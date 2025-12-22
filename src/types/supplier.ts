@@ -1,0 +1,32 @@
+export interface ISupplier {
+  id: string;
+  supplierCode: string;
+  name: string;
+  contactPerson: string;
+  email: string;
+  phone1: string;
+  phone2: string;
+  address: string | null;
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  city?: string | null;
+  district?: string | null;
+  country?: string | null;
+  postalCode?: string | null;
+  type?: "raw_material" | "packaging" | string;
+  bankName?: string | null;
+  accountName?: string | null;
+  accountNumber?: string | null;
+  branchName?: string | null;
+  routingCode?: string | null;
+  notes?: string | null;
+  isActive: boolean;
+  status?: "active" | "inactive";
+  totalPurchases: number;
+  totalPaid?: number;
+  totalDue?: number;
+  creditBalance?: number;
+  lastPurchaseDate: string | null;
+  createdAt: string;
+  updatedAt: string;
+}

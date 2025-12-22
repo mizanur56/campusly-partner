@@ -1,0 +1,36 @@
+/* Custom styles for table header */
+.ant-table-wrapper .ant-table-thead > tr > th {
+  background-color: #edeeef;
+  color: #4b5563;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  /* text-transform: uppercase; */
+}
+.ant-table-wrapper .ant-table-tbody > tr > td {
+  background-color: #fff;
+  color: #4b5563;
+  font-size: 14px;
+  border-bottom: #c7cacf 1px solid;
+}
+/* Custom styles for table row hover */
+.ant-table-wrapper .ant-table-tbody .ant-table-row > .ant-table-cell-row-hover {
+  background: rgba(237, 237, 237, 0.753) !important;
+  cursor: pointer;
+}
+
+.ant-table-wrapper {
+  background-color: #fff;
+  width: 100%;
+  overflow-x: auto;
+}
+
+@media (min-width: 1024px) {
+  .ant-table-wrapper.sidebar-expanded {
+    max-width: calc(100vw - 295px);
+  }
+
+  .ant-table-wrapper.sidebar-collapsed {
+    max-width: calc(100vw - 125px);
+  }
+}
