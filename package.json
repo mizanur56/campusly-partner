@@ -6,7 +6,7 @@
   "type": "module",
   "homepage": "/",
   "scripts": {
-    "dev": "vite --host 0.0.0.0 --port 4099",
+    "dev": "vite --host 0.0.0.0 --port 3001",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "type-check": "tsc --noEmit",

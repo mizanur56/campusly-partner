@@ -1,12 +1,12 @@
+import { Tooltip } from "antd";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useDispatch } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSidebar } from "../../../context/SidebarContext";
 import { useFilteredSidebarItems } from "../../../hooks/useFilteredSidebarItems";
 import { ChevronDownIcon } from "../../../icons";
-import { NavItem, SubMenuItem } from "../../../types/interfaces";
-import { useDispatch } from "react-redux";
 import { logout } from "../../../redux/features/auth/authSlice";
-import { Tooltip } from "antd";
+import { NavItem, SubMenuItem } from "../../../types/interfaces";
 
 // Sidebar items with Font Awesome class names
 const SidebarItems: NavItem[] = [
@@ -15,110 +15,6 @@ const SidebarItems: NavItem[] = [
     name: "Home",
     path: "/",
   },
-  {
-    icon: <i className="fa-solid fa-user"></i>,
-    name: "Profile",
-    path: "/profile",
-  },
-  {
-    icon: <i className="fa-solid fa-file-image"></i>,
-    name: "Media Library",
-    path: "/media",
-  },
-  {
-    icon: <i className="fa-solid fa-graduation-cap"></i>,
-    name: "Study Levels",
-    path: "/study-levels",
-  },
-  {
-    icon: <i className="fa-solid fa-calendar-days"></i>,
-    name: "Events Management",
-    path: "/events",
-  },
-  {
-    icon: <i className="fa-solid fa-images"></i>,
-    name: "Gallery Management",
-    path: "/gallery",
-  },
-  {
-    icon: <i className="fa-solid fa-book"></i>,
-    name: "Guides Management",
-    path: "/guides",
-  },
-  {
-    icon: <i className="fa-solid fa-graduation-cap"></i>,
-    name: "Courses Management",
-    path: "/courses",
-  },
-  {
-    icon: <i className="fa-solid fa-globe"></i>,
-    name: "Country Management",
-    path: "/country",
-  },
-  {
-    icon: <i className="fa-solid fa-graduation-cap"></i>,
-    name: "University Management",
-    path: "/universities",
-  },
-  {
-    icon: <i className="fa-solid fa-briefcase"></i>,
-    name: "Careers Management",
-    path: "/careers",
-    
-  },
-  {
-    icon: <i className="fa-brands fa-youtube"></i>,
-    name: "Video Management",
-    path: "/videos",
-  },
-  {
-    icon: <i className="fa-solid fa-newspaper"></i>,
-    name: "Articles Management",
-    path: "/articles",
-  },
-  {
-    icon: <i className="fa-solid fa-id-badge"></i>,
-    name: "Designations",
-    path: "/designations",
-  },
-  {
-    icon: <i className="fa-solid fa-users"></i>,
-    name: "User Management",
-    subItems: [
-      { name: "Employees", path: "/employees" },
-    ],
-  },
-  {
-    icon: <i className="fa-solid fa-file-alt"></i>,
-    name: "Content Management",
-    subItems: [
-      { name: "Content", path: "/content" },
-      { name: "Document", path: "/document" },
-    ],
-  },
-  {
-    icon: <i className="fa-solid fa-address-book"></i>,
-    name: "Offices Management",
-    path: "/offices",
-  },
-  {
-    icon: <i className="fa-solid fa-newspaper"></i>,
-    name: "News Management",
-    path: "/news",
-  },
-
-
-  {
-    icon: <i className="fa-solid fa-handshake"></i>,
-    name: "Institution Partners",
-    path: "/institution-partners",
-  },
-  {
-    icon: <i className="fa-solid fa-question-circle"></i>,
-    name: "FAQs Management",
-    path: "/faqs",
-  },
-
 ];
 
 const othersSidebarItems: NavItem[] = [
@@ -314,7 +210,7 @@ const Sidebar: React.FC = () => {
                 {(isExpanded || isMobileOpen) &&
                   (nav.name.length > 15 ? (
                     <Tooltip title={nav.name} placement="right">
-                      <span className="text-left truncate max-w-[150px] text-[14px] font-medium">
+                      <span className="text-left truncate max-w-50 text-[14px] font-medium">
                         {nav.name.substring(0, 15) + "..."}
                       </span>
                     </Tooltip>
@@ -340,7 +236,9 @@ const Sidebar: React.FC = () => {
               <Link
                 to={nav.path}
                 className={`menu-item group ${
-                  isActive(nav.path) ? "menu-item-active pl-5 transition-all duration-300" : "menu-item-inactive"
+                  isActive(nav.path)
+                    ? "menu-item-active pl-5 transition-all duration-300"
+                    : "menu-item-inactive"
                 }`}
               >
                 <span
