@@ -9,6 +9,7 @@ import AllMediaList from "../pages/Media/Media";
 import NotFound from "../pages/OtherPage/NotFound";
 import UnderDevelopment from "../pages/OtherPage/UnderDevelopment";
 import ProtectedRoute from "./ProtectedRoute";
+import Onboarding from "../pages/Auth/Onboarding";
 
 const routes = [
   {
@@ -23,6 +24,7 @@ const routes = [
       // Dashboard & Core
       { path: "/", element: <Dashboard /> },
       { path: "/media", element: <AllMediaList /> },
+      { path: "/onboarding", element: <Onboarding /> },
       { path: "/change-password", element: <ChangePassword /> },
       // Fallback for undefined child routes
       { path: "*", element: <UnderDevelopment /> },
