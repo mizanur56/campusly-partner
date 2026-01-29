@@ -14,22 +14,9 @@ const SidebarItems: NavItem[] = [
     path: "/",
   },
   {
-    icon: <i className="fa-solid fa-clipboard-list"></i>,
-    name: "Applications", 
-    path: "/applications", // Example path
-  },
-  {
-    icon: <i className="fa-solid fa-graduation-cap"></i>,
-    name: "Academics",
-    subItems: [
-        { name: "Subjects", path: "/courses" },
-        { name: "Universities", path: "/universities" },
-    ]
-  },
-  {
       icon: <i className="fa-solid fa-user"></i>,
       name: "Profile",
-      path: "/profile"
+      path: "/onboarding"
   }
 ];
 
@@ -314,19 +301,9 @@ const Sidebar: React.FC = () => {
       >
         <Link to="/" className="flex items-center gap-3 group">
           {isExpanded || isMobileOpen ? (
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-lg shadow-primary-500/25 group-hover:shadow-primary-500/40 transition-shadow duration-300">
-                <span className="text-white font-bold text-lg">C</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="font-bold text-gray-900 dark:text-white text-[15px] tracking-tight">Campus Transfer</span>
-                <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">Partner Panel</span>
-              </div>
-            </div>
+            <img src="/images/logo/logo.svg" alt="Campus Transfer" className="h-[40px] w-auto" />
           ) : (
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-lg shadow-primary-500/25 group-hover:shadow-primary-500/40 transition-shadow duration-300">
-              <span className="text-white font-bold text-lg">C</span>
-            </div>
+            <img src="/images/logo/logo-icon.svg" alt="Campus Transfer" className="h-[40px] w-[40px]" />
           )}
         </Link>
       </div>
