@@ -1,19 +1,41 @@
+
 // Mock components for onboarding steps
 import { Form, Button, theme, Avatar } from "antd";
 import { useState } from "react";
 import { UserOutlined, BellOutlined } from "@ant-design/icons";
-import FormInput from "../../components/common/Forms/FormInput";
+import BaseFormInput from "../../components/common/Forms/FormInput";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { useNavigate } from "react-router-dom";
 import { Check } from "lucide-react";
 
+// Wrapper to make FormInput transparent
+const FormInput = (props: any) => (
+  <BaseFormInput className="!bg-transparent" {...props} />
+);
+
+// Common styles for transparent PhoneInput
+const phoneInputStyle = {
+  width: "100%",
+  height: "40px",
+  borderRadius: "6px",
+  borderColor: "#d9d9d9",
+  backgroundColor: "transparent",
+};
+
+const phoneButtonStyle = {
+  borderTopLeftRadius: "6px",
+  borderBottomLeftRadius: "6px",
+  borderColor: "#d9d9d9",
+  backgroundColor: "transparent",
+};
+
 // ------------ Steps Components ------------
 
 const OwnerDetails = () => {
   return (
-    <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <FormInput
           name="fullName"
           label="Full Name"
@@ -43,18 +65,8 @@ const OwnerDetails = () => {
         >
           <PhoneInput
             country={"de"}
-            enableSearch={true}
-            inputStyle={{
-              width: "100%",
-              height: "40px", // Match FormInput size='large' default roughly
-              borderRadius: "6px",
-              borderColor: "#d9d9d9",
-            }}
-            buttonStyle={{
-              borderTopLeftRadius: "6px",
-              borderBottomLeftRadius: "6px",
-              borderColor: "#d9d9d9",
-            }}
+            inputStyle={phoneInputStyle}
+            buttonStyle={phoneButtonStyle}
           />
         </Form.Item>
       </div>
@@ -69,8 +81,8 @@ const OwnerDetails = () => {
 
 const DirectorDetails = () => {
   return (
-    <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <FormInput
           name="directorFullName"
           label="Full Name"
@@ -100,13 +112,8 @@ const DirectorDetails = () => {
         >
           <PhoneInput
             country={"de"}
-            enableSearch={true}
-            inputStyle={{
-              width: "100%",
-              height: "40px",
-              borderRadius: "6px",
-              borderColor: "#d9d9d9",
-            }}
+            inputStyle={phoneInputStyle}
+            buttonStyle={phoneButtonStyle}
           />
         </Form.Item>
       </div>
@@ -116,8 +123,8 @@ const DirectorDetails = () => {
 
 const MainContactDetails = () => {
   return (
-    <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <FormInput
           name="mainContactFullName"
           label="Full Name"
@@ -147,13 +154,8 @@ const MainContactDetails = () => {
         >
           <PhoneInput
             country={"de"}
-            enableSearch={true}
-            inputStyle={{
-              width: "100%",
-              height: "40px",
-              borderRadius: "6px",
-              borderColor: "#d9d9d9",
-            }}
+            inputStyle={phoneInputStyle}
+            buttonStyle={phoneButtonStyle}
           />
         </Form.Item>
       </div>
@@ -163,8 +165,8 @@ const MainContactDetails = () => {
 
 const RegularCompliance = () => {
   return (
-    <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <FormInput
           name="registeredCompanyName"
           label="Registered Company Name"
@@ -197,13 +199,8 @@ const RegularCompliance = () => {
         >
           <PhoneInput
             country={"de"}
-            enableSearch={true}
-            inputStyle={{
-              width: "100%",
-              height: "40px",
-              borderRadius: "6px",
-              borderColor: "#d9d9d9",
-            }}
+            inputStyle={phoneInputStyle}
+            buttonStyle={phoneButtonStyle}
           />
         </Form.Item>
       </div>
@@ -242,15 +239,6 @@ const RegularCompliance = () => {
           placeholder="Enter instagram url"
         />
       </div>
-
-      {/* File Uploads Placeholders - matching the image "Regular Compliance" part 2 logic? 
-           Wait, there is another image for "Regular Compliance" (last one uploaded)
-           It shows "Your ID", "Business registration certificate", "Tax Certificate" 
-           Let's assume these file uploads are also part of this step or a separate one?
-           The Sidebar shows "Regular Compliance". The form fields are "Registered Company Name", etc.
-           The uploaded image 1 shows "Your ID" download buttons. It seems to be a view mode or upload mode.
-           I'll stick to the input fields shown in index 4 for Regular Compliance form.
-       */}
     </div>
   );
 };
@@ -468,7 +456,12 @@ const Onboarding = () => {
 
           {/* Right Side: Form Content */}
           <div className="flex-1">
-            <Form form={form} layout="vertical" onFinish={onFinish}>
+            <Form
+              form={form}
+              layout="vertical"
+              onFinish={onFinish}
+              className="[&_.ant-form-item-label_label]:!font-medium [&_.ant-form-item-label_label]:!text-[14px] [&_.ant-form-item]:mb-3"
+            >
               <div className="mb-6">{steps[currentStep].content}</div>
 
               <div className="flex justify-end gap-3 mt-8">
