@@ -422,7 +422,7 @@ const Onboarding = () => {
       {activeTab === "Onboarding Form" ? (
         <div className="flex flex-col lg:flex-row gap-6 py-6">
           {/* Left Side: Steps (Custom Vertical Stepper Design matching image) */}
-          <div className="w-full lg:w-[320px] bg-white p-6 rounded-xl border border-gray-200 h-fit">
+          <div className="w-full lg:w-[300px] bg-white p-6 rounded-xl border border-gray-200 h-fit">
             <h2 className="text-[19px] md:text-[20px] font-[600] text-neutral-900 mb-6">
               Onboarding Steps
             </h2>
@@ -439,7 +439,7 @@ const Onboarding = () => {
                 return (
                   <div
                     key={index}
-                    className="flex items-center gap-4 mb-8 last:mb-0 relative z-10"
+                    className="flex items-center gap-4 mb-[50px] last:mb-0 relative z-10"
                   >
                     {/* Icon */}
                     <div className="mt-0.5 bg-white">
