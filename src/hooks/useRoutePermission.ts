@@ -7,8 +7,8 @@ import { usePermissions } from "./usePermissions";
  * Based on your actual backend routes
  */
 const routePermissions: Record<string, { module: string; action: string }> = {
-  // Dashboard
-  "/": { module: "Dashboard", action: "view" },
+  // Dashboard - No permission required, accessible to all authenticated users
+  // "/": { module: "Dashboard", action: "view" },
 
   // ==================== EMPLOYEES & DESIGNATIONS ====================
   "/employees": { module: "Employees", action: "view" },

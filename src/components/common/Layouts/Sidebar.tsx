@@ -1,45 +1,60 @@
-import { Tooltip } from "antd";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useDispatch } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSidebar } from "../../../context/SidebarContext";
 import { useFilteredSidebarItems } from "../../../hooks/useFilteredSidebarItems";
 import { ChevronDownIcon } from "../../../icons";
-import { logout } from "../../../redux/features/auth/authSlice";
 import { NavItem, SubMenuItem } from "../../../types/interfaces";
+import { Tooltip } from "antd";
 
-// Sidebar items with Font Awesome class names
+// Define items locally for now to match Admin design
 const SidebarItems: NavItem[] = [
   {
     icon: <i className="fa-solid fa-house"></i>,
-    name: "Home",
+    name: "Dashboard",
     path: "/",
   },
+  {
+    icon: <i className="fa-solid fa-clipboard-list"></i>,
+    name: "Applications", 
+    path: "/applications", // Example path
+  },
+  {
+    icon: <i className="fa-solid fa-graduation-cap"></i>,
+    name: "Academics",
+    subItems: [
+        { name: "Subjects", path: "/courses" },
+        { name: "Universities", path: "/universities" },
+    ]
+  },
+  {
+      icon: <i className="fa-solid fa-user"></i>,
+      name: "Profile",
+      path: "/profile"
+  }
 ];
+
 
 const othersSidebarItems: NavItem[] = [
   {
     icon: <i className="fa-solid fa-sign-out-alt"></i>,
     name: "Logout",
-    action: "logout", // <-- path এর পরিবর্তে action ব্যবহার
+    action: "logout", 
   },
 ];
+
 const Sidebar: React.FC = () => {
   const { isExpanded, isMobileOpen } = useSidebar();
   const location = useLocation();
-  const dispatch = useDispatch();
   const navigate = useNavigate();
+  
   const handleLogout = () => {
-    // Redux slice থেকে logout action কল করা
-    dispatch(logout());
-
-    // Local storage থেকে token মুছে ফেলা
+    // Mock logout for design migration
+    console.log("Logging out...");
     localStorage.removeItem("token");
-    // Login পেজে redirect করা
     navigate("/login");
   };
 
-  // Get filtered sidebar items based on user permissions
+  // Get filtered sidebar items 
   const filteredSidebarItems = useFilteredSidebarItems(SidebarItems);
 
   const [openSubmenu, setOpenSubmenu] = useState<{
@@ -51,7 +66,6 @@ const Sidebar: React.FC = () => {
   );
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // const isActive = (path: string) => location.pathname === path;
   const isActive = useCallback(
     (path: string) => location.pathname === path,
     [location.pathname]
@@ -130,11 +144,10 @@ const Sidebar: React.FC = () => {
           {item.subItems ? (
             <div>
               <button
-                className={`menu-dropdown-item w-full text-left text-[14px] font-medium ${
-                  isAnyNestedItemActive(item.subItems)
-                    ? "menu-dropdown-item-active"
-                    : "menu-dropdown-item-inactive"
-                }`}
+                className={`menu-dropdown-item w-full text-left text-[14px] font-semibold ${isAnyNestedItemActive(item.subItems)
+                  ? "menu-dropdown-item-active"
+                  : "menu-dropdown-item-inactive"
+                  }`}
               >
                 {item.name}
                 <ChevronDownIcon className="ml-auto w-4 h-4" />
@@ -146,11 +159,10 @@ const Sidebar: React.FC = () => {
           ) : (
             <Link
               to={item.path || "#"}
-              className={`menu-dropdown-item text-[14px] font-medium ${
-                item.path && isActive(item.path)
-                  ? "menu-dropdown-item-active"
-                  : "menu-dropdown-item-inactive"
-              }`}
+              className={`menu-dropdown-item text-[14px] font-semibold ${item.path && isActive(item.path)
+                ? "menu-dropdown-item-active"
+                : "menu-dropdown-item-inactive"
+                }`}
             >
               {item.name}
               {item.new && (
@@ -163,8 +175,6 @@ const Sidebar: React.FC = () => {
     </ul>
   );
 
-  // change code
-  //   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const menuItemRefs = useRef<Record<string, HTMLLIElement | null>>({});
   const renderMenuItems = (items: NavItem[], menuType: "main" | "others") => (
     <ul className="flex flex-col gap-1 relative">
@@ -189,20 +199,18 @@ const Sidebar: React.FC = () => {
                 onClick={() => {
                   handleSubmenuToggle(index, menuType);
                 }}
-                className={`menu-item group cursor-pointer ${
-                  openSubmenu?.type === menuType && openSubmenu?.index === index
-                    ? "menu-item-active"
-                    : "menu-item-inactive"
-                }`}
+                className={`menu-item group cursor-pointer ${openSubmenu?.type === menuType && openSubmenu?.index === index
+                  ? "menu-item-active"
+                  : "menu-item-inactive"
+                  }`}
               >
                 <span className="menu-item-icon-size menu-item-icon-inactive">
                   <span
-                    className={`menu-item-icon-size ${
-                      openSubmenu?.type === menuType &&
+                    className={`menu-item-icon-size ${openSubmenu?.type === menuType &&
                       openSubmenu?.index === index
-                        ? "text-primary-500"
-                        : "menu-item-icon-inactive"
-                    }`}
+                      ? "text-primary-500"
+                      : "menu-item-icon-inactive"
+                      }`}
                   >
                     {nav.icon}
                   </span>
@@ -210,7 +218,7 @@ const Sidebar: React.FC = () => {
                 {(isExpanded || isMobileOpen) &&
                   (nav.name.length > 15 ? (
                     <Tooltip title={nav.name} placement="right">
-                      <span className="text-left truncate max-w-50 text-[14px] font-medium">
+                      <span className="text-left truncate max-w-[150px] text-[14px] font-semibold">
                         {nav.name.substring(0, 15) + "..."}
                       </span>
                     </Tooltip>
@@ -222,12 +230,11 @@ const Sidebar: React.FC = () => {
 
                 {nav.subItems && (
                   <ChevronDownIcon
-                    className={`ml-auto w-5 h-5 transition-transform duration-200 ${
-                      openSubmenu?.type === menuType &&
+                    className={`ml-auto w-5 h-5 transition-transform duration-200 ${openSubmenu?.type === menuType &&
                       openSubmenu?.index === index
-                        ? "rotate-180 text-primary-500"
-                        : ""
-                    }`}
+                      ? "rotate-180 text-primary-500"
+                      : ""
+                      }`}
                   />
                 )}
               </button>
@@ -235,25 +242,20 @@ const Sidebar: React.FC = () => {
               // Clickable main menu item without submenu
               <Link
                 to={nav.path}
-                className={`menu-item group ${
-                  isActive(nav.path)
-                    ? "menu-item-active pl-5 transition-all duration-300"
-                    : "menu-item-inactive"
-                }`}
+                className={`menu-item group ${isActive(nav.path) ? "menu-item-active pl-5 transition-all duration-300" : "menu-item-inactive"
+                  }`}
               >
                 <span
-                  className={`menu-item-icon-size ${
-                    isActive(nav.path)
-                      ? "menu-item-icon-active"
-                      : "menu-item-icon-inactive"
-                  }`}
+                  className={`menu-item-icon-size ${isActive(nav.path)
+                    ? "menu-item-icon-active"
+                    : "menu-item-icon-inactive"
+                    }`}
                 >
                   <span
-                    className={`menu-item-icon-size ${
-                      isActive(nav.path)
-                        ? "menu-item-icon-active"
-                        : "menu-item-icon-inactive"
-                    }`}
+                    className={`menu-item-icon-size ${isActive(nav.path)
+                      ? "menu-item-icon-active"
+                      : "menu-item-icon-inactive"
+                      }`}
                   >
                     {!isExpanded ? (
                       <Tooltip title={nav.name} placement="right">
@@ -265,7 +267,7 @@ const Sidebar: React.FC = () => {
                   </span>
                 </span>
                 {(isExpanded || isMobileOpen) && (
-                  <span className="text-left text-[14px] font-medium">
+                  <span className="text-left text-[14px] font-semibold">
                     {nav.name}
                   </span>
                 )}
@@ -282,7 +284,7 @@ const Sidebar: React.FC = () => {
                 style={{
                   height:
                     openSubmenu?.type === menuType &&
-                    openSubmenu?.index === index
+                      openSubmenu?.index === index
                       ? `${subMenuHeight[`${menuType}-${index}`]}px`
                       : "0px",
                 }}
@@ -298,35 +300,40 @@ const Sidebar: React.FC = () => {
 
   return (
     <aside
-      className={`fixed mt-16 flex flex-col lg:mt-0 top-0  left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
-        ${isExpanded || isMobileOpen ? "w-[240px]" : "w-[70px]"}
+      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 left-0 h-screen transition-all duration-300 ease-in-out z-50
+        bg-gradient-to-b from-white via-white to-gray-50/80 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800/80
+        border-r border-gray-200/80 dark:border-gray-700/50
+        shadow-[4px_0_24px_-12px_rgba(0,0,0,0.08)]
+        ${isExpanded || isMobileOpen ? "w-[280px]" : "w-[80px]"}
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0`}
     >
+      {/* Logo Section with enhanced styling */}
       <div
-        className={`py-4 px-5 lg:flex hidden ${
-          !isExpanded ? "lg:justify-center" : "justify-start"
-        }`}
+        className={`py-5 px-5 lg:flex hidden items-center border-b border-gray-100 dark:border-gray-800 ${!isExpanded ? "lg:justify-center" : "justify-start"}`}
       >
-        <Link to="/" className="flex items-center">
+        <Link to="/" className="flex items-center gap-3 group">
           {isExpanded || isMobileOpen ? (
-            <img
-              src={`${import.meta.env.BASE_URL}images/logo/logo.svg`}
-              alt="Campus Transfer Logo"
-              className="h-auto w-auto max-w-full"
-              style={{ height: "45px", width: "auto" }}
-            />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-lg shadow-primary-500/25 group-hover:shadow-primary-500/40 transition-shadow duration-300">
+                <span className="text-white font-bold text-lg">C</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="font-bold text-gray-900 dark:text-white text-[15px] tracking-tight">Campus Transfer</span>
+                <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">Partner Panel</span>
+              </div>
+            </div>
           ) : (
-            <img
-              src={`${import.meta.env.BASE_URL}images/logo/logo.svg`}
-              alt="Campus Transfer Logo"
-              className="h-10 w-10"
-            />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-lg shadow-primary-500/25 group-hover:shadow-primary-500/40 transition-shadow duration-300">
+              <span className="text-white font-bold text-lg">C</span>
+            </div>
           )}
         </Link>
       </div>
+
+      {/* Navigation Content */}
       <div className="flex flex-col flex-1 overflow-hidden">
-        <div className="flex-1 px-4 py-4 overflow-y-auto duration-300 ease-linear no-scrollbar">
+        <div className="flex-1 px-3 py-4 overflow-y-auto duration-300 ease-linear no-scrollbar">
           <nav>
             <div className="flex flex-col gap-1">
               {renderMenuItems(filteredSidebarItems, "main")}
@@ -334,14 +341,16 @@ const Sidebar: React.FC = () => {
           </nav>
         </div>
 
-        {/* Sticky Logout Button */}
-        <div className="px-5 py-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+        {/* Enhanced Logout Button */}
+        <div className="px-4 py-4 border-t border-gray-100 dark:border-gray-800 bg-gradient-to-t from-gray-50 to-transparent dark:from-gray-800/50">
           <button
             onClick={handleLogout}
-            className="menu-item group menu-item-inactive w-full text-left"
+            className={`group flex items-center gap-3 w-full px-4 py-3 rounded-xl text-gray-600 dark:text-gray-400 
+              hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400
+              transition-all duration-200 ${!isExpanded && !isMobileOpen ? "justify-center" : ""}`}
           >
-            <span className="menu-item-icon-size menu-item-icon-inactive">
-              {!isExpanded ? (
+            <span className="text-lg group-hover:scale-110 transition-transform duration-200">
+              {!isExpanded && !isMobileOpen ? (
                 <Tooltip title="Logout" placement="right">
                   <span>
                     <i className="fa-solid fa-sign-out-alt"></i>
@@ -352,7 +361,7 @@ const Sidebar: React.FC = () => {
               )}
             </span>
             {(isExpanded || isMobileOpen) && (
-              <span className="text-left text-[14px] font-medium">Logout</span>
+              <span className="text-[14px] font-semibold">Logout</span>
             )}
           </button>
         </div>
