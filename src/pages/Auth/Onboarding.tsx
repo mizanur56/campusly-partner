@@ -49,7 +49,7 @@ const OwnerDetails = () => {
           rules={[{ required: true, message: "Position is required" }]}
         />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <FormInput
           name="email"
           label="Email"
@@ -96,7 +96,7 @@ const DirectorDetails = () => {
           rules={[{ required: true, message: "Position is required" }]}
         />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <FormInput
           name="directorEmail"
           label="Email"
@@ -138,7 +138,7 @@ const MainContactDetails = () => {
           rules={[{ required: true, message: "Position is required" }]}
         />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <FormInput
           name="mainContactEmail"
           label="Email"
@@ -184,7 +184,7 @@ const RegularCompliance = () => {
           ]}
         />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {/* Implement Select for Country if needed, using text for now or mock select */}
         <FormInput
           name="countryOfRegistration"
@@ -205,7 +205,7 @@ const RegularCompliance = () => {
         </Form.Item>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <FormInput
           name="complianceEmail"
           label="Email"
@@ -227,7 +227,7 @@ const RegularCompliance = () => {
         // Use TextArea if multiple lines needed
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <FormInput
           name="facebook"
           label="Facebook"
