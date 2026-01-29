@@ -423,7 +423,7 @@ const Onboarding = () => {
         <div className="flex flex-col lg:flex-row gap-6 py-6">
           {/* Left Side: Steps (Custom Vertical Stepper Design matching image) */}
           <div className="w-full lg:w-[320px] bg-white p-6 rounded-xl border border-gray-200 h-fit">
-            <h2 className="text-lg font-bold text-gray-900 mb-6">
+            <h2 className="text-[19px] md:text-[20px] font-[600] text-neutral-900 mb-6">
               Onboarding Steps
             </h2>
 
@@ -456,7 +456,7 @@ const Onboarding = () => {
                     </div>
                     {/* Title */}
                     <span
-                      className={`text-[15px] font-medium transition-colors ${isActive ? "text-green-600" : "text-gray-500"}`}
+                      className={`text-[17px]  md:text-[18px] font-normal transition-colors ${isActive ? "text-green-500" : "text-gray-500"}`}
                     >
                       {step.title}
                     </span>
