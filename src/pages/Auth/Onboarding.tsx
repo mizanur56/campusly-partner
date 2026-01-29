@@ -7,7 +7,7 @@ import BaseFormInput from "../../components/common/Forms/FormInput";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { useNavigate } from "react-router-dom";
-import { Check } from "lucide-react";
+import { Check, Download } from "lucide-react";
 
 // Wrapper to make FormInput transparent
 const FormInput = (props: any) => (
@@ -37,31 +37,33 @@ const OwnerDetails = () => {
     <div className="flex flex-col gap-3">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <FormInput
-          name="fullName"
-          label="Full Name"
-          placeholder="Enter full name"
-          rules={[{ required: true, message: "Full name is required" }]}
+          name="registeredCompanyName"
+          label="Registered Company Name"
+          placeholder="Enter registered company name"
+          rules={[
+            { required: true, message: "Registered Company Name is required" },
+          ]}
         />
         <FormInput
-          name="position"
-          label="Position"
-          placeholder="Enter position"
-          rules={[{ required: true, message: "Position is required" }]}
+          name="companyRegistrationNumber"
+          label="Company Registration Number"
+          placeholder="Enter registration number"
+          rules={[
+            { required: true, message: "Registration number is required" },
+          ]}
         />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <FormInput
-          name="email"
-          label="Email"
-          placeholder="Enter email"
-          rules={[
-            { required: true, message: "Email is required", type: "email" },
-          ]}
+          name="countryOfRegistration"
+          label="Country of Registration"
+          placeholder="Select an Item"
+          rules={[{ required: true, message: "Country is required" }]}
         />
         <Form.Item
-          name="telephoneNumber"
-          label="Telephone Number"
-          rules={[{ required: true, message: "Telephone number is required" }]}
+          name="mobileNumber"
+          label="Mobile Number"
+          rules={[{ required: true, message: "Mobile number is required" }]}
         >
           <PhoneInput
             country={"de"}
@@ -70,11 +72,38 @@ const OwnerDetails = () => {
           />
         </Form.Item>
       </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <FormInput
+          name="complianceEmail"
+          label="Email"
+          placeholder="Select an Item"
+        />
+        <FormInput
+          name="website"
+          label="Website"
+          placeholder="Enter website url"
+        />
+      </div>
+
       <FormInput
-        name="whatsapp"
-        label="Whatsapp (If Applicable)"
-        placeholder="Enter whatsapp number"
+        name="companyAddress"
+        label="Company Address"
+        placeholder="Enter company address"
       />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <FormInput
+          name="facebook"
+          label="Facebook"
+          placeholder="Enter facebook url"
+        />
+        <FormInput
+          name="instagram"
+          label="Instagram"
+          placeholder="Enter instagram url"
+        />
+      </div>
     </div>
   );
 };
@@ -164,81 +193,47 @@ const MainContactDetails = () => {
 };
 
 const RegularCompliance = () => {
+  const documents = [
+    { label: "Your ID", key: "id" },
+    { label: "Business registration certificate", key: "business_cert" },
+    { label: "Tax Certificate (Optional)", key: "tax_cert" },
+  ];
+
   return (
-    <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <FormInput
-          name="registeredCompanyName"
-          label="Registered Company Name"
-          placeholder="Enter registered company name"
-          rules={[
-            { required: true, message: "Registered Company Name is required" },
-          ]}
-        />
-        <FormInput
-          name="companyRegistrationNumber"
-          label="Company Registration Number"
-          placeholder="Enter registration number"
-          rules={[
-            { required: true, message: "Registration number is required" },
-          ]}
-        />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {/* Implement Select for Country if needed, using text for now or mock select */}
-        <FormInput
-          name="countryOfRegistration"
-          label="Country of Registration"
-          placeholder="Select an Item" // Ideally this is a Select component
-          rules={[{ required: true, message: "Country is required" }]}
-        />
-        <Form.Item
-          name="mobileNumber"
-          label="Mobile Number"
-          rules={[{ required: true, message: "Mobile number is required" }]}
+    <div className="flex flex-col gap-4">
+      {documents.map((doc, index) => (
+        <div
+          key={index}
+          className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-white hover:border-green-500 transition-all cursor-pointer group"
         >
-          <PhoneInput
-            country={"de"}
-            inputStyle={phoneInputStyle}
-            buttonStyle={phoneButtonStyle}
-          />
-        </Form.Item>
-      </div>
+          <span className="text-gray-900 font-medium text-[15px]">
+            {doc.label}
+          </span>
+          <Download className="text-green-600 w-5 h-5 group-hover:scale-110 transition-transform" />
+        </div>
+      ))}
+    </div>
+  );
+};
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <FormInput
-          name="complianceEmail"
-          label="Email"
-          placeholder="Select an Item"
-          // rules={[{ required: true, message: 'Email is required' }]}
-        />
-        <FormInput
-          name="website"
-          label="Website"
-          placeholder="Enter website url"
-          // rules={[{ required: true, message: 'Website is required' }]}
-        />
+const StyledCheckbox = ({ checked, value, onChange, children }: any) => {
+  const isChecked = checked !== undefined ? checked : value; // Handle both checked (from Form.Item valuePropName) or value
+  return (
+    <div
+      className="flex items-start gap-3 cursor-pointer group"
+      onClick={() => onChange?.(!isChecked)}
+    >
+      <div
+        className={`
+              w-5 h-5 min-w-[20px] rounded flex items-center justify-center transition-colors border mt-0.5
+              ${isChecked ? "bg-green-600 border-green-600" : "bg-white border-gray-300 group-hover:border-green-500"}
+            `}
+      >
+        {isChecked && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
       </div>
-
-      <FormInput
-        name="companyAddress"
-        label="Company Address"
-        placeholder="Enter company address"
-        // Use TextArea if multiple lines needed
-      />
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <FormInput
-          name="facebook"
-          label="Facebook"
-          placeholder="Enter facebook url"
-        />
-        <FormInput
-          name="instagram"
-          label="Instagram"
-          placeholder="Enter instagram url"
-        />
-      </div>
+      <span className="text-gray-600 text-[14px] font-medium leading-relaxed select-none">
+        {children}
+      </span>
     </div>
   );
 };
@@ -246,57 +241,73 @@ const RegularCompliance = () => {
 const Declaration = () => {
   return (
     <div className="flex flex-col gap-6">
-      <h3 className="text-base font-medium text-gray-900">
+      <h3 className="text-[18px] font-medium text-gray-900 leading-relaxed">
         Minor mistakes can cause a major delay in our partnership. Please take a
         moment to verify the information in each section before submitting.
       </h3>
 
-      <p className="text-sm text-gray-500">
+      <p className="text-[14px] text-gray-500">
         By proceeding, you agree to the{" "}
-        <span className="text-green-600">Terms & Conditions</span> and{" "}
-        <span className="text-green-600">Privacy Policy</span>
+        <span className="text-green-600 cursor-pointer hover:underline">
+          Terms & Conditions
+        </span>{" "}
+        and{" "}
+        <span className="text-green-600 cursor-pointer hover:underline">
+          Privacy Policy
+        </span>
       </p>
 
-      <div className="flex flex-col gap-4">
-        {/* Mock Checkboxes using simple div/span for now or antd Checkbox */}
-        {/* Antd Form.Item with Checkbox valuePropName="checked" */}
+      <div className="flex flex-col gap-1 mt-2">
         <Form.Item
           name="verifyInfo"
           valuePropName="checked"
           rules={[
             {
               validator: (_, value) =>
-                value
-                  ? Promise.resolve()
-                  : Promise.reject(new Error("Required")),
+                value ? Promise.resolve() : Promise.reject(new Error("Required")),
             },
           ]}
+          className="!mb-0"
         >
-          <div className="flex gap-2 items-start">
-            <input type="checkbox" className="mt-1" />
-            <span className="text-sm text-gray-700">
-              I verify that all the information provided is accurate and
-              legitimate. *
-            </span>
-          </div>
+          <StyledCheckbox>
+            I verify that all the information provided is accurate and legitimate.{" "}
+            <span className="text-red-500">*</span>
+          </StyledCheckbox>
         </Form.Item>
-        <Form.Item name="allowData" valuePropName="checked">
-          <div className="flex gap-2 items-start">
-            <input type="checkbox" className="mt-1" />
-            <span className="text-sm text-gray-700">
-              I agree to allow Campus Transfer to store and process my personal
-              data in accordance with the Privacy Policy.*
-            </span>
-          </div>
+
+        <Form.Item
+          name="allowData"
+          valuePropName="checked"
+          rules={[
+            {
+              validator: (_, value) =>
+                value ? Promise.resolve() : Promise.reject(new Error("Required")),
+            },
+          ]}
+          className="!mb-0"
+        >
+          <StyledCheckbox>
+            I agree to allow Campus Transfer to store and process my personal
+            data in accordance with the Privacy Policy.
+            <span className="text-red-500">*</span>
+          </StyledCheckbox>
         </Form.Item>
-        <Form.Item name="receiveUpdates" valuePropName="checked">
-          <div className="flex gap-2 items-start">
-            <input type="checkbox" className="mt-1" />
-            <span className="text-sm text-gray-700">
-              I agree to receive updates and communication from Campus Transfer
-              via email or phone. *
-            </span>
-          </div>
+
+        <Form.Item
+          name="receiveUpdates"
+          valuePropName="checked"
+          rules={[
+            {
+              validator: (_, value) =>
+                value ? Promise.resolve() : Promise.reject(new Error("Required")),
+            },
+          ]}
+          className="mb-0"
+        >
+          <StyledCheckbox>
+            I agree to receive updates and communication from Campus Transfer
+            via email or phone. <span className="text-red-500">*</span>
+          </StyledCheckbox>
         </Form.Item>
       </div>
     </div>
