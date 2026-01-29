@@ -349,7 +349,7 @@ const Onboarding = () => {
   };
 
   const onFinish = (values: any) => {
-    console.log("Form Finished:", values);
+    console.log("Onboarding Data:", values);
     navigate("/"); // Redirect to dashboard after finish
   };
 
