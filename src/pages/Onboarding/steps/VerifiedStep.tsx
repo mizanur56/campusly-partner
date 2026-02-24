@@ -15,7 +15,7 @@ export default function VerifiedStep({ onProceedToContract }: Props) {
       <p className="mb-6 max-w-sm text-sm leading-relaxed text-neutral-500 dark:text-neutral-400">
         Your onboarding has been reviewed and approved.
       </p>
-      <Button type="button" variant="primary" onClick={onProceedToContract}>
+      <Button type="button" variant="primary" size="lg" onClick={onProceedToContract}>
         Proceed to contract
       </Button>
     </div>

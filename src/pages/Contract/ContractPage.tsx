@@ -3,9 +3,7 @@ import { Button } from "../../components/ui/button";
 import { SignaturePad } from "../../components/contract/SignaturePad";
 
 export default function ContractPage() {
-  const [signatureImageDataUrl, setSignatureImageDataUrl] = useState<
-    string | null
-  >(null);
+  const [signatureImageDataUrl, setSignatureImageDataUrl] = useState<string | null>(null);
   const [showSignaturePad, setShowSignaturePad] = useState(false);
   const [signedAt, setSignedAt] = useState<string | null>(null);
 
@@ -13,7 +11,13 @@ export default function ContractPage() {
 
   const handleSaveSignature = (dataUrl: string) => {
     setSignatureImageDataUrl(dataUrl);
-    setSignedAt(new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }));
+    setSignedAt(
+      new Date().toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    );
     setShowSignaturePad(false);
   };
 
@@ -151,9 +155,7 @@ export default function ContractPage() {
                     </div>
                   </div>
                   <div className="flex justify-start sm:justify-end">
-                    <Button variant="primary">
-                      Arrange meeting
-                    </Button>
+                    <Button variant="primary">Arrange meeting</Button>
                   </div>
                 </div>
               </section>
@@ -222,10 +224,7 @@ export default function ContractPage() {
                           )}
                         </div>
                         <div className="flex flex-wrap items-center gap-3">
-                          <Button
-                            variant="secondary"
-                            type="button"
-                          >
+                          <Button variant="secondary" type="button">
                             View signed contract
                           </Button>
                           <Button
@@ -255,4 +254,3 @@ export default function ContractPage() {
     </div>
   );
 }
-

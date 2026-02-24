@@ -42,7 +42,7 @@ export default function OwnerDetailsStep({ onNext }: Props) {
         <FormInput name="instagram" label="Instagram" placeholder="Enter instagram url" />
       </div>
       <div className="mt-8 flex justify-end gap-3">
-        <Button type="button" variant="primary" onClick={handleNext}>
+        <Button type="button" variant="primary" size="lg" onClick={handleNext}>
           Next →
         </Button>
       </div>

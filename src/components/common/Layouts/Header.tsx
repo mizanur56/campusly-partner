@@ -41,7 +41,7 @@ const Header: React.FC = () => {
   const [hasScrolled, setHasScrolled] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const isDashboardOrOnboarding =
-    pathname === "/" || pathname.startsWith("/onboarding");
+    pathname === "/" || pathname.startsWith("/onboarding") || pathname.startsWith("/contract");
 
   const countries = mockCountries;
   const countryOptions = countries;

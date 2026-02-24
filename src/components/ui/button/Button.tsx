@@ -12,6 +12,7 @@ const variantStyles = {
 const sizeStyles = {
   sm: "text-xs px-2.5 py-1.5",
   md: "", // uses btn-base default
+  lg: "text-[15px] px-6 py-3",
 } as const;
 
 type ButtonVariant = keyof typeof variantStyles;
