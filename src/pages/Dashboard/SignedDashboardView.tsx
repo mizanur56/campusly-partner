@@ -66,7 +66,7 @@ export default function SignedDashboardView() {
           {KPI_CARDS.map((kpi) => (
             <div
               key={kpi.label}
-              className={`rounded-xl p-4 ${kpi.color}`}
+              className={`rounded-xl p-4 card-shadow ${kpi.color}`}
             >
               <p className="text-xl font-semibold">{kpi.value} {kpi.label}</p>
               <p className="mt-0.5 text-sm opacity-90">{kpi.sub}</p>
@@ -76,7 +76,7 @@ export default function SignedDashboardView() {
 
         <div className="mt-8 grid gap-6 lg:grid-cols-3">
           {/* Your Support Panel */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 card-shadow dark:border-gray-800 dark:bg-gray-900">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
               Your Support Panel
             </h2>
@@ -104,7 +104,7 @@ export default function SignedDashboardView() {
           </div>
 
           {/* Recent Announcements */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 lg:col-span-2">
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 card-shadow dark:border-gray-800 dark:bg-gray-900 lg:col-span-2">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-semibold text-gray-900 dark:text-white">
                 Recent Announcements
@@ -137,7 +137,7 @@ export default function SignedDashboardView() {
 
         <div className="mt-6 grid gap-6 lg:grid-cols-3">
           {/* Team Members */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 card-shadow dark:border-gray-800 dark:bg-gray-900">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
               Team Members
             </h2>
@@ -157,7 +157,7 @@ export default function SignedDashboardView() {
           </div>
 
           {/* Destination */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 card-shadow dark:border-gray-800 dark:bg-gray-900">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
               Destination
             </h2>
@@ -172,7 +172,7 @@ export default function SignedDashboardView() {
           </div>
 
           {/* Universities */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 card-shadow dark:border-gray-800 dark:bg-gray-900">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
               Universities
             </h2>
@@ -193,7 +193,7 @@ export default function SignedDashboardView() {
         </div>
 
         {/* Courses */}
-        <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+        <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-5 card-shadow dark:border-gray-800 dark:bg-gray-900">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
               Courses

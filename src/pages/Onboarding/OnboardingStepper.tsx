@@ -25,50 +25,44 @@ export default function OnboardingStepper({
       ? currentStepIndex
       : -1;
 
-  const completedCount =
-    variant === "verified"
-      ? 6
-      : variant === "submitted"
-        ? 5
-        : currentIndex >= 0
-          ? currentIndex
-          : 0;
-
   return (
     <aside
-      className="w-full shrink-0 lg:w-56 xl:w-64 lg:self-start"
+      className="w-full shrink-0 lg:w-60 xl:w-72 lg:self-start"
       aria-label="Application progress"
     >
-      <div className="sticky top-24 overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-        <p className="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">
-          Progress
-        </p>
-        <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
-          {variant === "verified"
-            ? "Step 5 of 5"
-            : variant === "submitted"
-              ? "Under review"
-              : currentIndex >= 0
-                ? `Step ${currentIndex + 1} of ${STEP_COUNT}`
-                : "Step 1 of 5"}
-        </p>
-        <nav className="relative flex flex-col" aria-label="Steps">
-          {/* Connector line (background) */}
-          <div
-            className="absolute left-[15px] top-6 w-px bg-gray-200 dark:bg-gray-700"
-            style={{ height: "calc(100% - 24px)" }}
-            aria-hidden
-          />
-          {/* Connector line (progress) */}
-          {completedCount > 0 && (
+      <div className="sticky top-24 overflow-hidden rounded-2xl border border-gray-200/90 bg-white card-shadow dark:border-gray-700/90 dark:bg-gray-900">
+        <div className="border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+          <p className="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            Progress
+          </p>
+          <p className="mt-1 text-base font-semibold text-gray-900 dark:text-white">
+            {variant === "verified"
+              ? "All steps complete"
+              : variant === "submitted"
+                ? "Under review"
+                : currentIndex >= 0
+                  ? `Step ${currentIndex + 1} of ${STEP_COUNT}`
+                  : "Step 1 of 5"}
+          </p>
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
             <div
-              className="absolute left-[15px] top-6 z-[1] w-px bg-primary-500 transition-all duration-300"
+              className="h-full rounded-full bg-primary-500 transition-all duration-300"
               style={{
-                height: `calc(${Math.min(completedCount, STEP_COUNT)} * (36px + 8px) - 8px)`,
+                width: `${
+                  variant === "verified"
+                    ? 100
+                    : variant === "submitted"
+                      ? 100
+                      : currentIndex >= 0
+                        ? ((currentIndex + 1) / STEP_COUNT) * 100
+                        : 20
+                }%`,
               }}
               aria-hidden
             />
-          )}
+          </div>
+        </div>
+        <nav className="relative flex flex-col px-5 py-4" aria-label="Steps">
           {STEP_LIST_FOR_STEPPER.map((step, index) => {
             const isStepPath = step.path !== null;
             const isCompleted =
@@ -84,12 +78,12 @@ export default function OnboardingStepper({
             return (
               <div
                 key={step.label + String(index)}
-                className="relative z-10 flex items-start gap-3 py-2"
+                className="relative z-10 flex items-start gap-3 py-2.5"
               >
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center">
                   {isUnderReview ? (
                     <span
-                      className="flex h-8 w-8 items-center justify-center rounded-full bg-warning-500 text-white"
+                      className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-500 text-white shadow-sm"
                       aria-hidden
                     >
                       <svg
@@ -108,7 +102,7 @@ export default function OnboardingStepper({
                     </span>
                   ) : isCompleted ? (
                     <span
-                      className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-600 text-white"
+                      className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-600 text-white shadow-sm"
                       aria-hidden
                     >
                       <svg
@@ -125,14 +119,14 @@ export default function OnboardingStepper({
                     </span>
                   ) : isActive ? (
                     <span
-                      className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-primary-600 bg-white text-sm font-semibold text-primary-600 dark:bg-gray-900"
+                      className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-primary-500 bg-primary-50 text-sm font-semibold text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
                       aria-current="step"
                     >
                       {stepNumber}
                     </span>
                   ) : (
                     <span
-                      className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 bg-white text-sm text-gray-400 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-500"
+                      className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-gray-50 text-sm font-medium text-gray-400 dark:border-gray-600 dark:bg-gray-800/50 dark:text-gray-500"
                       aria-hidden
                     >
                       {stepNumber}
@@ -140,13 +134,13 @@ export default function OnboardingStepper({
                   )}
                 </div>
                 <span
-                  className={`pt-1 text-sm leading-tight ${
+                  className={`pt-1.5 text-sm leading-snug ${
                     isActive
-                      ? "font-medium text-gray-900 dark:text-white"
+                      ? "font-semibold text-gray-900 dark:text-white"
                       : isUnderReview
-                        ? "font-medium text-warning-700 dark:text-warning-400"
+                        ? "font-medium text-amber-700 dark:text-amber-400"
                         : isCompleted
-                          ? "text-gray-600 dark:text-gray-300"
+                          ? "font-medium text-gray-600 dark:text-gray-300"
                           : "text-gray-500 dark:text-gray-400"
                   }`}
                 >
@@ -156,9 +150,9 @@ export default function OnboardingStepper({
             );
           })}
           {variant === "verified" && (
-            <div className="relative z-10 flex items-start gap-3 py-2">
+            <div className="relative z-10 flex items-start gap-3 py-2.5">
               <span
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-600 text-white"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-600 text-white shadow-sm"
                 aria-hidden
               >
                 <svg
@@ -173,7 +167,7 @@ export default function OnboardingStepper({
                   />
                 </svg>
               </span>
-              <span className="pt-1 text-sm font-medium text-gray-600 dark:text-gray-300">
+              <span className="pt-1.5 text-sm font-semibold text-gray-700 dark:text-gray-200">
                 Complete
               </span>
             </div>

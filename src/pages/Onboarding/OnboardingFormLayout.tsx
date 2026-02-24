@@ -25,7 +25,7 @@ export default function OnboardingFormLayout({
   const stepIndex = showStepInHeader ? currentStepIndex! : 0;
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-gray-50/50 px-4 py-8 dark:bg-gray-950/30 md:px-6 md:py-10">
+    <div className="min-h-[calc(100vh-4rem)] px-4 py-8 md:px-6 md:py-10">
       <div className="mx-auto max-w-5xl">
         <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
           <OnboardingStepper
@@ -33,10 +33,10 @@ export default function OnboardingFormLayout({
             variant={stepperVariant}
           />
           <main className="min-w-0 flex-1">
-            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-              <header className="border-b border-gray-100 px-6 py-6 dark:border-gray-800 sm:px-8 sm:py-7">
+            <div className="overflow-hidden rounded-2xl border border-gray-200/90 bg-white card-shadow dark:border-gray-700/90 dark:bg-gray-900">
+              <header className="border-b border-gray-100 bg-white px-6 py-5 dark:border-gray-800 dark:bg-gray-900 sm:px-8 sm:py-6">
                 {showStepInHeader && (
-                  <p className="mb-1 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
                     {stepperVariant === "form"
                       ? `Step ${stepIndex + 1} of ${ONBOARDING_FORM_STEP_COUNT}`
                       : stepperVariant === "submitted"
@@ -44,11 +44,11 @@ export default function OnboardingFormLayout({
                         : "Complete"}
                   </p>
                 )}
-                <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
+                <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white sm:text-2xl">
                   {title}
                 </h1>
                 {subtitle && (
-                  <p className="mt-2 text-base text-gray-600 dark:text-gray-400">
+                  <p className="mt-2 text-base leading-relaxed text-gray-600 dark:text-gray-400">
                     {subtitle}
                   </p>
                 )}

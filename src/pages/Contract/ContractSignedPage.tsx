@@ -4,7 +4,7 @@ export default function ContractSignedPage() {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gray-50/50 px-4 py-8 dark:bg-gray-950/30 md:px-6 md:py-10">
       <div className="mx-auto flex max-w-3xl flex-col items-center justify-center text-center">
-        <div className="mb-8 rounded-2xl border border-gray-200 bg-white px-8 py-10 dark:border-gray-800 dark:bg-gray-900">
+        <div className="mb-8 rounded-2xl border border-gray-200 bg-white px-8 py-10 card-shadow dark:border-gray-800 dark:bg-gray-900">
           <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-warning-50 text-warning-500 dark:bg-warning-900/20">
             <svg
               className="h-10 w-10"
