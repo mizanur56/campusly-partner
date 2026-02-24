@@ -91,9 +91,11 @@ const Header: React.FC = () => {
         {/* Dashboard / Onboarding: Partner branding */}
         {isDashboardOrOnboarding ? (
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-500 text-sm font-bold text-white shadow-sm">
-              WNEC
-            </div>
+            <img
+              src="https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=80&h=80&fit=crop"
+              alt="Window Nepal Education"
+              className="h-10 w-10 shrink-0 rounded-xl object-cover"
+            />
             <div>
               <span className="block text-base font-semibold tracking-tight text-gray-900 dark:text-white">
                 Window Nepal Education
