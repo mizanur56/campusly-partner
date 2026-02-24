@@ -65,7 +65,13 @@ const Sidebar: React.FC = () => {
   const isActive = useCallback(
     (path: string) => {
       if (path === "/") {
-        return location.pathname === "/" || location.pathname.startsWith("/onboarding");
+        // Treat onboarding + contract flows as part of "Home"
+        return (
+          location.pathname === "/" ||
+          location.pathname.startsWith("/onboarding") ||
+          location.pathname === "/contract" ||
+          location.pathname.startsWith("/contract/")
+        );
       }
       return location.pathname === path;
     },
