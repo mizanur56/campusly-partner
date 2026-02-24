@@ -10,19 +10,19 @@ const LayoutContent: React.FC = () => {
   // useRoutePermission(); // Disabled for design migration
 
   return (
-    <div className="min-h-screen lg:flex bg-gray-50/50 dark:bg-gray-900">
+    <div className="min-h-screen lg:flex bg-white dark:bg-neutral-900">
       <div>
         <Sidebar />
         <Backdrop />
       </div>
       <div
-        className={`flex-1 transition-all duration-300 ease-in-out flex-col ${
+        className={`flex min-h-screen flex-1 flex-col transition-all duration-300 ease-in-out ${
           isExpanded ? "lg:ml-[280px]" : "lg:ml-[80px]"
         } ${isMobileOpen ? "ml-0" : ""}`}
       >
         <Header />
-        <main className="min-h-[calc(100vh-64px)]">
-          <div className="p-4 md:p-6">
+        <main className="flex-1 min-h-[calc(100vh-4rem)]">
+          <div className="p-4 md:p-6 lg:p-8">
             <Outlet />
           </div>
         </main>

@@ -6,51 +6,48 @@ import { ChevronDownIcon } from "../../../icons";
 import { NavItem, SubMenuItem } from "../../../types/interfaces";
 import { Tooltip } from "antd";
 
-// Define items locally for now to match Admin design
 const SidebarItems: NavItem[] = [
   {
     icon: <i className="fa-solid fa-house"></i>,
-    name: "Dashboard",
+    name: "Home",
     path: "/",
   },
-  {
-      icon: <i className="fa-solid fa-user"></i>,
-      name: "Profile",
-      path: "/onboarding"
-  }
 ];
-
 
 const othersSidebarItems: NavItem[] = [
   {
     icon: <i className="fa-solid fa-sign-out-alt"></i>,
     name: "Logout",
-    action: "logout", 
+    action: "logout",
   },
 ];
+
+// Mock managed-by user
+const managedByUser = {
+  name: "Dipak Sharma",
+  email: "dipak@campustransfer.com",
+  phone: "+977 017879 39155",
+  avatar: "/images/logo/logo-icon.svg",
+};
 
 const Sidebar: React.FC = () => {
   const { isExpanded, isMobileOpen } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   const handleLogout = () => {
-    // Mock logout for design migration
     console.log("Logging out...");
     localStorage.removeItem("token");
     navigate("/login");
   };
 
-  // Get filtered sidebar items 
   const filteredSidebarItems = useFilteredSidebarItems(SidebarItems);
 
   const [openSubmenu, setOpenSubmenu] = useState<{
     type: "main" | "others";
     index: number;
   } | null>(null);
-  const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>(
-    {}
-  );
+  const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>({});
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const isActive = useCallback(
@@ -58,16 +55,11 @@ const Sidebar: React.FC = () => {
     [location.pathname]
   );
 
-  // Helper function to check if any nested item is active
   const isAnyNestedItemActive = useCallback(
     (items: SubMenuItem[]): boolean => {
       return items.some((item) => {
-        if (item.path && isActive(item.path)) {
-          return true;
-        }
-        if (item.subItems) {
-          return isAnyNestedItemActive(item.subItems);
-        }
+        if (item.path && isActive(item.path)) return true;
+        if (item.subItems) return isAnyNestedItemActive(item.subItems);
         return false;
       });
     },
@@ -80,30 +72,24 @@ const Sidebar: React.FC = () => {
       const items =
         menuType === "main" ? filteredSidebarItems : othersSidebarItems;
       items.forEach((nav, index) => {
-        if (nav.subItems) {
-          // Check if any nested item (including deeply nested) is active
-          if (isAnyNestedItemActive(nav.subItems)) {
-            setOpenSubmenu({
-              type: menuType as "main" | "others",
-              index,
-            });
-            submenuMatched = true;
-          }
+        if (nav.subItems && isAnyNestedItemActive(nav.subItems)) {
+          setOpenSubmenu({
+            type: menuType as "main" | "others",
+            index,
+          });
+          submenuMatched = true;
         }
       });
     });
-
-    if (!submenuMatched) {
-      setOpenSubmenu(null);
-    }
+    if (!submenuMatched) setOpenSubmenu(null);
   }, [location, isActive, filteredSidebarItems, isAnyNestedItemActive]);
 
   useEffect(() => {
     if (openSubmenu !== null) {
       const key = `${openSubmenu.type}-${openSubmenu.index}`;
       if (subMenuRefs.current[key]) {
-        setSubMenuHeight((prevHeights) => ({
-          ...prevHeights,
+        setSubMenuHeight((prev) => ({
+          ...prev,
           [key]: subMenuRefs.current[key]?.scrollHeight || 0,
         }));
       }
@@ -111,45 +97,41 @@ const Sidebar: React.FC = () => {
   }, [openSubmenu]);
 
   const handleSubmenuToggle = (index: number, menuType: "main" | "others") => {
-    setOpenSubmenu((prevOpenSubmenu) => {
-      if (
-        prevOpenSubmenu &&
-        prevOpenSubmenu.type === menuType &&
-        prevOpenSubmenu.index === index
-      ) {
-        return null;
-      }
-      return { type: menuType, index };
-    });
+    setOpenSubmenu((prev) =>
+      prev?.type === menuType && prev?.index === index
+        ? null
+        : { type: menuType, index }
+    );
   };
 
-  // Recursive function to render nested menu items
-  const renderNestedMenuItems = (items: SubMenuItem[], level: number = 0) => (
+  const renderNestedMenuItems = (items: SubMenuItem[], level = 0) => (
     <ul className={`space-y-1 ${level > 0 ? "ml-4" : ""}`}>
       {items.map((item, index) => (
         <li key={`${item.name}-${index}`}>
           {item.subItems ? (
             <div>
               <button
-                className={`menu-dropdown-item w-full text-left text-[14px] font-semibold ${isAnyNestedItemActive(item.subItems)
-                  ? "menu-dropdown-item-active"
-                  : "menu-dropdown-item-inactive"
-                  }`}
+                className={`menu-dropdown-item w-full text-left text-base font-semibold ${
+                  isAnyNestedItemActive(item.subItems)
+                    ? "menu-dropdown-item-active"
+                    : "menu-dropdown-item-inactive"
+                }`}
               >
                 {item.name}
                 <ChevronDownIcon className="ml-auto w-4 h-4" />
               </button>
-              <div className="ml-4 mt-1 ">
+              <div className="ml-4 mt-1">
                 {renderNestedMenuItems(item.subItems, level + 1)}
               </div>
             </div>
           ) : (
             <Link
               to={item.path || "#"}
-              className={`menu-dropdown-item text-[14px] font-semibold ${item.path && isActive(item.path)
-                ? "menu-dropdown-item-active"
-                : "menu-dropdown-item-inactive"
-                }`}
+              className={`menu-dropdown-item text-base font-semibold ${
+                item.path && isActive(item.path)
+                  ? "menu-dropdown-item-active"
+                  : "menu-dropdown-item-inactive"
+              }`}
             >
               {item.name}
               {item.new && (
@@ -166,12 +148,7 @@ const Sidebar: React.FC = () => {
   const renderMenuItems = (items: NavItem[], menuType: "main" | "others") => (
     <ul className="flex flex-col gap-1 relative">
       {items.map((nav, index) => {
-        // Skip logout button in the main rendering
-        if (nav.action === "logout") {
-          return null;
-        }
-
-        // Main menu item
+        if (nav.action === "logout") return null;
         return (
           <li
             key={nav.name}
@@ -181,23 +158,22 @@ const Sidebar: React.FC = () => {
             }}
           >
             {nav.subItems ? (
-              // Item with submenu
               <button
-                onClick={() => {
-                  handleSubmenuToggle(index, menuType);
-                }}
-                className={`menu-item group cursor-pointer ${openSubmenu?.type === menuType && openSubmenu?.index === index
-                  ? "menu-item-active"
-                  : "menu-item-inactive"
-                  }`}
+                onClick={() => handleSubmenuToggle(index, menuType)}
+                className={`menu-item group cursor-pointer ${
+                  openSubmenu?.type === menuType && openSubmenu?.index === index
+                    ? "menu-item-active"
+                    : "menu-item-inactive"
+                }`}
               >
                 <span className="menu-item-icon-size menu-item-icon-inactive">
                   <span
-                    className={`menu-item-icon-size ${openSubmenu?.type === menuType &&
+                    className={`menu-item-icon-size ${
+                      openSubmenu?.type === menuType &&
                       openSubmenu?.index === index
-                      ? "text-primary-500"
-                      : "menu-item-icon-inactive"
-                      }`}
+                        ? "text-primary-500"
+                        : "menu-item-icon-inactive"
+                    }`}
                   >
                     {nav.icon}
                   </span>
@@ -205,44 +181,48 @@ const Sidebar: React.FC = () => {
                 {(isExpanded || isMobileOpen) &&
                   (nav.name.length > 15 ? (
                     <Tooltip title={nav.name} placement="right">
-                      <span className="text-left truncate max-w-[150px] text-[14px] font-semibold">
+                      <span className="text-left truncate max-w-[150px] text-base font-semibold">
                         {nav.name.substring(0, 15) + "..."}
                       </span>
                     </Tooltip>
                   ) : (
-                    <span className="text-left text-[14px] font-medium">
+                    <span className="text-left text-base font-medium">
                       {nav.name}
                     </span>
                   ))}
-
                 {nav.subItems && (
                   <ChevronDownIcon
-                    className={`ml-auto w-5 h-5 transition-transform duration-200 ${openSubmenu?.type === menuType &&
+                    className={`ml-auto w-5 h-5 transition-transform duration-200 ${
+                      openSubmenu?.type === menuType &&
                       openSubmenu?.index === index
-                      ? "rotate-180 text-primary-500"
-                      : ""
-                      }`}
+                        ? "rotate-180 text-primary-500"
+                        : ""
+                    }`}
                   />
                 )}
               </button>
             ) : nav.path ? (
-              // Clickable main menu item without submenu
               <Link
                 to={nav.path}
-                className={`menu-item group ${isActive(nav.path) ? "menu-item-active pl-5 transition-all duration-300" : "menu-item-inactive"
-                  }`}
+                className={`menu-item group ${
+                  isActive(nav.path)
+                    ? "menu-item-active pl-5 transition-all duration-300"
+                    : "menu-item-inactive"
+                }`}
               >
                 <span
-                  className={`menu-item-icon-size ${isActive(nav.path)
-                    ? "menu-item-icon-active"
-                    : "menu-item-icon-inactive"
-                    }`}
-                >
-                  <span
-                    className={`menu-item-icon-size ${isActive(nav.path)
+                  className={`menu-item-icon-size ${
+                    isActive(nav.path)
                       ? "menu-item-icon-active"
                       : "menu-item-icon-inactive"
-                      }`}
+                  }`}
+                >
+                  <span
+                    className={`menu-item-icon-size ${
+                      isActive(nav.path)
+                        ? "menu-item-icon-active"
+                        : "menu-item-icon-inactive"
+                    }`}
                   >
                     {!isExpanded ? (
                       <Tooltip title={nav.name} placement="right">
@@ -254,14 +234,12 @@ const Sidebar: React.FC = () => {
                   </span>
                 </span>
                 {(isExpanded || isMobileOpen) && (
-                  <span className="text-left text-[14px] font-semibold">
+                  <span className="text-left text-base font-semibold">
                     {nav.name}
                   </span>
                 )}
               </Link>
             ) : null}
-
-            {/* Submenu for all sidebar states */}
             {nav.subItems && (
               <div
                 ref={(el) => {
@@ -271,7 +249,7 @@ const Sidebar: React.FC = () => {
                 style={{
                   height:
                     openSubmenu?.type === menuType &&
-                      openSubmenu?.index === index
+                    openSubmenu?.index === index
                       ? `${subMenuHeight[`${menuType}-${index}`]}px`
                       : "0px",
                 }}
@@ -287,46 +265,96 @@ const Sidebar: React.FC = () => {
 
   return (
     <aside
-      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 left-0 h-screen transition-all duration-300 ease-in-out z-50
-        bg-gradient-to-b from-white via-white to-gray-50/80 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800/80
-        border-r border-gray-200/80 dark:border-gray-700/50
-        shadow-[4px_0_24px_-12px_rgba(0,0,0,0.08)]
+      className={`fixed top-0 left-0 z-50 mt-16 flex h-screen flex-col transition-all duration-300 ease-in-out lg:mt-0
+        border-r border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900
         ${isExpanded || isMobileOpen ? "w-[280px]" : "w-[80px]"}
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0`}
     >
-      {/* Logo Section with enhanced styling */}
+      {/* Logo */}
       <div
-        className={`py-5 px-5 lg:flex hidden items-center border-b border-gray-100 dark:border-gray-800 ${!isExpanded ? "lg:justify-center" : "justify-start"}`}
+        className={`flex px-5 py-5 ${
+          !isExpanded && !isMobileOpen ? "lg:justify-center" : ""
+        }`}
       >
-        <Link to="/" className="flex items-center gap-3 group">
-          {isExpanded || isMobileOpen ? (
-            <img src="/images/logo/logo.svg" alt="Campus Transfer" className="h-[40px] w-auto" />
+        <Link to="/" className="flex items-center gap-3">
+          {(isExpanded || isMobileOpen) ? (
+            <div className="flex flex-col">
+              <span className="text-xl font-bold tracking-tight text-primary-600 dark:text-primary-400">
+                campus
+              </span>
+              <span className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                TRANSFER LTD
+              </span>
+            </div>
           ) : (
-            <img src="/images/logo/logo-icon.svg" alt="Campus Transfer" className="h-[40px] w-[40px]" />
+            <img
+              src="/images/logo/logo-icon.svg"
+              alt="Campus Transfer"
+              className="h-9 w-9"
+            />
           )}
         </Link>
       </div>
 
-      {/* Navigation Content */}
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <div className="flex-1 px-3 py-4 overflow-y-auto duration-300 ease-linear no-scrollbar">
-          <nav>
-            <div className="flex flex-col gap-1">
-              {renderMenuItems(filteredSidebarItems, "main")}
+      {/* Managed by card */}
+      {(isExpanded || isMobileOpen) && (
+        <div className="mx-3 mt-3 rounded-xl bg-gray-50 p-4 dark:bg-gray-800/50">
+          <p className="mb-3 text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            Managed by
+          </p>
+          <div className="flex items-center gap-3">
+            <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-base font-semibold text-primary-600 dark:text-primary-400">
+              {managedByUser.avatar ? (
+                <img src={managedByUser.avatar} alt="" className="h-full w-full object-cover" />
+              ) : (
+                managedByUser.name.charAt(0)
+              )}
             </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-base font-semibold text-gray-900 dark:text-white">
+                {managedByUser.name}
+              </p>
+              <a
+                href={`mailto:${managedByUser.email}`}
+                className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
+              >
+                <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <span className="truncate">{managedByUser.email}</span>
+              </a>
+              <a
+                href={`tel:${managedByUser.phone.replace(/\s/g, "")}`}
+                className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
+              >
+                <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                </svg>
+                <span className="truncate">{managedByUser.phone}</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Navigation */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <div className="flex-1 overflow-y-auto px-3 py-4 no-scrollbar">
+          <nav className="flex flex-col gap-1">
+            {renderMenuItems(filteredSidebarItems, "main")}
           </nav>
         </div>
 
-        {/* Enhanced Logout Button */}
-        <div className="px-4 py-4 border-t border-gray-100 dark:border-gray-800 bg-gradient-to-t from-gray-50 to-transparent dark:from-gray-800/50">
+        <div className="px-3 py-3">
           <button
+            type="button"
             onClick={handleLogout}
-            className={`group flex items-center gap-3 w-full px-4 py-3 rounded-xl text-gray-600 dark:text-gray-400 
-              hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400
-              transition-all duration-200 ${!isExpanded && !isMobileOpen ? "justify-center" : ""}`}
+            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-base font-medium text-gray-600 transition-colors hover:bg-red-50 hover:text-red-600 dark:text-gray-400 dark:hover:bg-red-900/20 dark:hover:text-red-400 ${
+              !isExpanded && !isMobileOpen ? "justify-center" : ""
+            }`}
           >
-            <span className="text-lg group-hover:scale-110 transition-transform duration-200">
+            <span className="text-lg">
               {!isExpanded && !isMobileOpen ? (
                 <Tooltip title="Logout" placement="right">
                   <span>
@@ -337,9 +365,7 @@ const Sidebar: React.FC = () => {
                 <i className="fa-solid fa-sign-out-alt"></i>
               )}
             </span>
-            {(isExpanded || isMobileOpen) && (
-              <span className="text-[14px] font-semibold">Logout</span>
-            )}
+            {(isExpanded || isMobileOpen) && <span>Logout</span>}
           </button>
         </div>
       </div>

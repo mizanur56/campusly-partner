@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { useSidebar } from "../../../context/SidebarContext";
 import UserDropdown from "../Dropdowns/UserDropdown";
-import { Link } from "react-router-dom";
 
 // Mock Data
 const mockCountries = [
@@ -29,12 +29,19 @@ const mockCourses = [
   }
 ];
 
+const SCROLL_THRESHOLD = 8;
+
 const Header: React.FC = () => {
+  const { pathname } = useLocation();
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
   const [isCoursesOpen, setIsCoursesOpen] = useState(false);
   const [isCountriesOpen, setIsCountriesOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [isPartnersOpen, setIsPartnersOpen] = useState(false);
+  const [hasScrolled, setHasScrolled] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const isDashboardOrOnboarding =
+    pathname === "/" || pathname.startsWith("/onboarding");
 
   const countries = mockCountries;
   const countryOptions = countries;
@@ -63,53 +70,119 @@ const Header: React.FC = () => {
     };
   }, []);
 
-  return (
-    <header className="sticky top-0 flex w-full backdrop-blur-md bg-white/90 dark:bg-gray-900/90 border-b border-gray-200/80 dark:border-gray-700/50 z-40">
-      <div className="flex items-center justify-between w-full px-6 py-[18px]">
-        {/* Left Side - Enhanced Search Input */}
-        <div className="flex-1 max-w-[450px] ml-4 lg:ml-0">
-          <form className="relative">
-            <div className="hidden sm:block relative group">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 group-focus-within:text-primary-500">
-                <svg
-                  className="w-5 h-5 text-gray-400 group-focus-within:text-primary-500 transition-colors"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              </span>
-              <input
-                ref={inputRef}
-                type="text"
-                placeholder="Search courses, universities..."
-                className="w-full h-11 pl-12 pr-12 rounded-xl bg-gray-50/80 dark:bg-gray-800/50 border border-gray-200/80 dark:border-gray-700/50 
-                  focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 focus:bg-white dark:focus:bg-gray-800
-                  text-[15px] font-normal text-gray-700 dark:text-gray-200 placeholder:text-gray-400 
-                  transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600"
-              />
-              <kbd className="hidden lg:inline-flex absolute right-3 top-1/2 -translate-y-1/2 h-6 items-center gap-1 rounded-md border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 px-1.5 font-mono text-[10px] font-medium text-gray-500 dark:text-gray-400">
-                ⌘K
-              </kbd>
-            </div>
-          </form>
-        </div>
+  useEffect(() => {
+    const handleScroll = () => {
+      setHasScrolled(window.scrollY > SCROLL_THRESHOLD);
+    };
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
-        {/* Right Side - Navigation Links, Bell Icon, Avatar */}
-        <div className="flex items-center gap-6 ml-6">
-          {/* Navigation Links with Dropdowns */}
+  return (
+    <header
+      className={`sticky top-0 z-40 flex w-full items-center border-b transition-all duration-300 ${
+        hasScrolled
+          ? "border-gray-100 bg-white/80 backdrop-blur-md dark:border-gray-800 dark:bg-gray-900/80"
+          : "border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900"
+      }`}
+    >
+      <div className="flex w-full items-center justify-between px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
+        {/* Dashboard / Onboarding: Partner branding */}
+        {isDashboardOrOnboarding ? (
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-500 text-sm font-bold text-white shadow-sm">
+              WNEC
+            </div>
+            <div>
+              <span className="block text-base font-semibold tracking-tight text-gray-900 dark:text-white">
+                Window Nepal Education
+              </span>
+              <span className="block text-sm text-gray-500 dark:text-gray-400">
+                Partner portal
+              </span>
+            </div>
+          </div>
+        ) : (
+          /* Left Side - Search Input */
+          <div className="flex-1 max-w-[450px] ml-4 lg:ml-0">
+            <form className="relative">
+              <div className="hidden sm:block relative group">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 group-focus-within:text-primary-500">
+                  <svg
+                    className="w-5 h-5 text-gray-400 group-focus-within:text-primary-500 transition-colors"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                </span>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  placeholder="Search courses, universities..."
+                  className="w-full h-11 pl-12 pr-12 rounded-xl bg-gray-50/80 dark:bg-gray-800/50 border border-gray-200/80 dark:border-gray-700/50 
+                    focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 focus:bg-white dark:focus:bg-gray-800
+                    text-base font-normal text-gray-700 dark:text-gray-200 placeholder:text-gray-400 
+                    transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600"
+                />
+                <kbd className="hidden lg:inline-flex absolute right-3 top-1/2 -translate-y-1/2 h-6 items-center gap-1 rounded-md border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 px-1.5 font-mono text-xs font-medium text-gray-500 dark:text-gray-400">
+                  ⌘K
+                </kbd>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Right: Nav, notifications, user */}
+        <div className="flex items-center gap-1 sm:gap-4">
+          {isDashboardOrOnboarding ? (
+            <nav className="hidden md:flex items-center gap-1">
+              <div className="relative group">
+                <button
+                  className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-base font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+                  type="button"
+                >
+                  About
+                  <svg className="h-4 w-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div className="absolute left-0 top-full mt-2 w-44 rounded-2xl border border-gray-200 bg-white py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] opacity-0 transition-opacity group-hover:opacity-100 dark:border-gray-800 dark:bg-gray-800 z-50">
+                  <Link to="/galleries" className="block px-4 py-2.5 text-base text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700/50 transition-colors duration-200">Our Story</Link>
+                  <Link to="/employees" className="block px-4 py-2.5 text-base text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700/50 transition-colors duration-200">Team</Link>
+                  <Link to="/offices" className="block px-4 py-2.5 text-base text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700/50 transition-colors duration-200">Contact</Link>
+                </div>
+              </div>
+              <div className="relative group">
+                <button
+                  className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-base font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+                  type="button"
+                >
+                  Partners
+                  <svg className="h-4 w-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div className="absolute left-0 top-full mt-2 w-44 rounded-2xl border border-gray-200 bg-white py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] opacity-0 transition-opacity group-hover:opacity-100 dark:border-gray-800 dark:bg-gray-800 z-50">
+                  <Link to="#" className="block px-4 py-2.5 text-base text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700/50 transition-colors duration-200">Partners</Link>
+                </div>
+              </div>
+            </nav>
+          ) : (
+          /* Navigation Links with Dropdowns (non-dashboard) */
           <nav className="hidden md:flex items-center gap-6">
      {/* Courses Dropdown */}
 <div className="relative group">
   <button
-    className="font-medium cursor-pointer flex items-center gap-1.5 text-gray-700 hover:text-gray-900 font-normal text-[18px]"
+    className="font-medium cursor-pointer flex items-center gap-1.5 text-gray-700 hover:text-gray-900 font-normal text-lg"
   >
     Courses
     <svg
@@ -130,9 +203,9 @@ const Header: React.FC = () => {
 
   
   {/* Dropdown */}
-  <div className="absolute top-full left-0 mt-2 w-[400px] bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200">
+  <div className="absolute top-full left-0 mt-2 w-[400px] bg-white rounded-2xl border border-gray-200 py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] z-50 opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200 dark:border-gray-800 dark:bg-gray-800">
     
-    <h1 className="text-[18px] font-semibold px-4 py-4">Top Courses</h1>
+    <h1 className="text-lg font-semibold px-4 py-4">Top Courses</h1>
     {universitiesCourse?.data?.map((item: any) => (
       <Link
         key={item.id}
@@ -149,7 +222,7 @@ const Header: React.FC = () => {
           <span className="font-semibold text-gray-800">
             {item.course.name}
           </span>
-          <span className="text-sm text-gray-500 mt-1">
+          <span className="text-base text-gray-500 mt-1">
             {item.university.name}
           </span>
         </div>
@@ -162,7 +235,7 @@ const Header: React.FC = () => {
          {/* Countries Dropdown */}
 <div className="relative group">
   <button
-    className="font-medium cursor-pointer flex items-center gap-1.5 text-gray-700 hover:text-gray-900 font-normal text-[18px]"
+    className="font-medium cursor-pointer flex items-center gap-1.5 text-gray-700 hover:text-gray-900 font-normal text-lg"
   >
     Countries
     <svg
@@ -181,12 +254,12 @@ const Header: React.FC = () => {
   </button>
 
   {/* Dropdown → Hidden by default, show on hover */}
-  <div className="absolute top-full -left-6 mt-2 grid grid-cols-2 gap-2 w-[380px] bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200">
+  <div className="absolute top-full -left-6 mt-2 grid grid-cols-2 gap-2 w-[380px] bg-white rounded-2xl border border-gray-200 py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] z-50 opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200 dark:border-gray-800 dark:bg-gray-800">
     {countryOptions.map((country: any) => (
       <Link
         key={country.value}
         to={`/country/${country.value}`}
-        className="flex items-center gap-3 px-4 py-2 text-[16px] text-gray-700 hover:bg-gray-50"
+        className="flex items-center gap-3 px-4 py-2 text-base text-gray-700 hover:bg-gray-50"
       >
         {/* Flag */}
         <div className="w-8 h-8 rounded-full border bg-gray-100"></div>
@@ -202,7 +275,7 @@ const Header: React.FC = () => {
           {/* About Dropdown */}
 <div className="relative group">
   <button
-    className="font-medium cursor-pointer flex items-center gap-1.5 text-gray-700 hover:text-gray-900 font-normal text-[18px]"
+    className="font-medium cursor-pointer flex items-center gap-1.5 text-gray-700 hover:text-gray-900 font-normal text-lg"
   >
     About
     <svg
@@ -221,25 +294,25 @@ const Header: React.FC = () => {
   </button>
 
   {/* Dropdown submenu */}
-  <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50
+  <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-2xl border border-gray-200 py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] z-50
                   opacity-0 invisible group-hover:visible group-hover:opacity-100
                   max-h-0 group-hover:max-h-96 overflow-hidden
-                  transition-all duration-300 ease-in-out">
+                  transition-all duration-300 ease-in-out dark:border-gray-800 dark:bg-gray-800">
     <Link
       to="/galleries"
-      className="block px-4 py-2 text-[18px] font-normal text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+      className="block px-4 py-2 text-base text-gray-700 hover:bg-gray-100 transition-colors duration-200"
     >
       Our Story
     </Link>
     <Link
       to="/employees"
-      className="block px-4 py-2 text-[18px] font-normal text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+      className="block px-4 py-2 text-base text-gray-700 hover:bg-gray-100 transition-colors duration-200"
     >
       Team
     </Link>
     <Link
       to="/offices"
-      className="block px-4 py-2 text-[18px] font-normal text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+      className="block px-4 py-2 text-base text-gray-700 hover:bg-gray-100 transition-colors duration-200"
     >
       Contact
     </Link>
@@ -247,26 +320,18 @@ const Header: React.FC = () => {
 </div>
 
           </nav>
+          )}
 
-          {/* Enhanced Notification Bell */}
-          <button className="relative p-2.5 rounded-xl text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-100 transition-all duration-200 group">
-            <svg
-              className="w-5 h-5 group-hover:scale-110 transition-transform duration-200"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-              />
+          {/* Notifications */}
+          <button
+            type="button"
+            className="relative rounded-lg p-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+            aria-label="Notifications"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
-            {/* Notification dot with pulse animation */}
-            <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-primary-500 rounded-full ring-2 ring-white dark:ring-gray-900">
-              <span className="absolute inset-0 rounded-full bg-primary-500 animate-ping opacity-75"></span>
-            </span>
+            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary-500 ring-2 ring-white dark:ring-gray-900" />
           </button>
 
           {/* User Avatar */}

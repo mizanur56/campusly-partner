@@ -31,7 +31,20 @@ const authApi = baseApi.injectEndpoints({
         body: userInfo,
       }),
     }),
+    register: builder.mutation({
+      query: (partnerInfo) => ({
+        url: "/auth/register",
+        method: "POST",
+        body: partnerInfo,
+      }),
+    }),
   }),
 });
 
-export const { useLoginMutation , useForgotPasswordMutation, useResetPasswordMutation, useChangePasswordMutation} = authApi;
+export const {
+  useLoginMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
+  useChangePasswordMutation,
+  useRegisterMutation,
+} = authApi;
