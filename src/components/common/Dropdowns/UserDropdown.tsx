@@ -58,7 +58,7 @@ export default function UserDropdown() {
       <Dropdown
         isOpen={isOpen}
         onClose={closeDropdown}
-        className="absolute right-0 mt-[17px] flex w-[260px] flex-col"
+        className="absolute right-0 left-auto mt-[17px] flex w-[260px] flex-col"
       >
         <div className="mb-3">
           <span className="block text-sm font-medium text-gray-900 dark:text-gray-100">

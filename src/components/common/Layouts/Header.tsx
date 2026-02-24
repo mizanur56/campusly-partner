@@ -89,13 +89,13 @@ const Header: React.FC = () => {
 
   return (
     <header
-      className={`sticky top-0 z-40 flex w-full items-center border-b transition-all duration-300 ${
+      className={`sticky top-0 z-[60] flex w-full min-w-0 items-center border-b overflow-visible transition-all duration-300 ${
         hasScrolled
           ? "border-gray-100 bg-white/80 backdrop-blur-md dark:border-gray-800 dark:bg-gray-900/80"
           : "border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900"
       }`}
     >
-      <div className="flex w-full items-center justify-between px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
+      <div className="flex w-full min-w-0 items-center justify-between gap-2 px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
         {/* Dashboard / Onboarding: Partner branding */}
         {isDashboardOrOnboarding ? (
           <div className="flex items-center gap-3">
@@ -151,18 +151,8 @@ const Header: React.FC = () => {
           </div>
         )}
 
-        {/* Right: Nav, notifications, user */}
-        <div className="flex items-center gap-1 sm:gap-4">
-          {isSignedMode ? (
-            <>
-              <button type="button" className="flex items-center justify-center rounded-full p-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200" aria-label="Documents">
-                <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
-              </button>
-              <button type="button" className="flex items-center justify-center rounded-full p-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200" aria-label="Calendar">
-                <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-              </button>
-            </>
-          ) : null}
+        {/* Right: Nav, then others (4 icons when signed), notification, user at end */}
+        <div className="flex min-w-0 items-center gap-1 sm:gap-4">
           {isDashboardOrOnboarding && !isSignedMode ? (
             <nav className="hidden md:flex items-center gap-1">
               <div className="relative group">
@@ -175,7 +165,7 @@ const Header: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
-                <div className="absolute left-0 top-full mt-2 w-44 rounded-2xl border border-gray-200 bg-white py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] opacity-0 transition-opacity group-hover:opacity-100 dark:border-gray-800 dark:bg-gray-800 z-50">
+                <div className="absolute left-0 top-full mt-2 w-44 rounded-2xl border border-gray-200 bg-white py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] opacity-0 transition-opacity group-hover:opacity-100 dark:border-gray-800 dark:bg-gray-800 z-[100]">
                   <Link to="/galleries" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700/50 transition-colors duration-200">Our story</Link>
                   <Link to="/employees" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700/50 transition-colors duration-200">Our team</Link>
                   <Link to="/offices" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700/50 transition-colors duration-200">Contact</Link>
@@ -191,7 +181,7 @@ const Header: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
-                <div className="absolute left-0 top-full mt-2 w-44 rounded-2xl border border-gray-200 bg-white py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] opacity-0 transition-opacity group-hover:opacity-100 dark:border-gray-800 dark:bg-gray-800 z-50">
+                <div className="absolute left-0 top-full mt-2 w-44 rounded-2xl border border-gray-200 bg-white py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] opacity-0 transition-opacity group-hover:opacity-100 dark:border-gray-800 dark:bg-gray-800 z-[100]">
                   <Link to="#" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700/50 transition-colors duration-200">Partner resources</Link>
                 </div>
               </div>
@@ -223,7 +213,7 @@ const Header: React.FC = () => {
 
   
   {/* Dropdown */}
-  <div className="absolute top-full left-0 mt-2 w-[400px] bg-white rounded-2xl border border-gray-200 py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] z-50 opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200 dark:border-gray-800 dark:bg-gray-800">
+  <div className="absolute top-full left-0 mt-2 w-[400px] bg-white rounded-2xl border border-gray-200 py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] z-[100] opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200 dark:border-gray-800 dark:bg-gray-800">
     
     <h1 className="text-sm font-semibold px-4 py-3 text-gray-900 dark:text-gray-100">Top courses</h1>
     {universitiesCourse?.data?.map((item: any) => (
@@ -274,7 +264,7 @@ const Header: React.FC = () => {
   </button>
 
   {/* Dropdown → Hidden by default, show on hover */}
-  <div className="absolute top-full -left-6 mt-2 grid grid-cols-2 gap-2 w-[380px] bg-white rounded-2xl border border-gray-200 py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] z-50 opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200 dark:border-gray-800 dark:bg-gray-800">
+  <div className="absolute top-full -left-6 mt-2 grid grid-cols-2 gap-2 w-[380px] bg-white rounded-2xl border border-gray-200 py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] z-[100] opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200 dark:border-gray-800 dark:bg-gray-800">
     {countryOptions.map((country: any) => (
       <Link
         key={country.value}
@@ -314,7 +304,7 @@ const Header: React.FC = () => {
   </button>
 
   {/* Dropdown submenu */}
-  <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-2xl border border-gray-200 py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] z-50
+  <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-2xl border border-gray-200 py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] z-[100]
                   opacity-0 invisible group-hover:visible group-hover:opacity-100
                   max-h-0 group-hover:max-h-96 overflow-hidden
                   transition-all duration-300 ease-in-out dark:border-gray-800 dark:bg-gray-800">
@@ -342,7 +332,27 @@ const Header: React.FC = () => {
           </nav>
           )}
 
-          {/* Notifications */}
+          {/* Signed mode: others first, notification (bell) at dui number (second from right), then user */}
+          {isSignedMode ? (
+            <>
+              <button type="button" className="flex items-center justify-center rounded-full p-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200" aria-label="Announcements">
+                <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.712-6.673A1 1 0 005 12.5V5.882a1.76 1.76 0 013.418-.592l2.712 6.673A1 1 0 0011 5.882z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 9.34a1.76 1.76 0 011.417.592l2.712 6.673A1 1 0 0119 12.5V5.882a1.76 1.76 0 00-3.418-.592l-2.712 6.673A1 1 0 0015 9.34z" /></svg>
+              </button>
+              <button type="button" className="flex items-center justify-center rounded-full p-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200" aria-label="Documents">
+                <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
+              </button>
+              <button type="button" className="flex items-center justify-center rounded-full p-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200" aria-label="Marking">
+                <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+              </button>
+              <button type="button" className="relative flex items-center justify-center rounded-full p-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200" aria-label="Notifications">
+                <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                <span className="absolute right-1 top-1 flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-400 opacity-75" /><span className="relative inline-flex h-2 w-2 rounded-full bg-primary-500 ring-2 ring-white dark:ring-gray-900" /></span>
+              </button>
+            </>
+          ) : null}
+
+          {/* Notification — when not signed (signed has bell in "others" above) */}
+          {!isSignedMode && (
           <button
             type="button"
             className="relative flex items-center justify-center rounded-full p-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
@@ -367,23 +377,18 @@ const Header: React.FC = () => {
               <span className="relative inline-flex h-2 w-2 rounded-full bg-primary-500 ring-2 ring-white dark:ring-gray-900" />
             </span>
           </button>
+          )}
 
-          {/* User Avatar */}
+          {/* User icon — always at the very right */}
           <div className="flex items-center">
             <UserDropdown />
           </div>
-          {isSignedMode ? (
-            <Link to="#" className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700">
-              <span>+</span>
-              <span>Add Student</span>
-            </Link>
-          ) : null}
         </div>
       </div>
 
       {/* Mobile Menu Toggle Button */}
       <button
-        className="lg:hidden absolute left-4 top-1/2 -translate-y-1/2 p-2 text-gray-600 z-50"
+        className="lg:hidden absolute left-4 top-1/2 -translate-y-1/2 p-2 text-gray-600 z-[100]"
         onClick={handleToggle}
         aria-label="Toggle Sidebar"
       >

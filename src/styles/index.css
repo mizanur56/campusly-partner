@@ -359,7 +359,7 @@ layer(base);
   }
 
   body {
-    @apply bg-[#FAFAFA] text-foreground font-sans;
+    @apply bg-[#FAFAFA] text-foreground font-sans overflow-x-hidden;
     font-family: var(--font-inter), "Inter", sans-serif;
   }
 }

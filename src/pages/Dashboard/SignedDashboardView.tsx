@@ -57,9 +57,18 @@ export default function SignedDashboardView() {
   return (
     <div className="min-h-[calc(100vh-4rem)] -mx-4 px-4 pb-8 pt-0 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8">
       <div className="w-full">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white sm:text-3xl">
-          Welcome, {userName} !
-        </h1>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white sm:text-3xl">
+            Welcome, {userName} !
+          </h1>
+          <Link
+            to="#"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700"
+          >
+            <span>+</span>
+            <span>Add Student</span>
+          </Link>
+        </div>
 
         {/* KPI Cards */}
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
