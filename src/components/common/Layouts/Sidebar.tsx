@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { config } from "../../../config";
+import { usePreviewMode } from "../../../context/PreviewModeContext";
 import { useSidebar } from "../../../context/SidebarContext";
 import { useFilteredSidebarItems } from "../../../hooks/useFilteredSidebarItems";
 import { ChevronDownIcon } from "../../../icons";
@@ -10,11 +11,27 @@ import { NavItem, SubMenuItem } from "../../../types/interfaces";
 import { Tooltip } from "antd";
 
 const SidebarItems: NavItem[] = [
-  {
-    icon: <i className="fa-solid fa-house"></i>,
-    name: "Home",
-    path: "/",
-  },
+  { icon: <i className="fa-solid fa-house"></i>, name: "Home", path: "/" },
+];
+
+const SignedSidebarItems: NavItem[] = [
+  { icon: <i className="fa-solid fa-house"></i>, name: "Home", path: "/" },
+  { icon: <i className="fa-solid fa-magnifying-glass"></i>, name: "Programs & Schools", path: "/programs-schools" },
+  { icon: <i className="fa-solid fa-users"></i>, name: "Students", path: "/students" },
+  { icon: <i className="fa-solid fa-file-lines"></i>, name: "Applications", path: "/applications" },
+  { icon: <i className="fa-solid fa-list-check"></i>, name: "My Tasks", path: "/my-tasks" },
+  { icon: <i className="fa-solid fa-credit-card"></i>, name: "Payments", path: "/payments" },
+  { icon: <i className="fa-solid fa-graduation-cap"></i>, name: "Academy", path: "/academy" },
+  { icon: <i className="fa-solid fa-fire"></i>, name: "Hot Offers", path: "/hot-offers" },
+];
+const SIGNED_ROUTE_PATHS = [
+  "/programs-schools",
+  "/students",
+  "/applications",
+  "/my-tasks",
+  "/payments",
+  "/academy",
+  "/hot-offers",
 ];
 
 const othersSidebarItems: NavItem[] = [
@@ -35,6 +52,7 @@ const fallbackManagedBy = {
 
 const Sidebar: React.FC = () => {
   const { isExpanded, isMobileOpen } = useSidebar();
+  const { previewMode } = usePreviewMode();
   const location = useLocation();
   const navigate = useNavigate();
   const user = useSelector(selectCurrentUser);
@@ -53,7 +71,13 @@ const Sidebar: React.FC = () => {
     navigate("/login");
   };
 
-  const filteredSidebarItems = useFilteredSidebarItems(SidebarItems);
+  const baseItems =
+    (location.pathname === "/" && previewMode === "signed") || SIGNED_ROUTE_PATHS.includes(location.pathname)
+      ? SignedSidebarItems
+      : SidebarItems;
+  const filteredSidebarItems = useFilteredSidebarItems(baseItems);
+  const isSignedSidebar =
+    (location.pathname === "/" && previewMode === "signed") || SIGNED_ROUTE_PATHS.includes(location.pathname);
 
   const [openSubmenu, setOpenSubmenu] = useState<{
     type: "main" | "others";
@@ -204,12 +228,12 @@ const Sidebar: React.FC = () => {
                 {(isExpanded || isMobileOpen) &&
                   (nav.name.length > 15 ? (
                     <Tooltip title={nav.name} placement="right">
-                      <span className="text-left truncate max-w-[150px] text-base font-semibold">
+                      <span className={`text-left truncate max-w-[150px] ${isSignedSidebar ? "text-sm font-medium" : "text-base font-semibold"}`}>
                         {nav.name.substring(0, 15) + "..."}
                       </span>
                     </Tooltip>
                   ) : (
-                    <span className="text-left text-base font-medium">
+                    <span className={`text-left ${isSignedSidebar ? "text-sm font-medium" : "text-base font-medium"}`}>
                       {nav.name}
                     </span>
                   ))}
@@ -257,7 +281,7 @@ const Sidebar: React.FC = () => {
                   </span>
                 </span>
                 {(isExpanded || isMobileOpen) && (
-                  <span className="text-left text-base font-semibold">
+                  <span className={`text-left ${isSignedSidebar ? "text-sm font-medium" : "text-base font-semibold"}`}>
                     {nav.name}
                   </span>
                 )}
@@ -309,8 +333,8 @@ const Sidebar: React.FC = () => {
         </Link>
       </div>
 
-      {/* Managed by — live profile, simple & professional */}
-      {(isExpanded || isMobileOpen) && (
+      {/* Managed by — live profile, simple & professional (hidden in signed preview) */}
+      {(isExpanded || isMobileOpen) && !isSignedSidebar && (
         <div className="mx-3 mt-2 rounded-xl bg-gray-50/80 p-3 dark:bg-gray-800/40">
           <p className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
             Managed by

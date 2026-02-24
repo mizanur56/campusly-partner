@@ -1,6 +1,8 @@
 import { useState } from "react";
 import PageMeta from "../../components/common/Meta/PageMeta";
 import { Button } from "../../components/ui/button";
+import { usePreviewMode } from "../../context/PreviewModeContext";
+import SignedDashboardView from "./SignedDashboardView";
 
 const ONBOARDING_STEPS = [
   { id: "owner", label: "Owner Details", completed: true },
@@ -17,6 +19,7 @@ const CONTRACT_STEPS = [
 ];
 
 const Dashboard = () => {
+  const { previewMode } = usePreviewMode();
   const [onboardingOpen, setOnboardingOpen] = useState(true);
   const [contractOpen, setContractOpen] = useState(true);
 
@@ -32,6 +35,9 @@ const Dashboard = () => {
         description="Welcome to the Campus Transfer partner portal."
       />
 
+      {previewMode === "signed" ? (
+        <SignedDashboardView />
+      ) : (
       <div className="min-h-[calc(100vh-4rem)] -mx-4 px-0 py-0 md:-mx-6 md:px-0 lg:-mx-8">
         <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
           {/* Welcome — improved */}
@@ -252,6 +258,7 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+      )}
     </>
   );
 };

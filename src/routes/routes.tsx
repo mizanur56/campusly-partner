@@ -31,6 +31,14 @@ const routes = [
       { path: "/contract", element: <ContractPage /> },
       { path: "/contract/signed", element: <ContractSignedPage /> },
       { path: "/change-password", element: <ChangePassword /> },
+      // Signed sidebar — default/under-development pages
+      { path: "/programs-schools", element: <UnderDevelopment /> },
+      { path: "/students", element: <UnderDevelopment /> },
+      { path: "/applications", element: <UnderDevelopment /> },
+      { path: "/my-tasks", element: <UnderDevelopment /> },
+      { path: "/payments", element: <UnderDevelopment /> },
+      { path: "/academy", element: <UnderDevelopment /> },
+      { path: "/hot-offers", element: <UnderDevelopment /> },
       // Fallback for undefined child routes
       { path: "*", element: <UnderDevelopment /> },
     ],

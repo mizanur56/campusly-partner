@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { usePreviewMode } from "../../../context/PreviewModeContext";
 import { useSidebar } from "../../../context/SidebarContext";
 import UserDropdown from "../Dropdowns/UserDropdown";
 
@@ -33,7 +34,9 @@ const SCROLL_THRESHOLD = 8;
 
 const Header: React.FC = () => {
   const { pathname } = useLocation();
+  const { previewMode } = usePreviewMode();
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
+  const isSignedMode = pathname === "/" && previewMode === "signed";
   const [isCoursesOpen, setIsCoursesOpen] = useState(false);
   const [isCountriesOpen, setIsCountriesOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
@@ -41,7 +44,12 @@ const Header: React.FC = () => {
   const [hasScrolled, setHasScrolled] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const isDashboardOrOnboarding =
-    pathname === "/" || pathname.startsWith("/onboarding") || pathname.startsWith("/contract");
+    pathname === "/" ||
+    pathname.startsWith("/onboarding") ||
+    pathname.startsWith("/contract") ||
+    ["/programs-schools", "/students", "/applications", "/my-tasks", "/payments", "/academy", "/hot-offers"].includes(
+      pathname
+    );
 
   const countries = mockCountries;
   const countryOptions = countries;
@@ -145,7 +153,17 @@ const Header: React.FC = () => {
 
         {/* Right: Nav, notifications, user */}
         <div className="flex items-center gap-1 sm:gap-4">
-          {isDashboardOrOnboarding ? (
+          {isSignedMode ? (
+            <>
+              <button type="button" className="flex items-center justify-center rounded-full p-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200" aria-label="Documents">
+                <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
+              </button>
+              <button type="button" className="flex items-center justify-center rounded-full p-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200" aria-label="Calendar">
+                <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+              </button>
+            </>
+          ) : null}
+          {isDashboardOrOnboarding && !isSignedMode ? (
             <nav className="hidden md:flex items-center gap-1">
               <div className="relative group">
                 <button
@@ -354,6 +372,12 @@ const Header: React.FC = () => {
           <div className="flex items-center">
             <UserDropdown />
           </div>
+          {isSignedMode ? (
+            <Link to="#" className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700">
+              <span>+</span>
+              <span>Add Student</span>
+            </Link>
+          ) : null}
         </div>
       </div>
 
