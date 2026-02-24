@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { config } from "../../../config";
 import { useSidebar } from "../../../context/SidebarContext";
 import { useFilteredSidebarItems } from "../../../hooks/useFilteredSidebarItems";
 import { ChevronDownIcon } from "../../../icons";
+import { selectCurrentUser } from "../../../redux/features/auth/authSlice";
 import { NavItem, SubMenuItem } from "../../../types/interfaces";
 import { Tooltip } from "antd";
 
@@ -22,8 +25,8 @@ const othersSidebarItems: NavItem[] = [
   },
 ];
 
-// Mock managed-by user
-const managedByUser = {
+// Fallback when no logged-in user
+const fallbackManagedBy = {
   name: "Dipak Sharma",
   email: "dipak@campustransfer.com",
   phone: "+977 017879 39155",
@@ -34,6 +37,15 @@ const Sidebar: React.FC = () => {
   const { isExpanded, isMobileOpen } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
+  const user = useSelector(selectCurrentUser);
+  const profileName = user?.name ?? fallbackManagedBy.name;
+  const profileEmail = user?.email ?? fallbackManagedBy.email;
+  const profilePhone = fallbackManagedBy.phone;
+  const profilePhotoUrl = user?.profile_photo
+    ? (user.profile_photo.startsWith("http")
+        ? user.profile_photo
+        : `${config.image_access_url || ""}${user.profile_photo}`)
+    : `https://i.pravatar.cc/80?u=${user?.id || encodeURIComponent(profileEmail) || "user"}`;
 
   const handleLogout = () => {
     console.log("Logging out...");
@@ -273,67 +285,67 @@ const Sidebar: React.FC = () => {
     >
       {/* Logo */}
       <div
-        className={`flex px-5 py-5 ${
+        className={`flex px-5 pb-5 ${
           !isExpanded && !isMobileOpen ? "lg:justify-center" : ""
         }`}
       >
         <Link to="/" className="flex items-center gap-3">
-          {(isExpanded || isMobileOpen) ? (
-            <div className="flex flex-col">
-              <span className="text-xl font-bold tracking-tight text-primary-600 dark:text-primary-400">
-                campus
-              </span>
-              <span className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                TRANSFER LTD
-              </span>
-            </div>
-          ) : (
-            <img
-              src="/images/logo/logo-icon.svg"
-              alt="Campus Transfer"
-              className="h-9 w-9"
-            />
-          )}
+          <img
+            src="/images/logo/Frame1044.svg"
+            alt="Campus Transfer"
+            className={(isExpanded || isMobileOpen) ? "h-20 w-auto max-w-[300px]" : "h-14 w-14 object-contain"}
+          />
         </Link>
       </div>
 
-      {/* Managed by card */}
+      {/* Managed by — live profile, simple & professional */}
       {(isExpanded || isMobileOpen) && (
-        <div className="mx-3 mt-3 rounded-xl bg-gray-50 p-4 dark:bg-gray-800/50">
-          <p className="mb-3 text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
+        <div className="mx-3 mt-2 rounded-xl bg-gray-50/80 p-3 dark:bg-gray-800/40">
+          <p className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
             Managed by
           </p>
-          <div className="flex items-center gap-3">
-            <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-base font-semibold text-primary-600 dark:text-primary-400">
-              {managedByUser.avatar ? (
-                <img src={managedByUser.avatar} alt="" className="h-full w-full object-cover" />
-              ) : (
-                managedByUser.name.charAt(0)
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-base font-semibold text-gray-900 dark:text-white">
-                {managedByUser.name}
-              </p>
-              <a
-                href={`mailto:${managedByUser.email}`}
-                className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
+          <div className="mt-2 flex items-center gap-2.5">
+            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+              <img
+                src={profilePhotoUrl}
+                alt={profileName}
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                  const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                  if (fallback) fallback.style.display = "flex";
+                }}
+              />
+              <span
+                className="text-sm font-semibold text-gray-600 dark:text-gray-300"
+                style={{ display: "none", alignItems: "center", justifyContent: "center", width: "100%", height: "100%" }}
               >
-                <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                <span className="truncate">{managedByUser.email}</span>
-              </a>
-              <a
-                href={`tel:${managedByUser.phone.replace(/\s/g, "")}`}
-                className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
-              >
-                <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-                <span className="truncate">{managedByUser.phone}</span>
-              </a>
+                {profileName.charAt(0)}
+              </span>
             </div>
+            <p className="min-w-0 flex-1 truncate text-sm font-medium text-gray-800 dark:text-gray-100">
+              {profileName}
+            </p>
+          </div>
+          <div className="mt-2.5 space-y-1.5">
+            <a
+              href={`mailto:${profileEmail}`}
+              className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
+            >
+              <svg className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              <span className="min-w-0 truncate">{profileEmail}</span>
+            </a>
+            <a
+              href={`tel:${profilePhone.replace(/\s/g, "")}`}
+              className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
+            >
+              <svg className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+              </svg>
+              <span className="min-w-0 truncate">{profilePhone}</span>
+            </a>
           </div>
         </div>
       )}
