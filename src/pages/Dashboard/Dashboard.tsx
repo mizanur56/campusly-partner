@@ -89,7 +89,7 @@ const Dashboard = () => {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button as="link" to="/onboarding" variant="primary">
+                <Button as="link" to="/onboarding" variant="primary" size="sm">
                   Continue
                 </Button>
                 <button
@@ -185,7 +185,7 @@ const Dashboard = () => {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button as="link" to="/contract" variant="primary">
+                <Button as="link" to="/contract" variant="primary" size="sm">
                   Continue
                 </Button>
                 <button

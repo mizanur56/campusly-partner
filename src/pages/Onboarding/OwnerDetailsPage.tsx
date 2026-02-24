@@ -89,7 +89,7 @@ export default function OwnerDetailsPage() {
           />
         </div>
         <div className="flex justify-end gap-3 mt-8">
-          <Button as="link" to="/onboarding/director" variant="primary">
+          <Button as="link" to="/onboarding/director" variant="primary" size="sm">
             Next →
           </Button>
         </div>

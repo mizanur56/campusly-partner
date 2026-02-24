@@ -81,10 +81,10 @@ export default function DeclarationPage() {
           </Checkbox>
         </Form.Item>
         <div className="flex justify-end gap-3 mt-8">
-          <Button as="link" to="/onboarding/compliance" variant="secondary">
+          <Button as="link" to="/onboarding/compliance" variant="secondary" size="sm">
             ← Previous
           </Button>
-          <Button type="submit" variant="primary">
+          <Button type="submit" variant="primary" size="sm">
             Submit
           </Button>
         </div>

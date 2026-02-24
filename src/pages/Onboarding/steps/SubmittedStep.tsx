@@ -18,7 +18,7 @@ export default function SubmittedStep({ onBackHome }: Props) {
       <p className="max-w-sm text-sm leading-relaxed text-neutral-500 dark:text-neutral-400">
         Your information has been received. Our team is reviewing it. You&apos;ll be notified once verification is complete.
       </p>
-      <Button type="button" variant="primary" size="lg" onClick={onBackHome} className="mt-6">
+      <Button type="button" variant="primary" size="sm" onClick={onBackHome} className="mt-6">
         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>

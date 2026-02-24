@@ -14,7 +14,7 @@ interface Props {
 export default function RegularComplianceStep({ onPrev, onNext }: Props) {
   return (
     <div className="space-y-5">
-      <Button type="button" variant="primary" size="lg">
+      <Button type="button" variant="primary" size="sm">
         + Add Qualifications
       </Button>
       <div className="space-y-2">
@@ -33,10 +33,10 @@ export default function RegularComplianceStep({ onPrev, onNext }: Props) {
         ))}
       </div>
       <div className="mt-6 flex justify-end gap-3 border-t border-gray-100 pt-5 dark:border-neutral-800">
-        <Button type="button" variant="secondary" size="lg" onClick={onPrev}>
+        <Button type="button" variant="secondary" size="sm" onClick={onPrev}>
           ← Previous
         </Button>
-        <Button type="button" variant="primary" size="lg" onClick={onNext}>
+        <Button type="button" variant="primary" size="sm" onClick={onNext}>
           Next →
         </Button>
       </div>

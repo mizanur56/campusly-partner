@@ -31,10 +31,10 @@ export default function MainContactDetailsStep({ onPrev, onNext }: Props) {
       </Form.Item>
       <FormInput name="whatsapp" label="Whatsapp (If Applicable)" placeholder="Enter whatsapp number" />
       <div className="mt-8 flex justify-end gap-3">
-        <Button type="button" variant="secondary" size="lg" onClick={onPrev}>
+        <Button type="button" variant="secondary" size="sm" onClick={onPrev}>
           ← Previous
         </Button>
-        <Button type="button" variant="primary" size="lg" onClick={handleNext}>
+        <Button type="button" variant="primary" size="sm" onClick={handleNext}>
           Next →
         </Button>
       </div>

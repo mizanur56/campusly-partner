@@ -50,10 +50,10 @@ export default function DirectorDetailsPage() {
           </Form.Item>
         </div>
         <div className="flex justify-end gap-3 mt-8">
-          <Button as="link" to="/onboarding/owner" variant="secondary">
+          <Button as="link" to="/onboarding/owner" variant="secondary" size="sm">
             ← Previous
           </Button>
-          <Button as="link" to="/onboarding/contact" variant="primary">
+          <Button as="link" to="/onboarding/contact" variant="primary" size="sm">
             Next →
           </Button>
         </div>

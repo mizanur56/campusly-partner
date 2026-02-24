@@ -140,19 +140,20 @@ export function SignaturePad({
           onPointerLeave={handlePointerUp}
         />
         <div className="flex flex-wrap items-center gap-2 px-3 py-3">
-          <Button type="button" variant="secondary" onClick={clear}>
+          <Button type="button" variant="secondary" size="sm" onClick={clear}>
             Clear
           </Button>
           <Button
             type="button"
             variant="primary"
+            size="sm"
             onClick={save}
             disabled={!hasStroke}
           >
             Save signature
           </Button>
           {onCancel && (
-            <Button type="button" variant="ghost" onClick={onCancel}>
+            <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
               Cancel
             </Button>
           )}

@@ -15,7 +15,7 @@ export default function RegularCompliancePage() {
       subtitle="Please upload your ID proof, which will be verified by our legal team"
     >
       <div className="space-y-4">
-        <Button type="button" variant="primary">
+        <Button type="button" variant="primary" size="sm">
           + Add Qualifications
         </Button>
         <div className="space-y-3">
@@ -46,10 +46,10 @@ export default function RegularCompliancePage() {
           ))}
         </div>
         <div className="flex justify-end gap-3 mt-8">
-          <Button as="link" to="/onboarding/contact" variant="secondary">
+          <Button as="link" to="/onboarding/contact" variant="secondary" size="sm">
             ← Previous
           </Button>
-          <Button as="link" to="/onboarding/declaration" variant="primary">
+          <Button as="link" to="/onboarding/declaration" variant="primary" size="sm">
             Next →
           </Button>
         </div>

@@ -32,7 +32,7 @@ export default function ContractPage() {
       <div className="mx-auto flex max-w-5xl flex-col gap-8 lg:flex-row lg:gap-10">
         {/* Left: Contract progress card */}
         <aside className="w-full shrink-0 lg:w-56 xl:w-64">
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <div className="lg:sticky lg:top-24 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
             <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">
               Contract
             </h2>
@@ -99,9 +99,9 @@ export default function ContractPage() {
               </p>
             </header>
 
-            <div className="space-y-6 px-6 py-6 sm:px-8 sm:py-7">
+            <div className="space-y-8 px-6 py-6 sm:px-8 sm:py-7 divide-y divide-gray-100 dark:divide-gray-800">
               {/* Contract signature viewer */}
-              <section className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+              <section className="pt-1 first:pt-0">
                 <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-800 sm:px-5">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-gray-800 dark:text-gray-100">
@@ -111,7 +111,7 @@ export default function ContractPage() {
                       Page 1 of 2
                     </span>
                   </div>
-                  <Button variant="primary">
+                  <Button variant="primary" size="sm">
                     Download PDF
                   </Button>
                 </div>
@@ -131,7 +131,7 @@ export default function ContractPage() {
               </section>
 
               {/* Onboarding manager card */}
-              <section className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+              <section className="pt-6">
                 <div className="border-b border-gray-100 px-4 py-3 dark:border-gray-800 sm:px-5">
                   <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
                     Your Onboarding Manager
@@ -155,13 +155,15 @@ export default function ContractPage() {
                     </div>
                   </div>
                   <div className="flex justify-start sm:justify-end">
-                    <Button variant="primary">Arrange meeting</Button>
+                    <Button variant="primary" size="sm">
+                      Arrange meeting
+                    </Button>
                   </div>
                 </div>
               </section>
 
               {/* Digital signature card */}
-              <section className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+              <section className="pt-6">
                 <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-800 sm:px-5">
                   <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
                     Digital Signature
@@ -187,14 +189,15 @@ export default function ContractPage() {
                             Ready to sign
                           </p>
                           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                            Please add your digital signature to complete this
-                            contract. Draw in the box after clicking the button.
+                            Add your digital signature to complete this
+                            contract. Click the button and draw in the box.
                           </p>
                         </div>
                       </div>
                       <div className="mt-4 flex justify-start">
                         <Button
                           variant="primary"
+                          size="sm"
                           onClick={() => setShowSignaturePad(true)}
                         >
                           Add your signature
@@ -224,11 +227,12 @@ export default function ContractPage() {
                           )}
                         </div>
                         <div className="flex flex-wrap items-center gap-3">
-                          <Button variant="secondary" type="button">
+                          <Button variant="secondary" size="sm" type="button">
                             View signed contract
                           </Button>
                           <Button
                             variant="secondary"
+                            size="sm"
                             type="button"
                             onClick={handleUpdateSignature}
                           >
@@ -238,6 +242,7 @@ export default function ContractPage() {
                             as="link"
                             to="/contract/signed"
                             variant="primary"
+                            size="sm"
                           >
                             Submit signed contract
                           </Button>

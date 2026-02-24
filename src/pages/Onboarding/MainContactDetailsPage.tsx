@@ -54,10 +54,10 @@ export default function MainContactDetailsPage() {
           placeholder="Enter whatsapp number"
         />
         <div className="flex justify-end gap-3 mt-8">
-          <Button as="link" to="/onboarding/director" variant="secondary">
+          <Button as="link" to="/onboarding/director" variant="secondary" size="sm">
             ← Previous
           </Button>
-          <Button as="link" to="/onboarding/compliance" variant="primary">
+          <Button as="link" to="/onboarding/compliance" variant="primary" size="sm">
             Next →
           </Button>
         </div>

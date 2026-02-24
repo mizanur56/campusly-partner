@@ -34,7 +34,7 @@ export default function ContractSignedPage() {
             email once your dashboard access is approved.
           </p>
           <div className="mt-6 flex justify-center">
-            <Button as="link" to="/" variant="primary" className="font-normal">
+            <Button as="link" to="/" variant="primary" size="sm" className="font-normal">
               ← Back to home
             </Button>
           </div>

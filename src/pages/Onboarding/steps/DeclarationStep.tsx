@@ -49,10 +49,10 @@ export default function DeclarationStep({ onPrev, onSubmit }: Props) {
           </Checkbox>
         </Form.Item>
         <div className="mt-6 flex justify-end gap-3 border-t border-gray-100 pt-5 dark:border-neutral-800">
-          <Button type="button" variant="secondary" size="lg" onClick={onPrev}>
+          <Button type="button" variant="secondary" size="sm" onClick={onPrev}>
             ← Previous
           </Button>
-          <Button type="submit" variant="primary" size="lg">
+          <Button type="submit" variant="primary" size="sm">
             Submit
           </Button>
         </div>
