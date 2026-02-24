@@ -107,7 +107,7 @@ export default function ContractPage() {
                       Page 1 of 2
                     </span>
                   </div>
-                  <Button variant="primary" className="font-normal">
+                  <Button variant="primary">
                     Download PDF
                   </Button>
                 </div>
@@ -151,7 +151,7 @@ export default function ContractPage() {
                     </div>
                   </div>
                   <div className="flex justify-start sm:justify-end">
-                    <Button variant="primary" className="font-normal">
+                    <Button variant="primary">
                       Arrange meeting
                     </Button>
                   </div>
@@ -193,7 +193,6 @@ export default function ContractPage() {
                       <div className="mt-4 flex justify-start">
                         <Button
                           variant="primary"
-                          className="font-normal"
                           onClick={() => setShowSignaturePad(true)}
                         >
                           Add your signature
@@ -225,14 +224,12 @@ export default function ContractPage() {
                         <div className="flex flex-wrap items-center gap-3">
                           <Button
                             variant="secondary"
-                            className="font-normal"
                             type="button"
                           >
                             View signed contract
                           </Button>
                           <Button
                             variant="secondary"
-                            className="font-normal"
                             type="button"
                             onClick={handleUpdateSignature}
                           >
@@ -242,7 +239,6 @@ export default function ContractPage() {
                             as="link"
                             to="/contract/signed"
                             variant="primary"
-                            className="font-normal"
                           >
                             Submit signed contract
                           </Button>

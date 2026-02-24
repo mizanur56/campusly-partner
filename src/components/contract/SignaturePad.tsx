@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Button } from "../ui/button";
 
 interface SignaturePadProps {
   onSave: (signatureDataUrl: string) => void;
@@ -139,29 +140,21 @@ export function SignaturePad({
           onPointerLeave={handlePointerUp}
         />
         <div className="flex flex-wrap items-center gap-2 px-3 py-3">
-          <button
-            type="button"
-            onClick={clear}
-            className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-          >
+          <Button type="button" variant="secondary" onClick={clear}>
             Clear
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="primary"
             onClick={save}
             disabled={!hasStroke}
-            className="rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:opacity-50 disabled:pointer-events-none"
           >
             Save signature
-          </button>
+          </Button>
           {onCancel && (
-            <button
-              type="button"
-              onClick={onCancel}
-              className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-            >
+            <Button type="button" variant="ghost" onClick={onCancel}>
               Cancel
-            </button>
+            </Button>
           )}
         </div>
       </div>

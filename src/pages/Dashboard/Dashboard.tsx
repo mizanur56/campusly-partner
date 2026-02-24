@@ -89,7 +89,7 @@ const Dashboard = () => {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button as="link" to="/onboarding" variant="primary" className="font-light">
+                <Button as="link" to="/onboarding" variant="primary">
                   Continue
                 </Button>
                 <button
@@ -189,7 +189,6 @@ const Dashboard = () => {
                   as="link"
                   to="/contract"
                   variant="primary"
-                  className="font-light"
                 >
                   Continue
                 </Button>
