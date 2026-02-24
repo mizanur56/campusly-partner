@@ -1,6 +1,6 @@
 const AuthIllustration = () => {
   return (
-    <div className="hidden lg:flex lg:w-1/2 flex-col relative min-h-screen pt-0 lg:-mt-8">
+    <div className="hidden lg:flex lg:w-1/2 flex-col relative lg:min-h-[520px] pt-6 pb-10">
       {/* Main illustration - centered above the splash */}
       <div className="relative z-10 flex-1 flex items-center justify-center">
         <img

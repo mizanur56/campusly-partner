@@ -1,11 +1,12 @@
 import { LockOutlined, MailOutlined } from "@ant-design/icons";
-import { Button, Form, Input } from "antd";
+import { Form, Input } from "antd";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useState, useEffect } from "react";
 import PageMeta from "../../components/common/Meta/PageMeta";
 import AuthIllustration from "../../components/auth/AuthIllustration";
 import SocialLoginButtons from "../../components/auth/SocialLoginButtons";
+import { Button } from "../../components/ui/button";
 import { useLoginMutation } from "../../redux/features/auth/authApi";
 import { setUser } from "../../redux/features/auth/authSlice";
 import { useAppDispatch } from "../../redux/features/hooks";
@@ -97,7 +98,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row mx-auto max-w-[950px] px-4 sm:px-6 lg:px-0 bg-white">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-slate-50 px-4 sm:px-6">
       <PageMeta
         title={
           activeTab === "partner"
@@ -106,187 +107,187 @@ const Login = () => {
         }
         description="Login to your Campus Transfer account"
       />
-      <AuthIllustration />
 
-      <div className="w-full lg:w-1/2 flex items-center justify-center pt-2 pb-8 sm:pt-4 sm:pb-12 lg:min-h-screen">
-        <div className="w-full max-w-[563px] px-4 sm:px-6 lg:px-0">
-          {/* Professional Tabs with Coming Soon */}
-          <div className="flex mb-6 border-b border-neutral-200">
-            <div className="relative">
+      <div className="flex w-full max-w-[980px] flex-col overflow-hidden rounded-3xl lg:flex-row">
+        <AuthIllustration />
+
+        <div className="flex w-full lg:w-1/2 items-center justify-center py-8 sm:py-10 lg:py-12 lg:min-h-[520px]">
+          <div className="w-full max-w-[563px] px-4 sm:px-6 lg:px-8">
+            {/* Professional Tabs with Coming Soon */}
+            <div className="mb-6 flex border-b border-neutral-200">
+              <div className="relative">
+                <button
+                  onClick={() => handleTabChange("student", "/student/login")}
+                  className={cn(
+                    "relative py-3 px-6 text-sm font-medium transition-all duration-200",
+                    activeTab === "student"
+                      ? "text-primary-600"
+                      : "text-neutral-400 cursor-not-allowed",
+                  )}
+                  disabled={activeTab !== "student"}
+                >
+                  Student
+                  {activeTab === "student" && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full bg-primary-600" />
+                  )}
+                </button>
+                {activeTab !== "student" && (
+                  <span className="absolute -top-2 -right-2 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+                    Soon
+                  </span>
+                )}
+              </div>
+
               <button
-                onClick={() => handleTabChange("student", "/student/login")}
+                onClick={() => handleTabChange("partner", "/partner/login")}
                 className={cn(
                   "relative py-3 px-6 text-sm font-medium transition-all duration-200",
-                  activeTab === "student"
+                  activeTab === "partner"
                     ? "text-primary-600"
-                    : "text-neutral-400 cursor-not-allowed",
+                    : "text-neutral-500 hover:text-neutral-700",
                 )}
-                disabled={activeTab !== "student"}
               >
-                Student
-                {activeTab === "student" && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 rounded-t-full" />
+                Recruitment Partner
+                {activeTab === "partner" && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full bg-primary-600" />
                 )}
               </button>
-              {activeTab !== "student" && (
-                <span className="absolute -top-2 -right-2 bg-amber-100 text-amber-700 text-[10px] font-medium px-1.5 py-0.5 rounded-full">
-                  Soon
-                </span>
-              )}
             </div>
 
-            <button
-              onClick={() => handleTabChange("partner", "/partner/login")}
+            {/* Content with fade transition */}
+            <div
               className={cn(
-                "relative py-3 px-6 text-sm font-medium transition-all duration-200",
-                activeTab === "partner"
-                  ? "text-primary-600"
-                  : "text-neutral-500 hover:text-neutral-700",
+                "transition-all duration-200",
+                isTransitioning ? "opacity-0 scale-95" : "opacity-100 scale-100",
               )}
             >
-              Recruitment Partner
-              {activeTab === "partner" && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 rounded-t-full" />
-              )}
-            </button>
-          </div>
-
-          {/* Content with fade transition */}
-          <div
-            className={cn(
-              "transition-all duration-200",
-              isTransitioning ? "opacity-0 scale-95" : "opacity-100 scale-100",
-            )}
-          >
-            {/* Card with SidebarCards inspired styling */}
-            <div className="flex flex-col rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
-              <div className="mb-5">
-                <h1 className="text-xl font-semibold text-neutral-900 mb-1">
-                  {activeTab === "partner"
-                    ? "Recruitment Partner Login"
-                    : "Student Login"}
-                </h1>
-                <p className="text-sm text-neutral-500">
-                  {activeTab === "partner"
-                    ? "Access your partner dashboard and manage your students"
-                    : "Student portal is coming soon"}
-                </p>
-              </div>
-
-              <Form
-                form={form}
-                name="login"
-                requiredMark={false}
-                onFinish={onFinish}
-                layout="vertical"
-                size="large"
-              >
-                <Form.Item
-                  label={
-                    <span className="text-sm font-medium text-neutral-700">
-                      Email
-                    </span>
-                  }
-                  name="email"
-                  rules={[
-                    { required: true, message: "Please input your email!" },
-                    { type: "email", message: "Please enter a valid email!" },
-                  ]}
-                >
-                  <Input
-                    prefix={<MailOutlined className="text-neutral-400" />}
-                    placeholder="Enter your email"
-                    className={cn(
-                      "rounded-lg hover:border-primary-400 transition-colors",
-                      activeTab === "student" && "bg-neutral-50",
-                    )}
-                    disabled={activeTab === "student"}
-                  />
-                </Form.Item>
-
-                <Form.Item
-                  label={
-                    <span className="text-sm font-medium text-neutral-700">
-                      Password
-                    </span>
-                  }
-                  name="password"
-                  rules={[
-                    { required: true, message: "Please input your password!" },
-                  ]}
-                >
-                  <Input.Password
-                    prefix={<LockOutlined className="text-neutral-400" />}
-                    placeholder="Enter your password"
-                    className={cn(
-                      "rounded-lg hover:border-primary-400 transition-colors",
-                      activeTab === "student" && "bg-neutral-50",
-                    )}
-                    disabled={activeTab === "student"}
-                  />
-                </Form.Item>
-
-                <div className="flex justify-end mb-4">
-                  <Link
-                    to={activeTab === "partner" ? "/forgot-password" : "#"}
-                    className={cn(
-                      "text-sm transition-colors",
-                      activeTab === "partner"
-                        ? "text-primary-600 hover:text-primary-700"
-                        : "text-neutral-300 pointer-events-none",
-                    )}
-                  >
-                    Forgot Password?
-                  </Link>
+              {/* Card with SidebarCards inspired styling */}
+              <div className="flex flex-col rounded-3xl bg-white p-6 shadow-sm">
+                <div className="mb-5">
+                  <h1 className="mb-1 text-xl font-semibold text-neutral-900">
+                    {activeTab === "partner"
+                      ? "Recruitment Partner Login"
+                      : "Student Login"}
+                  </h1>
+                  <p className="text-sm text-neutral-500">
+                    {activeTab === "partner"
+                      ? "Access your partner dashboard and manage your students"
+                      : "Student portal is coming soon"}
+                  </p>
                 </div>
 
-                {activeTab === "partner" ? (
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    loading={isLoading}
-                    className="w-full h-9 rounded-lg font-normal text-sm bg-primary-600 hover:bg-primary-700 border-0 shadow-sm"
+                <Form
+                  form={form}
+                  name="login"
+                  requiredMark={false}
+                  onFinish={onFinish}
+                  layout="vertical"
+                  size="large"
+                >
+                  <Form.Item
+                    label={
+                      <span className="text-sm font-medium text-neutral-700">
+                        Email
+                      </span>
+                    }
+                    name="email"
+                    rules={[
+                      { required: true, message: "Please input your email!" },
+                      { type: "email", message: "Please enter a valid email!" },
+                    ]}
                   >
-                    Login to Partner Dashboard
-                  </Button>
-                ) : (
-                  <Button
-                    disabled
-                    className="w-full h-10 rounded-lg font-medium bg-neutral-100 text-neutral-400 border-0 cursor-not-allowed"
-                  >
-                    Student Login - Coming Soon
-                  </Button>
-                )}
-              </Form>
+                    <Input
+                      prefix={<MailOutlined className="text-neutral-400" />}
+                      placeholder="Enter your email"
+                      className={cn(
+                        "rounded-lg hover:border-primary-400 transition-colors",
+                        activeTab === "student" && "bg-neutral-50",
+                      )}
+                      disabled={activeTab === "student"}
+                    />
+                  </Form.Item>
 
-              <div className="mt-4 text-center">
-                <p className="text-sm text-neutral-500">
-                  Don't have an account?{" "}
-                  {activeTab === "partner" ? (
+                  <Form.Item
+                    label={
+                      <span className="text-sm font-medium text-neutral-700">
+                        Password
+                      </span>
+                    }
+                    name="password"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please input your password!",
+                      },
+                    ]}
+                  >
+                    <Input.Password
+                      prefix={<LockOutlined className="text-neutral-400" />}
+                      placeholder="Enter your password"
+                      className={cn(
+                        "rounded-lg hover:border-primary-400 transition-colors",
+                        activeTab === "student" && "bg-neutral-50",
+                      )}
+                      disabled={activeTab === "student"}
+                    />
+                  </Form.Item>
+
+                  <div className="mb-4 flex justify-end">
                     <Link
-                      to="/partner/register"
-                      className="text-primary-600 font-medium hover:text-primary-700"
+                      to={activeTab === "partner" ? "/forgot-password" : "#"}
+                      className={cn(
+                        "text-sm transition-colors",
+                        activeTab === "partner"
+                          ? "text-primary-600 hover:text-primary-700"
+                          : "pointer-events-none text-neutral-300",
+                      )}
                     >
-                      Register as Partner
+                      Forgot Password?
                     </Link>
-                  ) : (
-                    <span className="text-neutral-400">Coming Soon</span>
+                  </div>
+
+                  {activeTab === "partner" && (
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      disabled={isLoading}
+                      className="w-full h-10 text-sm font-semibold"
+                    >
+                      {isLoading ? "Logging in..." : "Login"}
+                    </Button>
                   )}
+                </Form>
+
+                <div className="mt-4 text-center">
+                  <p className="text-sm text-neutral-500">
+                    Don't have an account?{" "}
+                    {activeTab === "partner" ? (
+                      <Link
+                        to="/partner/register"
+                        className="font-medium text-primary-600 hover:text-primary-700"
+                      >
+                        Register as Partner
+                      </Link>
+                    ) : (
+                      <span className="text-neutral-400">Coming Soon</span>
+                    )}
+                  </p>
+                </div>
+
+                {/* Only keep core login button – remove extra social buttons for a cleaner look */}
+              </div>
+            </div>
+
+            {/* Simple note for student tab */}
+            {activeTab === "student" && (
+              <div className="mt-4 rounded-lg bg-blue-50 p-4 text-center">
+                <p className="text-sm text-blue-700">
+                  🎓 Student portal is under development. Please check back
+                  soon!
                 </p>
               </div>
-
-              {activeTab === "partner" && <SocialLoginButtons />}
-            </div>
+            )}
           </div>
-
-          {/* Simple note for student tab */}
-          {activeTab === "student" && (
-            <div className="mt-4 p-4 bg-blue-50 rounded-lg text-center">
-              <p className="text-sm text-blue-700">
-                🎓 Student portal is under development. Please check back soon!
-              </p>
-            </div>
-          )}
         </div>
       </div>
     </div>
