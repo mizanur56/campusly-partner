@@ -11,6 +11,8 @@ import NotFound from "../pages/OtherPage/NotFound";
 import UnderDevelopment from "../pages/OtherPage/UnderDevelopment";
 import ProtectedRoute from "./ProtectedRoute";
 import { OnboardingPage } from "../pages/Onboarding";
+import ContractPage from "../pages/Contract/ContractPage";
+import ContractSignedPage from "../pages/Contract/ContractSignedPage";
 
 const routes = [
   {
@@ -26,6 +28,8 @@ const routes = [
       { path: "/", element: <Dashboard /> },
       { path: "/media", element: <AllMediaList /> },
       { path: "/onboarding", element: <OnboardingPage /> },
+      { path: "/contract", element: <ContractPage /> },
+      { path: "/contract/signed", element: <ContractSignedPage /> },
       { path: "/change-password", element: <ChangePassword /> },
       // Fallback for undefined child routes
       { path: "*", element: <UnderDevelopment /> },
