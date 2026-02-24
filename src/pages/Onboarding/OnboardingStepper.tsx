@@ -19,7 +19,7 @@ export default function OnboardingStepper({
       ? "submitted"
       : isControlled && currentStepIndex === 6
         ? "verified"
-        : variantProp ?? "form";
+        : (variantProp ?? "form");
   const currentIndex =
     isControlled && currentStepIndex >= 0 && currentStepIndex <= 4
       ? currentStepIndex

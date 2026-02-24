@@ -63,7 +63,12 @@ const Sidebar: React.FC = () => {
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const isActive = useCallback(
-    (path: string) => location.pathname === path,
+    (path: string) => {
+      if (path === "/") {
+        return location.pathname === "/" || location.pathname.startsWith("/onboarding");
+      }
+      return location.pathname === path;
+    },
     [location.pathname]
   );
 
