@@ -27,7 +27,7 @@ export default function OnboardingFormLayout({
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gray-50/50 px-4 py-8 dark:bg-gray-950/30 md:px-6 md:py-10">
       <div className="mx-auto max-w-5xl">
-        <div className="flex flex-col gap-8 lg:flex-row lg:gap-10">
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
           <OnboardingStepper
             currentStepIndex={currentStepIndex}
             variant={stepperVariant}

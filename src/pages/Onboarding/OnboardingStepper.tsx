@@ -36,10 +36,10 @@ export default function OnboardingStepper({
 
   return (
     <aside
-      className="w-full shrink-0 lg:w-56 xl:w-64"
+      className="w-full shrink-0 lg:w-56 xl:w-64 lg:self-start"
       aria-label="Application progress"
     >
-      <div className="sticky top-6 overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+      <div className="sticky top-24 overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
         <p className="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">
           Progress
         </p>
