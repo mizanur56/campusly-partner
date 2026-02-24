@@ -35,7 +35,7 @@ const SCROLL_THRESHOLD = 8;
 const Header: React.FC = () => {
   const { pathname } = useLocation();
   const { previewMode } = usePreviewMode();
-  const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
+  const { isMobileOpen, toggleSidebar, toggleMobileSidebar, isExpanded } = useSidebar();
   const isSignedMode = pathname === "/" && previewMode === "signed";
   const [isCoursesOpen, setIsCoursesOpen] = useState(false);
   const [isCountriesOpen, setIsCountriesOpen] = useState(false);
@@ -89,13 +89,15 @@ const Header: React.FC = () => {
 
   return (
     <header
-      className={`sticky top-0 z-[60] flex w-full min-w-0 items-center border-b overflow-visible transition-all duration-300 ${
+      className={`fixed top-0 left-0 z-[60] flex min-w-0 items-center border-b transition-all duration-300 w-full ${
+        isExpanded ? "lg:left-[280px] lg:w-[calc(100vw-280px)]" : "lg:left-[80px] lg:w-[calc(100vw-80px)]"
+      } ${
         hasScrolled
           ? "border-gray-100 bg-white/80 backdrop-blur-md dark:border-gray-800 dark:bg-gray-900/80"
           : "border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900"
       }`}
     >
-      <div className="flex w-full min-w-0 items-center justify-between gap-2 px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
+      <div className="flex w-full min-w-0 max-w-full items-center justify-between gap-2 px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
         {/* Dashboard / Onboarding: Partner branding */}
         {isDashboardOrOnboarding ? (
           <div className="flex items-center gap-3">
@@ -152,7 +154,7 @@ const Header: React.FC = () => {
         )}
 
         {/* Right: Nav, then others (4 icons when signed), notification, user at end */}
-        <div className="flex min-w-0 items-center gap-1 sm:gap-4">
+        <div className="flex min-w-0 shrink items-center gap-1 sm:gap-4">
           {isDashboardOrOnboarding && !isSignedMode ? (
             <nav className="hidden md:flex items-center gap-1">
               <div className="relative group">
