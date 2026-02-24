@@ -1,10 +1,17 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import { Backdrop, Header, Sidebar } from "../components/common/Layouts";
 import { SidebarProvider, useSidebar } from "../context/SidebarContext";
 // import { useRoutePermission } from "../hooks/useRoutePermission";
 
 const LayoutContent: React.FC = () => {
   const { isExpanded, isMobileOpen } = useSidebar();
+  const { pathname } = useLocation();
+
+  // Always scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
 
   // Automatically check permissions on every route change
   // useRoutePermission(); // Disabled for design migration
