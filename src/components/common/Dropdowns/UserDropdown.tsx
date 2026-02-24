@@ -60,18 +60,22 @@ export default function UserDropdown() {
         onClose={closeDropdown}
         className="absolute right-0 mt-[17px] flex w-[260px] flex-col"
       >
-        <div>
-          <span className="block font-medium text-gray-700 text-base">{user?.name || "User"}</span>
-          <span className="mt-0.5 block text-sm text-gray-500">{user?.email || "user@example.com"}</span>
+        <div className="mb-3">
+          <span className="block text-sm font-medium text-gray-900 dark:text-gray-100">
+            {user?.name || "Partner user"}
+          </span>
+          <span className="mt-0.5 block text-xs text-gray-500 dark:text-gray-400">
+            {user?.email || "user@example.com"}
+          </span>
         </div>
 
-        <ul className="flex flex-col gap-1 pt-4 pb-3 border-b border-gray-200 dark:border-gray-800">
+        <ul className="flex flex-col gap-1 pt-3 pb-3 border-t border-gray-200 dark:border-gray-800">
           <li>
             <DropdownItem
               onItemClick={closeDropdown}
               tag="a"
               to="/profile"
-              className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg text-base hover:bg-gray-100 dark:hover:bg-white/5 dark:text-gray-300"
+              className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 dark:text-gray-300"
             >
               <svg
                 className="fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300"
@@ -125,7 +129,7 @@ export default function UserDropdown() {
             closeDropdown();
             navigate("/login");
           }}
-          className="flex w-full items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg text-base hover:bg-gray-100 dark:hover:bg-white/5 dark:text-gray-300"
+          className="mt-2 flex w-full items-center gap-3 px-3 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
         >
           <svg
             className="fill-gray-500 group-hover:fill-gray-700 dark:group-hover:fill-gray-300"
