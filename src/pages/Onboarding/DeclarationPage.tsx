@@ -1,5 +1,6 @@
-import { Form, Button, Checkbox } from "antd";
+import { Form, Checkbox } from "antd";
 import { Link, useNavigate } from "react-router-dom";
+import { Button } from "../../components/ui/button";
 import OnboardingFormLayout from "./OnboardingFormLayout";
 
 const formItemLayout = {
@@ -80,20 +81,10 @@ export default function DeclarationPage() {
           </Checkbox>
         </Form.Item>
         <div className="flex justify-end gap-3 mt-8">
-          <Link to="/onboarding/compliance">
-            <Button
-              size="large"
-              className="border-primary-500 text-primary-600 bg-primary-50 hover:!bg-primary-100 hover:!text-primary-700 hover:!border-primary-500 px-6"
-            >
-              ← Previous
-            </Button>
-          </Link>
-          <Button
-            type="primary"
-            size="large"
-            htmlType="submit"
-            className="bg-primary-500 hover:!bg-primary-600 border-0 text-white px-6"
-          >
+          <Button as="link" to="/onboarding/compliance" variant="secondary">
+            ← Previous
+          </Button>
+          <Button type="submit" variant="primary">
             Submit
           </Button>
         </div>

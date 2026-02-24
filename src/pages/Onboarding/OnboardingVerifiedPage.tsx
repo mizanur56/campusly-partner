@@ -28,7 +28,7 @@ export default function OnboardingVerifiedPage() {
         <Link to="/">
           <button
             type="button"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 transition-colors"
+            className="btn-primary"
           >
             Proceed to contract
           </button>

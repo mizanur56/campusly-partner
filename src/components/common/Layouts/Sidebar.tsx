@@ -362,7 +362,7 @@ const Sidebar: React.FC = () => {
           <button
             type="button"
             onClick={handleLogout}
-            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-base font-medium text-gray-600 transition-colors hover:bg-red-50 hover:text-red-600 dark:text-gray-400 dark:hover:bg-red-900/20 dark:hover:text-red-400 ${
+            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-normal text-gray-600 transition-colors hover:bg-red-50 hover:text-red-600 dark:text-gray-400 dark:hover:bg-red-900/20 dark:hover:text-red-400 ${
               !isExpanded && !isMobileOpen ? "justify-center" : ""
             }`}
           >

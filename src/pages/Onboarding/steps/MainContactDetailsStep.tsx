@@ -1,4 +1,5 @@
-import { Form, Button } from "antd";
+import { Form } from "antd";
+import { Button } from "../../../components/ui/button";
 import { FormInput, PhoneInput, phoneButtonStyle, phoneInputStyle } from "../sharedFormProps";
 
 const formItemLayout = {
@@ -30,10 +31,10 @@ export default function MainContactDetailsStep({ onPrev, onNext }: Props) {
       </Form.Item>
       <FormInput name="whatsapp" label="Whatsapp (If Applicable)" placeholder="Enter whatsapp number" />
       <div className="mt-8 flex justify-end gap-3">
-        <Button size="large" className="border-primary-500 bg-primary-50 px-6 text-primary-600 hover:!border-primary-500 hover:!bg-primary-100 hover:!text-primary-700" onClick={onPrev}>
+        <Button type="button" variant="secondary" onClick={onPrev}>
           ← Previous
         </Button>
-        <Button type="primary" size="large" className="border-0 bg-primary-500 px-6 text-white hover:!bg-primary-600" onClick={handleNext}>
+        <Button type="button" variant="primary" onClick={handleNext}>
           Next →
         </Button>
       </div>

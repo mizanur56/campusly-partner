@@ -1,4 +1,5 @@
-import { Form, Button } from "antd";
+import { Form } from "antd";
+import { Button } from "../../../components/ui/button";
 import { FormInput, PhoneInput, phoneButtonStyle, phoneInputStyle } from "../sharedFormProps";
 
 const formItemLayout = {
@@ -41,7 +42,7 @@ export default function OwnerDetailsStep({ onNext }: Props) {
         <FormInput name="instagram" label="Instagram" placeholder="Enter instagram url" />
       </div>
       <div className="mt-8 flex justify-end gap-3">
-        <Button type="primary" size="large" className="border-0 bg-primary-500 px-6 text-white hover:!bg-primary-600" onClick={handleNext}>
+        <Button type="button" variant="primary" onClick={handleNext}>
           Next →
         </Button>
       </div>

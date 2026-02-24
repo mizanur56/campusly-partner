@@ -1,5 +1,5 @@
-import { Form, Button } from "antd";
-import { Link } from "react-router-dom";
+import { Form } from "antd";
+import { Button } from "../../components/ui/button";
 import OnboardingFormLayout from "./OnboardingFormLayout";
 import { FormInput, PhoneInput, phoneInputStyle, phoneButtonStyle } from "./sharedFormProps";
 
@@ -89,16 +89,9 @@ export default function OwnerDetailsPage() {
           />
         </div>
         <div className="flex justify-end gap-3 mt-8">
-          <Link to="/onboarding/director">
-            <Button
-              type="primary"
-              size="large"
-              htmlType="button"
-              className="bg-primary-500 hover:!bg-primary-600 border-0 text-white px-6"
-            >
-              Next →
-            </Button>
-          </Link>
+          <Button as="link" to="/onboarding/director" variant="primary">
+            Next →
+          </Button>
         </div>
       </Form>
     </OnboardingFormLayout>

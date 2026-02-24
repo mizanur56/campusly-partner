@@ -1,5 +1,5 @@
-import { Button } from "antd";
 import { Link } from "react-router-dom";
+import { Button } from "../../components/ui/button";
 import OnboardingFormLayout from "./OnboardingFormLayout";
 
 const UPLOAD_ITEMS = [
@@ -15,11 +15,7 @@ export default function RegularCompliancePage() {
       subtitle="Please upload your ID proof, which will be verified by our legal team"
     >
       <div className="space-y-4">
-        <Button
-          type="primary"
-          size="large"
-          className="bg-primary-500 hover:!bg-primary-600 border-0"
-        >
+        <Button type="button" variant="primary">
           + Add Qualifications
         </Button>
         <div className="space-y-3">
@@ -50,24 +46,12 @@ export default function RegularCompliancePage() {
           ))}
         </div>
         <div className="flex justify-end gap-3 mt-8">
-          <Link to="/onboarding/contact">
-            <Button
-              size="large"
-              className="border-primary-500 text-primary-600 bg-primary-50 hover:!bg-primary-100 hover:!text-primary-700 hover:!border-primary-500 px-6"
-            >
-              ← Previous
-            </Button>
-          </Link>
-          <Link to="/onboarding/declaration">
-            <Button
-              type="primary"
-              size="large"
-              htmlType="button"
-              className="bg-primary-500 hover:!bg-primary-600 border-0 text-white px-6"
-            >
-              Next →
-            </Button>
-          </Link>
+          <Button as="link" to="/onboarding/contact" variant="secondary">
+            ← Previous
+          </Button>
+          <Button as="link" to="/onboarding/declaration" variant="primary">
+            Next →
+          </Button>
         </div>
       </div>
     </OnboardingFormLayout>

@@ -245,7 +245,7 @@ const Login = () => {
                     type="primary"
                     htmlType="submit"
                     loading={isLoading}
-                    className="w-full h-10 rounded-lg font-medium bg-primary-600 hover:bg-primary-700 border-0 shadow-sm"
+                    className="w-full h-9 rounded-lg font-normal text-sm bg-primary-600 hover:bg-primary-700 border-0 shadow-sm"
                   >
                     Login to Partner Dashboard
                   </Button>

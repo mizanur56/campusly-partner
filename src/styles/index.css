@@ -443,6 +443,34 @@
   @apply bg-primary-50 group-hover:bg-primary-100 dark:group-hover:bg-primary-500/20;
 }
 
+/* ─── Root button styles (use .btn-* or <Button /> everywhere) ─── */
+@utility btn-base {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-normal transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:ring-offset-1 disabled:pointer-events-none disabled:opacity-50;
+}
+@utility btn-primary {
+  @apply btn-base bg-primary-600 text-white shadow-sm hover:bg-primary-700 hover:shadow active:bg-primary-800 active:scale-[0.98];
+}
+@utility btn-secondary {
+  @apply btn-base border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700/80;
+}
+
+/* Ant Design button — align with root */
+.ant-btn {
+  font-weight: 400 !important;
+  font-size: 14px !important;
+  border-radius: 0.5rem !important;
+}
+.ant-btn-primary {
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+}
+.ant-btn-sm {
+  font-size: 13px !important;
+}
+.ant-btn-lg {
+  font-size: 14px !important;
+  font-weight: 400 !important;
+}
+
 @utility no-scrollbar {
   /* Chrome, Safari and Opera */
   &::-webkit-scrollbar {

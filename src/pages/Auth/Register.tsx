@@ -265,7 +265,7 @@ const Register = () => {
                 type="primary"
                 htmlType="submit"
                 loading={isLoading}
-                className="w-full h-10 rounded-lg font-semibold bg-primary-600 hover:bg-primary-700 border-0"
+                className="w-full h-9 rounded-lg font-normal text-sm bg-primary-600 hover:bg-primary-700 border-0"
               >
                 Create Account
               </Button>

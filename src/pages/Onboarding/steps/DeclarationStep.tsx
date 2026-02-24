@@ -1,5 +1,6 @@
-import { Form, Button, Checkbox } from "antd";
+import { Form, Checkbox } from "antd";
 import { Link } from "react-router-dom";
+import { Button } from "../../../components/ui/button";
 
 const formItemLayout = {
   className:
@@ -16,25 +17,17 @@ export default function DeclarationStep({ onPrev, onSubmit }: Props) {
 
   return (
     <>
-      <div className="mb-6 space-y-4">
-        <p className="text-base leading-relaxed text-neutral-500">
-          I confirm that all the information provided in this application is true and accurate. I understand that
-          submission of this form does not guarantee approval as an agent for Campus Transfer Ltd.
+      <div className="mb-5 space-y-3">
+        <p className="text-sm leading-relaxed text-neutral-500 dark:text-neutral-400">
+          I confirm that all the information provided is true and accurate. Submission does not guarantee approval as an agent for Campus Transfer Ltd.
         </p>
-        <p className="text-base font-semibold leading-relaxed text-neutral-900">
-          Minor mistakes can cause a major delay in our partnership. Please take a moment to verify the information in
-          each section before submitting.
+        <p className="text-sm font-medium text-neutral-900 dark:text-white">
+          Please verify each section before submitting to avoid delays.
         </p>
-        <p className="text-sm text-neutral-500">
+        <p className="text-xs text-neutral-500 dark:text-neutral-400">
           By proceeding, you agree to the{" "}
-          <Link to="#" className="text-primary-600 hover:underline">
-            Terms &amp; Conditions
-          </Link>{" "}
-          and{" "}
-          <Link to="#" className="text-primary-600 hover:underline">
-            Privacy Policy
-          </Link>
-          .
+          <Link to="#" className="text-primary-600 hover:underline">Terms &amp; Conditions</Link> and{" "}
+          <Link to="#" className="text-primary-600 hover:underline">Privacy Policy</Link>.
         </p>
       </div>
       <Form form={form} layout="vertical" onFinish={onSubmit} {...formItemLayout}>
@@ -55,17 +48,11 @@ export default function DeclarationStep({ onPrev, onSubmit }: Props) {
             <span className="text-red-500">*</span>
           </Checkbox>
         </Form.Item>
-        <div className="mt-8 flex justify-end gap-3">
-          <Button
-            size="large"
-            className="border-primary-500 bg-primary-50 px-6 text-primary-600 hover:!border-primary-500 hover:!bg-primary-100 hover:!text-primary-700"
-            onClick={onPrev}
-          >
+        <div className="mt-6 flex justify-end gap-2 border-t border-gray-100 pt-5 dark:border-neutral-800">
+          <Button type="button" variant="secondary" onClick={onPrev}>
             ← Previous
           </Button>
-          <Button type="primary" size="large" htmlType="submit" className="border-0 bg-primary-500 px-6 text-white hover:!bg-primary-600">
-            Submit
-          </Button>
+          <Button type="submit" variant="primary">Submit</Button>
         </div>
       </Form>
     </>
