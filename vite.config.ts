@@ -18,4 +18,13 @@ export default defineConfig({
       },
     }),
   ],
+  server: {
+    proxy: {
+      "/api": {
+        target: "https://campustransferapi.thezoomit.com",
+        changeOrigin: true,
+        secure: true,
+      },
+    },
+  },
 });

@@ -1,8 +1,9 @@
 export const config = {
   // 🌐 Application
-  app_domain: import.meta.env.VITE_PUBLIC_APP_DOMAIN,
+  // Default origin falls back to production domain if env is not set
+  app_domain: import.meta.env.VITE_PUBLIC_APP_DOMAIN || "https://campustransfer.com/",
 
-  api: import.meta.env.VITE_API_URL,
+  api: import.meta.env.DEV ? "/api" : import.meta.env.VITE_API_URL,
   image_access_url: import.meta.env.VITE_IMAGE_ACCESS_URL,
 
   // 🚀 Server & API
