@@ -32,11 +32,13 @@ const mockCourses = [
 
 const SCROLL_THRESHOLD = 8;
 
+const SIGNED_HEADER_PATHS = ["/programs-schools", "/students", "/applications", "/my-tasks", "/payments", "/academy", "/hot-offers"];
+
 const Header: React.FC = () => {
   const { pathname } = useLocation();
   const { previewMode } = usePreviewMode();
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar, isExpanded } = useSidebar();
-  const isSignedMode = pathname === "/" && previewMode === "signed";
+  const isSignedMode = (pathname === "/" && previewMode === "signed") || SIGNED_HEADER_PATHS.includes(pathname);
   const [isCoursesOpen, setIsCoursesOpen] = useState(false);
   const [isCountriesOpen, setIsCountriesOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
@@ -153,9 +155,9 @@ const Header: React.FC = () => {
           </div>
         )}
 
-        {/* Right: Nav, then others (4 icons when signed), notification, user at end */}
-        <div className="flex min-w-0 shrink items-center gap-1 sm:gap-4">
-          {isDashboardOrOnboarding && !isSignedMode ? (
+        {/* Right: About + Partners (dashboard/onboarding/signed), then 4 icons when signed, notification, user */}
+        <div className="flex min-w-0 shrink items-center gap-2 sm:gap-3">
+          {isDashboardOrOnboarding ? (
             <nav className="hidden md:flex items-center gap-1">
               <div className="relative group">
                 <button
@@ -189,7 +191,7 @@ const Header: React.FC = () => {
               </div>
             </nav>
           ) : (
-          /* Navigation Links with Dropdowns (non-dashboard) */
+          /* Navigation Links with Dropdowns (non-dashboard, public site) */
           <nav className="hidden md:flex items-center gap-6">
      {/* Courses Dropdown */}
 <div className="relative group">
@@ -334,7 +336,7 @@ const Header: React.FC = () => {
           </nav>
           )}
 
-          {/* Signed mode: others first, notification (bell) at dui number (second from right), then user */}
+          {/* Signed mode: Announcements, Documents, Marking, Notifications */}
           {isSignedMode ? (
             <>
               <button type="button" className="flex items-center justify-center rounded-full p-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200" aria-label="Announcements">
