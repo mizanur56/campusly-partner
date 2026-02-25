@@ -1,0 +1,33 @@
+.students-page .students-search.ant-input-search {
+  max-width: 100%;
+}
+.students-page .students-table .ant-table-thead > tr > th {
+  background-color: var(--neutral-50, #f8f9fa) !important;
+  font-weight: 600;
+}
+
+/* Table wrapper: respect card rounded corners */
+.students-page .students-table.ant-table-wrapper {
+  border-radius: 24px;
+  overflow: hidden;
+}
+.students-page .students-table .ant-table-container {
+  border-radius: 24px;
+  overflow: hidden;
+}
+/* First header cell: top-left rounded */
+.students-page .students-table .ant-table-thead > tr > th:first-child {
+  border-radius: 24px 0 0 0;
+}
+/* Last header cell: top-right rounded */
+.students-page .students-table .ant-table-thead > tr > th:last-child {
+  border-radius: 0 24px 0 0;
+}
+/* First body cell in last row: bottom-left rounded */
+.students-page .students-table .ant-table-tbody > tr:last-child > td:first-child {
+  border-radius: 0 0 0 24px;
+}
+/* Last body cell in last row: bottom-right rounded */
+.students-page .students-table .ant-table-tbody > tr:last-child > td:last-child {
+  border-radius: 0 0 24px 0;
+}

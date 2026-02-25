@@ -14,6 +14,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import { OnboardingPage } from "../pages/Onboarding";
 import ContractPage from "../pages/Contract/ContractPage";
 import ContractSignedPage from "../pages/Contract/ContractSignedPage";
+import Students from "../pages/Students/Students";
 
 const routes = [
   {
@@ -34,7 +35,7 @@ const routes = [
       { path: "/change-password", element: <ChangePassword /> },
       // Signed sidebar — default/under-development pages
       { path: "/programs-schools", element: <ProgramsSchools /> },
-      { path: "/students", element: <UnderDevelopment /> },
+      { path: "/students", element: <Students /> },
       { path: "/applications", element: <UnderDevelopment /> },
       { path: "/my-tasks", element: <UnderDevelopment /> },
       { path: "/payments", element: <UnderDevelopment /> },
