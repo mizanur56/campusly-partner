@@ -37,7 +37,7 @@ const LayoutContent: React.FC = () => {
   // useRoutePermission(); // Disabled for design migration
 
   return (
-    <div className="min-h-screen lg:flex bg-white dark:bg-neutral-900 overflow-x-hidden">
+    <div className="min-h-screen lg:flex bg-[#fefefe] dark:bg-neutral-900 overflow-x-hidden">
       <div>
         <Sidebar />
         <Backdrop />
@@ -48,8 +48,8 @@ const LayoutContent: React.FC = () => {
         } ${isMobileOpen ? "ml-0" : ""}`}
       >
         <Header />
-        <main className="flex-1 min-h-[calc(100vh-4rem)] pt-[4.5rem]">
-          <div className="p-4 md:p-6 lg:p-8">
+        <main className="flex-1 min-h-[calc(100vh-4rem)] pt-[4.5rem] bg-[#fefefe] dark:bg-neutral-900">
+          <div className="p-4 md:p-6 lg:p-8 bg-[#fefefe] dark:bg-neutral-900">
             <Outlet />
           </div>
         </main>

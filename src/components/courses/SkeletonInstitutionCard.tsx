@@ -2,7 +2,7 @@ import React from "react";
 
 const SkeletonInstitutionCard: React.FC = () => {
   return (
-    <div className="bg-white border border-gray-100 rounded-xl p-5 sm:p-6 animate-pulse">
+    <div className="bg-white border border-neutral-100 rounded-xl p-5 sm:p-6 animate-pulse">
       <div className="flex flex-col sm:flex-row gap-4">
         {/* University Logo */}
         <div className="flex-shrink-0">

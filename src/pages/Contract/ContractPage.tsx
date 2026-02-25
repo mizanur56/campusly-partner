@@ -32,7 +32,7 @@ export default function ContractPage() {
       <div className="mx-auto flex max-w-5xl flex-col gap-8 lg:flex-row lg:gap-10">
         {/* Left: Contract progress card */}
         <aside className="w-full shrink-0 lg:w-56 xl:w-64">
-          <div className="lg:sticky lg:top-24 rounded-2xl border border-gray-200 bg-white p-5 card-shadow dark:border-gray-800 dark:bg-gray-900">
+          <div className="lg:sticky lg:top-24 rounded-[24px] border border-neutral-100 bg-white p-5 card-shadow dark:border-gray-800 dark:bg-gray-900">
             <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">
               Contract
             </h2>
@@ -87,7 +87,7 @@ export default function ContractPage() {
 
         {/* Right: Contract content */}
         <main className="min-w-0 flex-1">
-          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white card-shadow dark:border-gray-800 dark:bg-gray-900">
+          <div className="overflow-hidden rounded-[24px] border border-neutral-100 bg-white card-shadow dark:border-gray-800 dark:bg-gray-900">
             {/* Header */}
             <header className="border-b border-gray-100 px-6 py-6 dark:border-gray-800 sm:px-8 sm:py-7">
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">

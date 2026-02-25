@@ -86,7 +86,7 @@ const Register = () => {
               Recruitment Partner
             </span>
           </div>
-          <div className="bg-white rounded-[24px] sm:rounded-[32px] border border-neutral-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-4 sm:p-5 md:p-6">
+          <div className="rounded-[24px] sm:rounded-[32px] border border-neutral-100 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)] p-4 sm:p-5 md:p-6">
             <div className="mb-4 sm:mb-5">
               <h1 className="text-xl md:text-2xl font-semibold text-neutral-900 mb-1">
                 Partner Registration

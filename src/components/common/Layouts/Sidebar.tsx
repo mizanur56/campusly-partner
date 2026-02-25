@@ -313,7 +313,7 @@ const Sidebar: React.FC = () => {
   return (
     <aside
       className={`fixed top-0 left-0 z-50 mt-16 flex h-screen flex-col transition-all duration-300 ease-in-out lg:mt-0
-        border-r border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900
+        border-r border-gray-200/60 bg-white dark:border-gray-800 dark:bg-gray-900
         ${isExpanded || isMobileOpen ? "w-[280px]" : "w-[80px]"}
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0`}

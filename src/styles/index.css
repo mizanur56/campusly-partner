@@ -93,12 +93,12 @@ layer(base);
   --error-800: #8c241c;
   --error-900: #6b1b15;
 
-  /* Neutral Colors */
-  --neutral-50: #edeeef;
-  --neutral-100: #c7cacd;
-  --neutral-200: #acb1b7;
-  --neutral-300: #888d96;
-  --neutral-400: #6f7782;
+  /* Neutral Colors - soft borders for cards */
+  --neutral-50: #f8f9fa;
+  --neutral-100: #eef0f2;
+  --neutral-200: #dee2e6;
+  --neutral-300: #adb5bd;
+  --neutral-400: #6c757d;
   --neutral-500: #4b5563;
   --neutral-600: #444d5d;
   --neutral-700: #353646;
@@ -639,7 +639,7 @@ layer(base);
   transform: translateX(0);
 }
 
-/* Card shadow removed — border only (use border-gray-200 etc. on card) */
+/* Card shadow — very light, subtle */
 .card-shadow {
-  box-shadow: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }

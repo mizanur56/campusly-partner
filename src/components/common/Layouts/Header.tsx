@@ -93,8 +93,8 @@ const Header: React.FC = () => {
         isExpanded ? "lg:left-[280px] lg:w-[calc(100vw-280px)]" : "lg:left-[80px] lg:w-[calc(100vw-80px)]"
       } ${
         hasScrolled
-          ? "border-gray-100 bg-white/80 backdrop-blur-md dark:border-gray-800 dark:bg-gray-900/80"
-          : "border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900"
+          ? "border-gray-200/60 bg-white/95 backdrop-blur-md dark:border-gray-800 dark:bg-gray-900/95"
+          : "border-gray-200/60 bg-white dark:border-gray-800 dark:bg-gray-900"
       }`}
     >
       <div className="flex w-full min-w-0 max-w-full items-center justify-between gap-2 px-4 sm:px-6 lg:px-8 py-4 sm:py-5">

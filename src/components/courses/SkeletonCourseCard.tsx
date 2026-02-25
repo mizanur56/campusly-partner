@@ -2,7 +2,7 @@ import React from "react";
 
 const SkeletonCourseCard: React.FC = () => {
   return (
-    <div className="bg-white border border-gray-100 rounded-xl p-5 sm:p-6 animate-pulse">
+    <div className="bg-white border border-neutral-100 rounded-xl p-5 sm:p-6 animate-pulse">
       {/* Title and Level */}
       <div className="mb-3 sm:mb-4">
         <div className="h-5 sm:h-6 bg-gray-200 rounded w-3/4 mb-2"></div>

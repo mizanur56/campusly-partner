@@ -52,12 +52,12 @@ const KeywordGroup: React.FC<KeywordGroupProps> = ({
             key={option.value}
             type="button"
             onClick={() => handleClick(option.value)}
-            className={`px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+            className={`px-4 py-2 rounded-full text-xs font-normal transition-all border shrink-0 ${
               shouldUseFlex1 ? "flex-1" : ""
             } ${
               active
-                ? "bg-primary-50 text-primary-700"
-                : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                ? "bg-primary-100 text-primary-700 border-primary-200"
+                : "bg-white text-gray-600 border-gray-200 hover:bg-primary-50 hover:text-primary-600 hover:border-primary-200"
             }`}
           >
             {option.label}

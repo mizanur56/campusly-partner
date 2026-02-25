@@ -33,7 +33,7 @@ export default function OnboardingFormLayout({
             variant={stepperVariant}
           />
           <main className="min-w-0 flex-1">
-            <div className="overflow-hidden rounded-2xl border border-gray-200/90 bg-white card-shadow dark:border-gray-700/90 dark:bg-gray-900">
+            <div className="overflow-hidden rounded-[24px] border border-neutral-100 bg-white card-shadow dark:border-gray-700/90 dark:bg-gray-900">
               <header className="border-b border-gray-100 bg-white px-6 py-5 dark:border-gray-800 dark:bg-gray-900 sm:px-8 sm:py-6">
                 {showStepInHeader && (
                   <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">

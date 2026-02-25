@@ -189,7 +189,7 @@ export default function InstitutionsResultsView({
       {universities.map((university) => (
         <div
           key={university.id}
-          className="bg-white border border-gray-100 rounded-xl p-5 sm:p-6"
+          className="bg-white border border-neutral-100 rounded-xl p-5 sm:p-6"
         >
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-shrink-0">

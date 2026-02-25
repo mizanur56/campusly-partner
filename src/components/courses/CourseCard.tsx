@@ -28,7 +28,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
   onViewDetails,
 }) => {
   return (
-    <div className="bg-white border border-gray-100 rounded-xl p-5 sm:p-6">
+    <div className="bg-white border border-neutral-100 rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.02)] p-5 sm:p-6">
       {/* Title and Level */}
       <div className="mb-4">
         <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">{title}</h3>

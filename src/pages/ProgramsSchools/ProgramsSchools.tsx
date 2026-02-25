@@ -60,7 +60,7 @@ export default function ProgramsSchoolsPage() {
                 className="absolute inset-0 bg-black/50"
                 onClick={() => setIsMobileFiltersOpen(false)}
               />
-              <div className="absolute inset-y-0 left-0 w-full max-w-xs bg-white shadow-xl flex flex-col">
+              <div className="absolute inset-y-0 left-0 w-full max-w-xs bg-white rounded-r-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.08)] flex flex-col">
                 <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                   <h2 className="text-xl font-semibold text-gray-900">
                     Filters
@@ -177,8 +177,7 @@ export default function ProgramsSchoolsPage() {
                 }`}
               >
                 <span className="whitespace-nowrap">
-                  Institutions{" "}
-                  <span className="opacity-90">({institutionsCount})</span>
+                  Institutions <span className="opacity-90">({institutionsCount})</span>
                 </span>
               </button>
             </div>
