@@ -9,6 +9,7 @@ import Dashboard from "../pages/Dashboard/Dashboard.tsx";
 import AllMediaList from "../pages/Media/Media";
 import NotFound from "../pages/OtherPage/NotFound";
 import UnderDevelopment from "../pages/OtherPage/UnderDevelopment";
+import ProgramsSchools from "../pages/ProgramsSchools/ProgramsSchools";
 import ProtectedRoute from "./ProtectedRoute";
 import { OnboardingPage } from "../pages/Onboarding";
 import ContractPage from "../pages/Contract/ContractPage";
@@ -32,7 +33,7 @@ const routes = [
       { path: "/contract/signed", element: <ContractSignedPage /> },
       { path: "/change-password", element: <ChangePassword /> },
       // Signed sidebar — default/under-development pages
-      { path: "/programs-schools", element: <UnderDevelopment /> },
+      { path: "/programs-schools", element: <ProgramsSchools /> },
       { path: "/students", element: <UnderDevelopment /> },
       { path: "/applications", element: <UnderDevelopment /> },
       { path: "/my-tasks", element: <UnderDevelopment /> },
