@@ -15,6 +15,7 @@ import { OnboardingPage } from "../pages/Onboarding";
 import ContractPage from "../pages/Contract/ContractPage";
 import ContractSignedPage from "../pages/Contract/ContractSignedPage";
 import Students from "../pages/Students/Students";
+import Applications from "../pages/Applications/Applications";
 
 const routes = [
   {
@@ -36,7 +37,7 @@ const routes = [
       // Signed sidebar — default/under-development pages
       { path: "/programs-schools", element: <ProgramsSchools /> },
       { path: "/students", element: <Students /> },
-      { path: "/applications", element: <UnderDevelopment /> },
+      { path: "/applications", element: <Applications /> },
       { path: "/my-tasks", element: <UnderDevelopment /> },
       { path: "/payments", element: <UnderDevelopment /> },
       { path: "/academy", element: <UnderDevelopment /> },

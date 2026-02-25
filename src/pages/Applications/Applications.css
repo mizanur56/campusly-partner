@@ -1,0 +1,26 @@
+.applications-page .applications-table .ant-table-thead > tr > th {
+  background-color: var(--neutral-50, #f8f9fa) !important;
+  font-weight: 600;
+}
+
+/* Table wrapper: respect card rounded corners */
+.applications-page .applications-table.ant-table-wrapper {
+  border-radius: 24px;
+  overflow: hidden;
+}
+.applications-page .applications-table .ant-table-container {
+  border-radius: 24px;
+  overflow: hidden;
+}
+.applications-page .applications-table .ant-table-thead > tr > th:first-child {
+  border-radius: 24px 0 0 0;
+}
+.applications-page .applications-table .ant-table-thead > tr > th:last-child {
+  border-radius: 0 24px 0 0;
+}
+.applications-page .applications-table .ant-table-tbody > tr:last-child > td:first-child {
+  border-radius: 0 0 0 24px;
+}
+.applications-page .applications-table .ant-table-tbody > tr:last-child > td:last-child {
+  border-radius: 0 0 24px 0;
+}
