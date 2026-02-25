@@ -1,4 +1,5 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap") layer(base);
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap")
+layer(base);
 
 @import "tailwindcss";
 
@@ -92,12 +93,12 @@
   --error-800: #8c241c;
   --error-900: #6b1b15;
 
-  /* Neutral Colors */
-  --neutral-50: #edeeef;
-  --neutral-100: #c7cacd;
-  --neutral-200: #acb1b7;
-  --neutral-300: #888d96;
-  --neutral-400: #6f7782;
+  /* Neutral Colors - soft borders for cards */
+  --neutral-50: #f8f9fa;
+  --neutral-100: #eef0f2;
+  --neutral-200: #dee2e6;
+  --neutral-300: #adb5bd;
+  --neutral-400: #6c757d;
   --neutral-500: #4b5563;
   --neutral-600: #444d5d;
   --neutral-700: #353646;
@@ -358,7 +359,7 @@
   }
 
   body {
-    @apply bg-[#FAFAFA] text-foreground font-sans;
+    @apply bg-[#FAFAFA] text-foreground font-sans overflow-x-hidden;
     font-family: var(--font-inter), "Inter", sans-serif;
   }
 }
@@ -443,6 +444,34 @@
   @apply bg-primary-50 group-hover:bg-primary-100 dark:group-hover:bg-primary-500/20;
 }
 
+/* ─── Root button styles (use .btn-* or <Button /> everywhere) ─── */
+@utility btn-base {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
+}
+@utility btn-primary {
+  @apply btn-base bg-primary-600 text-white shadow-md hover:bg-primary-700 hover:-translate-y-0.5 hover:shadow-lg active:bg-primary-800 active:translate-y-0 active:scale-[0.98];
+}
+@utility btn-secondary {
+  @apply btn-base border border-neutral-200 bg-white text-neutral-800 shadow-sm hover:bg-neutral-50 hover:border-neutral-300 hover:shadow active:bg-neutral-100 active:scale-[0.98] dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700/80;
+}
+
+/* Ant Design button — align with root */
+.ant-btn {
+  font-weight: 300 !important;
+  font-size: 14px !important;
+  border-radius: 0.5rem !important;
+}
+.ant-btn-primary {
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+}
+.ant-btn-sm {
+  font-size: 13px !important;
+}
+.ant-btn-lg {
+  font-size: 14px !important;
+  font-weight: 300 !important;
+}
+
 @utility no-scrollbar {
   /* Chrome, Safari and Opera */
   &::-webkit-scrollbar {
@@ -484,66 +513,133 @@
   }
 }
 
+.ant-form-item-label > label {
+  color: #20242a !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
 
-  .ant-form-item-label > label {
-    color: #20242A !important;
-    font-size: 14px !important;
-    font-weight: 500 !important;
-  }
+.ant-collapse-header[aria-expanded="true"] .ant-collapse-header-text,
+.ant-collapse-header[aria-expanded="false"] .ant-collapse-header-text {
+  color: #20242a !important;
+  font-size: 18px !important;
+  font-weight: 600 !important;
+}
+.ant-collapse-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+.ant-collapse-header-text {
+  order: 1 !important;
+}
+.ant-collapse-expand-icon {
+  order: 2 !important;
+  margin-left: auto !important;
+}
 
- 
-    .ant-collapse-header[aria-expanded="true"] .ant-collapse-header-text,
-    .ant-collapse-header[aria-expanded="false"] .ant-collapse-header-text {
-      color: #20242A !important;
-      font-size: 18px !important;
-      font-weight: 600 !important;
-    }
-    .ant-collapse-header {
-      display: flex !important;
-      justify-content: space-between !important;
-      align-items: center !important;
-    }
-    .ant-collapse-header-text {
-      order: 1 !important;
-    }
-    .ant-collapse-expand-icon {
-      order: 2 !important;
-      margin-left: auto !important;
-    }
-    
-      /* General placeholder style for all search inputs */
-    /* .ant-input::placeholder {
+/* General placeholder style for all search inputs */
+/* .ant-input::placeholder {
         color: #4B5563 !important;
       }
      */
-   
 
-      .compact-media-picker .border-2 {
-        padding: 12px !important;
-      }
-      .compact-media-picker .w-12 {
-        width: 32px !important;
-        height: 32px !important;
-      }
-      .compact-media-picker .mb-4 {
-        margin-bottom: 8px !important;
-      }
-      .compact-media-picker .text-base {
-        font-size: 14px !important;
-      }
-      .compact-media-picker .mt-4 {
-        margin-top: 8px !important;
-      }
-      .compact-media-picker .mt-3 {
-        margin-top: 4px !important;
-      }
-      .compact-media-picker .text-xs {
-        font-size: 11px !important;
-      }
+.compact-media-picker .border-2 {
+  padding: 12px !important;
+}
+.compact-media-picker .w-12 {
+  width: 32px !important;
+  height: 32px !important;
+}
+.compact-media-picker .mb-4 {
+  margin-bottom: 8px !important;
+}
+.compact-media-picker .text-base {
+  font-size: 14px !important;
+}
+.compact-media-picker .mt-4 {
+  margin-top: 8px !important;
+}
+.compact-media-picker .mt-3 {
+  margin-top: 4px !important;
+}
+.compact-media-picker .text-xs {
+  font-size: 11px !important;
+}
 
+.search-input .ant-input::placeholder {
+  color: #4b5563 !important;
+}
 
-      
-        .search-input .ant-input::placeholder {
-          color: #4B5563 !important;
-        }
-      
+/* Preview switch button — rotating border animation */
+@keyframes preview-border-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.preview-btn-rotating-border {
+  background: conic-gradient(
+    from 0deg,
+    #ef4444,
+    #f97316,
+    #eab308,
+    #22c55e,
+    #3b82f6,
+    #8b5cf6,
+    #ef4444
+  );
+}
+
+/* Full-screen preview switch: right-to-left then left-to-right wipe */
+@keyframes preview-wipe-enter {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes preview-wipe-exit {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+.preview-wipe-panel {
+  background: linear-gradient(
+    90deg,
+    rgba(248, 250, 252, 0.98) 0%,
+    rgba(255, 255, 255, 0.99) 85%,
+    rgba(255, 255, 255, 0.97) 100%
+  );
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-left: 3px solid var(--primary-500);
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.06);
+}
+
+.dark .preview-wipe-panel {
+  background: linear-gradient(
+    90deg,
+    rgba(23, 23, 23, 0.98) 0%,
+    rgba(38, 38, 38, 0.99) 85%,
+    rgba(38, 38, 38, 0.97) 100%
+  );
+  border-left-color: var(--primary-400);
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.25);
+}
+.preview-wipe-enter {
+  animation: preview-wipe-enter 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  transform: translateX(100%);
+}
+.preview-wipe-exit {
+  animation: preview-wipe-exit 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  transform: translateX(0);
+}
+
+/* Card shadow — very light, subtle */
+.card-shadow {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}

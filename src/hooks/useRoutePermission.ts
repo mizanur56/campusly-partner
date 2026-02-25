@@ -44,7 +44,7 @@ const matchRoute = (pathname: string, routePattern: string): boolean => {
  * Get permission requirement for a given route path
  */
 const getRoutePermission = (
-  pathname: string
+  pathname: string,
 ): { module: string; action: string } | null => {
   // Remove trailing slash for consistency
   const normalizedPath =
@@ -112,7 +112,7 @@ export const useRoutePermission = () => {
 
     if (!hasAccess) {
       console.warn(
-        `🚫 Access denied to ${location.pathname}: Missing "${requirement.action}" permission for "${requirement.module}"`
+        `🚫 Access denied to ${location.pathname}: Missing "${requirement.action}" permission for "${requirement.module}"`,
       );
       navigate("/403", { replace: true });
     } else {

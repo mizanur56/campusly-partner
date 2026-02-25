@@ -25,7 +25,8 @@ export default function UserDropdown() {
     <div className="relative">
       <button
         onClick={toggleDropdown}
-        className="relative flex items-center justify-center text-gray-500 transition-colors bg-white border border-gray-200 rounded-full dropdown-toggle hover:text-gray-700 h-11 w-11 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800 dark:hover:text-white"
+        className="relative flex items-center justify-center w-11 h-11 text-gray-500 transition-colors bg-white border border-gray-100 rounded-full dropdown-toggle hover:text-gray-700 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800 dark:hover:text-white"
+        aria-label="User menu"
       >
         <span className="overflow-hidden rounded-full h-8 w-8 bg-gray-100 flex items-center justify-center">
           <img
@@ -46,7 +47,7 @@ export default function UserDropdown() {
             }}
           />
           <div
-            className="h-full w-full bg-primary-100 flex items-center justify-center text-primary-600 font-semibold text-sm"
+            className="h-full w-full bg-primary-100 flex items-center justify-center text-primary-600 font-semibold text-base"
             style={{ display: "none" }}
           >
             {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
@@ -57,24 +58,24 @@ export default function UserDropdown() {
       <Dropdown
         isOpen={isOpen}
         onClose={closeDropdown}
-        className="absolute right-0 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"
+        className="absolute right-0 left-auto mt-[17px] flex w-[260px] flex-col"
       >
-        <div>
-          <span className="block font-medium text-gray-700 text-theme-sm ">
-            {user?.name || "User"}
+        <div className="mb-3">
+          <span className="block text-sm font-medium text-gray-900 dark:text-gray-100">
+            {user?.name || "Partner user"}
           </span>
-          <span className="mt-0.5 block text-theme-xs text-gray-500 ">
+          <span className="mt-0.5 block text-xs text-gray-500 dark:text-gray-400">
             {user?.email || "user@example.com"}
           </span>
         </div>
 
-        <ul className="flex flex-col gap-1 pt-4 pb-3 border-b border-gray-200 dark:border-gray-800">
+        <ul className="flex flex-col gap-1 pt-3 pb-3 border-t border-gray-200 dark:border-gray-800">
           <li>
             <DropdownItem
               onItemClick={closeDropdown}
               tag="a"
               to="/profile"
-              className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700  dark:hover:bg-white/5 dark:hover:text-gray-300"
+              className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 dark:text-gray-300"
             >
               <svg
                 className="fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300"
@@ -128,7 +129,7 @@ export default function UserDropdown() {
             closeDropdown();
             navigate("/login");
           }}
-          className="flex items-center gap-3 px-3 py-2 mt-3 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700  dark:hover:bg-white/5 dark:hover:text-gray-300"
+          className="mt-2 flex w-full items-center gap-3 px-3 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
         >
           <svg
             className="fill-gray-500 group-hover:fill-gray-700 dark:group-hover:fill-gray-300"

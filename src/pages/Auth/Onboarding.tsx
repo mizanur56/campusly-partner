@@ -1,6 +1,6 @@
 
 // Mock components for onboarding steps
-import { Form, Button, theme, Avatar } from "antd";
+import { Form, Button as AntButton, theme, Avatar } from "antd";
 import { useState } from "react";
 import { UserOutlined, BellOutlined } from "@ant-design/icons";
 import BaseFormInput from "../../components/common/Forms/FormInput";
@@ -477,33 +477,33 @@ const Onboarding = () => {
 
               <div className="flex justify-end gap-3 mt-8">
                 {currentStep > 0 && (
-                  <Button
+                  <AntButton
                     size="large"
                     className="px-8 border-green-600 text-green-600 hover:bg-green-50"
                     onClick={() => prev()}
                   >
                     Previous
-                  </Button>
+                  </AntButton>
                 )}
                 {currentStep < steps.length - 1 && (
-                  <Button
+                  <AntButton
                     size="large"
                     type="primary"
                     onClick={() => next()}
                     className="px-8 bg-green-600 hover:bg-green-700 shadow-none"
                   >
                     Next
-                  </Button>
+                  </AntButton>
                 )}
                 {currentStep === steps.length - 1 && (
-                  <Button
+                  <AntButton
                     size="large"
                     type="primary"
                     htmlType="submit"
                     className="px-8 bg-green-600 hover:bg-green-700 shadow-none"
                   >
                     Approve
-                  </Button>
+                  </AntButton>
                 )}
               </div>
             </Form>

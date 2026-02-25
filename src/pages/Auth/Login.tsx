@@ -1,22 +1,22 @@
 import { LockOutlined, MailOutlined } from "@ant-design/icons";
-import { Button, Form, Input, Typography } from "antd";
-// import { useLocation, useNavigate } from "react-router-dom";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Form, Input } from "antd";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useState, useEffect } from "react";
 import PageMeta from "../../components/common/Meta/PageMeta";
+import AuthIllustration from "../../components/auth/AuthIllustration";
+import SocialLoginButtons from "../../components/auth/SocialLoginButtons";
+import { Button } from "../../components/ui/button";
 import { useLoginMutation } from "../../redux/features/auth/authApi";
 import { setUser } from "../../redux/features/auth/authSlice";
 import { useAppDispatch } from "../../redux/features/hooks";
+import { cn } from "../../utils/utils";
 
-const { Link } = Typography;
-
-// Define form input shape
 interface LoginFormValues {
   email: string;
   password: string;
 }
 
-// loading function
 const Login = () => {
   const [form] = Form.useForm<LoginFormValues>();
   const dispatch = useAppDispatch();
@@ -24,10 +24,44 @@ const Login = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Prefer redirect query param (e.g. /login?redirect=%2Fproducts%2F123)
+  // Tab transition state
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [activeTab, setActiveTab] = useState<"student" | "partner">(
+    location.pathname.includes("/student") ? "student" : "partner", // Default partner
+  );
+
+  useEffect(() => {
+    // Only update if path includes student, otherwise keep partner as default
+    if (location.pathname.includes("/student")) {
+      setActiveTab("student");
+    } else {
+      setActiveTab("partner");
+    }
+    setIsTransitioning(false);
+  }, [location.pathname]);
+
+  const handleTabChange = (tab: "student" | "partner", path: string) => {
+    if (tab === activeTab) return;
+
+    if (tab === "student") {
+      // Student tab - show coming soon toast
+      toast.info("Student login coming soon!", {
+        position: "top-center",
+        autoClose: 2000,
+        hideProgressBar: true,
+      });
+      return;
+    }
+
+    // Partner tab - navigate
+    setIsTransitioning(true);
+    setTimeout(() => {
+      navigate(path);
+    }, 150);
+  };
+
   const searchParams = new URLSearchParams(location.search);
   const redirectParam = searchParams.get("redirect");
-
   const from =
     (location.state as { from?: { pathname: string } })?.from?.pathname ||
     (redirectParam ? decodeURIComponent(redirectParam) : "/");
@@ -43,11 +77,9 @@ const Login = () => {
 
       if (res) {
         localStorage.setItem("token", res?.data?.token);
-        // Determine user type based on role
         const userFromResponse = res?.data?.user;
         const userType =
           userFromResponse?.role === "EMPLOYEE" ? "employee" : "user";
-
         const userData = {
           ...userFromResponse,
           type: userType,
@@ -60,87 +92,203 @@ const Login = () => {
       toast.error(
         err?.data?.errors ||
           err?.data?.message ||
-          "Something went wrong. Please try again later."
+          "Something went wrong. Please try again later.",
       );
     }
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-slate-50 px-4 sm:px-6">
       <PageMeta
-        title="React.js SignIn Dashboard | Campus Transfer - Next.js Partner Dashboard Template"
-        description="This is React.js SignIn Tables Dashboard page for Campus Transfer - React.js Tailwind CSS Partner Dashboard Template"
+        title={
+          activeTab === "partner"
+            ? "Partner Sign In | Campus Transfer"
+            : "Student Sign In | Campus Transfer"
+        }
+        description="Login to your Campus Transfer account"
       />
-      <div className="w-full max-w-md">
-        <div className="mb-5 sm:mb-8">
-          <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
-            Sign In
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Enter your email and password to sign in!
-          </p>
-        </div>
 
-        <Form
-          form={form}
-          name="login"
-          requiredMark={false}
-          onFinish={onFinish}
-          layout="vertical"
-          size="large"
-          className="space-y-6"
-        >
-          <Form.Item
-            label={
-              <span className="text-sm font-medium text-gray-700">
-                Email address
-              </span>
-            }
-            name="email"
-            rules={[
-              { required: true, message: "Please input your email!" },
-              { type: "email", message: "Please enter a valid email!" },
-            ]}
-          >
-            <Input
-              prefix={<MailOutlined className="text-gray-400" />}
-              placeholder="Enter your email"
-            />
-          </Form.Item>
+      <div className="flex w-full max-w-[980px] flex-col overflow-hidden rounded-3xl lg:flex-row">
+        <AuthIllustration />
 
-          <Form.Item
-            label={
-              <span className="text-sm font-medium text-gray-700">
-                Password
-              </span>
-            }
-            name="password"
-            rules={[{ required: true, message: "Please input your password!" }]}
-          >
-            <Input.Password
-              prefix={<LockOutlined className="text-gray-400" />}
-              placeholder="Enter your password"
-            />
-          </Form.Item>
+        <div className="flex w-full lg:w-1/2 items-center justify-center py-8 sm:py-10 lg:py-12 lg:min-h-[520px]">
+          <div className="w-full max-w-[563px] px-4 sm:px-6 lg:px-8">
+            {/* Professional Tabs with Coming Soon */}
+            <div className="mb-6 flex border-b border-neutral-200">
+              <div className="relative">
+                <button
+                  onClick={() => handleTabChange("student", "/student/login")}
+                  className={cn(
+                    "relative py-3 px-6 text-sm font-medium transition-all duration-200",
+                    activeTab === "student"
+                      ? "text-primary-600"
+                      : "text-neutral-400 cursor-not-allowed",
+                  )}
+                  disabled={activeTab !== "student"}
+                >
+                  Student
+                  {activeTab === "student" && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full bg-primary-600" />
+                  )}
+                </button>
+                {activeTab !== "student" && (
+                  <span className="absolute -top-2 -right-2 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+                    Soon
+                  </span>
+                )}
+              </div>
 
-          <div className="flex justify-end">
-            <Link
-              href="/forgot-password"
-              className="text-sm text-gray-600 hover:text-gray-900"
+              <button
+                onClick={() => handleTabChange("partner", "/partner/login")}
+                className={cn(
+                  "relative py-3 px-6 text-sm font-medium transition-all duration-200",
+                  activeTab === "partner"
+                    ? "text-primary-600"
+                    : "text-neutral-500 hover:text-neutral-700",
+                )}
+              >
+                Recruitment Partner
+                {activeTab === "partner" && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full bg-primary-600" />
+                )}
+              </button>
+            </div>
+
+            {/* Content with fade transition */}
+            <div
+              className={cn(
+                "transition-all duration-200",
+                isTransitioning ? "opacity-0 scale-95" : "opacity-100 scale-100",
+              )}
             >
-              Forgot password?
-            </Link>
-          </div>
+              {/* Card with SidebarCards inspired styling */}
+              <div className="flex flex-col rounded-3xl bg-white p-6 shadow-sm">
+                <div className="mb-5">
+                  <h1 className="mb-1 text-xl font-semibold text-neutral-900">
+                    {activeTab === "partner"
+                      ? "Recruitment Partner Login"
+                      : "Student Login"}
+                  </h1>
+                  <p className="text-sm text-neutral-500">
+                    {activeTab === "partner"
+                      ? "Access your partner dashboard and manage your students"
+                      : "Student portal is coming soon"}
+                  </p>
+                </div>
 
-          <Button
-            type="primary"
-            htmlType="submit"
-            loading={isLoading}
-            className="w-fit px-5!"
-          >
-            Sign in
-          </Button>
-        </Form>
+                <Form
+                  form={form}
+                  name="login"
+                  requiredMark={false}
+                  onFinish={onFinish}
+                  layout="vertical"
+                  size="large"
+                >
+                  <Form.Item
+                    label={
+                      <span className="text-sm font-medium text-neutral-700">
+                        Email
+                      </span>
+                    }
+                    name="email"
+                    rules={[
+                      { required: true, message: "Please input your email!" },
+                      { type: "email", message: "Please enter a valid email!" },
+                    ]}
+                  >
+                    <Input
+                      prefix={<MailOutlined className="text-neutral-400" />}
+                      placeholder="Enter your email"
+                      className={cn(
+                        "rounded-lg hover:border-primary-400 transition-colors",
+                        activeTab === "student" && "bg-neutral-50",
+                      )}
+                      disabled={activeTab === "student"}
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    label={
+                      <span className="text-sm font-medium text-neutral-700">
+                        Password
+                      </span>
+                    }
+                    name="password"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please input your password!",
+                      },
+                    ]}
+                  >
+                    <Input.Password
+                      prefix={<LockOutlined className="text-neutral-400" />}
+                      placeholder="Enter your password"
+                      className={cn(
+                        "rounded-lg hover:border-primary-400 transition-colors",
+                        activeTab === "student" && "bg-neutral-50",
+                      )}
+                      disabled={activeTab === "student"}
+                    />
+                  </Form.Item>
+
+                  <div className="mb-4 flex justify-end">
+                    <Link
+                      to={activeTab === "partner" ? "/forgot-password" : "#"}
+                      className={cn(
+                        "text-sm transition-colors",
+                        activeTab === "partner"
+                          ? "text-primary-600 hover:text-primary-700"
+                          : "pointer-events-none text-neutral-300",
+                      )}
+                    >
+                      Forgot Password?
+                    </Link>
+                  </div>
+
+                  {activeTab === "partner" && (
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      disabled={isLoading}
+                      className="w-full h-10 text-sm font-semibold"
+                    >
+                      {isLoading ? "Logging in..." : "Login"}
+                    </Button>
+                  )}
+                </Form>
+
+                <div className="mt-4 text-center">
+                  <p className="text-sm text-neutral-500">
+                    Don't have an account?{" "}
+                    {activeTab === "partner" ? (
+                      <Link
+                        to="/partner/register"
+                        className="font-medium text-primary-600 hover:text-primary-700"
+                      >
+                        Register as Partner
+                      </Link>
+                    ) : (
+                      <span className="text-neutral-400">Coming Soon</span>
+                    )}
+                  </p>
+                </div>
+
+                {/* Only keep core login button – remove extra social buttons for a cleaner look */}
+              </div>
+            </div>
+
+            {/* Simple note for student tab */}
+            {activeTab === "student" && (
+              <div className="mt-4 rounded-lg bg-blue-50 p-4 text-center">
+                <p className="text-sm text-blue-700">
+                  🎓 Student portal is under development. Please check back
+                  soon!
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
