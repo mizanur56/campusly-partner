@@ -3,6 +3,8 @@ import { useSearchParams } from "react-router-dom";
 import StudyPreferenceFilters, {
   FilterState,
 } from "../../components/courses/StudyPreferenceFilters";
+import StudentSelectBlock from "../../components/courses/StudentSelectBlock";
+import type { SelectedStudent } from "../../components/courses/SelectedStudentCard";
 import CoursesResultsView from "../../components/courses/CoursesResultsView";
 import InstitutionsResultsView from "../../components/courses/InstitutionsResultsView";
 import { useAppSelector } from "../../redux/features/hooks";
@@ -18,6 +20,7 @@ export default function ProgramsSchoolsPage() {
   const [searchQuery, setSearchQuery] = useState(qFromUrl);
   const [filters, setFilters] = useState<FilterState | undefined>(undefined);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<SelectedStudent | null>(null);
 
   const metaData = useAppSelector((state) => state.searchMeta);
   const coursesCount = metaData.courses || 0;
@@ -41,7 +44,11 @@ export default function ProgramsSchoolsPage() {
             className="hidden lg:block order-2 lg:order-1 lg:shrink-0"
             style={{ width: "100%", maxWidth: "320px" }}
           >
-            <div className="lg:sticky lg:top-6">
+            <div className="lg:sticky lg:top-6 space-y-4">
+              <StudentSelectBlock
+                selectedStudent={selectedStudent}
+                onSelect={setSelectedStudent}
+              />
               <StudyPreferenceFilters onFilterChange={handleFilterChange} />
             </div>
           </div>
@@ -77,7 +84,11 @@ export default function ProgramsSchoolsPage() {
                     </svg>
                   </button>
                 </div>
-                <div className="flex-1 overflow-y-auto p-4">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  <StudentSelectBlock
+                    selectedStudent={selectedStudent}
+                    onSelect={setSelectedStudent}
+                  />
                   <StudyPreferenceFilters onFilterChange={handleFilterChange} />
                 </div>
                 <div className="p-4 border-t border-gray-100 bg-gray-50">
