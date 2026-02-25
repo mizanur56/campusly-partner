@@ -73,13 +73,21 @@ export default function Students() {
         title="Students - Campus Transfer Partner"
         description="View and manage your students, applications, and enrollment status in the Campus Transfer Partner panel."
       />
-      <div className="mb-4">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
-          Students
-        </h1>
-        <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-          Total {filteredData.length} students
-        </p>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
+            Students
+          </h1>
+          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+            Easily manage every student you onboard and support.
+          </p>
+        </div>
+        <button
+          type="button"
+          className="inline-flex items-center justify-center rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+        >
+          + Add student
+        </button>
       </div>
 
       <div className="mb-6 max-w-sm">
