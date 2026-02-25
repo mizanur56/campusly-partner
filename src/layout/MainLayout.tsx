@@ -23,6 +23,7 @@ const LayoutContent: React.FC = () => {
     setTimeout(() => {
       togglePreviewMode();
       navigate("/", { replace: true });
+      window.scrollTo(0, 0);
       setWipePhase("exit");
       setTimeout(() => setWipePhase(null), EXIT_MS);
     }, ENTER_MS + DELAY_BETWEEN_MS);

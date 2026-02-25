@@ -16,13 +16,41 @@ const SidebarItems: NavItem[] = [
 
 const SignedSidebarItems: NavItem[] = [
   { icon: <i className="fa-solid fa-house"></i>, name: "Home", path: "/" },
-  { icon: <i className="fa-solid fa-magnifying-glass"></i>, name: "Programs & Schools", path: "/programs-schools" },
-  { icon: <i className="fa-solid fa-users"></i>, name: "Students", path: "/students" },
-  { icon: <i className="fa-solid fa-file-lines"></i>, name: "Applications", path: "/applications" },
-  { icon: <i className="fa-solid fa-list-check"></i>, name: "My Tasks", path: "/my-tasks" },
-  { icon: <i className="fa-solid fa-credit-card"></i>, name: "Payments", path: "/payments" },
-  { icon: <i className="fa-solid fa-graduation-cap"></i>, name: "Academy", path: "/academy" },
-  { icon: <i className="fa-solid fa-fire"></i>, name: "Hot Offers", path: "/hot-offers" },
+  {
+    icon: <i className="fa-solid fa-magnifying-glass"></i>,
+    name: "Programs & Schools",
+    path: "/programs-schools",
+  },
+  {
+    icon: <i className="fa-solid fa-users"></i>,
+    name: "Students",
+    path: "/students",
+  },
+  {
+    icon: <i className="fa-solid fa-file-lines"></i>,
+    name: "Applications",
+    path: "/applications",
+  },
+  {
+    icon: <i className="fa-solid fa-list-check"></i>,
+    name: "My Tasks",
+    path: "/my-tasks",
+  },
+  {
+    icon: <i className="fa-solid fa-credit-card"></i>,
+    name: "Payments",
+    path: "/payments",
+  },
+  {
+    icon: <i className="fa-solid fa-graduation-cap"></i>,
+    name: "Academy",
+    path: "/academy",
+  },
+  {
+    icon: <i className="fa-solid fa-fire"></i>,
+    name: "Hot Offers",
+    path: "/hot-offers",
+  },
 ];
 const SIGNED_ROUTE_PATHS = [
   "/programs-schools",
@@ -60,9 +88,9 @@ const Sidebar: React.FC = () => {
   const profileEmail = user?.email ?? fallbackManagedBy.email;
   const profilePhone = fallbackManagedBy.phone;
   const profilePhotoUrl = user?.profile_photo
-    ? (user.profile_photo.startsWith("http")
-        ? user.profile_photo
-        : `${config.image_access_url || ""}${user.profile_photo}`)
+    ? user.profile_photo.startsWith("http")
+      ? user.profile_photo
+      : `${config.image_access_url || ""}${user.profile_photo}`
     : `https://i.pravatar.cc/80?u=${user?.id || encodeURIComponent(profileEmail) || "user"}`;
 
   const handleLogout = () => {
@@ -72,18 +100,22 @@ const Sidebar: React.FC = () => {
   };
 
   const baseItems =
-    (location.pathname === "/" && previewMode === "signed") || SIGNED_ROUTE_PATHS.includes(location.pathname)
+    (location.pathname === "/" && previewMode === "signed") ||
+    SIGNED_ROUTE_PATHS.includes(location.pathname)
       ? SignedSidebarItems
       : SidebarItems;
   const filteredSidebarItems = useFilteredSidebarItems(baseItems);
   const isSignedSidebar =
-    (location.pathname === "/" && previewMode === "signed") || SIGNED_ROUTE_PATHS.includes(location.pathname);
+    (location.pathname === "/" && previewMode === "signed") ||
+    SIGNED_ROUTE_PATHS.includes(location.pathname);
 
   const [openSubmenu, setOpenSubmenu] = useState<{
     type: "main" | "others";
     index: number;
   } | null>(null);
-  const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>({});
+  const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>(
+    {},
+  );
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const isActive = useCallback(
@@ -99,7 +131,7 @@ const Sidebar: React.FC = () => {
       }
       return location.pathname === path;
     },
-    [location.pathname]
+    [location.pathname],
   );
 
   const isAnyNestedItemActive = useCallback(
@@ -110,7 +142,7 @@ const Sidebar: React.FC = () => {
         return false;
       });
     },
-    [isActive]
+    [isActive],
   );
 
   useEffect(() => {
@@ -147,7 +179,7 @@ const Sidebar: React.FC = () => {
     setOpenSubmenu((prev) =>
       prev?.type === menuType && prev?.index === index
         ? null
-        : { type: menuType, index }
+        : { type: menuType, index },
     );
   };
 
@@ -228,12 +260,16 @@ const Sidebar: React.FC = () => {
                 {(isExpanded || isMobileOpen) &&
                   (nav.name.length > 15 ? (
                     <Tooltip title={nav.name} placement="right">
-                      <span className={`text-left truncate max-w-[150px] ${isSignedSidebar ? "text-sm font-medium" : "text-base font-semibold"}`}>
+                      <span
+                        className={`text-left truncate max-w-[150px] ${isSignedSidebar ? "text-sm font-medium" : "text-base font-semibold"}`}
+                      >
                         {nav.name.substring(0, 15) + "..."}
                       </span>
                     </Tooltip>
                   ) : (
-                    <span className={`text-left ${isSignedSidebar ? "text-sm font-medium" : "text-base font-medium"}`}>
+                    <span
+                      className={`text-left ${isSignedSidebar ? "text-sm font-medium" : "text-base font-medium"}`}
+                    >
                       {nav.name}
                     </span>
                   ))}
@@ -281,7 +317,9 @@ const Sidebar: React.FC = () => {
                   </span>
                 </span>
                 {(isExpanded || isMobileOpen) && (
-                  <span className={`text-left ${isSignedSidebar ? "text-sm font-medium" : "text-base font-semibold"}`}>
+                  <span
+                    className={`text-left ${isSignedSidebar ? "text-sm font-medium" : "text-base font-semibold"}`}
+                  >
                     {nav.name}
                   </span>
                 )}
@@ -328,16 +366,20 @@ const Sidebar: React.FC = () => {
           <img
             src="/images/logo/Frame1044.svg"
             alt="Campus Transfer"
-            className={(isExpanded || isMobileOpen) ? "h-20 w-auto max-w-[300px]" : "h-14 w-14 object-contain"}
+            className={
+              isExpanded || isMobileOpen
+                ? "h-20 w-auto max-w-[300px]"
+                : "h-14 w-14 object-contain"
+            }
           />
         </Link>
       </div>
 
-      {/* Managed by — live profile, simple & professional (hidden in signed preview) */}
-      {(isExpanded || isMobileOpen) && !isSignedSidebar && (
+      {/* User profile — shown when sidebar is expanded (onboarding + signed phase) */}
+      {(isExpanded || isMobileOpen) && (
         <div className="mx-3 mt-2 rounded-xl bg-gray-50/80 p-3 dark:bg-gray-800/40">
           <p className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-            Managed by
+            {isSignedSidebar ? "" : "Managed by"}
           </p>
           <div className="mt-2 flex items-center gap-2.5">
             <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
@@ -347,13 +389,20 @@ const Sidebar: React.FC = () => {
                 className="h-full w-full object-cover"
                 onError={(e) => {
                   e.currentTarget.style.display = "none";
-                  const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                  const fallback = e.currentTarget
+                    .nextElementSibling as HTMLElement;
                   if (fallback) fallback.style.display = "flex";
                 }}
               />
               <span
                 className="text-sm font-semibold text-gray-600 dark:text-gray-300"
-                style={{ display: "none", alignItems: "center", justifyContent: "center", width: "100%", height: "100%" }}
+                style={{
+                  display: "none",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "100%",
+                  height: "100%",
+                }}
               >
                 {profileName.charAt(0)}
               </span>
@@ -367,8 +416,18 @@ const Sidebar: React.FC = () => {
               href={`mailto:${profileEmail}`}
               className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
             >
-              <svg className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              <svg
+                className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                />
               </svg>
               <span className="min-w-0 truncate">{profileEmail}</span>
             </a>
@@ -376,8 +435,18 @@ const Sidebar: React.FC = () => {
               href={`tel:${profilePhone.replace(/\s/g, "")}`}
               className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
             >
-              <svg className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+              <svg
+                className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                />
               </svg>
               <span className="min-w-0 truncate">{profilePhone}</span>
             </a>
