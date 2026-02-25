@@ -16,6 +16,7 @@ import ContractPage from "../pages/Contract/ContractPage";
 import ContractSignedPage from "../pages/Contract/ContractSignedPage";
 import Students from "../pages/Students/Students";
 import Applications from "../pages/Applications/Applications";
+import MyTasks from "../pages/MyTasks/MyTasks";
 
 const routes = [
   {
@@ -38,7 +39,7 @@ const routes = [
       { path: "/programs-schools", element: <ProgramsSchools /> },
       { path: "/students", element: <Students /> },
       { path: "/applications", element: <Applications /> },
-      { path: "/my-tasks", element: <UnderDevelopment /> },
+      { path: "/my-tasks", element: <MyTasks /> },
       { path: "/payments", element: <UnderDevelopment /> },
       { path: "/academy", element: <UnderDevelopment /> },
       { path: "/hot-offers", element: <UnderDevelopment /> },
