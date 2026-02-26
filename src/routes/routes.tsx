@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import MainLayout from "../layout/MainLayout";
 import ChangePassword from "../pages/Auth/ChangePassword";
 import ForgetPassword from "../pages/Auth/ForgetPassword";
@@ -7,6 +7,8 @@ import Register from "../pages/Auth/Register";
 import ResetPassword from "../pages/Auth/ResetPassword";
 import Dashboard from "../pages/Dashboard/Dashboard.tsx";
 import AllMediaList from "../pages/Media/Media";
+import Academy from "../pages/Academy/Academy";
+import HotOffers from "../pages/HotOffers/HotOffers";
 import NotFound from "../pages/OtherPage/NotFound";
 import UnderDevelopment from "../pages/OtherPage/UnderDevelopment";
 import ProgramsSchools from "../pages/ProgramsSchools/ProgramsSchools";
@@ -17,6 +19,7 @@ import ContractSignedPage from "../pages/Contract/ContractSignedPage";
 import Students from "../pages/Students/Students";
 import Applications from "../pages/Applications/Applications";
 import MyTasks from "../pages/MyTasks/MyTasks";
+import Payments from "../pages/Payments/Payments";
 
 const routes = [
   {
@@ -40,9 +43,11 @@ const routes = [
       { path: "/students", element: <Students /> },
       { path: "/applications", element: <Applications /> },
       { path: "/my-tasks", element: <MyTasks /> },
-      { path: "/payments", element: <UnderDevelopment /> },
-      { path: "/academy", element: <UnderDevelopment /> },
-      { path: "/hot-offers", element: <UnderDevelopment /> },
+      { path: "/payments", element: <Navigate to="/payments/purchase" replace /> },
+      { path: "/payments/purchase", element: <Payments /> },
+      { path: "/payments/commission", element: <Payments /> },
+      { path: "/academy", element: <Academy /> },
+      { path: "/hot-offers", element: <HotOffers /> },
       // Fallback for undefined child routes
       { path: "*", element: <UnderDevelopment /> },
     ],

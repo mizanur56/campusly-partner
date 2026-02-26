@@ -32,13 +32,13 @@ const mockCourses = [
 
 const SCROLL_THRESHOLD = 8;
 
-const SIGNED_HEADER_PATHS = ["/programs-schools", "/students", "/applications", "/my-tasks", "/payments", "/academy", "/hot-offers"];
+const SIGNED_HEADER_PATHS = ["/programs-schools", "/students", "/applications", "/my-tasks", "/academy", "/hot-offers"];
 
 const Header: React.FC = () => {
   const { pathname } = useLocation();
   const { previewMode } = usePreviewMode();
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar, isExpanded } = useSidebar();
-  const isSignedMode = (pathname === "/" && previewMode === "signed") || SIGNED_HEADER_PATHS.includes(pathname);
+  const isSignedMode = (pathname === "/" && previewMode === "signed") || SIGNED_HEADER_PATHS.includes(pathname) || pathname.startsWith("/payments");
   const [isCoursesOpen, setIsCoursesOpen] = useState(false);
   const [isCountriesOpen, setIsCountriesOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
@@ -49,9 +49,8 @@ const Header: React.FC = () => {
     pathname === "/" ||
     pathname.startsWith("/onboarding") ||
     pathname.startsWith("/contract") ||
-    ["/programs-schools", "/students", "/applications", "/my-tasks", "/payments", "/academy", "/hot-offers"].includes(
-      pathname
-    );
+    ["/programs-schools", "/students", "/applications", "/my-tasks", "/academy", "/hot-offers"].includes(pathname) ||
+    pathname.startsWith("/payments");
 
   const countries = mockCountries;
   const countryOptions = countries;
@@ -339,48 +338,54 @@ const Header: React.FC = () => {
           {/* Signed mode: Announcements, Documents, Marking, Notifications */}
           {isSignedMode ? (
             <>
-              <button type="button" className="flex items-center justify-center rounded-full p-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200" aria-label="Announcements">
-                <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.712-6.673A1 1 0 005 12.5V5.882a1.76 1.76 0 013.418-.592l2.712 6.673A1 1 0 0011 5.882z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 9.34a1.76 1.76 0 011.417.592l2.712 6.673A1 1 0 0119 12.5V5.882a1.76 1.76 0 00-3.418-.592l-2.712 6.673A1 1 0 0015 9.34z" /></svg>
+              <button
+                type="button"
+                className="flex items-center justify-center rounded-full p-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                aria-label="Announcements"
+              >
+                <i className="fa-solid fa-bullhorn text-[18px]" />
               </button>
-              <button type="button" className="flex items-center justify-center rounded-full p-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200" aria-label="Documents">
-                <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
+              <button
+                type="button"
+                className="flex items-center justify-center rounded-full p-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                aria-label="Documents"
+              >
+                <i className="fa-solid fa-file-lines text-[18px]" />
               </button>
-              <button type="button" className="flex items-center justify-center rounded-full p-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200" aria-label="Marking">
-                <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+              <button
+                type="button"
+                className="flex items-center justify-center rounded-full p-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                aria-label="Marking"
+              >
+                <i className="fa-solid fa-clipboard-check text-[18px]" />
               </button>
-              <button type="button" className="relative flex items-center justify-center rounded-full p-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200" aria-label="Notifications">
-                <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
-                <span className="absolute right-1 top-1 flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-400 opacity-75" /><span className="relative inline-flex h-2 w-2 rounded-full bg-primary-500 ring-2 ring-white dark:ring-gray-900" /></span>
+              <button
+                type="button"
+                className="relative flex items-center justify-center rounded-full p-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                aria-label="Notifications"
+              >
+                <i className="fa-solid fa-bell text-[18px]" />
+                <span className="absolute right-1 top-1 flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-primary-500 ring-2 ring-white dark:ring-gray-900" />
+                </span>
               </button>
             </>
           ) : null}
 
           {/* Notification — when not signed (signed has bell in "others" above) */}
           {!isSignedMode && (
-          <button
-            type="button"
-            className="relative flex items-center justify-center rounded-full p-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-            aria-label="Notifications"
-          >
-            <svg
-              className="h-5 w-5 shrink-0"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.75}
-              viewBox="0 0 24 24"
-              aria-hidden
+            <button
+              type="button"
+              className="relative flex items-center justify-center rounded-full p-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+              aria-label="Notifications"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
-              />
-            </svg>
-            <span className="absolute right-1 top-1 flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-400 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary-500 ring-2 ring-white dark:ring-gray-900" />
-            </span>
-          </button>
+              <i className="fa-solid fa-bell text-[18px]" aria-hidden />
+              <span className="absolute right-1 top-1 flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-primary-500 ring-2 ring-white dark:ring-gray-900" />
+              </span>
+            </button>
           )}
 
           {/* User icon — always at the very right */}

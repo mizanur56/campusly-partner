@@ -16,14 +16,78 @@ interface StudentRecord {
 }
 
 const MOCK_STUDENTS: StudentRecord[] = [
-  { key: "1", name: "Md Abdul Khalak", email: "md.abdulkhalak@example.com", phone: "+880 1712345678", course: "MBA", status: "Active", appliedDate: "2025-01-15" },
-  { key: "2", name: "Md Abdul Khaliq", email: "abdul.khaliq@example.com", phone: "+880 1812345678", course: "BSc Computer Science", status: "Pending", appliedDate: "2025-02-01" },
-  { key: "3", name: "Tareeq Mahmud", email: "tareeq.mahmud@example.com", phone: "+880 1912345678", course: "MSc Data Science", status: "Active", appliedDate: "2025-01-20" },
-  { key: "4", name: "Fatima Rahman", email: "fatima.rahman@example.com", phone: "+880 1612345678", course: "LLB", status: "Accepted", appliedDate: "2024-12-10" },
-  { key: "5", name: "Hassan Ahmed", email: "hassan.ahmed@example.com", phone: "+880 1512345678", course: "BBA", status: "Active", appliedDate: "2025-02-05" },
-  { key: "6", name: "Suman Thapa", email: "suman@example.com", phone: "+977 9812345678", course: "MBA", status: "Pending", appliedDate: "2025-01-28" },
-  { key: "7", name: "Anish Maharjan", email: "anish@example.com", phone: "+977 9712345678", course: "BSc IT", status: "Accepted", appliedDate: "2024-11-20" },
-  { key: "8", name: "Bikash Rai", email: "bikash@example.com", phone: "+977 9612345678", course: "MSc Engineering", status: "Active", appliedDate: "2025-02-10" },
+  {
+    key: "1",
+    name: "Md Abdul Khalak",
+    email: "md.abdulkhalak@example.com",
+    phone: "+880 1712345678",
+    course: "MBA",
+    status: "Active",
+    appliedDate: "2025-01-15",
+  },
+  {
+    key: "2",
+    name: "Md Abdul Khaliq",
+    email: "abdul.khaliq@example.com",
+    phone: "+880 1812345678",
+    course: "BSc Computer Science",
+    status: "Pending",
+    appliedDate: "2025-02-01",
+  },
+  {
+    key: "3",
+    name: "Tareeq Mahmud",
+    email: "tareeq.mahmud@example.com",
+    phone: "+880 1912345678",
+    course: "MSc Data Science",
+    status: "Active",
+    appliedDate: "2025-01-20",
+  },
+  {
+    key: "4",
+    name: "Fatima Rahman",
+    email: "fatima.rahman@example.com",
+    phone: "+880 1612345678",
+    course: "LLB",
+    status: "Accepted",
+    appliedDate: "2024-12-10",
+  },
+  {
+    key: "5",
+    name: "Hassan Ahmed",
+    email: "hassan.ahmed@example.com",
+    phone: "+880 1512345678",
+    course: "BBA",
+    status: "Active",
+    appliedDate: "2025-02-05",
+  },
+  {
+    key: "6",
+    name: "Suman Thapa",
+    email: "suman@example.com",
+    phone: "+977 9812345678",
+    course: "MBA",
+    status: "Pending",
+    appliedDate: "2025-01-28",
+  },
+  {
+    key: "7",
+    name: "Anish Maharjan",
+    email: "anish@example.com",
+    phone: "+977 9712345678",
+    course: "BSc IT",
+    status: "Accepted",
+    appliedDate: "2024-11-20",
+  },
+  {
+    key: "8",
+    name: "Bikash Rai",
+    email: "bikash@example.com",
+    phone: "+977 9612345678",
+    course: "MSc Engineering",
+    status: "Active",
+    appliedDate: "2025-02-10",
+  },
 ];
 
 export default function Students() {
@@ -38,12 +102,18 @@ export default function Students() {
         row.email.toLowerCase().includes(q) ||
         row.course.toLowerCase().includes(q) ||
         row.status.toLowerCase().includes(q) ||
-        row.phone.includes(searchText)
+        row.phone.includes(searchText),
     );
   }, [searchText]);
 
   const columns: ColumnsType<StudentRecord> = [
-    { title: "Name", dataIndex: "name", key: "name", sorter: (a, b) => a.name.localeCompare(b.name), width: 180 },
+    {
+      title: "Name",
+      dataIndex: "name",
+      key: "name",
+      sorter: (a, b) => a.name.localeCompare(b.name),
+      width: 180,
+    },
     { title: "Email", dataIndex: "email", key: "email", width: 220 },
     { title: "Phone", dataIndex: "phone", key: "phone", width: 140 },
     { title: "Course", dataIndex: "course", key: "course", width: 180 },
@@ -55,16 +125,25 @@ export default function Students() {
       render: (status: string) => (
         <span
           className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-            status === "Active" ? "bg-green-100 text-green-800" :
-            status === "Accepted" ? "bg-blue-100 text-blue-800" :
-            status === "Pending" ? "bg-amber-100 text-amber-800" : "bg-gray-100 text-gray-800"
+            status === "Active"
+              ? "bg-green-100 text-green-800"
+              : status === "Accepted"
+                ? "bg-blue-100 text-blue-800"
+                : status === "Pending"
+                  ? "bg-amber-100 text-amber-800"
+                  : "bg-gray-100 text-gray-800"
           }`}
         >
           {status}
         </span>
       ),
     },
-    { title: "Applied Date", dataIndex: "appliedDate", key: "appliedDate", width: 120 },
+    {
+      title: "Applied Date",
+      dataIndex: "appliedDate",
+      key: "appliedDate",
+      width: 120,
+    },
   ];
 
   return (

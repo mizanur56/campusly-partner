@@ -36,7 +36,17 @@ interface ClientDetails {
 const getClientDetails = async (): Promise<ClientDetails> => {
   const ipAddress = await getClientIP();
   const userAgent = navigator.userAgent || "Unknown";
-  const browserUrl = window.location.href;
+  const browserUrl = (() => {
+    try {
+      const current = window.location.href;
+      const url = new URL(current);
+      const origin = config.app_domain || "https://campustransfer.com/";
+      const cleanOrigin = origin.endsWith("/") ? origin.slice(0, -1) : origin;
+      return `${cleanOrigin}${url.pathname}${url.search}${url.hash}`;
+    } catch {
+      return config.app_domain || "https://campustransfer.com/";
+    }
+  })();
 
   return {
     ipAddress,

@@ -1,0 +1,535 @@
+/* ===== Page & layout (user-friendly, consistent spacing) ===== */
+.payments-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  padding: 0 0.5rem;
+}
+
+.payments-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.payments-title {
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: var(--neutral-900, #20242a);
+  letter-spacing: -0.02em;
+}
+
+.payments-subtitle {
+  font-size: 0.875rem;
+  color: var(--neutral-500, #4b5563);
+  line-height: 1.4;
+}
+
+/* ===== Top tabs (Purchase / Commission) – primary palette ===== */
+.payments-top-tabs {
+  display: flex;
+  gap: 2rem;
+  border-bottom: 1px solid var(--neutral-100, #eef0f2);
+  padding-bottom: 0;
+}
+
+.payments-top-tab {
+  position: relative;
+  padding: 0.5rem 0 0.75rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--neutral-500, #4b5563);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.payments-top-tab:hover {
+  color: var(--primary-600, #207236);
+}
+
+.payments-top-tab:focus-visible {
+  outline: 2px solid var(--primary-400, #4f9762);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.payments-top-tab--active {
+  color: var(--primary, #237d3b);
+}
+
+.payments-top-tab--active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 100%;
+  height: 2px;
+  border-radius: 999px;
+  background-color: var(--primary, #237d3b);
+}
+
+.payments-inner-tabs-wrapper {
+  margin-top: 0.5rem;
+}
+
+/* ===== Inner tabs – normal underline style ===== */
+.payments-inner-tabs {
+  display: inline-flex;
+  gap: 1.5rem;
+  border-bottom: 1px solid var(--neutral-200, #dee2e6);
+}
+
+.payments-inner-tab {
+  position: relative;
+  border: none;
+  background: none;
+  padding: 0.5rem 0 0.625rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--neutral-500, #4b5563);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.payments-inner-tab:hover {
+  color: var(--neutral-800, #292f36);
+}
+
+.payments-inner-tab:focus-visible {
+  outline: 2px solid var(--primary-400, #4f9762);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.payments-inner-tab--active {
+  color: var(--primary, #237d3b);
+  font-weight: 600;
+}
+
+.payments-inner-tab--active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--primary, #237d3b);
+  border-radius: 1px;
+}
+
+/* ===== KPI cards – neutral card style, value stands out ===== */
+.payments-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+@media (min-width: 1024px) {
+  .payments-kpi-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.payments-kpi-card {
+  border-radius: 1rem;
+  border: 1px solid var(--neutral-100, #eef0f2);
+  background-color: #fff;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.payments-kpi-card:hover {
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  border-color: var(--neutral-200, #dee2e6);
+}
+
+.payments-kpi-label {
+  font-size: 0.8125rem;
+  color: var(--neutral-500, #4b5563);
+  line-height: 1.3;
+}
+
+.payments-kpi-value {
+  margin-top: 0.375rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--neutral-900, #20242a);
+}
+
+.payments-section {
+  margin-top: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ===== Toolbar – search + actions ===== */
+.payments-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.payments-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.payments-search {
+  max-width: 280px;
+}
+
+.payments-search.ant-input,
+.payments-search.ant-input-affix-wrapper {
+  border-radius: 0.625rem;
+  border-color: var(--neutral-100, #eef0f2);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.payments-search.ant-input:hover,
+.payments-search.ant-input-affix-wrapper:hover {
+  border-color: var(--neutral-200, #dee2e6);
+}
+
+.payments-search.ant-input:focus,
+.payments-search.ant-input-affix-wrapper:focus,
+.payments-search.ant-input-focused,
+.payments-search.ant-input-affix-wrapper-focused {
+  border-color: var(--primary, #237d3b);
+  box-shadow: 0 0 0 2px rgba(35, 125, 59, 0.12);
+}
+
+.payments-filter-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.625rem;
+  border: 1px solid var(--neutral-100, #eef0f2);
+  background-color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--neutral-600, #444d5d);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.payments-filter-button:hover {
+  border-color: var(--neutral-200, #dee2e6);
+  background-color: var(--neutral-50, #f8f9fa);
+  color: var(--neutral-700, #353646);
+}
+
+.payments-filter-button:focus-visible {
+  outline: 2px solid var(--primary-400, #4f9762);
+  outline-offset: 2px;
+}
+
+.payments-filter-badge .ant-badge-count {
+  box-shadow: none;
+  background-color: var(--primary, #237d3b);
+}
+
+.payments-primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1.1rem;
+  border-radius: 0.625rem;
+  border: none;
+  background-color: var(--primary, #237d3b);
+  color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+}
+
+.payments-primary-button:hover {
+  background-color: var(--primary-600, #207236);
+  box-shadow: 0 2px 4px rgba(35, 125, 59, 0.2);
+}
+
+.payments-primary-button:active {
+  transform: scale(0.98);
+}
+
+.payments-primary-button:focus-visible {
+  outline: 2px solid var(--primary-400, #4f9762);
+  outline-offset: 2px;
+}
+
+.payments-outline-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1.1rem;
+  border-radius: 0.625rem;
+  border: 1px solid var(--primary, #237d3b);
+  background-color: #fff;
+  color: var(--primary, #237d3b);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.payments-outline-button:hover {
+  background-color: var(--primary-50, #e9f2eb);
+  color: var(--primary-600, #207236);
+  border-color: var(--primary-600, #207236);
+}
+
+.payments-outline-button:focus-visible {
+  outline: 2px solid var(--primary-400, #4f9762);
+  outline-offset: 2px;
+}
+
+/* ===== Table card – matches rest of app ===== */
+.payments-table-card {
+  border-radius: 1.25rem;
+  border: 1px solid var(--neutral-100, #eef0f2);
+  background-color: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+}
+
+.payments-table .ant-table-thead > tr > th {
+  background-color: var(--neutral-50, #f8f9fa) !important;
+  font-weight: 600;
+  color: var(--neutral-700, #353646);
+}
+
+.payments-table.ant-table-wrapper {
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+.payments-table .ant-table-container {
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+/* Header: top corners rounded (like other tables) */
+.payments-table .ant-table-thead > tr > th:first-child {
+  border-radius: 24px 0 0 0;
+}
+
+.payments-table .ant-table-thead > tr > th:last-child {
+  border-radius: 0 24px 0 0;
+}
+
+/* Last row: bottom corners rounded (like other tables) */
+.payments-table .ant-table-tbody > tr:last-child > td:first-child {
+  border-radius: 0 0 0 24px;
+}
+
+.payments-table .ant-table-tbody > tr:last-child > td:last-child {
+  border-radius: 0 0 24px 0;
+}
+
+.payments-link-button {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--primary, #237d3b);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.payments-link-button:hover {
+  color: var(--primary-600, #207236);
+  text-decoration: underline;
+}
+
+.payments-link-button:focus-visible {
+  outline: 2px solid var(--primary-400, #4f9762);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.payments-status-tag {
+  border-radius: 999px !important;
+  padding: 0 0.75rem !important;
+  font-size: 0.75rem !important;
+}
+
+/* ===== Modals – upload & bank (color-matched) ===== */
+.payments-upload-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.payments-upload-application {
+  font-size: 0.875rem;
+  color: var(--neutral-500, #4b5563);
+}
+
+.payments-upload-application span {
+  font-weight: 600;
+  color: var(--neutral-800, #292f36);
+}
+
+.payments-dragger {
+  border-radius: 1rem !important;
+  border-style: dashed !important;
+  border-color: var(--neutral-200, #dee2e6) !important;
+  padding: 1.75rem !important;
+  background-color: var(--neutral-50, #f8f9fa) !important;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.payments-dragger:hover {
+  border-color: var(--primary-300, #6ca37c) !important;
+  background-color: var(--primary-50, #e9f2eb) !important;
+}
+
+.payments-dragger-title {
+  margin-top: 0.25rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--neutral-900, #20242a);
+}
+
+.payments-dragger-hint {
+  margin-top: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--neutral-500, #4b5563);
+}
+
+.payments-bank-modal {
+  margin-top: 0.5rem;
+}
+
+.payments-bank-modal .space-y-5 > * + * {
+  margin-top: 1.25rem;
+}
+
+.payments-bank-section {
+  border-radius: 1rem;
+  background-color: var(--neutral-50, #f8f9fa);
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--neutral-100, #eef0f2);
+}
+
+.payments-bank-section--highlight {
+  background-color: var(--success-50, #e6f8ef);
+  border-color: var(--primary-100, #d4e5d7);
+}
+
+.payments-bank-section-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--neutral-900, #20242a);
+  margin-bottom: 0.75rem;
+}
+
+.payments-bank-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .payments-bank-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.payments-bank-label {
+  font-size: 0.8125rem;
+  color: var(--neutral-500, #4b5563);
+}
+
+.payments-bank-value {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--neutral-900, #20242a);
+}
+
+.payments-bank-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+/* Modal buttons (Ant) – match primary palette */
+.payments-page .ant-modal-content {
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.12);
+}
+
+.payments-page .ant-modal-header {
+  border-bottom: 1px solid var(--neutral-100, #eef0f2);
+  padding: 1rem 1.5rem;
+}
+
+.payments-page .ant-modal-title {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--neutral-900, #20242a);
+}
+
+.payments-page .ant-modal-body {
+  padding: 1.25rem 1.5rem;
+}
+
+.payments-page .ant-modal-footer .ant-btn-primary {
+  background: var(--primary, #237d3b);
+  border-color: var(--primary, #237d3b);
+  border-radius: 0.625rem;
+}
+
+.payments-page .ant-modal-footer .ant-btn-primary:hover {
+  background: var(--primary-600, #207236);
+  border-color: var(--primary-600, #207236);
+}
+
+.payments-page .ant-modal-footer .ant-btn-default {
+  border-radius: 0.625rem;
+  border-color: var(--neutral-200, #dee2e6);
+  color: var(--neutral-600, #444d5d);
+}
+
+.payments-page .ant-modal-footer .ant-btn-default:hover {
+  border-color: var(--neutral-300, #adb5bd);
+  color: var(--neutral-700, #353646);
+}
+
+/* Table pagination – match theme */
+.payments-table .ant-pagination .ant-pagination-item,
+.payments-table .ant-pagination .ant-pagination-item a {
+  color: var(--neutral-600, #444d5d);
+}
+
+.payments-table .ant-pagination .ant-pagination-item-active {
+  background: var(--primary, #237d3b) !important;
+  border-color: var(--primary, #237d3b) !important;
+}
+
+.payments-table .ant-pagination .ant-pagination-item-active a {
+  color: #fff !important;
+}
+
+.payments-table .ant-pagination .ant-pagination-item:hover,
+.payments-table .ant-pagination .ant-pagination-prev:hover .ant-pagination-item-link,
+.payments-table .ant-pagination .ant-pagination-next:hover .ant-pagination-item-link {
+  border-color: var(--primary-300, #6ca37c);
+  color: var(--primary, #237d3b);
+}
+

@@ -22,13 +22,97 @@ interface TaskRecord {
 }
 
 const MOCK_TASKS: TaskRecord[] = [
-  { key: "1", taskId: "T-001", studentId: "STU-2025-001", studentName: "Md Abdul Khalak", email: "md.abdulkhalak@example.com", phone: "+880 1712345678", description: "Passport copy required for visa application.", createdBy: "Tahsan Tamim", createdAt: "06 Jul 2025, 1:16 PM", assignedTo: "Suchita Roxy", status: "Pending" },
-  { key: "2", taskId: "T-002", studentId: "STU-2025-002", studentName: "Fatima Rahman", email: "fatima.rahman@example.com", phone: "+880 1612345678", description: "Hey! create fir tgusadf", createdBy: "Tahsan Tamim", createdAt: "05 Jul 2025, 10:30 AM", assignedTo: "Ramesh Khadka", status: "In Progress" },
-  { key: "3", taskId: "T-003", studentId: "STU-2025-003", studentName: "Tareeq Mahmud", email: "tareeq.mahmud@example.com", phone: "+880 1912345678", description: "Verify academic documents with university.", createdBy: "Dipak Sharma", createdAt: "04 Jul 2025, 3:45 PM", assignedTo: "Suchita Roxy", status: "Completed" },
-  { key: "4", taskId: "T-004", studentId: "STU-2025-004", studentName: "Hassan Ahmed", email: "hassan.ahmed@example.com", phone: "+880 1512345678", description: "Follow up on offer letter.", createdBy: "Tahsan Tamim", createdAt: "03 Jul 2025, 11:00 AM", assignedTo: "Dipak Sharma", status: "Pending" },
-  { key: "5", taskId: "T-005", studentId: "STU-2025-005", studentName: "Suman Thapa", email: "suman@example.com", phone: "+977 9812345678", description: "IELTS result upload pending.", createdBy: "Ramesh Khadka", createdAt: "02 Jul 2025, 2:20 PM", assignedTo: "Suchita Roxy", status: "In Progress" },
-  { key: "6", taskId: "T-006", studentId: "STU-2024-120", studentName: "Anish Maharjan", email: "anish@example.com", phone: "+977 9712345678", description: "CAS request submitted – awaiting response.", createdBy: "Dipak Sharma", createdAt: "01 Jul 2025, 9:15 AM", assignedTo: "Ramesh Khadka", status: "Completed" },
-  { key: "7", taskId: "T-007", studentId: "STU-2025-006", studentName: "Rita Islam", email: "rita.islam@example.com", phone: "+880 1812345678", description: "Bank statement for visa.", createdBy: "Tahsan Tamim", createdAt: "30 Jun 2025, 4:00 PM", assignedTo: "Suchita Roxy", status: "Pending" },
+  {
+    key: "1",
+    taskId: "T-001",
+    studentId: "STU-2025-001",
+    studentName: "Md Abdul Khalak",
+    email: "md.abdulkhalak@example.com",
+    phone: "+880 1712345678",
+    description: "Passport copy required for visa application.",
+    createdBy: "Tahsan Tamim",
+    createdAt: "06 Jul 2025, 1:16 PM",
+    assignedTo: "Suchita Roxy",
+    status: "Pending",
+  },
+  {
+    key: "2",
+    taskId: "T-002",
+    studentId: "STU-2025-002",
+    studentName: "Fatima Rahman",
+    email: "fatima.rahman@example.com",
+    phone: "+880 1612345678",
+    description: "Hey! create fir tgusadf",
+    createdBy: "Tahsan Tamim",
+    createdAt: "05 Jul 2025, 10:30 AM",
+    assignedTo: "Ramesh Khadka",
+    status: "In Progress",
+  },
+  {
+    key: "3",
+    taskId: "T-003",
+    studentId: "STU-2025-003",
+    studentName: "Tareeq Mahmud",
+    email: "tareeq.mahmud@example.com",
+    phone: "+880 1912345678",
+    description: "Verify academic documents with university.",
+    createdBy: "Dipak Sharma",
+    createdAt: "04 Jul 2025, 3:45 PM",
+    assignedTo: "Suchita Roxy",
+    status: "Completed",
+  },
+  {
+    key: "4",
+    taskId: "T-004",
+    studentId: "STU-2025-004",
+    studentName: "Hassan Ahmed",
+    email: "hassan.ahmed@example.com",
+    phone: "+880 1512345678",
+    description: "Follow up on offer letter.",
+    createdBy: "Tahsan Tamim",
+    createdAt: "03 Jul 2025, 11:00 AM",
+    assignedTo: "Dipak Sharma",
+    status: "Pending",
+  },
+  {
+    key: "5",
+    taskId: "T-005",
+    studentId: "STU-2025-005",
+    studentName: "Suman Thapa",
+    email: "suman@example.com",
+    phone: "+977 9812345678",
+    description: "IELTS result upload pending.",
+    createdBy: "Ramesh Khadka",
+    createdAt: "02 Jul 2025, 2:20 PM",
+    assignedTo: "Suchita Roxy",
+    status: "In Progress",
+  },
+  {
+    key: "6",
+    taskId: "T-006",
+    studentId: "STU-2024-120",
+    studentName: "Anish Maharjan",
+    email: "anish@example.com",
+    phone: "+977 9712345678",
+    description: "CAS request submitted – awaiting response.",
+    createdBy: "Dipak Sharma",
+    createdAt: "01 Jul 2025, 9:15 AM",
+    assignedTo: "Ramesh Khadka",
+    status: "Completed",
+  },
+  {
+    key: "7",
+    taskId: "T-007",
+    studentId: "STU-2025-006",
+    studentName: "Rita Islam",
+    email: "rita.islam@example.com",
+    phone: "+880 1812345678",
+    description: "Bank statement for visa.",
+    createdBy: "Tahsan Tamim",
+    createdAt: "30 Jun 2025, 4:00 PM",
+    assignedTo: "Suchita Roxy",
+    status: "Pending",
+  },
 ];
 
 const STATUS_OPTIONS = [
@@ -54,7 +138,7 @@ export default function MyTasks() {
           row.studentId.toLowerCase().includes(q) ||
           row.email.toLowerCase().includes(q) ||
           row.phone.includes(searchText) ||
-          row.studentName.toLowerCase().includes(q)
+          row.studentName.toLowerCase().includes(q),
       );
     }
     if (statusFilter) {
@@ -64,11 +148,33 @@ export default function MyTasks() {
   }, [searchText, statusFilter]);
 
   const columns: ColumnsType<TaskRecord> = [
-    { title: "Student ID", dataIndex: "studentId", key: "studentId", width: 120 },
-    { title: "Student Name", dataIndex: "studentName", key: "studentName", width: 160, sorter: (a, b) => a.studentName.localeCompare(b.studentName) },
+    {
+      title: "Student ID",
+      dataIndex: "studentId",
+      key: "studentId",
+      width: 120,
+    },
+    {
+      title: "Student Name",
+      dataIndex: "studentName",
+      key: "studentName",
+      width: 160,
+      sorter: (a, b) => a.studentName.localeCompare(b.studentName),
+    },
     { title: "Email", dataIndex: "email", key: "email", width: 200 },
-    { title: "Task", dataIndex: "description", key: "description", width: 220, ellipsis: true },
-    { title: "Created by", dataIndex: "createdBy", key: "createdBy", width: 120 },
+    {
+      title: "Task",
+      dataIndex: "description",
+      key: "description",
+      width: 220,
+      ellipsis: true,
+    },
+    {
+      title: "Created by",
+      dataIndex: "createdBy",
+      key: "createdBy",
+      width: 120,
+    },
     { title: "Date", dataIndex: "createdAt", key: "createdAt", width: 140 },
     {
       title: "Assigned to",
@@ -89,9 +195,13 @@ export default function MyTasks() {
       render: (status: string) => (
         <span
           className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-            status === "Completed" ? "bg-green-100 text-green-800" :
-            status === "In Progress" ? "bg-blue-100 text-blue-800" :
-            status === "Pending" ? "bg-amber-100 text-amber-800" : "bg-gray-100 text-gray-800"
+            status === "Completed"
+              ? "bg-green-100 text-green-800"
+              : status === "In Progress"
+                ? "bg-blue-100 text-blue-800"
+                : status === "Pending"
+                  ? "bg-amber-100 text-amber-800"
+                  : "bg-gray-100 text-gray-800"
           }`}
         >
           {status}

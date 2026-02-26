@@ -16,14 +16,78 @@ interface ApplicationRecord {
 }
 
 const MOCK_APPLICATIONS: ApplicationRecord[] = [
-  { key: "1", applicationId: "APP-2025-001", studentName: "Md Abdul Khalak", course: "MBA", university: "University of London", status: "Pending", submittedDate: "2025-02-15" },
-  { key: "2", applicationId: "APP-2025-002", studentName: "Fatima Rahman", course: "LLB", university: "University of Manchester", status: "Accepted", submittedDate: "2025-02-10" },
-  { key: "3", applicationId: "APP-2025-003", studentName: "Tareeq Mahmud", course: "MSc Data Science", university: "Imperial College London", status: "Under Review", submittedDate: "2025-02-12" },
-  { key: "4", applicationId: "APP-2025-004", studentName: "Hassan Ahmed", course: "BBA", university: "University of Birmingham", status: "Rejected", submittedDate: "2025-02-08" },
-  { key: "5", applicationId: "APP-2025-005", studentName: "Suman Thapa", course: "MBA", university: "University of Edinburgh", status: "Pending", submittedDate: "2025-02-14" },
-  { key: "6", applicationId: "APP-2024-120", studentName: "Anish Maharjan", course: "BSc IT", university: "University of Bristol", status: "Accepted", submittedDate: "2024-12-20" },
-  { key: "7", applicationId: "APP-2025-006", studentName: "Rita Islam", course: "MSc Engineering", university: "University of Leeds", status: "Under Review", submittedDate: "2025-02-18" },
-  { key: "8", applicationId: "APP-2025-007", studentName: "Md Ashiqur Rahman", course: "BSc Computer Science", university: "University of Glasgow", status: "Pending", submittedDate: "2025-02-20" },
+  {
+    key: "1",
+    applicationId: "APP-2025-001",
+    studentName: "Md Abdul Khalak",
+    course: "MBA",
+    university: "University of London",
+    status: "Pending",
+    submittedDate: "2025-02-15",
+  },
+  {
+    key: "2",
+    applicationId: "APP-2025-002",
+    studentName: "Fatima Rahman",
+    course: "LLB",
+    university: "University of Manchester",
+    status: "Accepted",
+    submittedDate: "2025-02-10",
+  },
+  {
+    key: "3",
+    applicationId: "APP-2025-003",
+    studentName: "Tareeq Mahmud",
+    course: "MSc Data Science",
+    university: "Imperial College London",
+    status: "Under Review",
+    submittedDate: "2025-02-12",
+  },
+  {
+    key: "4",
+    applicationId: "APP-2025-004",
+    studentName: "Hassan Ahmed",
+    course: "BBA",
+    university: "University of Birmingham",
+    status: "Rejected",
+    submittedDate: "2025-02-08",
+  },
+  {
+    key: "5",
+    applicationId: "APP-2025-005",
+    studentName: "Suman Thapa",
+    course: "MBA",
+    university: "University of Edinburgh",
+    status: "Pending",
+    submittedDate: "2025-02-14",
+  },
+  {
+    key: "6",
+    applicationId: "APP-2024-120",
+    studentName: "Anish Maharjan",
+    course: "BSc IT",
+    university: "University of Bristol",
+    status: "Accepted",
+    submittedDate: "2024-12-20",
+  },
+  {
+    key: "7",
+    applicationId: "APP-2025-006",
+    studentName: "Rita Islam",
+    course: "MSc Engineering",
+    university: "University of Leeds",
+    status: "Under Review",
+    submittedDate: "2025-02-18",
+  },
+  {
+    key: "8",
+    applicationId: "APP-2025-007",
+    studentName: "Md Ashiqur Rahman",
+    course: "BSc Computer Science",
+    university: "University of Glasgow",
+    status: "Pending",
+    submittedDate: "2025-02-20",
+  },
 ];
 
 export default function Applications() {
@@ -38,15 +102,31 @@ export default function Applications() {
         row.studentName.toLowerCase().includes(q) ||
         row.course.toLowerCase().includes(q) ||
         row.university.toLowerCase().includes(q) ||
-        row.status.toLowerCase().includes(q)
+        row.status.toLowerCase().includes(q),
     );
   }, [searchText]);
 
   const columns: ColumnsType<ApplicationRecord> = [
-    { title: "Application ID", dataIndex: "applicationId", key: "applicationId", width: 140 },
-    { title: "Student Name", dataIndex: "studentName", key: "studentName", sorter: (a, b) => a.studentName.localeCompare(b.studentName), width: 180 },
+    {
+      title: "Application ID",
+      dataIndex: "applicationId",
+      key: "applicationId",
+      width: 140,
+    },
+    {
+      title: "Student Name",
+      dataIndex: "studentName",
+      key: "studentName",
+      sorter: (a, b) => a.studentName.localeCompare(b.studentName),
+      width: 180,
+    },
     { title: "Course", dataIndex: "course", key: "course", width: 160 },
-    { title: "University", dataIndex: "university", key: "university", width: 220 },
+    {
+      title: "University",
+      dataIndex: "university",
+      key: "university",
+      width: 220,
+    },
     {
       title: "Status",
       dataIndex: "status",
@@ -55,17 +135,27 @@ export default function Applications() {
       render: (status: string) => (
         <span
           className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-            status === "Accepted" ? "bg-green-100 text-green-800" :
-            status === "Rejected" ? "bg-red-100 text-red-800" :
-            status === "Under Review" ? "bg-blue-100 text-blue-800" :
-            status === "Pending" ? "bg-amber-100 text-amber-800" : "bg-gray-100 text-gray-800"
+            status === "Accepted"
+              ? "bg-green-100 text-green-800"
+              : status === "Rejected"
+                ? "bg-red-100 text-red-800"
+                : status === "Under Review"
+                  ? "bg-blue-100 text-blue-800"
+                  : status === "Pending"
+                    ? "bg-amber-100 text-amber-800"
+                    : "bg-gray-100 text-gray-800"
           }`}
         >
           {status}
         </span>
       ),
     },
-    { title: "Submitted", dataIndex: "submittedDate", key: "submittedDate", width: 120 },
+    {
+      title: "Submitted",
+      dataIndex: "submittedDate",
+      key: "submittedDate",
+      width: 120,
+    },
   ];
 
   return (

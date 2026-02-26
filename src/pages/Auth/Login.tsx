@@ -158,7 +158,9 @@ const Login = () => {
             <div
               className={cn(
                 "transition-all duration-200",
-                isTransitioning ? "opacity-0 scale-95" : "opacity-100 scale-100",
+                isTransitioning
+                  ? "opacity-0 scale-95"
+                  : "opacity-100 scale-100",
               )}
             >
               {/* Card with SidebarCards inspired styling */}
@@ -175,6 +177,21 @@ const Login = () => {
                       : "Student portal is coming soon"}
                   </p>
                 </div>
+
+                {activeTab === "partner" && (
+                  <div className="mb-4 rounded-lg border border-dashed border-neutral-200 bg-neutral-50 px-3 py-2">
+                    <p className="text-xs font-medium text-neutral-700">
+                      Demo login credentials
+                    </p>
+                    <p className="mt-1 text-xs text-neutral-600">
+                      Email:{" "}
+                      <span className="font-mono">student@example.com</span>
+                    </p>
+                    <p className="text-xs text-neutral-600">
+                      Password: <span className="font-mono">Password@123</span>
+                    </p>
+                  </div>
+                )}
 
                 <Form
                   form={form}
