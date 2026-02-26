@@ -363,7 +363,7 @@ const Sidebar: React.FC = () => {
     >
       {/* Logo */}
       <div
-        className={`flex px-5 pb-5 ${
+        className={`flex px-5 pb-0 ${
           !isExpanded && !isMobileOpen ? "lg:justify-center" : ""
         }`}
       >
@@ -382,7 +382,7 @@ const Sidebar: React.FC = () => {
 
       {/* User profile — shown when sidebar is expanded (onboarding + signed phase) */}
       {(isExpanded || isMobileOpen) && (
-        <div className="mx-3 mt-2 rounded-xl bg-gray-50/80 p-3 dark:bg-gray-800/40">
+        <div className="mx-3 mt-0 rounded-xl bg-gray-50/80 p-3 dark:bg-gray-800/40">
           <p className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
             {isSignedSidebar ? "" : "Managed by"}
           </p>

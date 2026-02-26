@@ -8,6 +8,7 @@ import ResetPassword from "../pages/Auth/ResetPassword";
 import Dashboard from "../pages/Dashboard/Dashboard.tsx";
 import AllMediaList from "../pages/Media/Media";
 import Academy from "../pages/Academy/Academy";
+import HotOffers from "../pages/HotOffers/HotOffers";
 import NotFound from "../pages/OtherPage/NotFound";
 import UnderDevelopment from "../pages/OtherPage/UnderDevelopment";
 import ProgramsSchools from "../pages/ProgramsSchools/ProgramsSchools";
@@ -46,7 +47,7 @@ const routes = [
       { path: "/payments/purchase", element: <Payments /> },
       { path: "/payments/commission", element: <Payments /> },
       { path: "/academy", element: <Academy /> },
-      { path: "/hot-offers", element: <UnderDevelopment /> },
+      { path: "/hot-offers", element: <HotOffers /> },
       // Fallback for undefined child routes
       { path: "*", element: <UnderDevelopment /> },
     ],

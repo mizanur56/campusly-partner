@@ -74,7 +74,7 @@ export default function AcademyVideoSection({
   return (
     <>
       <section className="pb-6 md:pb-10">
-        <div className="w-full px-4">
+        <div className="w-full">
           <div className="mb-6">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
               {title}

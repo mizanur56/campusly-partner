@@ -1,6 +1,5 @@
 import { useMemo } from "react";
-import PageHeader from "../../components/common/Navigation/PageHeader";
-import Loader from "../../components/common/Loading/Loader";
+import PageLoader from "../../components/ui/PageLoader";
 import AcademyVideoSection from "./AcademyVideoSection";
 import { useGetVideoGalleryCategoriesQuery } from "../../redux/features/videoGallery/videoGalleryApi";
 import {
@@ -28,17 +27,18 @@ export default function Academy() {
 
   return (
     <>
-      <PageHeader
-        title="Academy"
-        subtitle="Training videos and guides for partners. Watch tutorials to enhance your skills."
-        breadcrumbs={[
-          { title: "Dashboard", path: "/" },
-          { title: "Academy" },
-        ]}
-      />
+      <div className="mb-4">
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
+          Academy
+        </h1>
+        <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+          Training videos and guides for partners. Watch tutorials to enhance your skills.
+        </p>
+        <hr className="mt-4 border-gray-200 dark:border-gray-700" />
+      </div>
 
       {isLoading ? (
-        <Loader text="Loading academy videos..." />
+        <PageLoader fullScreen={false} />
       ) : isError ? (
         <div className="flex flex-col items-center justify-center py-16 px-4">
           <p className="text-gray-600 text-center mb-4">
