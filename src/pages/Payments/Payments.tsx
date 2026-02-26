@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Table, Input, Tag, Badge, Modal, Upload } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { InboxOutlined } from "@ant-design/icons";
@@ -77,7 +78,8 @@ const COMMISSION_TRANSACTIONS: CommissionTransactionRecord[] = [
 ];
 
 export default function Payments() {
-  const [topTab, setTopTab] = useState<TopTabKey>("purchase");
+  const { pathname } = useLocation();
+  const topTab: TopTabKey = pathname.includes("/commission") ? "commission" : "purchase";
   const [purchaseTab, setPurchaseTab] = useState<PurchaseTabKey>("applications");
   const [commissionTab, setCommissionTab] = useState<CommissionTabKey>("earned");
   const [searchText, setSearchText] = useState("");
@@ -554,50 +556,22 @@ export default function Payments() {
   return (
     <div className="payments-page">
       <PageMeta
-        title="Payments - Campus Transfer Partner"
-        description="Manage your application payments and commissions."
+        title={`${topTab === "purchase" ? "Purchase" : "Commission"} - Payments | Campus Transfer Partner`}
+        description={topTab === "purchase" ? "Manage application payments and transaction history." : "View earned commissions and commission transaction history."}
       />
 
       <header className="payments-header">
         <div>
-          <h1 className="payments-title">Payments</h1>
+          <h1 className="payments-title">
+            {topTab === "purchase" ? "Purchase" : "Commission"}
+          </h1>
           <p className="payments-subtitle">
-            Manage your application payments and commissions.
+            {topTab === "purchase"
+              ? "Manage application payments and transaction history."
+              : "View earned commissions and commission transaction history."}
           </p>
         </div>
       </header>
-
-      {/* Top tabs: Purchase / Commission */}
-      <div className="payments-top-tabs">
-        <button
-          type="button"
-          className={
-            topTab === "purchase"
-              ? "payments-top-tab payments-top-tab--active"
-              : "payments-top-tab"
-          }
-          onClick={() => {
-            setTopTab("purchase");
-            handleResetSearchOnTabChange();
-          }}
-        >
-          Purchase
-        </button>
-        <button
-          type="button"
-          className={
-            topTab === "commission"
-              ? "payments-top-tab payments-top-tab--active"
-              : "payments-top-tab"
-          }
-          onClick={() => {
-            setTopTab("commission");
-            handleResetSearchOnTabChange();
-          }}
-        >
-          Commission
-        </button>
-      </div>
 
       {/* Inner tabs: Applications / Transaction History or Earned Commissions / Transaction History */}
       <div className="payments-inner-tabs-wrapper">

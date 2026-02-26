@@ -158,7 +158,9 @@ const Login = () => {
             <div
               className={cn(
                 "transition-all duration-200",
-                isTransitioning ? "opacity-0 scale-95" : "opacity-100 scale-100",
+                isTransitioning
+                  ? "opacity-0 scale-95"
+                  : "opacity-100 scale-100",
               )}
             >
               {/* Card with SidebarCards inspired styling */}
@@ -182,7 +184,8 @@ const Login = () => {
                       Demo login credentials
                     </p>
                     <p className="mt-1 text-xs text-neutral-600">
-                      Email: <span className="font-mono">partner@campustransfer.com</span>
+                      Email:{" "}
+                      <span className="font-mono">student@example.com</span>
                     </p>
                     <p className="text-xs text-neutral-600">
                       Password: <span className="font-mono">Password@123</span>

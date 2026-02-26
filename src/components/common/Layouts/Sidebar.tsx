@@ -39,7 +39,10 @@ const SignedSidebarItems: NavItem[] = [
   {
     icon: <i className="fa-solid fa-credit-card"></i>,
     name: "Payments",
-    path: "/payments",
+    subItems: [
+      { name: "Purchase", path: "/payments/purchase" },
+      { name: "Commission", path: "/payments/commission" },
+    ],
   },
   {
     icon: <i className="fa-solid fa-graduation-cap"></i>,
@@ -58,6 +61,8 @@ const SIGNED_ROUTE_PATHS = [
   "/applications",
   "/my-tasks",
   "/payments",
+  "/payments/purchase",
+  "/payments/commission",
   "/academy",
   "/hot-offers",
 ];
@@ -190,7 +195,7 @@ const Sidebar: React.FC = () => {
           {item.subItems ? (
             <div>
               <button
-                className={`menu-dropdown-item w-full text-left text-base font-semibold ${
+                className={`menu-dropdown-item w-full text-left text-[0.9375rem] font-medium ${
                   isAnyNestedItemActive(item.subItems)
                     ? "menu-dropdown-item-active"
                     : "menu-dropdown-item-inactive"
@@ -206,7 +211,7 @@ const Sidebar: React.FC = () => {
           ) : (
             <Link
               to={item.path || "#"}
-              className={`menu-dropdown-item text-base font-semibold ${
+              className={`menu-dropdown-item text-[0.9375rem] font-medium ${
                 item.path && isActive(item.path)
                   ? "menu-dropdown-item-active"
                   : "menu-dropdown-item-inactive"

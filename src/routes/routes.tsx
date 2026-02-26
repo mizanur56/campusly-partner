@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import MainLayout from "../layout/MainLayout";
 import ChangePassword from "../pages/Auth/ChangePassword";
 import ForgetPassword from "../pages/Auth/ForgetPassword";
@@ -7,6 +7,7 @@ import Register from "../pages/Auth/Register";
 import ResetPassword from "../pages/Auth/ResetPassword";
 import Dashboard from "../pages/Dashboard/Dashboard.tsx";
 import AllMediaList from "../pages/Media/Media";
+import Academy from "../pages/Academy/Academy";
 import NotFound from "../pages/OtherPage/NotFound";
 import UnderDevelopment from "../pages/OtherPage/UnderDevelopment";
 import ProgramsSchools from "../pages/ProgramsSchools/ProgramsSchools";
@@ -41,8 +42,10 @@ const routes = [
       { path: "/students", element: <Students /> },
       { path: "/applications", element: <Applications /> },
       { path: "/my-tasks", element: <MyTasks /> },
-      { path: "/payments", element: <Payments /> },
-      { path: "/academy", element: <UnderDevelopment /> },
+      { path: "/payments", element: <Navigate to="/payments/purchase" replace /> },
+      { path: "/payments/purchase", element: <Payments /> },
+      { path: "/payments/commission", element: <Payments /> },
+      { path: "/academy", element: <Academy /> },
       { path: "/hot-offers", element: <UnderDevelopment /> },
       // Fallback for undefined child routes
       { path: "*", element: <UnderDevelopment /> },
