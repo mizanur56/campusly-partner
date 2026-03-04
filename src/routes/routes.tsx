@@ -1,4 +1,9 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter, Navigate, useParams } from "react-router-dom";
+
+function StudentProfileRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/students/${id}/profile`} replace />;
+}
 import MainLayout from "../layout/MainLayout";
 import ChangePassword from "../pages/Auth/ChangePassword";
 import ForgetPassword from "../pages/Auth/ForgetPassword";
@@ -17,6 +22,7 @@ import { OnboardingPage } from "../pages/Onboarding";
 import ContractPage from "../pages/Contract/ContractPage";
 import ContractSignedPage from "../pages/Contract/ContractSignedPage";
 import Students from "../pages/Students/Students";
+import StudentProfile from "../pages/Students/StudentProfile/StudentProfile";
 import Applications from "../pages/Applications/Applications";
 import MyTasks from "../pages/MyTasks/MyTasks";
 import Payments from "../pages/Payments/Payments";
@@ -41,6 +47,11 @@ const routes = [
       // Signed sidebar — default/under-development pages
       { path: "/programs-schools", element: <ProgramsSchools /> },
       { path: "/students", element: <Students /> },
+      { path: "/students/:id", element: <StudentProfileRedirect /> },
+      { path: "/students/:id/profile", element: <StudentProfile /> },
+      { path: "/students/:id/activity", element: <StudentProfile /> },
+      { path: "/students/:id/applications", element: <StudentProfile /> },
+      { path: "/students/:id/tasks", element: <StudentProfile /> },
       { path: "/applications", element: <Applications /> },
       { path: "/my-tasks", element: <MyTasks /> },
       { path: "/payments", element: <Navigate to="/payments/purchase" replace /> },

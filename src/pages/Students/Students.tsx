@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Table, Input } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import PageMeta from "../../components/common/Meta/PageMeta";
@@ -91,6 +92,7 @@ const MOCK_STUDENTS: StudentRecord[] = [
 ];
 
 export default function Students() {
+  const navigate = useNavigate();
   const [searchText, setSearchText] = useState("");
 
   const filteredData = useMemo(() => {
@@ -185,6 +187,10 @@ export default function Students() {
           dataSource={filteredData}
           columns={columns}
           rowKey="key"
+          onRow={(record) => ({
+            onClick: () => navigate(`/students/${record.key}/profile`, { state: { student: record } }),
+            style: { cursor: "pointer" },
+          })}
           pagination={{
             pageSize: 10,
             showSizeChanger: true,

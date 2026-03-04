@@ -4,6 +4,7 @@ import { Backdrop, Header, Sidebar } from "../components/common/Layouts";
 import { usePreviewMode } from "../context/PreviewModeContext";
 import { PreviewModeProvider } from "../context/PreviewModeContext";
 import { SidebarProvider, useSidebar } from "../context/SidebarContext";
+import { StudentProfileProvider } from "../context/StudentProfileContext";
 // import { useRoutePermission } from "../hooks/useRoutePermission";
 
 const ENTER_MS = 500;
@@ -90,7 +91,9 @@ const MainLayout: React.FC = () => {
   return (
     <PreviewModeProvider>
       <SidebarProvider>
-        <LayoutContent />
+        <StudentProfileProvider>
+          <LayoutContent />
+        </StudentProfileProvider>
       </SidebarProvider>
     </PreviewModeProvider>
   );
