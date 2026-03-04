@@ -4,109 +4,65 @@ import { Table, Input } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import PageMeta from "../../components/common/Meta/PageMeta";
 import "../../components/common/Tables/AntTable.css";
+import { useGetStudentsQuery } from "../../redux/features/users/usersApi";
 import "./Students.css";
 
 interface StudentRecord {
   key: string;
+  id: string;
   name: string;
   email: string;
   phone: string;
-  course: string;
   status: string;
-  appliedDate: string;
+  lastLogin: string;
 }
 
-const MOCK_STUDENTS: StudentRecord[] = [
-  {
-    key: "1",
-    name: "Md Abdul Khalak",
-    email: "md.abdulkhalak@example.com",
-    phone: "+880 1712345678",
-    course: "MBA",
-    status: "Active",
-    appliedDate: "2025-01-15",
-  },
-  {
-    key: "2",
-    name: "Md Abdul Khaliq",
-    email: "abdul.khaliq@example.com",
-    phone: "+880 1812345678",
-    course: "BSc Computer Science",
-    status: "Pending",
-    appliedDate: "2025-02-01",
-  },
-  {
-    key: "3",
-    name: "Tareeq Mahmud",
-    email: "tareeq.mahmud@example.com",
-    phone: "+880 1912345678",
-    course: "MSc Data Science",
-    status: "Active",
-    appliedDate: "2025-01-20",
-  },
-  {
-    key: "4",
-    name: "Fatima Rahman",
-    email: "fatima.rahman@example.com",
-    phone: "+880 1612345678",
-    course: "LLB",
-    status: "Accepted",
-    appliedDate: "2024-12-10",
-  },
-  {
-    key: "5",
-    name: "Hassan Ahmed",
-    email: "hassan.ahmed@example.com",
-    phone: "+880 1512345678",
-    course: "BBA",
-    status: "Active",
-    appliedDate: "2025-02-05",
-  },
-  {
-    key: "6",
-    name: "Suman Thapa",
-    email: "suman@example.com",
-    phone: "+977 9812345678",
-    course: "MBA",
-    status: "Pending",
-    appliedDate: "2025-01-28",
-  },
-  {
-    key: "7",
-    name: "Anish Maharjan",
-    email: "anish@example.com",
-    phone: "+977 9712345678",
-    course: "BSc IT",
-    status: "Accepted",
-    appliedDate: "2024-11-20",
-  },
-  {
-    key: "8",
-    name: "Bikash Rai",
-    email: "bikash@example.com",
-    phone: "+977 9612345678",
-    course: "MSc Engineering",
-    status: "Active",
-    appliedDate: "2025-02-10",
-  },
-];
+function formatDate(iso: string | null): string {
+  if (!iso) return "—";
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return "—";
+  }
+}
 
 export default function Students() {
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  const filteredData = useMemo(() => {
-    if (!searchText.trim()) return MOCK_STUDENTS;
+  const { data, isFetching } = useGetStudentsQuery({
+    page,
+    limit: pageSize,
+  });
+
+  const tableData: StudentRecord[] = useMemo(() => {
+    if (!data?.data) return [];
+    const rows = data.data.map((u) => ({
+      key: u.id,
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      phone: u.phone ?? "—",
+      status: u.isActive ? "Active" : "Inactive",
+      lastLogin: formatDate(u.lastLogin),
+    }));
+    if (!searchText.trim()) return rows;
     const q = searchText.toLowerCase();
-    return MOCK_STUDENTS.filter(
+    return rows.filter(
       (row) =>
         row.name.toLowerCase().includes(q) ||
         row.email.toLowerCase().includes(q) ||
-        row.course.toLowerCase().includes(q) ||
-        row.status.toLowerCase().includes(q) ||
-        row.phone.includes(searchText),
+        row.phone.includes(searchText) ||
+        row.status.toLowerCase().includes(q),
     );
-  }, [searchText]);
+  }, [data?.data, searchText]);
 
   const columns: ColumnsType<StudentRecord> = [
     {
@@ -118,7 +74,6 @@ export default function Students() {
     },
     { title: "Email", dataIndex: "email", key: "email", width: 220 },
     { title: "Phone", dataIndex: "phone", key: "phone", width: 140 },
-    { title: "Course", dataIndex: "course", key: "course", width: 180 },
     {
       title: "Status",
       dataIndex: "status",
@@ -128,12 +83,8 @@ export default function Students() {
         <span
           className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
             status === "Active"
-              ? "bg-green-100 text-green-800"
-              : status === "Accepted"
-                ? "bg-blue-100 text-blue-800"
-                : status === "Pending"
-                  ? "bg-amber-100 text-amber-800"
-                  : "bg-gray-100 text-gray-800"
+              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+              : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400"
           }`}
         >
           {status}
@@ -141,9 +92,9 @@ export default function Students() {
       ),
     },
     {
-      title: "Applied Date",
-      dataIndex: "appliedDate",
-      key: "appliedDate",
+      title: "Last Login",
+      dataIndex: "lastLogin",
+      key: "lastLogin",
       width: 120,
     },
   ];
@@ -173,7 +124,7 @@ export default function Students() {
 
       <div className="mb-6 max-w-sm">
         <Input
-          placeholder="Search by name, email, course, status or phone"
+          placeholder="Search by name, email, status or phone"
           allowClear
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
@@ -184,21 +135,31 @@ export default function Students() {
       <div className="overflow-hidden rounded-[24px] border border-neutral-100 bg-white card-shadow dark:border-gray-800 dark:bg-gray-900">
         <Table
           className="students-table"
-          dataSource={filteredData}
+          dataSource={tableData}
           columns={columns}
           rowKey="key"
-          onRow={(record) => ({
-            onClick: () => navigate(`/students/${record.key}/profile`, { state: { student: record } }),
-            style: { cursor: "pointer" },
-          })}
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            showTotal: (total) => `Total ${total} students`,
-            pageSizeOptions: ["10", "20", "50"],
-          }}
-          scroll={{ x: 900 }}
-        />
+          loading={isFetching}
+            onRow={(record) => ({
+              onClick: () =>
+                navigate(`/students/${record.id}/profile`, {
+                  state: { student: record },
+                }),
+              style: { cursor: "pointer" },
+            })}
+            pagination={{
+              current: page,
+              pageSize,
+              total: data?.meta?.total ?? 0,
+              showSizeChanger: true,
+              showTotal: (total) => `Total ${total} students`,
+              pageSizeOptions: ["10", "20", "50"],
+              onChange: (newPage, newPageSize) => {
+                setPage(newPage);
+                setPageSize(newPageSize ?? 10);
+              },
+            }}
+            scroll={{ x: 900 }}
+          />
       </div>
     </div>
   );
