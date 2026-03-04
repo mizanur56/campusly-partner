@@ -155,6 +155,8 @@ const Sidebar: React.FC = () => {
       SIGNED_ROUTE_PATHS.includes(location.pathname) ||
       location.pathname.startsWith("/payments"));
 
+  // Application details loading: show loading state (click korar sathe start)
+  const isApplicationDetailLoading = isApplicationDetailContext && !student;
   const baseItems = isSignedContext ? SignedSidebarItems : SidebarItems;
   const filteredSidebarItems = useFilteredSidebarItems(baseItems);
   const isSignedSidebar = isSignedContext;
@@ -580,6 +582,23 @@ const Sidebar: React.FC = () => {
         </div>
       )}
 
+      {/* APPLICATION DETAIL LOADING: Skeleton */}
+      {(isExpanded || isMobileOpen) && isApplicationDetailLoading && (
+        <div className="mx-3 mt-0 rounded-xl border border-gray-200/60 bg-gray-50/80 p-3 dark:border-gray-700 dark:bg-gray-800/40 animate-pulse">
+          <div className="flex items-center gap-2.5">
+            <div className="h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-700" />
+            <div className="flex-1 space-y-2">
+              <div className="h-3 w-24 rounded bg-gray-200 dark:bg-gray-700" />
+              <div className="h-2 w-32 rounded bg-gray-200 dark:bg-gray-700" />
+            </div>
+          </div>
+          <div className="mt-3 space-y-2">
+            <div className="h-2 w-full rounded bg-gray-200 dark:bg-gray-700" />
+            <div className="h-2 w-2/3 rounded bg-gray-200 dark:bg-gray-700" />
+          </div>
+        </div>
+      )}
+
       {/* STUDENT / APPLICATION DETAIL: Student profile card + Activity/Profile/Applications/Tasks */}
       {(isExpanded || isMobileOpen) && showStudentSidebar && studentId && (
         <div className="mx-3 mt-0 rounded-xl border border-gray-200/60 bg-gray-50/80 p-3 dark:border-gray-700 dark:bg-gray-800/40">
@@ -631,9 +650,18 @@ const Sidebar: React.FC = () => {
         </div>
       )}
 
-      {/* Navigation - UNSIGNED: Home only | SIGNED: full nav | STUDENT/APPLICATION: hidden */}
+      {/* Navigation - UNSIGNED: Home only | SIGNED: full nav | STUDENT: hidden | APPLICATION LOADING: skeleton */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {!showStudentSidebar && (
+        {isApplicationDetailLoading && (
+          <div className="flex-1 overflow-y-auto px-3 py-4 no-scrollbar">
+            <div className="flex flex-col gap-2 animate-pulse">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-10 rounded-lg bg-gray-200 dark:bg-gray-700" />
+              ))}
+            </div>
+          </div>
+        )}
+        {!showStudentSidebar && !isApplicationDetailLoading && (
           <div className="flex-1 overflow-y-auto px-3 py-4 no-scrollbar">
             <nav className="flex flex-col gap-1">
               {renderMenuItems(filteredSidebarItems, "main")}
