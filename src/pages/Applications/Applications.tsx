@@ -1,110 +1,46 @@
-import React, { useMemo, useState } from "react";
-import { Table, Input } from "antd";
+import React, { useState } from "react";
+import { Table, Input, Tag, Tooltip } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { useNavigate } from "react-router-dom";
+import { FiEye } from "react-icons/fi";
 import PageMeta from "../../components/common/Meta/PageMeta";
 import "../../components/common/Tables/AntTable.css";
 import "./Applications.css";
+import { useGetMyAllApplicationsQuery } from "../../redux/features/application/applicationApi";
+import { config } from "../../config";
 
 interface ApplicationRecord {
-  key: string;
+  id: string;
   applicationId: string;
-  studentName: string;
-  course: string;
-  university: string;
   status: string;
-  submittedDate: string;
+  course?: { university?: { name: string; UniversityLogo?: { url: string } }; course?: { name: string } };
+  intake?: string;
+  createdAt?: string;
 }
 
-const MOCK_APPLICATIONS: ApplicationRecord[] = [
-  {
-    key: "1",
-    applicationId: "APP-2025-001",
-    studentName: "Md Abdul Khalak",
-    course: "MBA",
-    university: "University of London",
-    status: "Pending",
-    submittedDate: "2025-02-15",
-  },
-  {
-    key: "2",
-    applicationId: "APP-2025-002",
-    studentName: "Fatima Rahman",
-    course: "LLB",
-    university: "University of Manchester",
-    status: "Accepted",
-    submittedDate: "2025-02-10",
-  },
-  {
-    key: "3",
-    applicationId: "APP-2025-003",
-    studentName: "Tareeq Mahmud",
-    course: "MSc Data Science",
-    university: "Imperial College London",
-    status: "Under Review",
-    submittedDate: "2025-02-12",
-  },
-  {
-    key: "4",
-    applicationId: "APP-2025-004",
-    studentName: "Hassan Ahmed",
-    course: "BBA",
-    university: "University of Birmingham",
-    status: "Rejected",
-    submittedDate: "2025-02-08",
-  },
-  {
-    key: "5",
-    applicationId: "APP-2025-005",
-    studentName: "Suman Thapa",
-    course: "MBA",
-    university: "University of Edinburgh",
-    status: "Pending",
-    submittedDate: "2025-02-14",
-  },
-  {
-    key: "6",
-    applicationId: "APP-2024-120",
-    studentName: "Anish Maharjan",
-    course: "BSc IT",
-    university: "University of Bristol",
-    status: "Accepted",
-    submittedDate: "2024-12-20",
-  },
-  {
-    key: "7",
-    applicationId: "APP-2025-006",
-    studentName: "Rita Islam",
-    course: "MSc Engineering",
-    university: "University of Leeds",
-    status: "Under Review",
-    submittedDate: "2025-02-18",
-  },
-  {
-    key: "8",
-    applicationId: "APP-2025-007",
-    studentName: "Md Ashiqur Rahman",
-    course: "BSc Computer Science",
-    university: "University of Glasgow",
-    status: "Pending",
-    submittedDate: "2025-02-20",
-  },
-];
+const statusColors: Record<string, string> = {
+  REVIEW: "blue",
+  APPLY: "cyan",
+  PENDING_OFFER_LETTER: "magenta",
+  PENDING_TRAVEL_LETTER: "gold",
+  SUCCESS: "green",
+  REJECTED: "red",
+};
 
 export default function Applications() {
-  const [searchText, setSearchText] = useState("");
+  const navigate = useNavigate();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
-  const filteredData = useMemo(() => {
-    if (!searchText.trim()) return MOCK_APPLICATIONS;
-    const q = searchText.toLowerCase();
-    return MOCK_APPLICATIONS.filter(
-      (row) =>
-        row.applicationId.toLowerCase().includes(q) ||
-        row.studentName.toLowerCase().includes(q) ||
-        row.course.toLowerCase().includes(q) ||
-        row.university.toLowerCase().includes(q) ||
-        row.status.toLowerCase().includes(q),
-    );
-  }, [searchText]);
+  const { data, isLoading, isFetching } = useGetMyAllApplicationsQuery({
+    page: currentPage,
+    limit,
+    sortBy: "createdAt",
+    sortOrder: "desc",
+  });
+
+  const tableData = data?.data || [];
+  const total = data?.meta?.total ?? 0;
 
   const columns: ColumnsType<ApplicationRecord> = [
     {
@@ -112,49 +48,77 @@ export default function Applications() {
       dataIndex: "applicationId",
       key: "applicationId",
       width: 140,
+      render: (applicationId: string, record: ApplicationRecord) => (
+        <span
+          onClick={() => navigate(`/applications/${record.id}`)}
+          className="hover:underline cursor-pointer hover:font-semibold"
+        >
+          {applicationId}
+        </span>
+      ),
     },
     {
-      title: "Student Name",
-      dataIndex: "studentName",
-      key: "studentName",
-      sorter: (a, b) => a.studentName.localeCompare(b.studentName),
-      width: 180,
-    },
-    { title: "Course", dataIndex: "course", key: "course", width: 160 },
-    {
-      title: "University",
-      dataIndex: "university",
+      title: "School / University",
+      dataIndex: "course",
       key: "university",
       width: 220,
+      render: (course: ApplicationRecord["course"]) => (
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
+            {course?.university?.UniversityLogo?.url ? (
+              <img
+                src={`${config.image_access_url}${course.university.UniversityLogo.url}`}
+                alt=""
+                className="w-full h-full object-cover"
+              />
+            ) : null}
+          </div>
+          <span className="text-sm font-medium">{course?.university?.name || "N/A"}</span>
+        </div>
+      ),
+    },
+    {
+      title: "Program",
+      dataIndex: "course",
+      key: "program",
+      width: 180,
+      render: (course: ApplicationRecord["course"]) => (
+        <span className="text-sm font-medium">{course?.course?.name || "N/A"}</span>
+      ),
+    },
+    {
+      title: "Intake",
+      dataIndex: "intake",
+      key: "intake",
+      width: 120,
     },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
       width: 120,
-      render: (status: string) => (
-        <span
-          className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-            status === "Accepted"
-              ? "bg-green-100 text-green-800"
-              : status === "Rejected"
-                ? "bg-red-100 text-red-800"
-                : status === "Under Review"
-                  ? "bg-blue-100 text-blue-800"
-                  : status === "Pending"
-                    ? "bg-amber-100 text-amber-800"
-                    : "bg-gray-100 text-gray-800"
-          }`}
-        >
-          {status}
-        </span>
-      ),
+      render: (status: string) => {
+        const color = statusColors[status] || "default";
+        return (
+          <Tag color={color}>{status}</Tag>
+        );
+      },
     },
     {
-      title: "Submitted",
-      dataIndex: "submittedDate",
-      key: "submittedDate",
-      width: 120,
+      title: "Actions",
+      key: "actions",
+      width: 100,
+      align: "center",
+      render: (_: unknown, record: ApplicationRecord) => (
+        <Tooltip title="View" placement="top">
+          <button
+            onClick={() => navigate(`/applications/${record.id}`)}
+            className="flex cursor-pointer items-center justify-center w-8 h-8 rounded border border-gray-300 transition-all text-gray-600 hover:text-primary-500 hover:border-primary-500"
+          >
+            <FiEye size={16} />
+          </button>
+        </Tooltip>
+      ),
     },
   ];
 
@@ -183,10 +147,8 @@ export default function Applications() {
 
       <div className="mb-6 max-w-sm">
         <Input
-          placeholder="Search by ID, student, course, university or status"
+          placeholder="Search by ID, course, university or status"
           allowClear
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
           size="large"
         />
       </div>
@@ -194,14 +156,21 @@ export default function Applications() {
       <div className="overflow-hidden rounded-[24px] border border-neutral-100 bg-white card-shadow dark:border-gray-800 dark:bg-gray-900">
         <Table
           className="applications-table"
-          dataSource={filteredData}
+          dataSource={tableData}
           columns={columns}
-          rowKey="key"
+          rowKey="id"
+          loading={isLoading || isFetching}
           pagination={{
-            pageSize: 10,
+            current: currentPage,
+            pageSize: limit,
+            total,
             showSizeChanger: true,
-            showTotal: (total) => `Total ${total} applications`,
+            showTotal: (t) => `Total ${t} applications`,
             pageSizeOptions: ["10", "20", "50"],
+            onChange: (page, pageSize) => {
+              setCurrentPage(page);
+              setLimit(pageSize || 10);
+            },
           }}
           scroll={{ x: 900 }}
         />

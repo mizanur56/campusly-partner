@@ -38,7 +38,7 @@ const Header: React.FC = () => {
   const { pathname } = useLocation();
   const { previewMode } = usePreviewMode();
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar, isExpanded } = useSidebar();
-  const isSignedMode = (pathname === "/" && previewMode === "signed") || SIGNED_HEADER_PATHS.includes(pathname) || pathname.startsWith("/payments") || pathname.startsWith("/students/");
+  const isSignedMode = (pathname === "/" && previewMode === "signed") || SIGNED_HEADER_PATHS.includes(pathname) || pathname.startsWith("/payments") || pathname.startsWith("/students/") || pathname.startsWith("/applications/");
   const [isCoursesOpen, setIsCoursesOpen] = useState(false);
   const [isCountriesOpen, setIsCountriesOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
@@ -51,7 +51,8 @@ const Header: React.FC = () => {
     pathname.startsWith("/contract") ||
     ["/programs-schools", "/students", "/applications", "/my-tasks", "/academy", "/hot-offers"].includes(pathname) ||
     pathname.startsWith("/payments") ||
-    pathname.startsWith("/students/");
+    pathname.startsWith("/students/") ||
+    pathname.startsWith("/applications/");
 
   const countries = mockCountries;
   const countryOptions = countries;

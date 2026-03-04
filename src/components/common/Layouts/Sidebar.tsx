@@ -135,17 +135,22 @@ const Sidebar: React.FC = () => {
 
   /* Sidebar mode by context:
    * - STUDENT: /students/:id/* → only student card + Activity/Profile/Applications/Tasks
+   * - APPLICATION DETAIL: /applications/:id/* → student card (from application) + Activity/Profile/Applications/Tasks
    * - UNSIGNED (onboarding): / or /onboarding or /contract → partner card + Home
    * - SIGNED: dashboard routes → partner card + full nav
    */
   const isStudentContext = /^\/students\/[^/]+(\/|$)/.test(location.pathname);
-  const studentId = isStudentContext ? location.pathname.split("/")[2] : null;
+  const isApplicationDetailContext = /^\/applications\/[^/]+(\/|$)/.test(location.pathname);
+  const studentIdFromPath = isStudentContext ? location.pathname.split("/")[2] : null;
+  const studentId = isStudentContext ? studentIdFromPath : isApplicationDetailContext ? student?.id : null;
+  const showStudentSidebar = (isStudentContext && studentIdFromPath) || (isApplicationDetailContext && student);
   const isOnboardingContext =
     (location.pathname === "/" && previewMode === "onboarding") ||
     location.pathname.startsWith("/onboarding") ||
     location.pathname.startsWith("/contract");
   const isSignedContext =
     !isStudentContext &&
+    !isApplicationDetailContext &&
     ((location.pathname === "/" && previewMode === "signed") ||
       SIGNED_ROUTE_PATHS.includes(location.pathname) ||
       location.pathname.startsWith("/payments"));
@@ -575,8 +580,8 @@ const Sidebar: React.FC = () => {
         </div>
       )}
 
-      {/* STUDENT: Student profile card + Activity/Profile/Applications/Tasks only */}
-      {(isExpanded || isMobileOpen) && isStudentContext && studentId && (
+      {/* STUDENT / APPLICATION DETAIL: Student profile card + Activity/Profile/Applications/Tasks */}
+      {(isExpanded || isMobileOpen) && showStudentSidebar && studentId && (
         <div className="mx-3 mt-0 rounded-xl border border-gray-200/60 bg-gray-50/80 p-3 dark:border-gray-700 dark:bg-gray-800/40">
           <div className="flex items-center gap-2.5">
             <div className="relative shrink-0">
@@ -626,9 +631,9 @@ const Sidebar: React.FC = () => {
         </div>
       )}
 
-      {/* Navigation - UNSIGNED: Home only | SIGNED: full nav | STUDENT: hidden */}
+      {/* Navigation - UNSIGNED: Home only | SIGNED: full nav | STUDENT/APPLICATION: hidden */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {!isStudentContext && (
+        {!showStudentSidebar && (
           <div className="flex-1 overflow-y-auto px-3 py-4 no-scrollbar">
             <nav className="flex flex-col gap-1">
               {renderMenuItems(filteredSidebarItems, "main")}
@@ -636,15 +641,15 @@ const Sidebar: React.FC = () => {
           </div>
         )}
 
-        {/* STUDENT: Back to Students link */}
-        {isStudentContext && studentId && (
+        {/* STUDENT / APPLICATION: Back link */}
+        {showStudentSidebar && studentId && (
           <div className="flex-1 px-3 py-4">
             <Link
-              to="/students"
+              to={isApplicationDetailContext ? "/applications" : "/students"}
               className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[0.9375rem] font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:hover:bg-gray-700/50 dark:hover:text-gray-100 transition-colors"
             >
               <i className="fa-solid fa-arrow-left w-4 text-center" />
-              <span>Back to Students</span>
+              <span>{isApplicationDetailContext ? "Back to Applications" : "Back to Students"}</span>
             </Link>
           </div>
         )}

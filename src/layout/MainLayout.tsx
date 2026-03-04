@@ -13,7 +13,8 @@ const DELAY_BETWEEN_MS = 220;
 
 const LayoutContent: React.FC = () => {
   const { isExpanded, isMobileOpen } = useSidebar();
-  const { pathname } = useLocation();
+  const location = useLocation();
+  const { pathname } = location;
   const navigate = useNavigate();
   const { previewMode, togglePreviewMode } = usePreviewMode();
   const [wipePhase, setWipePhase] = useState<"enter" | "exit" | null>(null);
@@ -52,7 +53,7 @@ const LayoutContent: React.FC = () => {
         <Header />
         <main className="flex-1 min-h-[calc(100vh-4rem)] pt-[4.5rem] bg-[#fefefe] dark:bg-neutral-900">
           <div className="p-4 md:p-6 lg:p-8 bg-[#fefefe] dark:bg-neutral-900">
-            <Outlet />
+            <Outlet key={location.key || location.pathname} />
           </div>
         </main>
 

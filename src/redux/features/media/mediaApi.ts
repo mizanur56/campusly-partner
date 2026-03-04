@@ -2,6 +2,14 @@ import { baseApi } from "../../api/baseApi";
 
 const mediaApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
+    createMedia: builder.mutation({
+      query: (formData: FormData) => ({
+        url: "/media/public/upload",
+        method: "POST",
+        body: formData,
+      }),
+      invalidatesTags: ["media", "documents"],
+    }),
     // Media endpoints
     uploadImage: builder.mutation({
       query: (payload: FormData) => ({
@@ -100,6 +108,7 @@ const mediaApi = baseApi.injectEndpoints({
 });
 
 export const {
+  useCreateMediaMutation,
   // Media hooks
   useMediaListQuery,
   useUploadImageMutation,

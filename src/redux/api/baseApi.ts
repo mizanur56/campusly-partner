@@ -222,6 +222,8 @@ export const baseApi = createApi({
     "countryStudyLevels",
     "countryDocuments",
     "search",
+    "applications",
+    "invoices",
   ],
   endpoints: () => ({}),
 });

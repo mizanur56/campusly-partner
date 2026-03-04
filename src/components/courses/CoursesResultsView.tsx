@@ -15,9 +15,23 @@ import { transformSearchCourse } from "../../utils/searchTransform";
 import { transformFiltersToApi } from "../../utils/transformFiltersToApi";
 import type { FilterState } from "./StudyPreferenceFilters";
 
+export interface CourseForApply {
+  id: string;
+  title: string;
+  level: string;
+  institution: { name: string; logo?: string; location: string };
+  price: string;
+  intake?: string;
+  duration?: string;
+  startDates?: string;
+  campus?: string;
+  modeOfStudy?: string;
+}
+
 type CoursesResultsViewProps = {
   searchQuery: string;
   filters?: FilterState;
+  onStartApplication?: (course: CourseForApply) => void;
 };
 
 const COURSES_LIMIT = 20;
@@ -47,6 +61,7 @@ const transformToFilterFormData = (filters?: FilterState) => {
 export default function CoursesResultsView({
   searchQuery,
   filters,
+  onStartApplication,
 }: CoursesResultsViewProps) {
   const dispatch = useAppDispatch();
   const [triggerCoursesSearch] = useLazySearchCoursesQuery();
@@ -132,7 +147,7 @@ export default function CoursesResultsView({
   });
 
   const transformedCourses = useMemo(
-    () =>
+    (): CourseForApply[] =>
       courses.map((course) => ({
         id: course.id,
         title: course.title,
@@ -145,7 +160,9 @@ export default function CoursesResultsView({
         price: course.tuition || "N/A",
         intake: course.startYear || undefined,
         duration: course.duration || undefined,
-        startDates: course.startDates || undefined,
+        startDates: course.startDates || course.startYear || undefined,
+        campus: course.location || course.city || "TBA",
+        modeOfStudy: "On Campus",
       })),
     [courses],
   );
@@ -192,6 +209,7 @@ export default function CoursesResultsView({
     <div>
       <CourseList
         courses={transformedCourses}
+        onStartApplication={onStartApplication}
       />
       {hasMore && (
         <div

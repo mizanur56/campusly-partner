@@ -1,9 +1,4 @@
-import { createBrowserRouter, Navigate, useParams } from "react-router-dom";
-
-function StudentProfileRedirect() {
-  const { id } = useParams();
-  return <Navigate to={`/students/${id}/profile`} replace />;
-}
+import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-dom";
 import MainLayout from "../layout/MainLayout";
 import ChangePassword from "../pages/Auth/ChangePassword";
 import ForgetPassword from "../pages/Auth/ForgetPassword";
@@ -24,54 +19,79 @@ import ContractSignedPage from "../pages/Contract/ContractSignedPage";
 import Students from "../pages/Students/Students";
 import StudentProfile from "../pages/Students/StudentProfile/StudentProfile";
 import Applications from "../pages/Applications/Applications";
+import ApplicationDetails from "../pages/Applications/ApplicationDetails";
+import Admission from "../pages/Applications/ApplicationStep/Admission";
+import Apply from "../pages/Applications/ApplicationStep/Apply";
+import ChecklistUpload from "../pages/Applications/ApplicationStep/ChecklistUpload";
+import FinalLetter from "../pages/Applications/ApplicationStep/FinalLetter";
+import EmbassySubmission from "../pages/Applications/ApplicationStep/EmbassySubmission";
+import VisaOutcome from "../pages/Applications/ApplicationStep/VisaOutcome";
+import Enroll from "../pages/Applications/ApplicationStep/Enroll";
+import VisaRejectPage from "../pages/Applications/ApplicationStep/VisaRejectPage";
+import VisaSuccessPage from "../pages/Applications/ApplicationStep/VisaSuccessPage";
 import MyTasks from "../pages/MyTasks/MyTasks";
 import Payments from "../pages/Payments/Payments";
 
-const routes = [
-  {
-    path: "/",
-    element: (
-      <ProtectedRoute>
-        <MainLayout />
-      </ProtectedRoute>
-    ),
-    errorElement: <NotFound />,
-    children: [
-      // Dashboard & Core
-      { path: "/", element: <Dashboard /> },
-      { path: "/media", element: <AllMediaList /> },
-      { path: "/onboarding", element: <OnboardingPage /> },
-      { path: "/contract", element: <ContractPage /> },
-      { path: "/contract/signed", element: <ContractSignedPage /> },
-      { path: "/change-password", element: <ChangePassword /> },
-      // Signed sidebar — default/under-development pages
-      { path: "/programs-schools", element: <ProgramsSchools /> },
-      { path: "/students", element: <Students /> },
-      { path: "/students/:id", element: <StudentProfileRedirect /> },
-      { path: "/students/:id/profile", element: <StudentProfile /> },
-      { path: "/students/:id/activity", element: <StudentProfile /> },
-      { path: "/students/:id/applications", element: <StudentProfile /> },
-      { path: "/students/:id/tasks", element: <StudentProfile /> },
-      { path: "/applications", element: <Applications /> },
-      { path: "/my-tasks", element: <MyTasks /> },
-      { path: "/payments", element: <Navigate to="/payments/purchase" replace /> },
-      { path: "/payments/purchase", element: <Payments /> },
-      { path: "/payments/commission", element: <Payments /> },
-      { path: "/academy", element: <Academy /> },
-      { path: "/hot-offers", element: <HotOffers /> },
-      // Fallback for undefined child routes
-      { path: "*", element: <UnderDevelopment /> },
-    ],
-  },
+function StudentProfileRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/students/${id}/profile`} replace />;
+}
 
-  // Global fallback routes
-  { path: "/404", element: <NotFound /> },
-  { path: "/login", element: <Login /> },
-  { path: "/register", element: <Register /> },
-  { path: "/forgot-password", element: <ForgetPassword /> },
-  { path: "/reset-password", element: <ResetPassword /> },
-];
+function AppRoutes() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/404" element={<NotFound />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgetPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <MainLayout />
+            </ProtectedRoute>
+          }
+          errorElement={<NotFound />}
+        >
+          <Route index element={<Dashboard />} />
+          <Route path="media" element={<AllMediaList />} />
+          <Route path="onboarding" element={<OnboardingPage />} />
+          <Route path="contract" element={<ContractPage />} />
+          <Route path="contract/signed" element={<ContractSignedPage />} />
+          <Route path="change-password" element={<ChangePassword />} />
+          <Route path="programs-schools" element={<ProgramsSchools />} />
+          <Route path="students" element={<Students />} />
+          <Route path="students/:id" element={<StudentProfileRedirect />} />
+          <Route path="students/:id/profile" element={<StudentProfile />} />
+          <Route path="students/:id/activity" element={<StudentProfile />} />
+          <Route path="students/:id/applications" element={<StudentProfile />} />
+          <Route path="students/:id/tasks" element={<StudentProfile />} />
+          <Route path="applications" element={<Applications />} />
+          <Route path="visa-reject" element={<VisaRejectPage />} />
+          <Route path="visa-success" element={<VisaSuccessPage />} />
+          <Route path="applications/:id" element={<ApplicationDetails />}>
+            <Route index element={<Admission />} />
+            <Route path="admission" element={<Admission />} />
+            <Route path="apply" element={<Apply />} />
+            <Route path="checklist" element={<ChecklistUpload />} />
+            <Route path="final-letter" element={<FinalLetter />} />
+            <Route path="embassy" element={<EmbassySubmission />} />
+            <Route path="visa" element={<VisaOutcome />} />
+            <Route path="enroll" element={<Enroll />} />
+          </Route>
+          <Route path="my-tasks" element={<MyTasks />} />
+          <Route path="payments" element={<Navigate to="/payments/purchase" replace />} />
+          <Route path="payments/purchase" element={<Payments />} />
+          <Route path="payments/commission" element={<Payments />} />
+          <Route path="academy" element={<Academy />} />
+          <Route path="hot-offers" element={<HotOffers />} />
+          <Route path="*" element={<UnderDevelopment />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
+}
 
-const router = createBrowserRouter(routes);
-
-export default router;
+export default AppRoutes;
