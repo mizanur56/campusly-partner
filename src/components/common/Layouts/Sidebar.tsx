@@ -8,6 +8,7 @@ import { useFilteredSidebarItems } from "../../../hooks/useFilteredSidebarItems"
 import { useStudentProfile } from "../../../context/StudentProfileContext";
 import { ChevronDownIcon } from "../../../icons";
 import { selectCurrentUser } from "../../../redux/features/auth/authSlice";
+import { useGetPartnerProfileQuery } from "../../../redux/features/profile/partnerProfileApi";
 import { NavItem, SubMenuItem } from "../../../types/interfaces";
 import { Tooltip } from "antd";
 
@@ -118,14 +119,20 @@ const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const { student } = useStudentProfile();
   const user = useSelector(selectCurrentUser);
-  const profileName = user?.name ?? fallbackManagedBy.name;
-  const profileEmail = user?.email ?? fallbackManagedBy.email;
-  const profilePhone = fallbackManagedBy.phone;
-  const profilePhotoUrl = user?.profile_photo
-    ? user.profile_photo.startsWith("http")
-      ? user.profile_photo
-      : `${config.image_access_url || ""}${user.profile_photo}`
-    : `https://i.pravatar.cc/80?u=${user?.id || encodeURIComponent(profileEmail) || "user"}`;
+  
+  // Fetch partner profile to get advisor details
+  const { data: partnerProfile } = useGetPartnerProfileQuery(undefined, {
+    skip: !user, // Only fetch when user is logged in
+  });
+  
+  // Advisor details from partner profile (for "Managed by" section)
+  const advisor = partnerProfile?.advisor;
+  const profileName = advisor?.name ?? fallbackManagedBy.name;
+  const profileEmail = advisor?.email ?? fallbackManagedBy.email;
+  const profilePhone = advisor?.phone ?? fallbackManagedBy.phone;
+  const profilePhotoUrl = advisor
+    ? `https://i.pravatar.cc/80?u=${encodeURIComponent(advisor.email)}`
+    : fallbackManagedBy.avatar;
 
   const handleLogout = () => {
     console.log("Logging out...");
