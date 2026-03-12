@@ -10,8 +10,7 @@ export default function ContractSignedPage() {
   useEffect(() => {
     if (
       onboardingStatus?.status === "AWAITING_PARTNER_SIGNATURE" ||
-      (onboardingStatus?.status === "REJECTED" &&
-        onboardingStatus?.statusLabel === "Contract sign rejected")
+      onboardingStatus?.statusLabel === "Contract sign rejected"
     ) {
       navigate("/contract", { replace: true });
     }

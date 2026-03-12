@@ -89,7 +89,6 @@ export default function ContractPage() {
 
   const hasSigned = !!signatureImageDataUrl;
   const isContractSignRejected =
-    onboardingStatus?.status === "REJECTED" &&
     onboardingStatus?.statusLabel === "Contract sign rejected";
   const contractRejectionReason = onboardingStatus?.rejectionReason?.trim();
 
@@ -138,7 +137,7 @@ export default function ContractPage() {
           type: "image/png",
         }),
       );
-      formData.append("category", "signature");
+      formData.append("category", "document");
 
       const mediaResponse = await createMedia(formData).unwrap();
       const uploadedSignatureUrl = `${config.image_access_url}${

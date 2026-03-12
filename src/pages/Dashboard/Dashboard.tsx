@@ -150,8 +150,8 @@ const Dashboard = () => {
   // Contract progress derived from overall status
   const status = formStatus?.status;
   const statusLabel = formStatus?.statusLabel;
-  const isContractSignRejected =
-    status === "REJECTED" && statusLabel === "Contract sign rejected";
+  const isContractSignRejected = statusLabel === "Contract sign rejected";
+  const contractRejectionReason = formStatus?.rejectionReason?.trim();
 
   // Check if application is rejected
   const isRejected = status === "REJECTED" && !isContractSignRejected;
@@ -164,7 +164,10 @@ const Dashboard = () => {
   const canAccessContract = isApproved || isContractSignRejected;
 
   let contractCompleted = 0;
-  if (status === "AWAITING_PARTNER_SIGNATURE") {
+  if (isContractSignRejected) {
+    // Keep contract flow visible and show rejection on the final contract step
+    contractCompleted = contractTotal;
+  } else if (status === "AWAITING_PARTNER_SIGNATURE") {
     // Partner needs to sign - View and Sign is active (step 1)
     contractCompleted = 0;
   } else if (status === "AWAITING_ADMIN_APPROVAL") {
@@ -172,9 +175,6 @@ const Dashboard = () => {
     contractCompleted = 1;
   } else if (status === "ACTIVE") {
     // All done
-    contractCompleted = contractTotal;
-  } else if (isContractSignRejected) {
-    // Keep contract flow visible and show rejection on the final contract step
     contractCompleted = contractTotal;
   }
 
@@ -557,6 +557,11 @@ const Dashboard = () => {
                       );
                     })}
                   </ul>
+                  {isContractSignRejected && contractRejectionReason && (
+                    <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
+                      Reason: {contractRejectionReason}
+                    </div>
+                  )}
                 </div>
               )}
               {contractOpen && !canAccessContract && (

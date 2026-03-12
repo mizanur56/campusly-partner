@@ -36,7 +36,6 @@ export default function OnboardingPage() {
     const backendStep = status.onboardingStep ?? 0;
     const workflowStatus = status.status;
     const isContractSignRejected =
-      workflowStatus === "REJECTED" &&
       status.statusLabel === "Contract sign rejected";
 
     if (isContractSignRejected) {
