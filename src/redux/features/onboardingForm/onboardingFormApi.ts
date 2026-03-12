@@ -63,6 +63,10 @@ export interface OnboardingStatusResponse {
   advisor?: unknown;
 }
 
+export interface ContractResponse {
+  contractDocumentUrl: string;
+}
+
 export interface StepDataResponse {
   step: number;
   currentStep?: number;
@@ -170,6 +174,17 @@ const onboardingFormApi = baseApi.injectEndpoints({
         { type: "partnerOnboarding", id: "step-5" },
       ],
     }),
+
+    /** Get contract document URL. */
+    getContract: builder.query<ContractResponse, void>({
+      query: () => ({
+        url: "/partners/contract",
+        method: "GET",
+      }),
+      transformResponse: (response: any) =>
+        (response?.data || {}) as ContractResponse,
+      providesTags: ["partnerContract"],
+    }),
   }),
 });
 
@@ -184,4 +199,6 @@ export const {
   usePatchStep5Mutation,
   useSubmitOnboardingMutation,
   useResubmitOnboardingMutation,
+  useGetContractQuery,
+  useLazyGetContractQuery,
 } = onboardingFormApi;

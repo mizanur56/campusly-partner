@@ -1,11 +1,26 @@
 import { useState } from "react";
+import { config } from "../../config";
 import { Button } from "../../components/ui/button";
 import { SignaturePad } from "../../components/contract/SignaturePad";
+import { useGetContractQuery } from "../../redux/features/onboardingForm/onboardingFormApi";
+import { useGetPartnerProfileQuery } from "../../redux/features/profile/partnerProfileApi";
 
 export default function ContractPage() {
   const [signatureImageDataUrl, setSignatureImageDataUrl] = useState<string | null>(null);
   const [showSignaturePad, setShowSignaturePad] = useState(false);
   const [signedAt, setSignedAt] = useState<string | null>(null);
+
+  // Fetch contract document URL
+  const { data: contractData, isLoading: isContractLoading } = useGetContractQuery();
+  
+  // Fetch partner profile for advisor info
+  const { data: partnerProfile } = useGetPartnerProfileQuery();
+  const advisor = partnerProfile?.advisor;
+
+  // Build full PDF URL
+  const contractPdfUrl = contractData?.contractDocumentUrl
+    ? `${config.image_access_url}${contractData.contractDocumentUrl}`
+    : null;
 
   const hasSigned = !!signatureImageDataUrl;
 
@@ -131,28 +146,52 @@ export default function ContractPage() {
                 <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-800 sm:px-5">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-gray-800 dark:text-gray-100">
-                      Contract Signature
-                    </span>
-                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-                      Page 1 of 2
+                      Contract Document
                     </span>
                   </div>
-                  <Button variant="primary" size="sm">
-                    Download PDF
-                  </Button>
+                  {contractPdfUrl && (
+                    <a
+                      href={contractPdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download
+                    >
+                      <Button variant="primary" size="sm">
+                        Download PDF
+                      </Button>
+                    </a>
+                  )}
                 </div>
                 <div className="bg-gray-50 px-4 py-4 dark:bg-gray-950 sm:px-5 sm:py-5">
-                  <div className="mx-auto h-[360px] max-w-full rounded-xl border border-dashed border-gray-300 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
-                    <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
-                      <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                        Contract preview
-                      </span>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Your contract PDF will appear here. Use this space to
-                        show a read-only preview of the document.
-                      </p>
+                  {isContractLoading ? (
+                    <div className="mx-auto h-[500px] max-w-full rounded-xl border border-dashed border-gray-300 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                      <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
+                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-primary-600"></div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Loading contract...
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  ) : contractPdfUrl ? (
+                    <div className="mx-auto h-[500px] max-w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                      <iframe
+                        src={`${contractPdfUrl}#toolbar=0&navpanes=0`}
+                        className="h-full w-full"
+                        title="Contract Document"
+                      />
+                    </div>
+                  ) : (
+                    <div className="mx-auto h-[500px] max-w-full rounded-xl border border-dashed border-gray-300 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                      <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
+                        <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                          Contract preview
+                        </span>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Contract document is not available yet.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </section>
 
@@ -166,18 +205,27 @@ export default function ContractPage() {
                 <div className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
                   <div className="flex items-center gap-3">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-gray-500 dark:bg-gray-700 dark:text-gray-200">
-                      DS
+                      {advisor?.name
+                        ? advisor.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .slice(0, 2)
+                            .toUpperCase()
+                        : "CT"}
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        Dipak Sharma
+                        {advisor?.name || "Campus Transfer"}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        tareq97@gmail.com
+                        {advisor?.email || "support@campustransfer.com"}
                       </p>
-                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        +881787939155 • st.thompson@company.com
-                      </p>
+                      {advisor?.phone && (
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                          {advisor.phone}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex justify-start sm:justify-end">
