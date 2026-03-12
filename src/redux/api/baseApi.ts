@@ -60,7 +60,7 @@ const getClientDetails = async (): Promise<ClientDetails> => {
 // Base Query
 // ======================
 const rawBaseQuery = fetchBaseQuery({
-  baseUrl: config.api,
+  baseUrl: config.api, // from src/config — single source for API base
   credentials: "include",
   prepareHeaders: async (headers, { getState, endpoint }) => {
     const token = (getState() as RootState).auth.token;
@@ -224,6 +224,7 @@ export const baseApi = createApi({
     "search",
     "applications",
     "invoices",
+    "partnerOnboarding",
   ],
   endpoints: () => ({}),
 });

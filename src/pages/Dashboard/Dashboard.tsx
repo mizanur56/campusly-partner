@@ -3,19 +3,20 @@ import PageMeta from "../../components/common/Meta/PageMeta";
 import { Button } from "../../components/ui/button";
 import { usePreviewMode } from "../../context/PreviewModeContext";
 import SignedDashboardView from "./SignedDashboardView";
+import { useGetOnboardingStatusQuery } from "../../redux/features/onboardingForm";
 
-const ONBOARDING_STEPS = [
-  { id: "owner", label: "Owner Details", completed: true },
-  { id: "director", label: "Director Details", completed: true },
-  { id: "contact", label: "Main Contact Details", completed: false },
-  { id: "compliance", label: "Regular Compliance", completed: false },
-  { id: "declaration", label: "Declaration", completed: false },
-  { id: "review", label: "Review Complete", completed: false },
+const BASE_ONBOARDING_STEPS = [
+  { id: "owner", label: "Owner Details" },
+  { id: "director", label: "Director Details" },
+  { id: "contact", label: "Main Contact Details" },
+  { id: "compliance", label: "Regular Compliance" },
+  { id: "declaration", label: "Declaration" },
+  { id: "review", label: "Review Complete" },
 ];
 
-const CONTRACT_STEPS = [
-  { id: "view-sign", label: "View and Sign", completed: false },
-  { id: "complete", label: "Complete", completed: false },
+const BASE_CONTRACT_STEPS = [
+  { id: "view-sign", label: "View and Sign" },
+  { id: "complete", label: "Complete" },
 ];
 
 const Dashboard = () => {
@@ -23,10 +24,33 @@ const Dashboard = () => {
   const [onboardingOpen, setOnboardingOpen] = useState(true);
   const [contractOpen, setContractOpen] = useState(true);
 
-  const onboardingCompleted = ONBOARDING_STEPS.filter(
-    (s) => s.completed,
-  ).length;
-  const contractCompleted = CONTRACT_STEPS.filter((s) => s.completed).length;
+  const { data: formStatus } = useGetOnboardingStatusQuery();
+
+  const onboardingTotal = BASE_ONBOARDING_STEPS.length;
+  const contractTotal = BASE_CONTRACT_STEPS.length;
+
+  // Backend: onboardingStep = number of completed onboarding steps (0–6).
+  // So "completed" = onboardingStep (clamped to total steps).
+  const rawOnboardingStep = formStatus?.onboardingStep ?? 0;
+  const onboardingCompleted = Math.max(
+    0,
+    Math.min(onboardingTotal, rawOnboardingStep),
+  );
+
+  const ONBOARDING_STEPS = BASE_ONBOARDING_STEPS.map((step, index) => ({
+    ...step,
+    completed: index < onboardingCompleted,
+  }));
+
+  // Contract progress derived from overall status
+  const status = formStatus?.status;
+  const statusLabel = formStatus?.statusLabel;
+  let contractCompleted = 0;
+  if (status === "AWAITING_PARTNER_SIGNATURE") {
+    contractCompleted = 1;
+  } else if (status === "AWAITING_ADMIN_APPROVAL" || status === "ACTIVE") {
+    contractCompleted = contractTotal;
+  }
 
   return (
     <>
@@ -57,13 +81,13 @@ const Dashboard = () => {
                   <div className="mt-2 flex items-baseline gap-2">
                     <span className="text-2xl font-semibold text-gray-900 dark:text-white">
                       {onboardingCompleted}
-                      <span className="text-lg font-normal text-gray-400 dark:text-gray-500">/{ONBOARDING_STEPS.length}</span>
+                      <span className="text-lg font-normal text-gray-400 dark:text-gray-500">/{onboardingTotal}</span>
                     </span>
                   </div>
                   <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                     <div
                       className="h-full rounded-full bg-primary-500 transition-all duration-300"
-                      style={{ width: `${(onboardingCompleted / ONBOARDING_STEPS.length) * 100}%` }}
+                      style={{ width: `${(onboardingCompleted / onboardingTotal) * 100}%` }}
                     />
                   </div>
                 </div>
@@ -74,13 +98,13 @@ const Dashboard = () => {
                   <div className="mt-2 flex items-baseline gap-2">
                     <span className="text-2xl font-semibold text-gray-900 dark:text-white">
                       {contractCompleted}
-                      <span className="text-lg font-normal text-gray-400 dark:text-gray-500">/{CONTRACT_STEPS.length}</span>
+                      <span className="text-lg font-normal text-gray-400 dark:text-gray-500">/{contractTotal}</span>
                     </span>
                   </div>
                   <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                     <div
                       className="h-full rounded-full bg-gray-400 dark:bg-gray-600 transition-all duration-300"
-                      style={{ width: `${(contractCompleted / CONTRACT_STEPS.length) * 100}%` }}
+                      style={{ width: `${(contractCompleted / contractTotal) * 100}%` }}
                     />
                   </div>
                 </div>
@@ -149,41 +173,58 @@ const Dashboard = () => {
               {onboardingOpen && (
                 <div className="border-t border-gray-100 bg-gray-50/60 px-5 py-4 dark:border-gray-800 dark:bg-gray-800/30">
                   <ul className="space-y-0">
-                    {ONBOARDING_STEPS.map((step, index) => (
-                      <li
-                        key={step.id}
-                        className={`flex items-center gap-3 py-3 ${index > 0 ? "border-t border-gray-100 dark:border-gray-700/80" : ""}`}
-                      >
-                        <span
-                          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
-                            step.completed
-                              ? "bg-primary-600 text-white"
-                              : "border border-gray-200 bg-white text-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-500"
+                    {ONBOARDING_STEPS.map((step, index) => {
+                      const isCompleted = step.completed;
+                      const isActive = !isCompleted && index === onboardingCompleted;
+
+                      return (
+                        <li
+                          key={step.id}
+                          className={`flex items-center gap-3 py-3 ${
+                            index > 0
+                              ? "border-t border-gray-100 dark:border-gray-700/80"
+                              : ""
                           }`}
                         >
-                          {step.completed ? (
-                            <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
-                              <path
-                                fillRule="evenodd"
-                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          ) : (
-                            index + 1
-                          )}
-                        </span>
-                        <span
-                          className={
-                            step.completed
-                              ? "text-sm font-medium text-gray-900 dark:text-white"
-                              : "text-sm text-gray-500 dark:text-gray-400"
-                          }
-                        >
-                          {step.label}
-                        </span>
-                      </li>
-                    ))}
+                          <span
+                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
+                              isCompleted
+                                ? "bg-primary-600 text-white"
+                                : isActive
+                                  ? "border border-primary-500 bg-primary-50 text-primary-600 dark:border-primary-400 dark:bg-primary-900/30"
+                                  : "border border-gray-200 bg-white text-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-500"
+                            }`}
+                          >
+                            {isCompleted ? (
+                              <svg
+                                className="h-3.5 w-3.5"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            ) : (
+                              index + 1
+                            )}
+                          </span>
+                          <span
+                            className={
+                              isCompleted
+                                ? "text-sm font-medium text-gray-900 dark:text-white"
+                                : isActive
+                                  ? "text-sm font-medium text-primary-700 dark:text-primary-300"
+                                  : "text-sm text-gray-500 dark:text-gray-400"
+                            }
+                          >
+                            {step.label}
+                          </span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               )}
@@ -213,7 +254,7 @@ const Dashboard = () => {
                       Contract
                     </h2>
                     <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-                      {contractCompleted} of {CONTRACT_STEPS.length} steps completed
+                      {contractCompleted} of {contractTotal} steps completed
                     </p>
                   </div>
                 </div>
@@ -246,41 +287,52 @@ const Dashboard = () => {
               {contractOpen && (
                 <div className="border-t border-gray-100 bg-gray-50/60 px-5 py-4 dark:border-gray-800 dark:bg-gray-800/30">
                   <ul className="space-y-0">
-                    {CONTRACT_STEPS.map((step, index) => (
-                      <li
-                        key={step.id}
-                        className={`flex items-center gap-3 py-3 ${index > 0 ? "border-t border-gray-100 dark:border-gray-700/80" : ""}`}
-                      >
-                        <span
-                          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
-                            step.completed
-                              ? "bg-primary-600 text-white"
-                              : "border border-gray-200 bg-white text-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-500"
+                    {BASE_CONTRACT_STEPS.map((step, index) => {
+                      const isCompleted = index < contractCompleted;
+                      return (
+                        <li
+                          key={step.id}
+                          className={`flex items-center gap-3 py-3 ${
+                            index > 0
+                              ? "border-t border-gray-100 dark:border-gray-700/80"
+                              : ""
                           }`}
                         >
-                          {step.completed ? (
-                            <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
-                              <path
-                                fillRule="evenodd"
-                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          ) : (
-                            index + 1
-                          )}
-                        </span>
-                        <span
-                          className={
-                            step.completed
-                              ? "text-sm font-medium text-gray-900 dark:text-white"
-                              : "text-sm text-gray-500 dark:text-gray-400"
-                          }
-                        >
-                          {step.label}
-                        </span>
-                      </li>
-                    ))}
+                          <span
+                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
+                              isCompleted
+                                ? "bg-primary-600 text-white"
+                                : "border border-gray-200 bg-white text-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-500"
+                            }`}
+                          >
+                            {isCompleted ? (
+                              <svg
+                                className="h-3.5 w-3.5"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            ) : (
+                              index + 1
+                            )}
+                          </span>
+                          <span
+                            className={
+                              isCompleted
+                                ? "text-sm font-medium text-gray-900 dark:text-white"
+                                : "text-sm text-gray-500 dark:text-gray-400"
+                            }
+                          >
+                            {step.label}
+                          </span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               )}

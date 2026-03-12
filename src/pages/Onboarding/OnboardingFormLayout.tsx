@@ -9,6 +9,8 @@ interface OnboardingFormLayoutProps {
   /** 0-4 form steps, 5 submitted, 6 verified. When set, stepper uses this instead of route */
   currentStepIndex?: number;
   stepperVariant?: "form" | "submitted" | "verified";
+  /** Optional: when provided, enables clicking steps 0–4 in sidebar to switch form tab */
+  onStepChange?: (index: number) => void;
 }
 
 export default function OnboardingFormLayout({
@@ -17,6 +19,7 @@ export default function OnboardingFormLayout({
   subtitle,
   currentStepIndex,
   stepperVariant = "form",
+  onStepChange,
 }: OnboardingFormLayoutProps) {
   const showStepInHeader =
     currentStepIndex !== undefined &&
@@ -31,6 +34,7 @@ export default function OnboardingFormLayout({
           <OnboardingStepper
             currentStepIndex={currentStepIndex}
             variant={stepperVariant}
+            onStepSelect={onStepChange}
           />
           <main className="min-w-0 flex-1">
             <div className="overflow-hidden rounded-[24px] border border-neutral-100 bg-white card-shadow dark:border-gray-700/90 dark:bg-gray-900">

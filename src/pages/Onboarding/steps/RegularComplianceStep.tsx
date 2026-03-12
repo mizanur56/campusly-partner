@@ -1,17 +1,45 @@
 import { Button } from "../../../components/ui/button";
+import { toast } from "react-toastify";
+import { usePatchStep4Mutation } from "../../../redux/features/onboardingForm/onboardingFormApi";
+import type { Step4Payload } from "../../../redux/features/onboardingForm/onboardingFormApi";
 
 const UPLOAD_ITEMS = [
   { label: "Your ID", key: "yourId" },
-  { label: "Business registration certificate", key: "businessCert" },
-  { label: "Tax Certificate (Optional)", key: "taxCert" },
+  { label: "Business registration certificate", key: "businessRegistrationCertificate" },
+  { label: "Tax Certificate (Optional)", key: "taxCertificate" },
 ];
 
 interface Props {
+  apiStep: number;
   onPrev: () => void;
   onNext: () => void;
 }
 
-export default function RegularComplianceStep({ onPrev, onNext }: Props) {
+export default function RegularComplianceStep({ apiStep, onPrev, onNext }: Props) {
+  const [patchStep4, { isLoading: isSaving }] = usePatchStep4Mutation();
+
+  const handleNext = async () => {
+    try {
+      await patchStep4({} as Step4Payload).unwrap();
+      onNext();
+    } catch (err: any) {
+      const raw =
+        err?.data?.message || (typeof err?.error === "string" ? err.error : "") || "";
+      const message = String(raw);
+
+      if (message.toLowerCase().includes("onboarding form already submitted")) {
+        toast.info("Your onboarding form is already submitted.");
+        return;
+      }
+
+      if (message) {
+        toast.error(message);
+      } else {
+        toast.error("Failed to save compliance documents. Please try again.");
+      }
+    }
+  };
+
   return (
     <div className="space-y-5">
       <Button type="button" variant="primary" size="sm">
@@ -36,8 +64,8 @@ export default function RegularComplianceStep({ onPrev, onNext }: Props) {
         <Button type="button" variant="secondary" size="sm" onClick={onPrev}>
           ← Previous
         </Button>
-        <Button type="button" variant="primary" size="sm" onClick={onNext}>
-          Next →
+        <Button type="button" variant="primary" size="sm" onClick={handleNext} disabled={isSaving}>
+          {isSaving ? "Saving…" : "Next →"}
         </Button>
       </div>
     </div>

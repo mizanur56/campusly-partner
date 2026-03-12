@@ -5,6 +5,8 @@ type StepperVariant = "form" | "submitted" | "verified";
 interface OnboardingStepperProps {
   currentStepIndex?: number;
   variant?: StepperVariant;
+  /** Optional: allow parent to switch active step when user clicks in sidebar (0-4) */
+  onStepSelect?: (index: number) => void;
 }
 
 const STEP_COUNT = 5;
@@ -12,6 +14,7 @@ const STEP_COUNT = 5;
 export default function OnboardingStepper({
   currentStepIndex,
   variant: variantProp,
+  onStepSelect,
 }: OnboardingStepperProps) {
   const isControlled = currentStepIndex !== undefined;
   const variant: StepperVariant =
@@ -75,10 +78,22 @@ export default function OnboardingStepper({
             const stepNumber = index + 1;
             const stepLabel = isUnderReview ? "Under review" : step.label;
 
-            return (
+            const isClickable =
+              variant === "form" && isStepPath && index >= 0 && index <= 4 && !!onStepSelect;
+
+            const handleClick = () => {
+              if (isClickable) {
+                onStepSelect(index);
+              }
+            };
+
+            const content = (
               <div
                 key={step.label + String(index)}
-                className="relative z-10 flex items-start gap-3 py-2.5"
+                className={`relative z-10 flex items-start gap-3 py-2.5 ${
+                  isClickable ? "cursor-pointer" : "cursor-default"
+                }`}
+                onClick={handleClick}
               >
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center">
                   {isUnderReview ? (
@@ -148,6 +163,8 @@ export default function OnboardingStepper({
                 </span>
               </div>
             );
+
+            return content;
           })}
           {variant === "verified" && (
             <div className="relative z-10 flex items-start gap-3 py-2.5">

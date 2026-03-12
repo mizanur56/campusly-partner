@@ -427,7 +427,7 @@ const Sidebar: React.FC = () => {
         </Link>
       </div>
 
-      {/* UNSIGNED (onboarding): Partner "Managed by" card */}
+      {/* Sidebar preview: UNSIGNED (onboarding) partner view – "Managed by" card */}
       {(isExpanded || isMobileOpen) && isOnboardingContext && (
         <div className="mx-3 mt-0 rounded-xl bg-gray-50/80 p-3 dark:bg-gray-800/40">
           <p className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
@@ -506,7 +506,7 @@ const Sidebar: React.FC = () => {
         </div>
       )}
 
-      {/* SIGNED: Partner card (no "Managed by" label) */}
+      {/* Sidebar preview: SIGNED partner view – partner card (no "Managed by" label) */}
       {(isExpanded || isMobileOpen) && isSignedContext && (
         <div className="mx-3 mt-0 rounded-xl bg-gray-50/80 p-3 dark:bg-gray-800/40">
           <div className="mt-0 flex items-center gap-2.5">
@@ -582,7 +582,7 @@ const Sidebar: React.FC = () => {
         </div>
       )}
 
-      {/* APPLICATION DETAIL LOADING: Skeleton */}
+      {/* Sidebar preview: APPLICATION DETAIL (loading skeleton while student sidebar data loads) */}
       {(isExpanded || isMobileOpen) && isApplicationDetailLoading && (
         <div className="mx-3 mt-0 rounded-xl border border-gray-200/60 bg-gray-50/80 p-3 dark:border-gray-700 dark:bg-gray-800/40 animate-pulse">
           <div className="flex items-center gap-2.5">
@@ -599,7 +599,7 @@ const Sidebar: React.FC = () => {
         </div>
       )}
 
-      {/* STUDENT / APPLICATION DETAIL: Student profile card + Activity/Profile/Applications/Tasks */}
+      {/* Sidebar preview: STUDENT / APPLICATION DETAIL – student profile card + Activity/Profile/Applications/Tasks */}
       {(isExpanded || isMobileOpen) && showStudentSidebar && studentId && (
         <div className="mx-3 mt-0 rounded-xl border border-gray-200/60 bg-gray-50/80 p-3 dark:border-gray-700 dark:bg-gray-800/40">
           <div className="flex items-center gap-2.5">
@@ -650,7 +650,7 @@ const Sidebar: React.FC = () => {
         </div>
       )}
 
-      {/* Navigation - UNSIGNED: Home only | SIGNED: full nav | STUDENT: hidden | APPLICATION LOADING: skeleton */}
+      {/* Sidebar preview nav: UNSIGNED → Home only | SIGNED → full partner nav | STUDENT/APPLICATION → hidden (handled by student sidebar above) */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {isApplicationDetailLoading && (
           <div className="flex-1 overflow-y-auto px-3 py-4 no-scrollbar">
@@ -669,7 +669,7 @@ const Sidebar: React.FC = () => {
           </div>
         )}
 
-        {/* STUDENT / APPLICATION: Back link */}
+        {/* Sidebar preview: STUDENT / APPLICATION – back link below student sidebar */}
         {showStudentSidebar && studentId && (
           <div className="flex-1 px-3 py-4">
             <Link
