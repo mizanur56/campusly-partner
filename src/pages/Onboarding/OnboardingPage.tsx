@@ -35,6 +35,14 @@ export default function OnboardingPage() {
 
     const backendStep = status.onboardingStep ?? 0;
     const workflowStatus = status.status;
+    const isContractSignRejected =
+      workflowStatus === "REJECTED" &&
+      status.statusLabel === "Contract sign rejected";
+
+    if (isContractSignRejected) {
+      navigate("/contract", { replace: true });
+      return;
+    }
 
     if (workflowStatus === "ONBOARDING_IN_PROGRESS") {
       // Treat backend step as "completed count" (1–5):
@@ -73,7 +81,7 @@ export default function OnboardingPage() {
       setStep(7);
       return;
     }
-  }, [status]);
+  }, [navigate, status]);
 
   const handleResubmit = async () => {
     try {

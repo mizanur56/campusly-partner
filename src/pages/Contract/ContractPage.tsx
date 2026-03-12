@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Input, Modal, message } from "antd";
+import { useNavigate } from "react-router-dom";
 import { config } from "../../config";
 import { Button } from "../../components/ui/button";
 import { SignaturePad } from "../../components/contract/SignaturePad";
@@ -7,10 +8,17 @@ import {
   useBookMeetingMutation,
   useGetAvailableMeetingSlotsQuery,
   useGetContractQuery,
+  useCancelMeetingMutation,
+  useGetOnboardingStatusQuery,
+  useLazyGetOnboardingStatusQuery,
+  useGetMyMeetingsQuery,
+  useSignContractMutation,
 } from "../../redux/features/onboardingForm/onboardingFormApi";
+import { useCreateMediaMutation } from "../../redux/features/media/mediaApi";
 import { useGetPartnerProfileQuery } from "../../redux/features/profile/partnerProfileApi";
 
 export default function ContractPage() {
+  const navigate = useNavigate();
   const [signatureImageDataUrl, setSignatureImageDataUrl] = useState<
     string | null
   >(null);
@@ -24,6 +32,8 @@ export default function ContractPage() {
   // Fetch contract document URL
   const { data: contractData, isLoading: isContractLoading } =
     useGetContractQuery();
+  const { data: onboardingStatus, isLoading: isOnboardingStatusLoading } =
+    useGetOnboardingStatusQuery();
 
   // Fetch partner profile for advisor info
   const { data: partnerProfile } = useGetPartnerProfileQuery();
@@ -63,6 +73,14 @@ export default function ContractPage() {
 
   const [bookMeeting, { isLoading: isBookingMeeting }] =
     useBookMeetingMutation();
+  const [signContract, { isLoading: isSigningContract }] =
+    useSignContractMutation();
+  const [createMedia] = useCreateMediaMutation();
+  const [fetchOnboardingStatus] = useLazyGetOnboardingStatusQuery();
+  const { data: meetings, isLoading: isMeetingsLoading } =
+    useGetMyMeetingsQuery();
+  const [cancelMeeting, { isLoading: isCancelingMeeting }] =
+    useCancelMeetingMutation();
 
   // Build full PDF URL
   const contractPdfUrl = contractData?.contractDocumentUrl
@@ -70,6 +88,19 @@ export default function ContractPage() {
     : null;
 
   const hasSigned = !!signatureImageDataUrl;
+  const isContractSignRejected =
+    onboardingStatus?.status === "REJECTED" &&
+    onboardingStatus?.statusLabel === "Contract sign rejected";
+  const contractRejectionReason = onboardingStatus?.rejectionReason?.trim();
+
+  useEffect(() => {
+    if (
+      onboardingStatus?.status === "AWAITING_ADMIN_APPROVAL" ||
+      onboardingStatus?.status === "ACTIVE"
+    ) {
+      navigate("/contract/signed", { replace: true });
+    }
+  }, [navigate, onboardingStatus?.status]);
 
   const handleSaveSignature = (dataUrl: string) => {
     setSignatureImageDataUrl(dataUrl);
@@ -87,6 +118,57 @@ export default function ContractPage() {
     setSignatureImageDataUrl(null);
     setSignedAt(null);
     setShowSignaturePad(true);
+  };
+
+  const handleSubmitSignedContract = async () => {
+    if (!signatureImageDataUrl) {
+      message.warning("Please draw and save your signature first");
+      return;
+    }
+
+    try {
+      const signatureBlob = await fetch(signatureImageDataUrl).then((res) =>
+        res.blob(),
+      );
+
+      const formData = new FormData();
+      formData.append(
+        "file",
+        new File([signatureBlob], `partner-signature-${Date.now()}.png`, {
+          type: "image/png",
+        }),
+      );
+      formData.append("category", "signature");
+
+      const mediaResponse = await createMedia(formData).unwrap();
+      const uploadedSignatureUrl = `${config.image_access_url}${
+        mediaResponse.data.url.startsWith("/")
+          ? mediaResponse.data.url
+          : `/${mediaResponse.data.url}`
+      }`;
+
+      await signContract({ signatureUrl: uploadedSignatureUrl }).unwrap();
+
+      const statusResponse = await fetchOnboardingStatus().unwrap();
+
+      message.success("Signed contract submitted successfully");
+
+      if (
+        statusResponse?.status === "AWAITING_ADMIN_APPROVAL" ||
+        statusResponse?.status === "ACTIVE"
+      ) {
+        navigate("/contract/signed");
+        return;
+      }
+
+      if (statusResponse?.status === "AWAITING_PARTNER_SIGNATURE") {
+        message.info(
+          statusResponse?.statusLabel || "Contract ready for signature",
+        );
+      }
+    } catch (error: any) {
+      message.error(error?.data?.message || "Failed to submit signed contract");
+    }
   };
 
   const handleOpenMeetingModal = () => {
@@ -201,6 +283,80 @@ export default function ContractPage() {
     });
   }, [selectedSlot]);
 
+  const upcomingMeeting = useMemo(() => {
+    return (meetings || [])
+      .filter(
+        (meeting) =>
+          meeting.status === "SCHEDULED" &&
+          new Date(meeting.scheduledAt).getTime() > Date.now(),
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime(),
+      )[0];
+  }, [meetings]);
+
+  const upcomingMeetingSummary = useMemo(() => {
+    if (!upcomingMeeting) return null;
+    const meetingDate = new Date(upcomingMeeting.scheduledAt);
+    return {
+      date: meetingDate.toLocaleDateString("en-GB", {
+        weekday: "long",
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }),
+      time: meetingDate.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      }),
+    };
+  }, [upcomingMeeting]);
+
+  const meetingManager = useMemo(() => {
+    if (!upcomingMeeting) return null;
+    return {
+      name:
+        upcomingMeeting.advisor?.name || advisor?.name || "Onboarding Manager",
+      email:
+        upcomingMeeting.advisor?.email ||
+        advisor?.email ||
+        "support@campustransfer.com",
+      phone: advisor?.phone || null,
+      meetingLink:
+        upcomingMeeting.meetingLink ||
+        upcomingMeeting.advisor?.meetingLink ||
+        advisor?.meetingLink ||
+        null,
+    };
+  }, [upcomingMeeting, advisor]);
+
+  const handleCancelMeeting = () => {
+    if (!upcomingMeeting) return;
+
+    Modal.confirm({
+      title: "Cancel meeting?",
+      content:
+        "This will cancel your scheduled meeting with the onboarding manager.",
+      okText: "Cancel Meeting",
+      cancelText: "Keep Meeting",
+      okButtonProps: {
+        danger: true,
+        style: { fontWeight: 700 },
+      },
+      cancelButtonProps: { style: { fontWeight: 700 } },
+      onOk: async () => {
+        try {
+          await cancelMeeting(upcomingMeeting.id).unwrap();
+          message.success("Meeting canceled successfully");
+        } catch (error: any) {
+          message.error(error?.data?.message || "Failed to cancel meeting");
+        }
+      },
+    });
+  };
+
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gray-50/50 px-4 py-8 dark:bg-gray-950/30 md:px-6 md:py-10">
       <div className="mx-auto flex max-w-5xl flex-col gap-8 lg:flex-row lg:gap-10">
@@ -297,6 +453,32 @@ export default function ContractPage() {
                 Please review and complete the following steps to finalize your
                 partnership.
               </p>
+                {isContractSignRejected && (
+                  <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-200">
+                    <p className="font-semibold">Your previous contract signature was rejected.</p>
+                    <p className="mt-1">
+                      Please review the feedback below, update your signature if needed, and submit the signed contract again.
+                    </p>
+                    {contractRejectionReason && (
+                      <p className="mt-2 rounded-xl bg-white/70 px-3 py-2 text-xs font-medium text-red-700 dark:bg-gray-900/40 dark:text-red-200">
+                        Reason: {contractRejectionReason}
+                      </p>
+                    )}
+                  </div>
+                )}
+              {isOnboardingStatusLoading ? (
+                <div className="mt-3 h-5 w-56 animate-pulse rounded-full bg-gray-200 dark:bg-gray-700" />
+              ) : onboardingStatus?.statusLabel ? (
+                  <div
+                    className={`mt-3 inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
+                      isContractSignRejected
+                        ? "bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-300"
+                        : "bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300"
+                    }`}
+                  >
+                  {onboardingStatus.statusLabel}
+                </div>
+              ) : null}
             </header>
 
             <div className="space-y-8 px-6 py-6 sm:px-8 sm:py-7 divide-y divide-gray-100 dark:divide-gray-800">
@@ -354,59 +536,154 @@ export default function ContractPage() {
                 </div>
               </section>
 
-              {/* Onboarding manager card */}
+              {/* Onboarding manager / meeting card */}
               <section className="pt-6">
                 <div className="border-b border-gray-100 px-4 py-3 dark:border-gray-800 sm:px-5">
                   <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                    Your Onboarding Manager
+                    {upcomingMeeting
+                      ? "Scheduled Meeting"
+                      : "Your Onboarding Manager"}
                   </h2>
                 </div>
-                <div className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-gray-200 text-sm font-semibold text-gray-500 dark:bg-gray-700 dark:text-gray-200">
-                      {advisorPhotoUrl ? (
-                        <img
-                          src={advisorPhotoUrl}
-                          alt={advisor?.name || "Campus Transfer"}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <>
-                          {advisor?.name
-                            ? advisor.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")
-                                .slice(0, 2)
-                                .toUpperCase()
-                            : "CT"}
-                        </>
-                      )}
+                <div className="px-4 py-4 sm:px-5">
+                  {isMeetingsLoading ? (
+                    <div className="animate-pulse space-y-3">
+                      <div className="h-4 w-40 rounded bg-gray-200 dark:bg-gray-700" />
+                      <div className="h-10 w-full rounded-xl bg-gray-100 dark:bg-gray-800" />
+                      <div className="h-10 w-32 rounded-lg bg-gray-100 dark:bg-gray-800" />
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {advisor?.name || "Campus Transfer"}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {advisor?.email || "support@campustransfer.com"}
-                      </p>
-                      {advisor?.phone && (
-                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                          {advisor.phone}
-                        </p>
-                      )}
+                  ) : upcomingMeeting && upcomingMeetingSummary ? (
+                    <div className="space-y-4">
+                      <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4 dark:border-emerald-900/30 dark:bg-emerald-950/20">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                                Scheduled
+                              </span>
+                              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                Meeting with your onboarding manager
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3 rounded-xl border border-white/70 bg-white/80 p-3 dark:border-white/10 dark:bg-gray-900/30">
+                              {advisorPhotoUrl ? (
+                                <img
+                                  src={advisorPhotoUrl}
+                                  alt={
+                                    meetingManager?.name || "Onboarding Manager"
+                                  }
+                                  className="h-11 w-11 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-gray-600 dark:bg-gray-700 dark:text-gray-200">
+                                  {(meetingManager?.name || "OM")
+                                    .split(" ")
+                                    .map((n) => n[0])
+                                    .join("")
+                                    .slice(0, 2)
+                                    .toUpperCase()}
+                                </div>
+                              )}
+                              <div className="min-w-0 space-y-1">
+                                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                  {meetingManager?.name}
+                                </p>
+                                <p className="truncate text-xs text-gray-600 dark:text-gray-300">
+                                  {meetingManager?.email}
+                                </p>
+                                {meetingManager?.phone && (
+                                  <p className="text-xs text-gray-600 dark:text-gray-300">
+                                    {meetingManager.phone}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                              {upcomingMeetingSummary.date}
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-300">
+                              {upcomingMeetingSummary.time}
+                            </p>
+                            {upcomingMeeting.note && (
+                              <p className="text-sm text-gray-600 dark:text-gray-300">
+                                {upcomingMeeting.note}
+                              </p>
+                            )}
+                            {meetingManager?.meetingLink && (
+                              <a
+                                href={meetingManager.meetingLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-700"
+                              >
+                                Meeting link
+                              </a>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-3">
+                            <button
+                              type="button"
+                              onClick={handleCancelMeeting}
+                              disabled={isCancelingMeeting}
+                              className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {isCancelingMeeting
+                                ? "Canceling..."
+                                : "Cancel Meeting"}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex justify-start sm:justify-end">
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={handleOpenMeetingModal}
-                      disabled={!advisor}
-                    >
-                      Arrange meeting
-                    </Button>
-                  </div>
+                  ) : (
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-gray-200 text-sm font-semibold text-gray-500 dark:bg-gray-700 dark:text-gray-200">
+                          {advisorPhotoUrl ? (
+                            <img
+                              src={advisorPhotoUrl}
+                              alt={advisor?.name || "Campus Transfer"}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <>
+                              {advisor?.name
+                                ? advisor.name
+                                    .split(" ")
+                                    .map((n) => n[0])
+                                    .join("")
+                                    .slice(0, 2)
+                                    .toUpperCase()
+                                : "CT"}
+                            </>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">
+                            {advisor?.name || "Campus Transfer"}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {advisor?.email || "support@campustransfer.com"}
+                          </p>
+                          {advisor?.phone && (
+                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                              {advisor.phone}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex justify-start sm:justify-end">
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={handleOpenMeetingModal}
+                          disabled={!advisor}
+                        >
+                          Arrange meeting
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </section>
 
@@ -418,7 +695,7 @@ export default function ContractPage() {
                   </h2>
                   {hasSigned && (
                     <span className="rounded-full bg-success-50 px-2 py-0.5 text-xs font-medium text-success-700 dark:bg-success-900/20 dark:text-success-400">
-                      Signed
+                      {isContractSignRejected ? "Needs re-sign" : "Signed"}
                     </span>
                   )}
                 </div>
@@ -487,12 +764,19 @@ export default function ContractPage() {
                             Update signature
                           </Button>
                           <Button
-                            as="link"
-                            to="/contract/signed"
+                            type="button"
                             variant="primary"
                             size="sm"
+                            onClick={handleSubmitSignedContract}
+                            disabled={
+                              isSigningContract || !signatureImageDataUrl
+                            }
                           >
-                            Submit signed contract
+                            {isSigningContract
+                              ? "Submitting..."
+                              : isContractSignRejected
+                                ? "Resubmit signed contract"
+                                : "Submit signed contract"}
                           </Button>
                         </div>
                       </div>

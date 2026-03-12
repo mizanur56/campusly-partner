@@ -1,6 +1,22 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/button";
+import { useGetOnboardingStatusQuery } from "../../redux/features/onboardingForm/onboardingFormApi";
 
 export default function ContractSignedPage() {
+  const navigate = useNavigate();
+  const { data: onboardingStatus } = useGetOnboardingStatusQuery();
+
+  useEffect(() => {
+    if (
+      onboardingStatus?.status === "AWAITING_PARTNER_SIGNATURE" ||
+      (onboardingStatus?.status === "REJECTED" &&
+        onboardingStatus?.statusLabel === "Contract sign rejected")
+    ) {
+      navigate("/contract", { replace: true });
+    }
+  }, [navigate, onboardingStatus?.status, onboardingStatus?.statusLabel]);
+
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gray-50/50 px-4 py-8 dark:bg-gray-950/30 md:px-6 md:py-10">
       <div className="mx-auto flex max-w-3xl flex-col items-center justify-center text-center">

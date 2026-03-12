@@ -78,6 +78,24 @@ export interface BookMeetingPayload {
   note?: string;
 }
 
+export interface SignContractPayload {
+  signatureUrl: string;
+}
+
+export interface PartnerMeetingItem {
+  id: string;
+  scheduledAt: string;
+  status: "SCHEDULED" | "COMPLETED" | "NO_SHOW" | "CANCELED";
+  meetingLink?: string | null;
+  note?: string | null;
+  advisor?: {
+    id: string;
+    name: string;
+    email: string;
+    meetingLink?: string | null;
+  } | null;
+}
+
 export interface StepDataResponse {
   step: number;
   currentStep?: number;
@@ -197,6 +215,16 @@ const onboardingFormApi = baseApi.injectEndpoints({
       providesTags: ["partnerContract"],
     }),
 
+    /** Submit signed contract. */
+    signContract: builder.mutation<any, SignContractPayload>({
+      query: (body) => ({
+        url: "/partners/contract/sign",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["partnerOnboarding", "partnerContract"],
+    }),
+
     /** Get available advisor meeting slots by date range. */
     getAvailableMeetingSlots: builder.query<
       AvailableMeetingSlot[],
@@ -225,11 +253,32 @@ const onboardingFormApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["partnerOnboarding"],
     }),
+
+    /** Get my booked meetings. */
+    getMyMeetings: builder.query<PartnerMeetingItem[], void>({
+      query: () => ({
+        url: "/partners/meetings",
+        method: "GET",
+      }),
+      transformResponse: (response: any) =>
+        (response?.data || []) as PartnerMeetingItem[],
+      providesTags: ["partnerOnboarding"],
+    }),
+
+    /** Cancel a scheduled meeting. */
+    cancelMeeting: builder.mutation<any, string>({
+      query: (meetingId) => ({
+        url: `/partners/meetings/${meetingId}/cancel`,
+        method: "PATCH",
+      }),
+      invalidatesTags: ["partnerOnboarding"],
+    }),
   }),
 });
 
 export const {
   useGetOnboardingStatusQuery,
+  useLazyGetOnboardingStatusQuery,
   useGetStepDataQuery,
   useLazyGetStepDataQuery,
   usePatchStep1Mutation,
@@ -241,6 +290,9 @@ export const {
   useResubmitOnboardingMutation,
   useGetContractQuery,
   useLazyGetContractQuery,
+  useSignContractMutation,
   useGetAvailableMeetingSlotsQuery,
   useBookMeetingMutation,
+  useGetMyMeetingsQuery,
+  useCancelMeetingMutation,
 } = onboardingFormApi;

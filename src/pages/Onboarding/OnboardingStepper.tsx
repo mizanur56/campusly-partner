@@ -37,6 +37,8 @@ export default function OnboardingStepper({
   const isApproved =
     workflowStatus === "AWAITING_PARTNER_SIGNATURE" ||
     workflowStatus === "AWAITING_ADMIN_APPROVAL";
+  const isActive = workflowStatus === "ACTIVE";
+  const isContractStage = isApproved || isActive;
 
   return (
     <aside
@@ -50,10 +52,10 @@ export default function OnboardingStepper({
           </p>
           <p className="mt-1 text-base font-semibold text-gray-900 dark:text-white">
             {variant === "verified"
-              ? "All steps complete"
+              ? "Complete"
               : variant === "submitted"
-                ? isApproved
-                  ? "Approved"
+                ? isContractStage
+                  ? "Contract"
                   : "Under review"
                 : variant === "rejected"
                   ? "Rejected"
@@ -98,9 +100,11 @@ export default function OnboardingStepper({
             const isRejected = variant === "rejected" && index === 5;
             const stepNumber = index + 1;
             const stepLabel = isReviewApproved
-              ? "Approved"
+              ? "Contract"
               : isUnderReview
-                ? "Under review"
+                ? isContractStage
+                  ? "Contract"
+                  : "Under review"
                 : isRejected
                   ? "Rejected"
                   : step.label;

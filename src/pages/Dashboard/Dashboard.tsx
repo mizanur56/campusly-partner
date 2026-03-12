@@ -116,7 +116,7 @@ const BASE_ONBOARDING_STEPS = [
   { id: "contact", label: "Main Contact Details" },
   { id: "compliance", label: "Regular Compliance" },
   { id: "declaration", label: "Declaration" },
-  { id: "review", label: "Review Complete" },
+  { id: "review", label: "Approved" },
 ];
 
 const BASE_CONTRACT_STEPS = [
@@ -150,15 +150,18 @@ const Dashboard = () => {
   // Contract progress derived from overall status
   const status = formStatus?.status;
   const statusLabel = formStatus?.statusLabel;
+  const isContractSignRejected =
+    status === "REJECTED" && statusLabel === "Contract sign rejected";
 
   // Check if application is rejected
-  const isRejected = status === "REJECTED";
+  const isRejected = status === "REJECTED" && !isContractSignRejected;
 
   // Check if application is approved (contract uploaded means admin approved the application)
   const isApproved =
     status === "AWAITING_PARTNER_SIGNATURE" ||
     status === "AWAITING_ADMIN_APPROVAL" ||
     status === "ACTIVE";
+  const canAccessContract = isApproved || isContractSignRejected;
 
   let contractCompleted = 0;
   if (status === "AWAITING_PARTNER_SIGNATURE") {
@@ -169,6 +172,9 @@ const Dashboard = () => {
     contractCompleted = 1;
   } else if (status === "ACTIVE") {
     // All done
+    contractCompleted = contractTotal;
+  } else if (isContractSignRejected) {
+    // Keep contract flow visible and show rejection on the final contract step
     contractCompleted = contractTotal;
   }
 
@@ -313,7 +319,7 @@ const Dashboard = () => {
                       const isReviewRejected =
                         step.id === "review" && isRejected;
                       const isReviewApproved =
-                        step.id === "review" && isApproved;
+                        step.id === "review" && (isApproved || isContractSignRejected);
 
                       return (
                         <li
@@ -395,7 +401,7 @@ const Dashboard = () => {
             {/* Contract card */}
             <section
               className={`mt-6 rounded-2xl border bg-white card-shadow dark:bg-gray-900 ${
-                isApproved
+                canAccessContract
                   ? "border-gray-200/90 dark:border-gray-700/90"
                   : "border-gray-200/50 opacity-60 dark:border-gray-700/50"
               }`}
@@ -404,14 +410,14 @@ const Dashboard = () => {
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div
                     className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
-                      isApproved
+                      canAccessContract
                         ? "bg-primary-50 dark:bg-primary-900/30"
                         : "bg-gray-100 dark:bg-gray-800"
                     }`}
                   >
                     <svg
                       className={`h-5 w-5 ${
-                        isApproved
+                        canAccessContract
                           ? "text-primary-600 dark:text-primary-400"
                           : "text-gray-400 dark:text-gray-500"
                       }`}
@@ -432,14 +438,14 @@ const Dashboard = () => {
                       Contract
                     </h2>
                     <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-                      {isApproved
+                      {canAccessContract
                         ? `${contractCompleted} of ${contractTotal} steps completed`
                         : "Complete onboarding first"}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {isApproved ? (
+                  {canAccessContract ? (
                     <Button
                       as="link"
                       to="/contract"
@@ -458,7 +464,7 @@ const Dashboard = () => {
                     onClick={() => setContractOpen(!contractOpen)}
                     className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
                     aria-label={contractOpen ? "Collapse" : "Expand"}
-                    disabled={!isApproved}
+                    disabled={!canAccessContract}
                   >
                     <svg
                       className={`h-4 w-4 transition-transform ${!contractOpen ? "rotate-180" : ""}`}
@@ -476,13 +482,16 @@ const Dashboard = () => {
                   </button>
                 </div>
               </div>
-              {contractOpen && isApproved && (
+              {contractOpen && canAccessContract && (
                 <div className="border-t border-gray-100 bg-gray-50/60 px-5 py-4 dark:border-gray-800 dark:bg-gray-800/30">
                   <ul className="space-y-0">
                     {BASE_CONTRACT_STEPS.map((step, index) => {
-                      const isCompleted = index < contractCompleted;
+                      const isContractRejectedStep =
+                        isContractSignRejected && step.id === "complete";
+                      const isCompleted =
+                        index < contractCompleted && !isContractRejectedStep;
                       const isActive =
-                        !isCompleted && index === contractCompleted;
+                        !isCompleted && !isContractRejectedStep && index === contractCompleted;
                       return (
                         <li
                           key={step.id}
@@ -494,14 +503,28 @@ const Dashboard = () => {
                         >
                           <span
                             className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
-                              isCompleted
+                              isContractRejectedStep
+                                ? "bg-red-600 text-white"
+                                : isCompleted
                                 ? "bg-primary-600 text-white"
                                 : isActive
                                   ? "border-2 border-primary-500 bg-primary-50 text-primary-600 dark:border-primary-400 dark:bg-primary-900/30"
                                   : "border border-gray-200 bg-white text-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-500"
                             }`}
                           >
-                            {isCompleted ? (
+                            {isContractRejectedStep ? (
+                              <svg
+                                className="h-3.5 w-3.5"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            ) : isCompleted ? (
                               <svg
                                 className="h-3.5 w-3.5"
                                 fill="currentColor"
@@ -519,14 +542,16 @@ const Dashboard = () => {
                           </span>
                           <span
                             className={
-                              isCompleted
+                              isContractRejectedStep
+                                ? "text-sm font-medium text-red-600 dark:text-red-400"
+                                : isCompleted
                                 ? "text-sm font-medium text-gray-900 dark:text-white"
                                 : isActive
                                   ? "text-sm font-semibold text-primary-700 dark:text-primary-300"
                                   : "text-sm text-gray-500 dark:text-gray-400"
                             }
                           >
-                            {step.label}
+                            {isContractRejectedStep ? "Rejected" : step.label}
                           </span>
                         </li>
                       );
@@ -534,7 +559,7 @@ const Dashboard = () => {
                   </ul>
                 </div>
               )}
-              {contractOpen && !isApproved && (
+              {contractOpen && !canAccessContract && (
                 <div className="border-t border-gray-100 bg-gray-50/60 px-5 py-4 dark:border-gray-800 dark:bg-gray-800/30">
                   <div className="flex items-center gap-3 rounded-lg bg-gray-100 px-4 py-3 dark:bg-gray-800">
                     <svg

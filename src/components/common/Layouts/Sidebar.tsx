@@ -121,7 +121,11 @@ const Sidebar: React.FC = () => {
   const user = useSelector(selectCurrentUser);
 
   // Fetch partner profile to get advisor details
-  const { data: partnerProfile, isLoading: isPartnerProfileLoading, isFetching: isPartnerProfileFetching } = useGetPartnerProfileQuery(undefined, {
+  const {
+    data: partnerProfile,
+    isLoading: isPartnerProfileLoading,
+    isFetching: isPartnerProfileFetching,
+  } = useGetPartnerProfileQuery(undefined, {
     skip: !user, // Only fetch when user is logged in
   });
 
@@ -135,7 +139,8 @@ const Sidebar: React.FC = () => {
       ? advisor.profile.url
       : `${config.image_access_url}${advisor.profile.url}`
     : null;
-  const isManagedByLoading = isPartnerProfileLoading || isPartnerProfileFetching;
+  const isManagedByLoading =
+    isPartnerProfileLoading || isPartnerProfileFetching;
 
   const handleLogout = () => {
     console.log("Logging out...");
