@@ -153,6 +153,23 @@ const onboardingFormApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["partnerOnboarding"],
     }),
+
+    /** Resubmit onboarding (only for rejected partners - resets all steps). */
+    resubmitOnboarding: builder.mutation<unknown, void>({
+      query: () => ({
+        url: "/partners/onboarding/resubmit",
+        method: "POST",
+      }),
+      // Invalidate all step data caches to ensure fresh data is fetched
+      invalidatesTags: [
+        "partnerOnboarding",
+        { type: "partnerOnboarding", id: "step-1" },
+        { type: "partnerOnboarding", id: "step-2" },
+        { type: "partnerOnboarding", id: "step-3" },
+        { type: "partnerOnboarding", id: "step-4" },
+        { type: "partnerOnboarding", id: "step-5" },
+      ],
+    }),
   }),
 });
 
@@ -166,4 +183,5 @@ export const {
   usePatchStep4Mutation,
   usePatchStep5Mutation,
   useSubmitOnboardingMutation,
+  useResubmitOnboardingMutation,
 } = onboardingFormApi;

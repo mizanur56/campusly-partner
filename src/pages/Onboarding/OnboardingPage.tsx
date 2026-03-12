@@ -12,16 +12,22 @@ import MainContactDetailsStep from "./steps/MainContactDetailsStep";
 import RegularComplianceStep from "./steps/RegularComplianceStep";
 import DeclarationStep from "./steps/DeclarationStep";
 import SubmittedStep from "./steps/SubmittedStep";
+import RejectedStep from "./steps/RejectedStep";
 import VerifiedStep from "./steps/VerifiedStep";
-import { useGetOnboardingStatusQuery } from "../../redux/features/onboardingForm/onboardingFormApi";
+import {
+  useGetOnboardingStatusQuery,
+  useResubmitOnboardingMutation,
+} from "../../redux/features/onboardingForm/onboardingFormApi";
 
-/** Step index: 0-4 = form steps, 5 = submitted, 6 = verified. API steps are 1–5. */
-export type OnboardingStepIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+/** Step index: 0-4 = form steps, 5 = submitted, 6 = verified, 7 = rejected. API steps are 1–5. */
+export type OnboardingStepIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 export default function OnboardingPage() {
   const [step, setStep] = useState<OnboardingStepIndex>(0);
   const navigate = useNavigate();
-  const { data: status } = useGetOnboardingStatusQuery(undefined);
+  const { data: status, refetch } = useGetOnboardingStatusQuery(undefined);
+  const [resubmitOnboarding, { isLoading: isResubmitting }] =
+    useResubmitOnboardingMutation();
 
   // Sync UI step with backend onboarding status
   useEffect(() => {
@@ -63,19 +69,36 @@ export default function OnboardingPage() {
     }
 
     if (workflowStatus === "REJECTED") {
-      // Keep last known step so user can review data
-      const safeStep =
-        backendStep >= 0 && backendStep <= 4 ? backendStep : 0;
-      setStep(safeStep as OnboardingStepIndex);
+      // Show rejected step with rejection reason and resubmit option
+      setStep(7);
+      return;
     }
   }, [status]);
 
-  const title = STEP_TITLES[step] ?? "Onboarding";
+  const handleResubmit = async () => {
+    try {
+      await resubmitOnboarding().unwrap();
+      // Refetch status to update UI to step 0
+      await refetch();
+    } catch (error) {
+      console.error("Resubmit failed:", error);
+    }
+  };
+
+  const title =
+    step === 7 ? "Application Rejected" : (STEP_TITLES[step] ?? "Onboarding");
   const subtitle =
-    STEP_SUBTITLES[step] ||
-    status?.statusLabel ||
-    STEP_SUBTITLES[step];
-  const stepperVariant = step === 5 ? "submitted" : step === 6 ? "verified" : "form";
+    step === 7
+      ? "Your application has been rejected"
+      : STEP_SUBTITLES[step] || status?.statusLabel || STEP_SUBTITLES[step];
+  const stepperVariant =
+    step === 5
+      ? "submitted"
+      : step === 6
+        ? "verified"
+        : step === 7
+          ? "rejected"
+          : "form";
 
   const goNext = () => {
     if (step < 4) {
@@ -101,18 +124,41 @@ export default function OnboardingPage() {
       subtitle={subtitle}
       currentStepIndex={step}
       stepperVariant={stepperVariant}
+      workflowStatus={status?.status}
       onStepChange={(index) => {
         const safeIndex = Math.min(Math.max(index, 0), 4);
         setStep(safeIndex as OnboardingStepIndex);
       }}
     >
       {step === 0 && <OwnerDetailsStep apiStep={1} onNext={goNext} />}
-      {step === 1 && <DirectorDetailsStep apiStep={2} onPrev={goPrev} onNext={goNext} />}
-      {step === 2 && <MainContactDetailsStep apiStep={3} onPrev={goPrev} onNext={goNext} />}
-      {step === 3 && <RegularComplianceStep apiStep={4} onPrev={goPrev} onNext={goNext} />}
-      {step === 4 && <DeclarationStep apiStep={5} onPrev={goPrev} onSubmit={goSubmitted} />}
-      {step === 5 && <SubmittedStep onBackHome={backHome} />}
+      {step === 1 && (
+        <DirectorDetailsStep apiStep={2} onPrev={goPrev} onNext={goNext} />
+      )}
+      {step === 2 && (
+        <MainContactDetailsStep apiStep={3} onPrev={goPrev} onNext={goNext} />
+      )}
+      {step === 3 && (
+        <RegularComplianceStep apiStep={4} onPrev={goPrev} onNext={goNext} />
+      )}
+      {step === 4 && (
+        <DeclarationStep apiStep={5} onPrev={goPrev} onSubmit={goSubmitted} />
+      )}
+      {step === 5 && (
+        <SubmittedStep
+          onBackHome={backHome}
+          statusLabel={status?.statusLabel}
+          workflowStatus={status?.status}
+        />
+      )}
       {step === 6 && <VerifiedStep onProceedToContract={proceedToContract} />}
+      {step === 7 && (
+        <RejectedStep
+          rejectionReason={status?.rejectionReason}
+          onResubmit={handleResubmit}
+          isResubmitting={isResubmitting}
+          onBackHome={backHome}
+        />
+      )}
     </OnboardingFormLayout>
   );
 }

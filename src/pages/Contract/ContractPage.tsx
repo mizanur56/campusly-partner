@@ -37,48 +37,74 @@ export default function ContractPage() {
               Contract
             </h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              1/1 completed •{" "}
-              <span className="font-medium text-warning-700 dark:text-warning-400">
-                {hasSigned ? "Under final review" : "Under review"}
+              {hasSigned ? "2" : "1"}/2 steps •{" "}
+              <span className="font-medium text-primary-600 dark:text-primary-400">
+                {hasSigned ? "Complete" : "View and Sign"}
               </span>
             </p>
             <ul className="mt-4 space-y-3">
               <li className="flex items-center gap-3 text-sm">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-600">
-                  <svg
-                    className="h-3 w-3 text-white"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+                <span
+                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
+                    hasSigned
+                      ? "bg-primary-600"
+                      : "border-2 border-primary-500 bg-primary-50 dark:border-primary-400 dark:bg-primary-900/30"
+                  }`}
+                >
+                  {hasSigned ? (
+                    <svg
+                      className="h-3 w-3 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  ) : (
+                    <span className="text-xs font-semibold text-primary-600 dark:text-primary-400">
+                      1
+                    </span>
+                  )}
                 </span>
-                <span className="text-gray-800 dark:text-gray-100">
-                  View and sign
+                <span
+                  className={
+                    hasSigned
+                      ? "text-gray-600 dark:text-gray-300"
+                      : "font-semibold text-primary-700 dark:text-primary-300"
+                  }
+                >
+                  View and Sign
                 </span>
               </li>
               <li className="flex items-center gap-3 text-sm">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-warning-300 bg-warning-50 text-warning-600 dark:border-warning-700 dark:bg-warning-900/20">
-                  <svg
-                    className="h-3 w-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8v4l2 2m6-2a8 8 0 11-16 0 8 8 0 0116 0z"
-                    />
-                  </svg>
+                <span
+                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
+                    hasSigned
+                      ? "border-2 border-primary-500 bg-primary-50 dark:border-primary-400 dark:bg-primary-900/30"
+                      : "border border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-800"
+                  }`}
+                >
+                  {hasSigned ? (
+                    <span className="text-xs font-semibold text-primary-600 dark:text-primary-400">
+                      2
+                    </span>
+                  ) : (
+                    <span className="text-xs text-gray-400 dark:text-gray-500">
+                      2
+                    </span>
+                  )}
                 </span>
-                <span className="text-gray-700 dark:text-gray-200">
-                  Under review
+                <span
+                  className={
+                    hasSigned
+                      ? "font-semibold text-primary-700 dark:text-primary-300"
+                      : "text-gray-500 dark:text-gray-400"
+                  }
+                >
+                  Complete
                 </span>
               </li>
             </ul>

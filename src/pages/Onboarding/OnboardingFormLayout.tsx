@@ -6,11 +6,13 @@ interface OnboardingFormLayoutProps {
   children: ReactNode;
   title: string;
   subtitle?: string;
-  /** 0-4 form steps, 5 submitted, 6 verified. When set, stepper uses this instead of route */
+  /** 0-4 form steps, 5 submitted, 6 verified, 7 rejected. When set, stepper uses this instead of route */
   currentStepIndex?: number;
-  stepperVariant?: "form" | "submitted" | "verified";
+  stepperVariant?: "form" | "submitted" | "verified" | "rejected";
   /** Optional: when provided, enables clicking steps 0–4 in sidebar to switch form tab */
   onStepChange?: (index: number) => void;
+  /** Optional: workflow status to determine if approved */
+  workflowStatus?: string;
 }
 
 export default function OnboardingFormLayout({
@@ -20,6 +22,7 @@ export default function OnboardingFormLayout({
   currentStepIndex,
   stepperVariant = "form",
   onStepChange,
+  workflowStatus,
 }: OnboardingFormLayoutProps) {
   const showStepInHeader =
     currentStepIndex !== undefined &&
@@ -35,6 +38,7 @@ export default function OnboardingFormLayout({
             currentStepIndex={currentStepIndex}
             variant={stepperVariant}
             onStepSelect={onStepChange}
+            workflowStatus={workflowStatus}
           />
           <main className="min-w-0 flex-1">
             <div className="overflow-hidden rounded-[24px] border border-neutral-100 bg-white card-shadow dark:border-gray-700/90 dark:bg-gray-900">
@@ -44,8 +48,13 @@ export default function OnboardingFormLayout({
                     {stepperVariant === "form"
                       ? `Step ${stepIndex + 1} of ${ONBOARDING_FORM_STEP_COUNT}`
                       : stepperVariant === "submitted"
-                        ? "Under review"
-                        : "Complete"}
+                        ? workflowStatus === "AWAITING_PARTNER_SIGNATURE" ||
+                          workflowStatus === "AWAITING_ADMIN_APPROVAL"
+                          ? "Approved"
+                          : "Under review"
+                        : stepperVariant === "rejected"
+                          ? "Action required"
+                          : "Complete"}
                   </p>
                 )}
                 <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white sm:text-2xl">
