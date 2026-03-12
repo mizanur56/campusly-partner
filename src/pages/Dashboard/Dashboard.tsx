@@ -5,6 +5,111 @@ import { usePreviewMode } from "../../context/PreviewModeContext";
 import SignedDashboardView from "./SignedDashboardView";
 import { useGetOnboardingStatusQuery } from "../../redux/features/onboardingForm";
 
+// Skeleton pulse animation component
+const Skeleton = ({ className = "" }: { className?: string }) => (
+  <div
+    className={`animate-pulse rounded bg-gray-200 dark:bg-gray-700 ${className}`}
+  />
+);
+
+// Dashboard Skeleton Loader
+const DashboardSkeleton = () => (
+  <div className="min-h-[calc(100vh-4rem)] -mx-4 px-0 py-0 md:-mx-6 md:px-0 lg:-mx-8">
+    <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
+      {/* Header skeleton */}
+      <header className="mb-10">
+        <Skeleton className="h-8 w-72 sm:h-9" />
+        <Skeleton className="mt-3 h-5 w-full max-w-lg" />
+        {/* Progress summary skeleton */}
+        <div className="mt-6 flex flex-wrap gap-4">
+          <div className="min-w-0 flex-1 rounded-xl border border-gray-200/80 bg-white p-4 card-shadow dark:border-gray-700/80 dark:bg-gray-900/50">
+            <Skeleton className="h-3 w-20" />
+            <div className="mt-2 flex items-baseline gap-2">
+              <Skeleton className="h-8 w-12" />
+            </div>
+            <Skeleton className="mt-2 h-1.5 w-full rounded-full" />
+          </div>
+          <div className="min-w-0 flex-1 rounded-xl border border-gray-200/80 bg-white p-4 card-shadow dark:border-gray-700/80 dark:bg-gray-900/50">
+            <Skeleton className="h-3 w-16" />
+            <div className="mt-2 flex items-baseline gap-2">
+              <Skeleton className="h-8 w-12" />
+            </div>
+            <Skeleton className="mt-2 h-1.5 w-full rounded-full" />
+          </div>
+        </div>
+      </header>
+
+      {/* Onboarding Form card skeleton */}
+      <section className="rounded-2xl border border-gray-200/90 bg-white card-shadow dark:border-gray-700/90 dark:bg-gray-900">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <Skeleton className="h-11 w-11 rounded-xl" />
+            <div className="min-w-0">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="mt-1 h-3 w-40" />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-8 w-20 rounded-lg" />
+            <Skeleton className="h-8 w-8 rounded-lg" />
+          </div>
+        </div>
+        <div className="border-t border-gray-100 bg-gray-50/60 px-5 py-4 dark:border-gray-800 dark:bg-gray-800/30">
+          <ul className="space-y-0">
+            {[...Array(6)].map((_, index) => (
+              <li
+                key={index}
+                className={`flex items-center gap-3 py-3 ${
+                  index > 0
+                    ? "border-t border-gray-100 dark:border-gray-700/80"
+                    : ""
+                }`}
+              >
+                <Skeleton className="h-6 w-6 rounded-full" />
+                <Skeleton className="h-4 w-32" />
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* Contract card skeleton */}
+      <section className="mt-6 rounded-2xl border border-gray-200/90 bg-white card-shadow dark:border-gray-700/90 dark:bg-gray-900">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <Skeleton className="h-11 w-11 rounded-xl" />
+            <div className="min-w-0">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="mt-1 h-3 w-36" />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-8 w-20 rounded-lg" />
+            <Skeleton className="h-8 w-8 rounded-lg" />
+          </div>
+        </div>
+        <div className="border-t border-gray-100 bg-gray-50/60 px-5 py-4 dark:border-gray-800 dark:bg-gray-800/30">
+          <ul className="space-y-0">
+            {[...Array(2)].map((_, index) => (
+              <li
+                key={index}
+                className={`flex items-center gap-3 py-3 ${
+                  index > 0
+                    ? "border-t border-gray-100 dark:border-gray-700/80"
+                    : ""
+                }`}
+              >
+                <Skeleton className="h-6 w-6 rounded-full" />
+                <Skeleton className="h-4 w-28" />
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    </div>
+  </div>
+);
+
 const BASE_ONBOARDING_STEPS = [
   { id: "owner", label: "Owner Details" },
   { id: "director", label: "Director Details" },
@@ -24,7 +129,7 @@ const Dashboard = () => {
   const [onboardingOpen, setOnboardingOpen] = useState(true);
   const [contractOpen, setContractOpen] = useState(true);
 
-  const { data: formStatus } = useGetOnboardingStatusQuery();
+  const { data: formStatus, isLoading } = useGetOnboardingStatusQuery();
 
   const onboardingTotal = BASE_ONBOARDING_STEPS.length;
   const contractTotal = BASE_CONTRACT_STEPS.length;
@@ -74,7 +179,9 @@ const Dashboard = () => {
         description="Welcome to the Campus Transfer partner portal."
       />
 
-      {previewMode === "signed" ? (
+      {isLoading ? (
+        <DashboardSkeleton />
+      ) : previewMode === "signed" ? (
         <SignedDashboardView />
       ) : (
         <div className="min-h-[calc(100vh-4rem)] -mx-4 px-0 py-0 md:-mx-6 md:px-0 lg:-mx-8">
