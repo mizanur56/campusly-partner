@@ -67,6 +67,17 @@ export interface ContractResponse {
   contractDocumentUrl: string;
 }
 
+export interface AvailableMeetingSlot {
+  slot: string;
+  label: string;
+  date: string;
+}
+
+export interface BookMeetingPayload {
+  scheduledAt: string;
+  note?: string;
+}
+
 export interface StepDataResponse {
   step: number;
   currentStep?: number;
@@ -185,6 +196,35 @@ const onboardingFormApi = baseApi.injectEndpoints({
         (response?.data || {}) as ContractResponse,
       providesTags: ["partnerContract"],
     }),
+
+    /** Get available advisor meeting slots by date range. */
+    getAvailableMeetingSlots: builder.query<
+      AvailableMeetingSlot[],
+      { from: string; to: string }
+    >({
+      query: ({ from, to }) => {
+        const params = new URLSearchParams();
+        params.append("from", from);
+        params.append("to", to);
+        return {
+          url: "/partners/meetings/available-slots",
+          method: "GET",
+          params,
+        };
+      },
+      transformResponse: (response: any) =>
+        (response?.data || []) as AvailableMeetingSlot[],
+    }),
+
+    /** Book a meeting with advisor. */
+    bookMeeting: builder.mutation<any, BookMeetingPayload>({
+      query: (body) => ({
+        url: "/partners/meetings",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["partnerOnboarding"],
+    }),
   }),
 });
 
@@ -201,4 +241,6 @@ export const {
   useResubmitOnboardingMutation,
   useGetContractQuery,
   useLazyGetContractQuery,
+  useGetAvailableMeetingSlotsQuery,
+  useBookMeetingMutation,
 } = onboardingFormApi;

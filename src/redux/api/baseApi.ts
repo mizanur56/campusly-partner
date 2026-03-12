@@ -134,7 +134,7 @@ const baseQueryWithRefreshToken: BaseQueryFn<
       // Show specific message for permission updates
       toast.error(
         "Your permissions have been updated. Please login again to continue.",
-        { autoClose: 5000 }
+        { autoClose: 5000 },
       );
     } else {
       // Show generic unauthorized message
@@ -171,7 +171,7 @@ const baseQueryWithRefreshToken: BaseQueryFn<
         typeof result.error.data === "object" &&
         "message" in result.error.data
         ? (result.error.data as { message?: string }).message || "Not found."
-        : "Not found."
+        : "Not found.",
     );
   }
 

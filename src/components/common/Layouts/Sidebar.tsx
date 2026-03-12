@@ -119,20 +119,23 @@ const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const { student } = useStudentProfile();
   const user = useSelector(selectCurrentUser);
-  
+
   // Fetch partner profile to get advisor details
-  const { data: partnerProfile } = useGetPartnerProfileQuery(undefined, {
+  const { data: partnerProfile, isLoading: isPartnerProfileLoading, isFetching: isPartnerProfileFetching } = useGetPartnerProfileQuery(undefined, {
     skip: !user, // Only fetch when user is logged in
   });
-  
+
   // Advisor details from partner profile (for "Managed by" section)
   const advisor = partnerProfile?.advisor;
   const profileName = advisor?.name ?? fallbackManagedBy.name;
   const profileEmail = advisor?.email ?? fallbackManagedBy.email;
   const profilePhone = advisor?.phone ?? fallbackManagedBy.phone;
-  const profilePhotoUrl = advisor
-    ? `https://i.pravatar.cc/80?u=${encodeURIComponent(advisor.email)}`
-    : fallbackManagedBy.avatar;
+  const profilePhotoUrl = advisor?.profile?.url
+    ? advisor.profile.url.startsWith("http")
+      ? advisor.profile.url
+      : `${config.image_access_url}${advisor.profile.url}`
+    : null;
+  const isManagedByLoading = isPartnerProfileLoading || isPartnerProfileFetching;
 
   const handleLogout = () => {
     console.log("Logging out...");
@@ -147,10 +150,20 @@ const Sidebar: React.FC = () => {
    * - SIGNED: dashboard routes → partner card + full nav
    */
   const isStudentContext = /^\/students\/[^/]+(\/|$)/.test(location.pathname);
-  const isApplicationDetailContext = /^\/applications\/[^/]+(\/|$)/.test(location.pathname);
-  const studentIdFromPath = isStudentContext ? location.pathname.split("/")[2] : null;
-  const studentId = isStudentContext ? studentIdFromPath : isApplicationDetailContext ? student?.id : null;
-  const showStudentSidebar = (isStudentContext && studentIdFromPath) || (isApplicationDetailContext && student);
+  const isApplicationDetailContext = /^\/applications\/[^/]+(\/|$)/.test(
+    location.pathname,
+  );
+  const studentIdFromPath = isStudentContext
+    ? location.pathname.split("/")[2]
+    : null;
+  const studentId = isStudentContext
+    ? studentIdFromPath
+    : isApplicationDetailContext
+      ? student?.id
+      : null;
+  const showStudentSidebar =
+    (isStudentContext && studentIdFromPath) ||
+    (isApplicationDetailContext && student);
   const isOnboardingContext =
     (location.pathname === "/" && previewMode === "onboarding") ||
     location.pathname.startsWith("/onboarding") ||
@@ -440,152 +453,150 @@ const Sidebar: React.FC = () => {
           <p className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
             Managed by
           </p>
-          <div className="mt-2 flex items-center gap-2.5">
-            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-              <img
-                src={profilePhotoUrl}
-                alt={profileName}
-                className="h-full w-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
-                  const fallback = e.currentTarget
-                    .nextElementSibling as HTMLElement;
-                  if (fallback) fallback.style.display = "flex";
-                }}
-              />
-              <span
-                className="text-sm font-semibold text-gray-600 dark:text-gray-300"
-                style={{
-                  display: "none",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "100%",
-                  height: "100%",
-                }}
-              >
-                {profileName.charAt(0)}
-              </span>
+          {isManagedByLoading ? (
+            <div className="mt-2 animate-pulse">
+              <div className="flex items-center gap-2.5">
+                <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700" />
+                <div className="h-4 w-28 rounded bg-gray-200 dark:bg-gray-700" />
+              </div>
+              <div className="mt-3 space-y-2">
+                <div className="h-3.5 w-full rounded bg-gray-200 dark:bg-gray-700" />
+                <div className="h-3.5 w-4/5 rounded bg-gray-200 dark:bg-gray-700" />
+              </div>
             </div>
-            <p className="min-w-0 flex-1 truncate text-sm font-medium text-gray-800 dark:text-gray-100">
-              {profileName}
-            </p>
-          </div>
-          <div className="mt-2.5 space-y-1.5">
-            <a
-              href={`mailto:${profileEmail}`}
-              className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
-            >
-              <svg
-                className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                />
-              </svg>
-              <span className="min-w-0 truncate">{profileEmail}</span>
-            </a>
-            <a
-              href={`tel:${profilePhone.replace(/\s/g, "")}`}
-              className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
-            >
-              <svg
-                className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                />
-              </svg>
-              <span className="min-w-0 truncate">{profilePhone}</span>
-            </a>
-          </div>
+          ) : (
+            <>
+              <div className="mt-2 flex items-center gap-2.5">
+                {profilePhotoUrl ? (
+                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                    <img
+                      src={profilePhotoUrl}
+                      alt={profileName}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                ) : null}
+                <p className="min-w-0 flex-1 truncate text-sm font-medium text-gray-800 dark:text-gray-100">
+                  {profileName}
+                </p>
+              </div>
+              <div className="mt-2.5 space-y-1.5">
+                <a
+                  href={`mailto:${profileEmail}`}
+                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
+                >
+                  <svg
+                    className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                    />
+                  </svg>
+                  <span className="min-w-0 truncate">{profileEmail}</span>
+                </a>
+                <a
+                  href={`tel:${profilePhone.replace(/\s/g, "")}`}
+                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
+                >
+                  <svg
+                    className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                    />
+                  </svg>
+                  <span className="min-w-0 truncate">{profilePhone}</span>
+                </a>
+              </div>
+            </>
+          )}
         </div>
       )}
 
       {/* Sidebar preview: SIGNED partner view – partner card (no "Managed by" label) */}
       {(isExpanded || isMobileOpen) && isSignedContext && (
         <div className="mx-3 mt-0 rounded-xl bg-gray-50/80 p-3 dark:bg-gray-800/40">
-          <div className="mt-0 flex items-center gap-2.5">
-            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-              <img
-                src={profilePhotoUrl}
-                alt={profileName}
-                className="h-full w-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
-                  const fallback = e.currentTarget
-                    .nextElementSibling as HTMLElement;
-                  if (fallback) fallback.style.display = "flex";
-                }}
-              />
-              <span
-                className="text-sm font-semibold text-gray-600 dark:text-gray-300"
-                style={{
-                  display: "none",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "100%",
-                  height: "100%",
-                }}
-              >
-                {profileName.charAt(0)}
-              </span>
+          {isManagedByLoading ? (
+            <div className="animate-pulse">
+              <div className="flex items-center gap-2.5">
+                <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700" />
+                <div className="h-4 w-28 rounded bg-gray-200 dark:bg-gray-700" />
+              </div>
+              <div className="mt-3 space-y-2">
+                <div className="h-3.5 w-full rounded bg-gray-200 dark:bg-gray-700" />
+                <div className="h-3.5 w-4/5 rounded bg-gray-200 dark:bg-gray-700" />
+              </div>
             </div>
-            <p className="min-w-0 flex-1 truncate text-sm font-medium text-gray-800 dark:text-gray-100">
-              {profileName}
-            </p>
-          </div>
-          <div className="mt-2.5 space-y-1.5">
-            <a
-              href={`mailto:${profileEmail}`}
-              className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
-            >
-              <svg
-                className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                />
-              </svg>
-              <span className="min-w-0 truncate">{profileEmail}</span>
-            </a>
-            <a
-              href={`tel:${profilePhone.replace(/\s/g, "")}`}
-              className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
-            >
-              <svg
-                className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                />
-              </svg>
-              <span className="min-w-0 truncate">{profilePhone}</span>
-            </a>
-          </div>
+          ) : (
+            <>
+              <div className="mt-0 flex items-center gap-2.5">
+                {profilePhotoUrl ? (
+                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                    <img
+                      src={profilePhotoUrl}
+                      alt={profileName}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                ) : null}
+                <p className="min-w-0 flex-1 truncate text-sm font-medium text-gray-800 dark:text-gray-100">
+                  {profileName}
+                </p>
+              </div>
+              <div className="mt-2.5 space-y-1.5">
+                <a
+                  href={`mailto:${profileEmail}`}
+                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
+                >
+                  <svg
+                    className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                    />
+                  </svg>
+                  <span className="min-w-0 truncate">{profileEmail}</span>
+                </a>
+                <a
+                  href={`tel:${profilePhone.replace(/\s/g, "")}`}
+                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
+                >
+                  <svg
+                    className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                    />
+                  </svg>
+                  <span className="min-w-0 truncate">{profilePhone}</span>
+                </a>
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -663,7 +674,10 @@ const Sidebar: React.FC = () => {
           <div className="flex-1 overflow-y-auto px-3 py-4 no-scrollbar">
             <div className="flex flex-col gap-2 animate-pulse">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-10 rounded-lg bg-gray-200 dark:bg-gray-700" />
+                <div
+                  key={i}
+                  className="h-10 rounded-lg bg-gray-200 dark:bg-gray-700"
+                />
               ))}
             </div>
           </div>
@@ -684,7 +698,11 @@ const Sidebar: React.FC = () => {
               className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[0.9375rem] font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:hover:bg-gray-700/50 dark:hover:text-gray-100 transition-colors"
             >
               <i className="fa-solid fa-arrow-left w-4 text-center" />
-              <span>{isApplicationDetailContext ? "Back to Applications" : "Back to Students"}</span>
+              <span>
+                {isApplicationDetailContext
+                  ? "Back to Applications"
+                  : "Back to Students"}
+              </span>
             </Link>
           </div>
         )}

@@ -6,6 +6,10 @@ export interface Advisor {
   email: string;
   phone: string | null;
   meetingLink: string | null;
+  profile?: {
+    id: string;
+    url: string;
+  } | null;
 }
 
 export interface PartnerProfileResponse {
@@ -26,12 +30,12 @@ const partnerProfileApi = baseApi.injectEndpoints({
         url: "/partners/profile",
         method: "GET",
       }),
+      transformResponse: (response: any) =>
+        (response?.data || {}) as PartnerProfileResponse,
       providesTags: ["partnerProfile"],
     }),
   }),
 });
 
-export const {
-  useGetPartnerProfileQuery,
-  useLazyGetPartnerProfileQuery,
-} = partnerProfileApi;
+export const { useGetPartnerProfileQuery, useLazyGetPartnerProfileQuery } =
+  partnerProfileApi;
