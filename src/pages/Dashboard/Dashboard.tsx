@@ -319,7 +319,8 @@ const Dashboard = () => {
                       const isReviewRejected =
                         step.id === "review" && isRejected;
                       const isReviewApproved =
-                        step.id === "review" && (isApproved || isContractSignRejected);
+                        step.id === "review" &&
+                        (isApproved || isContractSignRejected);
 
                       return (
                         <li
@@ -491,7 +492,9 @@ const Dashboard = () => {
                       const isCompleted =
                         index < contractCompleted && !isContractRejectedStep;
                       const isActive =
-                        !isCompleted && !isContractRejectedStep && index === contractCompleted;
+                        !isCompleted &&
+                        !isContractRejectedStep &&
+                        index === contractCompleted;
                       return (
                         <li
                           key={step.id}
@@ -506,10 +509,10 @@ const Dashboard = () => {
                               isContractRejectedStep
                                 ? "bg-red-600 text-white"
                                 : isCompleted
-                                ? "bg-primary-600 text-white"
-                                : isActive
-                                  ? "border-2 border-primary-500 bg-primary-50 text-primary-600 dark:border-primary-400 dark:bg-primary-900/30"
-                                  : "border border-gray-200 bg-white text-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-500"
+                                  ? "bg-primary-600 text-white"
+                                  : isActive
+                                    ? "border-2 border-primary-500 bg-primary-50 text-primary-600 dark:border-primary-400 dark:bg-primary-900/30"
+                                    : "border border-gray-200 bg-white text-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-500"
                             }`}
                           >
                             {isContractRejectedStep ? (
@@ -545,10 +548,10 @@ const Dashboard = () => {
                               isContractRejectedStep
                                 ? "text-sm font-medium text-red-600 dark:text-red-400"
                                 : isCompleted
-                                ? "text-sm font-medium text-gray-900 dark:text-white"
-                                : isActive
-                                  ? "text-sm font-semibold text-primary-700 dark:text-primary-300"
-                                  : "text-sm text-gray-500 dark:text-gray-400"
+                                  ? "text-sm font-medium text-gray-900 dark:text-white"
+                                  : isActive
+                                    ? "text-sm font-semibold text-primary-700 dark:text-primary-300"
+                                    : "text-sm text-gray-500 dark:text-gray-400"
                             }
                           >
                             {isContractRejectedStep ? "Rejected" : step.label}

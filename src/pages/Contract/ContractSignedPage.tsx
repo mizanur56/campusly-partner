@@ -44,12 +44,18 @@ export default function ContractSignedPage() {
             </span>
           </div>
           <p className="mt-4 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
-            Your contract has been successfully signed. Our team is now reviewing
-            the details for final partnership activation. You&apos;ll receive an
-            email once your dashboard access is approved.
+            Your contract has been successfully signed. Our team is now
+            reviewing the details for final partnership activation. You&apos;ll
+            receive an email once your dashboard access is approved.
           </p>
           <div className="mt-6 flex justify-center">
-            <Button as="link" to="/" variant="primary" size="sm" className="font-normal">
+            <Button
+              as="link"
+              to="/"
+              variant="primary"
+              size="sm"
+              className="font-normal"
+            >
               ← Back to home
             </Button>
           </div>
@@ -58,4 +64,3 @@ export default function ContractSignedPage() {
     </div>
   );
 }
-

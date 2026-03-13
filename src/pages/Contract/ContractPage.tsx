@@ -452,29 +452,32 @@ export default function ContractPage() {
                 Please review and complete the following steps to finalize your
                 partnership.
               </p>
-                {isContractSignRejected && (
-                  <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-200">
-                    <p className="font-semibold">Your previous contract signature was rejected.</p>
-                    <p className="mt-1">
-                      Please review the feedback below, update your signature if needed, and submit the signed contract again.
+              {isContractSignRejected && (
+                <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-200">
+                  <p className="font-semibold">
+                    Your previous contract signature was rejected.
+                  </p>
+                  <p className="mt-1">
+                    Please review the feedback below, update your signature if
+                    needed, and submit the signed contract again.
+                  </p>
+                  {contractRejectionReason && (
+                    <p className="mt-2 rounded-xl bg-white/70 px-3 py-2 text-xs font-medium text-red-700 dark:bg-gray-900/40 dark:text-red-200">
+                      Reason: {contractRejectionReason}
                     </p>
-                    {contractRejectionReason && (
-                      <p className="mt-2 rounded-xl bg-white/70 px-3 py-2 text-xs font-medium text-red-700 dark:bg-gray-900/40 dark:text-red-200">
-                        Reason: {contractRejectionReason}
-                      </p>
-                    )}
-                  </div>
-                )}
+                  )}
+                </div>
+              )}
               {isOnboardingStatusLoading ? (
                 <div className="mt-3 h-5 w-56 animate-pulse rounded-full bg-gray-200 dark:bg-gray-700" />
               ) : onboardingStatus?.statusLabel ? (
-                  <div
-                    className={`mt-3 inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
-                      isContractSignRejected
-                        ? "bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-300"
-                        : "bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300"
-                    }`}
-                  >
+                <div
+                  className={`mt-3 inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
+                    isContractSignRejected
+                      ? "bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-300"
+                      : "bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300"
+                  }`}
+                >
                   {onboardingStatus.statusLabel}
                 </div>
               ) : null}
