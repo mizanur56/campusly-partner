@@ -69,24 +69,7 @@ const LayoutContent: React.FC = () => {
           />
         )}
 
-        {/* Preview switch — fixed bottom */}
-        <div className="pointer-events-none fixed bottom-6 right-6 z-30">
-          <div className="preview-btn-rotating-border pointer-events-none rounded-full p-[3px]">
-            <button
-              type="button"
-              onClick={handlePreviewSwitch}
-              className="pointer-events-auto flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-primary-700 shadow-sm transition-colors hover:bg-primary-50 dark:bg-gray-900 dark:text-primary-200 dark:hover:bg-primary-900/30"
-            >
-              <span className="text-primary-600 dark:text-primary-400">
-                {previewMode === "onboarding" ? "Signed" : "Onboarding"}
-              </span>
-              <span className="text-gray-500 dark:text-gray-400">preview</span>
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-              </svg>
-            </button>
-          </div>
-        </div>
+        {/* Preview switch button hidden for now */}
       </div>
     </div>
   );

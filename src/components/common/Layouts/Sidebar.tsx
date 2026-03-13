@@ -29,6 +29,11 @@ const SignedSidebarItems: NavItem[] = [
     path: "/students",
   },
   {
+    icon: <i className="fa-solid fa-users-gear"></i>,
+    name: "Team Members",
+    path: "/team-members",
+  },
+  {
     icon: <i className="fa-solid fa-file-lines"></i>,
     name: "Applications",
     path: "/applications",
@@ -60,6 +65,7 @@ const SignedSidebarItems: NavItem[] = [
 const SIGNED_ROUTE_PATHS = [
   "/programs-schools",
   "/students",
+  "/team-members",
   "/applications",
   "/my-tasks",
   "/payments",

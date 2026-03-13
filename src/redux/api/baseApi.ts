@@ -227,6 +227,10 @@ export const baseApi = createApi({
     "partnerOnboarding",
     "partnerProfile",
     "partnerContract",
+    "partnerPayments",
+    "bankAccounts",
+    "partnerTeams",
+    "partnerTasks",
   ],
   endpoints: () => ({}),
 });

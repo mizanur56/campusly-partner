@@ -29,14 +29,16 @@ const applicationApi = baseApi.injectEndpoints({
     }),
     getApplicationById: builder.query({
       query: (id) => ({
-        url: `/applications/${id}`,
+        // Partner portal: get single application via partner-scoped endpoint
+        url: `/partners/applications/${id}`,
         method: "GET",
       }),
       providesTags: ["applications"],
     }),
     applicationDocumentUpload: builder.mutation({
       query: ({ id, ...info }) => ({
-        url: `/applications/${id}`,
+        // Partner portal: update application via partner-scoped endpoint
+        url: `/partners/applications/${id}`,
         method: "PATCH",
         body: info,
       }),

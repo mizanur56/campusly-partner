@@ -30,6 +30,7 @@ import Enroll from "../pages/Applications/ApplicationStep/Enroll";
 import VisaRejectPage from "../pages/Applications/ApplicationStep/VisaRejectPage";
 import VisaSuccessPage from "../pages/Applications/ApplicationStep/VisaSuccessPage";
 import MyTasks from "../pages/MyTasks/MyTasks";
+import TeamMembers from "../pages/TeamMembers/TeamMembers";
 import Payments from "../pages/Payments/Payments";
 
 function StudentProfileRedirect() {
@@ -81,6 +82,7 @@ function AppRoutes() {
             <Route path="visa" element={<VisaOutcome />} />
             <Route path="enroll" element={<Enroll />} />
           </Route>
+          <Route path="team-members" element={<TeamMembers />} />
           <Route path="my-tasks" element={<MyTasks />} />
           <Route path="payments" element={<Navigate to="/payments/purchase" replace />} />
           <Route path="payments/purchase" element={<Payments />} />

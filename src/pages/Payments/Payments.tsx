@@ -6,6 +6,17 @@ import { InboxOutlined } from "@ant-design/icons";
 import PageMeta from "../../components/common/Meta/PageMeta";
 import "../../components/common/Tables/AntTable.css";
 import "./Payments.css";
+import {
+  useGetActiveBankAccountQuery,
+  useGetPurchaseStatsQuery,
+  useGetPurchaseApplicationsQuery,
+  useGetPurchaseTransactionsQuery,
+  useGetCommissionStatsQuery,
+  useGetCommissionEarnedQuery,
+  useGetCommissionTransactionsQuery,
+  usePaySelectedApplicationsMutation,
+  useClaimCommissionMutation,
+} from "../../redux/features/payments/partnerPaymentsApi";
 
 const { Dragger } = Upload;
 
@@ -15,12 +26,14 @@ type CommissionTabKey = "earned" | "history";
 
 interface PurchaseApplicationRecord {
   key: string;
+  feeId: string;
   applicationId: string;
   studentName: string;
   fee: number;
   waiverPercent: number;
   payable: number;
   status: "Paid" | "Under Review" | "Unpaid";
+  raw: any;
 }
 
 interface PurchaseTransactionRecord {
@@ -30,14 +43,17 @@ interface PurchaseTransactionRecord {
   applicationId: string;
   amount: number;
   status: "Completed" | "Pending";
+  raw: any;
 }
 
 interface CommissionEarnedRecord {
   key: string;
+  commissionId: string;
   applicationId: string;
   studentName: string;
   earned: number;
   status: "Paid" | "Pending" | "Unpaid";
+  raw: any;
 }
 
 interface CommissionTransactionRecord {
@@ -47,35 +63,8 @@ interface CommissionTransactionRecord {
   applicationId: string;
   amount: number;
   status: "Completed" | "Pending";
+  raw: any;
 }
-
-const PURCHASE_APPLICATIONS: PurchaseApplicationRecord[] = [
-  { key: "1", applicationId: "62145321", studentName: "John Doe", fee: 100, waiverPercent: 30, payable: 70, status: "Paid" },
-  { key: "2", applicationId: "62145322", studentName: "John Doe", fee: 100, waiverPercent: 30, payable: 70, status: "Under Review" },
-  { key: "3", applicationId: "62145323", studentName: "John Doe", fee: 100, waiverPercent: 30, payable: 70, status: "Unpaid" },
-  { key: "4", applicationId: "62145324", studentName: "John Doe", fee: 100, waiverPercent: 30, payable: 70, status: "Paid" },
-];
-
-const PURCHASE_TRANSACTIONS: PurchaseTransactionRecord[] = [
-  { key: "1", transactionId: "TXN001", date: "2024-01-15", applicationId: "62145321", amount: 70, status: "Completed" },
-  { key: "2", transactionId: "TXN002", date: "2024-01-15", applicationId: "62145321", amount: 70, status: "Completed" },
-  { key: "3", transactionId: "TXN003", date: "2024-01-15", applicationId: "62145321", amount: 70, status: "Completed" },
-  { key: "4", transactionId: "TXN004", date: "2024-01-15", applicationId: "62145321", amount: 70, status: "Completed" },
-];
-
-const COMMISSION_EARNED: CommissionEarnedRecord[] = [
-  { key: "1", applicationId: "62145321", studentName: "John Doe", earned: 200, status: "Pending" },
-  { key: "2", applicationId: "62145322", studentName: "John Doe", earned: 200, status: "Unpaid" },
-  { key: "3", applicationId: "62145323", studentName: "John Doe", earned: 200, status: "Paid" },
-  { key: "4", applicationId: "62145324", studentName: "John Doe", earned: 200, status: "Paid" },
-];
-
-const COMMISSION_TRANSACTIONS: CommissionTransactionRecord[] = [
-  { key: "1", transactionId: "TXN001", date: "2024-01-15", applicationId: "62145321", amount: 200, status: "Completed" },
-  { key: "2", transactionId: "TXN002", date: "2024-01-15", applicationId: "62145321", amount: 200, status: "Completed" },
-  { key: "3", transactionId: "TXN003", date: "2024-01-15", applicationId: "62145321", amount: 200, status: "Completed" },
-  { key: "4", transactionId: "TXN004", date: "2024-01-15", applicationId: "62145321", amount: 200, status: "Completed" },
-];
 
 export default function Payments() {
   const { pathname } = useLocation();
@@ -85,51 +74,198 @@ export default function Payments() {
   const [searchText, setSearchText] = useState("");
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isBankModalOpen, setIsBankModalOpen] = useState(false);
-  const [uploadApplicationId, setUploadApplicationId] = useState<string | null>(null);
+  const [uploadCommissionId, setUploadCommissionId] = useState<string | null>(null);
+  const [uploadInvoiceFile, setUploadInvoiceFile] = useState<File | null>(null);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [selectedPurchaseKeys, setSelectedPurchaseKeys] = useState<React.Key[]>([]);
+  const [selectedPurchaseRecords, setSelectedPurchaseRecords] = useState<PurchaseApplicationRecord[]>([]);
+
+  const [purchasePage, setPurchasePage] = useState(1);
+  const [purchasePageSize, setPurchasePageSize] = useState(10);
+  const [purchaseHistoryPage, setPurchaseHistoryPage] = useState(1);
+  const [purchaseHistoryPageSize, setPurchaseHistoryPageSize] = useState(10);
+  const [commissionPage, setCommissionPage] = useState(1);
+  const [commissionPageSize, setCommissionPageSize] = useState(10);
+  const [commissionHistoryPage, setCommissionHistoryPage] = useState(1);
+  const [commissionHistoryPageSize, setCommissionHistoryPageSize] = useState(10);
+
+  const { data: bankAccount } = useGetActiveBankAccountQuery();
+  const { data: purchaseStats } = useGetPurchaseStatsQuery();
+  const { data: purchaseApplicationsData, isLoading: isPurchaseAppsLoading } =
+    useGetPurchaseApplicationsQuery({
+      page: purchasePage,
+      limit: purchasePageSize,
+      search: searchText || undefined,
+    });
+  const { data: purchaseTransactionsData, isLoading: isPurchaseTxLoading } =
+    useGetPurchaseTransactionsQuery({
+      page: purchaseHistoryPage,
+      limit: purchaseHistoryPageSize,
+      search: searchText || undefined,
+    });
+  const { data: commissionStats } = useGetCommissionStatsQuery();
+  const { data: commissionEarnedData, isLoading: isCommissionEarnedLoading } =
+    useGetCommissionEarnedQuery({
+      page: commissionPage,
+      limit: commissionPageSize,
+      search: searchText || undefined,
+    });
+  const { data: commissionTransactionsData, isLoading: isCommissionTxLoading } =
+    useGetCommissionTransactionsQuery({
+      page: commissionHistoryPage,
+      limit: commissionHistoryPageSize,
+      search: searchText || undefined,
+    });
+
+  const [paySelectedApplications, { isLoading: isPaying }] =
+    usePaySelectedApplicationsMutation();
+  const [claimCommission, { isLoading: isClaiming }] = useClaimCommissionMutation();
 
   const handleResetSearchOnTabChange = () => {
     setSearchText("");
   };
 
-  const filteredPurchaseApplications = useMemo(() => {
-    if (!searchText.trim()) return PURCHASE_APPLICATIONS;
-    const q = searchText.toLowerCase();
-    return PURCHASE_APPLICATIONS.filter(
-      (row) =>
-        row.applicationId.toLowerCase().includes(q) ||
-        row.studentName.toLowerCase().includes(q)
-    );
-  }, [searchText]);
+  const purchaseApplications: PurchaseApplicationRecord[] = useMemo(() => {
+    const items = purchaseApplicationsData?.data || [];
+    return items.map((fee: any, index: number) => {
+      const app = fee.application;
+      const studentName =
+        app?.student?.user?.name ||
+        `${app?.student?.firstName || ""} ${app?.student?.lastName || ""}`.trim() ||
+        "N/A";
+      const statusRaw = fee.status as string;
+      const status: PurchaseApplicationRecord["status"] =
+        statusRaw === "PAID"
+          ? "Paid"
+          : statusRaw === "UNDER_REVIEW"
+          ? "Under Review"
+          : "Unpaid";
+      return {
+        key: fee.id || `${index}`,
+        feeId: fee.id,
+        applicationId: String(app?.applicationId ?? ""),
+        studentName,
+        fee: fee.originalFee ?? 0,
+        waiverPercent: fee.waiverPercentage ?? 0,
+        payable: fee.payableAmount ?? 0,
+        status,
+        raw: fee,
+      };
+    });
+  }, [purchaseApplicationsData]);
 
-  const filteredPurchaseTransactions = useMemo(() => {
-    if (!searchText.trim()) return PURCHASE_TRANSACTIONS;
-    const q = searchText.toLowerCase();
-    return PURCHASE_TRANSACTIONS.filter(
-      (row) =>
-        row.transactionId.toLowerCase().includes(q) ||
-        row.applicationId.toLowerCase().includes(q)
-    );
-  }, [searchText]);
+  const purchaseTransactions: PurchaseTransactionRecord[] = useMemo(() => {
+    const items = purchaseTransactionsData?.data || [];
+    return items.map((txn: any, index: number) => {
+      const firstApp = txn.appFees?.[0]?.application;
+      return {
+        key: txn.id || `${index}`,
+        transactionId: txn.txnRef || "",
+        date: txn.createdAt ? new Date(txn.createdAt).toISOString().slice(0, 10) : "",
+        applicationId: firstApp?.applicationId
+          ? String(firstApp.applicationId)
+          : "—",
+        amount: txn.totalAmount ?? 0,
+        status: txn.status === "COMPLETED" ? "Completed" : "Pending",
+        raw: txn,
+      };
+    });
+  }, [purchaseTransactionsData]);
 
-  const filteredCommissionEarned = useMemo(() => {
-    if (!searchText.trim()) return COMMISSION_EARNED;
-    const q = searchText.toLowerCase();
-    return COMMISSION_EARNED.filter(
-      (row) =>
-        row.applicationId.toLowerCase().includes(q) ||
-        row.studentName.toLowerCase().includes(q)
-    );
-  }, [searchText]);
+  const commissionEarned: CommissionEarnedRecord[] = useMemo(() => {
+    const items = commissionEarnedData?.data || [];
+    return items.map((c: any, index: number) => {
+      const app = c.application;
+      const studentName =
+        app?.student?.user?.name ||
+        `${app?.student?.firstName || ""} ${app?.student?.lastName || ""}`.trim() ||
+        "N/A";
+      const statusRaw = c.status as string;
+      const status: CommissionEarnedRecord["status"] =
+        statusRaw === "PAID"
+          ? "Paid"
+          : statusRaw === "PENDING"
+          ? "Pending"
+          : "Unpaid";
+      return {
+        key: c.id || `${index}`,
+        commissionId: c.id,
+        applicationId: String(app?.applicationId ?? ""),
+        studentName,
+        earned: c.earnedAmount ?? 0,
+        status,
+        raw: c,
+      };
+    });
+  }, [commissionEarnedData]);
 
-  const filteredCommissionTransactions = useMemo(() => {
-    if (!searchText.trim()) return COMMISSION_TRANSACTIONS;
-    const q = searchText.toLowerCase();
-    return COMMISSION_TRANSACTIONS.filter(
-      (row) =>
-        row.transactionId.toLowerCase().includes(q) ||
-        row.applicationId.toLowerCase().includes(q)
+  const commissionTransactions: CommissionTransactionRecord[] = useMemo(() => {
+    const items = commissionTransactionsData?.data || [];
+    return items.map((p: any, index: number) => ({
+      key: p.id || `${index}`,
+      transactionId: p.txnRef || "",
+      date: p.createdAt ? new Date(p.createdAt).toISOString().slice(0, 10) : "",
+      applicationId:
+        p.commissions?.[0]?.application?.applicationId != null
+          ? String(p.commissions[0].application.applicationId)
+          : "—",
+      amount: p.totalAmount ?? 0,
+      status: p.status === "COMPLETED" ? "Completed" : "Pending",
+      raw: p,
+    }));
+  }, [commissionTransactionsData]);
+
+  const selectedTotalPayable = useMemo(
+    () =>
+      selectedPurchaseRecords.reduce(
+        (sum, row) => sum + (row.status === "Unpaid" ? row.payable : 0),
+        0,
+      ),
+    [selectedPurchaseRecords],
+  );
+
+  const handlePurchaseRowSelectionChange = (
+    newSelectedRowKeys: React.Key[],
+    selectedRows: PurchaseApplicationRecord[],
+  ) => {
+    setSelectedPurchaseKeys(newSelectedRowKeys);
+    setSelectedPurchaseRecords(selectedRows);
+  };
+
+  const handleConfirmBankPayment = async () => {
+    if (!receiptFile || selectedPurchaseRecords.length === 0) return;
+    const applicationIds = selectedPurchaseRecords.map(
+      (row) => row.raw?.applicationId,
     );
-  }, [searchText]);
+    try {
+      await paySelectedApplications({
+        applicationIds,
+        currency: "USD",
+        receipt: receiptFile,
+      }).unwrap();
+      setIsBankModalOpen(false);
+      setReceiptFile(null);
+      setSelectedPurchaseKeys([]);
+      setSelectedPurchaseRecords([]);
+    } catch {
+      // errors are handled globally by baseApi
+    }
+  };
+
+  const handleConfirmInvoiceUpload = async () => {
+    if (!uploadCommissionId || !uploadInvoiceFile) return;
+    try {
+      await claimCommission({
+        commissionId: uploadCommissionId,
+        invoice: uploadInvoiceFile,
+      }).unwrap();
+      setIsUploadModalOpen(false);
+      setUploadCommissionId(null);
+      setUploadInvoiceFile(null);
+    } catch {
+      // errors handled globally
+    }
+  };
 
   const purchaseApplicationsColumns: ColumnsType<PurchaseApplicationRecord> = [
     { title: "#", dataIndex: "key", key: "key", width: 60 },
@@ -255,10 +391,11 @@ export default function Payments() {
         <button
           type="button"
           className="payments-primary-button"
-          onClick={() => {
-            setUploadApplicationId(record.applicationId);
-            setIsUploadModalOpen(true);
-          }}
+                  onClick={() => {
+                    setUploadCommissionId(record.commissionId);
+                    setIsUploadModalOpen(true);
+                    setUploadInvoiceFile(null);
+                  }}
         >
           Upload Invoice
         </button>
@@ -297,23 +434,29 @@ export default function Payments() {
         placeholder="Search application ID, name"
         allowClear
         value={searchText}
-        onChange={(e) => setSearchText(e.target.value)}
+        onChange={(e) => {
+          setSearchText(e.target.value);
+          setPurchasePage(1);
+        }}
         className="payments-search"
         size="large"
       />
       <div className="payments-toolbar-actions">
         <button type="button" className="payments-filter-button">
           <span>Filter</span>
-          <Badge count={1} size="small" className="payments-filter-badge" />
+          <Badge count={0} size="small" className="payments-filter-badge" />
         </button>
         <button
           type="button"
           className="payments-primary-button"
+          disabled={selectedPurchaseRecords.length === 0 || selectedTotalPayable <= 0}
           onClick={() => setIsBankModalOpen(true)}
         >
-          Pay Selected (€70)
+          {selectedTotalPayable > 0
+            ? `Pay Selected (€${selectedTotalPayable.toFixed(2)})`
+            : "Pay Selected"}
         </button>
-        <button type="button" className="payments-outline-button">
+        <button type="button" className="payments-outline-button" disabled>
           Download Invoice
         </button>
       </div>
@@ -331,9 +474,9 @@ export default function Payments() {
         size="large"
       />
       <div className="payments-toolbar-actions">
-        <button type="button" className="payments-filter-button">
+        <button type="button" className="payments-filter-button" disabled>
           <span>Filter</span>
-          <Badge count={1} size="small" className="payments-filter-badge" />
+          <Badge count={0} size="small" className="payments-filter-badge" />
         </button>
       </div>
     </div>
@@ -342,23 +485,34 @@ export default function Payments() {
   const renderTopCards = () => {
     if (topTab === "purchase") {
       if (purchaseTab === "applications") {
+        const stats = purchaseStats || {};
         return (
           <div className="payments-kpi-grid">
             <div className="payments-kpi-card">
               <p className="payments-kpi-label">Total Applications</p>
-              <p className="payments-kpi-value">4</p>
+              <p className="payments-kpi-value">
+                {stats.totalApplications ?? 0}
+              </p>
             </div>
             <div className="payments-kpi-card">
               <p className="payments-kpi-label">Total Before Discount</p>
-              <p className="payments-kpi-value">€400</p>
+              <p className="payments-kpi-value">
+                €{(stats.totalBeforeDiscount ?? 0).toFixed?.(2) ?? "0.00"}
+              </p>
             </div>
             <div className="payments-kpi-card">
               <p className="payments-kpi-label">Waiver (30%)</p>
-              <p className="payments-kpi-value">€120</p>
+              <p className="payments-kpi-value">
+                {stats.avgWaiver != null
+                  ? `${stats.avgWaiver.toFixed?.(1) ?? stats.avgWaiver}%`
+                  : "0%"}
+              </p>
             </div>
             <div className="payments-kpi-card">
               <p className="payments-kpi-label">Total Due</p>
-              <p className="payments-kpi-value">€280</p>
+              <p className="payments-kpi-value">
+                €{(stats.totalDue ?? 0).toFixed?.(2) ?? "0.00"}
+              </p>
             </div>
           </div>
         );
@@ -368,19 +522,26 @@ export default function Payments() {
 
     // commission tab
     if (commissionTab === "earned") {
+      const stats = commissionStats || {};
       return (
         <div className="payments-kpi-grid">
           <div className="payments-kpi-card">
             <p className="payments-kpi-label">Total Commission Earned</p>
-            <p className="payments-kpi-value">€400</p>
+            <p className="payments-kpi-value">
+              €{(stats.totalEarned ?? 0).toFixed?.(2) ?? "0.00"}
+            </p>
           </div>
           <div className="payments-kpi-card">
             <p className="payments-kpi-label">Pending Payments</p>
-            <p className="payments-kpi-value">€300</p>
+            <p className="payments-kpi-value">
+              €{(stats.pending ?? 0).toFixed?.(2) ?? "0.00"}
+            </p>
           </div>
           <div className="payments-kpi-card">
             <p className="payments-kpi-label">Paid</p>
-            <p className="payments-kpi-value">€500</p>
+            <p className="payments-kpi-value">
+              €{(stats.paid ?? 0).toFixed?.(2) ?? "0.00"}
+            </p>
           </div>
         </div>
       );
@@ -467,14 +628,25 @@ export default function Payments() {
             <div className="payments-table-card">
               <Table
                 className="payments-table"
-                dataSource={filteredPurchaseApplications}
+                dataSource={purchaseApplications}
                 columns={purchaseApplicationsColumns}
                 rowKey="key"
+                loading={isPurchaseAppsLoading}
+                rowSelection={{
+                  selectedRowKeys: selectedPurchaseKeys,
+                  onChange: handlePurchaseRowSelectionChange,
+                }}
                 pagination={{
-                  pageSize: 10,
+                  current: purchasePage,
+                  pageSize: purchasePageSize,
+                  total: purchaseApplicationsData?.meta?.total ?? 0,
                   showSizeChanger: true,
                   showTotal: (total) => `Total ${total} applications`,
                   pageSizeOptions: ["10", "20", "50"],
+                  onChange: (page, pageSize) => {
+                    setPurchasePage(page);
+                    setPurchasePageSize(pageSize || 10);
+                  },
                 }}
                 scroll={{ x: 900 }}
               />
@@ -490,14 +662,21 @@ export default function Payments() {
           <div className="payments-table-card">
             <Table
               className="payments-table"
-              dataSource={filteredPurchaseTransactions}
+              dataSource={purchaseTransactions}
               columns={purchaseTransactionsColumns}
               rowKey="key"
+              loading={isPurchaseTxLoading}
               pagination={{
-                pageSize: 10,
+                current: purchaseHistoryPage,
+                pageSize: purchaseHistoryPageSize,
+                total: purchaseTransactionsData?.meta?.total ?? 0,
                 showSizeChanger: true,
                 showTotal: (total) => `Total ${total} transactions`,
                 pageSizeOptions: ["10", "20", "50"],
+                onChange: (page, pageSize) => {
+                  setPurchaseHistoryPage(page);
+                  setPurchaseHistoryPageSize(pageSize || 10);
+                },
               }}
               scroll={{ x: 900 }}
             />
@@ -514,14 +693,21 @@ export default function Payments() {
           <div className="payments-table-card">
             <Table
               className="payments-table"
-              dataSource={filteredCommissionEarned}
+              dataSource={commissionEarned}
               columns={commissionEarnedColumns}
               rowKey="key"
+              loading={isCommissionEarnedLoading}
               pagination={{
-                pageSize: 10,
+                current: commissionPage,
+                pageSize: commissionPageSize,
+                total: commissionEarnedData?.meta?.total ?? 0,
                 showSizeChanger: true,
                 showTotal: (total) => `Total ${total} records`,
                 pageSizeOptions: ["10", "20", "50"],
+                onChange: (page, pageSize) => {
+                  setCommissionPage(page);
+                  setCommissionPageSize(pageSize || 10);
+                },
               }}
               scroll={{ x: 900 }}
             />
@@ -537,14 +723,21 @@ export default function Payments() {
         <div className="payments-table-card">
           <Table
             className="payments-table"
-            dataSource={filteredCommissionTransactions}
+            dataSource={commissionTransactions}
             columns={commissionTransactionsColumns}
             rowKey="key"
+            loading={isCommissionTxLoading}
             pagination={{
-              pageSize: 10,
+              current: commissionHistoryPage,
+              pageSize: commissionHistoryPageSize,
+              total: commissionTransactionsData?.meta?.total ?? 0,
               showSizeChanger: true,
               showTotal: (total) => `Total ${total} transactions`,
               pageSizeOptions: ["10", "20", "50"],
+              onChange: (page, pageSize) => {
+                setCommissionHistoryPage(page);
+                setCommissionHistoryPageSize(pageSize || 10);
+              },
             }}
             scroll={{ x: 900 }}
           />
@@ -591,19 +784,31 @@ export default function Payments() {
         open={isUploadModalOpen}
         title="Upload Invoice"
         onCancel={() => setIsUploadModalOpen(false)}
-        onOk={() => setIsUploadModalOpen(false)}
-        okText="Confirm"
+        onOk={handleConfirmInvoiceUpload}
+        okText={isClaiming ? "Submitting..." : "Confirm"}
         cancelText="Cancel"
         centered
         width={560}
+        okButtonProps={{ disabled: !uploadInvoiceFile || isClaiming }}
       >
         <div className="payments-upload-modal">
-          {uploadApplicationId && (
+          {uploadCommissionId && (
             <p className="payments-upload-application">
-              Application ID : <span>{uploadApplicationId}</span>
+              Commission ID : <span>{uploadCommissionId}</span>
             </p>
           )}
-          <Dragger multiple={false} showUploadList={false} className="payments-dragger">
+          <Dragger
+            multiple={false}
+            showUploadList={!!uploadInvoiceFile}
+            beforeUpload={(file) => {
+              setUploadInvoiceFile(file);
+              return false;
+            }}
+            onRemove={() => {
+              setUploadInvoiceFile(null);
+            }}
+            className="payments-dragger"
+          >
             <p className="ant-upload-drag-icon">
               <InboxOutlined />
             </p>
@@ -623,11 +828,15 @@ export default function Payments() {
         open={isBankModalOpen}
         title="Bank Transfer Payment"
         onCancel={() => setIsBankModalOpen(false)}
-        onOk={() => setIsBankModalOpen(false)}
-        okText="Confirm"
+        onOk={handleConfirmBankPayment}
+        okText={isPaying ? "Submitting..." : "Confirm Payment"}
         cancelText="Cancel"
         centered
         width={600}
+        okButtonProps={{
+          disabled:
+            !receiptFile || selectedPurchaseRecords.length === 0 || isPaying,
+        }}
       >
         <div className="payments-bank-modal space-y-5 text-sm">
           <section className="payments-bank-section payments-bank-section--highlight">
@@ -635,15 +844,21 @@ export default function Payments() {
             <div className="payments-bank-grid">
               <div>
                 <p className="payments-bank-label">Bank Name</p>
-                <p className="payments-bank-value">Brac Bank</p>
+                <p className="payments-bank-value">
+                  {bankAccount?.bankName || "—"}
+                </p>
               </div>
               <div>
                 <p className="payments-bank-label">Account Name</p>
-                <p className="payments-bank-value">Campus Transfer LTD</p>
+                <p className="payments-bank-value">
+                  {bankAccount?.accountName || "—"}
+                </p>
               </div>
               <div>
                 <p className="payments-bank-label">Account Number</p>
-                <p className="payments-bank-value">168365603976</p>
+                <p className="payments-bank-value">
+                  {bankAccount?.accountNumber || "—"}
+                </p>
               </div>
             </div>
           </section>
@@ -653,17 +868,34 @@ export default function Payments() {
             <div className="payments-bank-summary">
               <div>
                 <p className="payments-bank-label">Student</p>
-                <p className="payments-bank-value">John Smith (APP001)</p>
+                <p className="payments-bank-value">
+                  {selectedPurchaseRecords.length > 0
+                    ? `${selectedPurchaseRecords.length} application(s)`
+                    : "No applications selected"}
+                </p>
               </div>
               <div>
                 <p className="payments-bank-label">Total Amount</p>
-                <p className="payments-bank-value">€70</p>
+                <p className="payments-bank-value">
+                  €{selectedTotalPayable.toFixed(2)}
+                </p>
               </div>
             </div>
           </section>
 
           <section className="payments-bank-section">
-            <Dragger multiple={false} showUploadList={false} className="payments-dragger">
+            <Dragger
+              multiple={false}
+              showUploadList={!!receiptFile}
+              beforeUpload={(file) => {
+                setReceiptFile(file);
+                return false;
+              }}
+              onRemove={() => {
+                setReceiptFile(null);
+              }}
+              className="payments-dragger"
+            >
               <p className="ant-upload-drag-icon">
                 <InboxOutlined />
               </p>
