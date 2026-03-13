@@ -4,7 +4,8 @@ const applicationApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     createApplication: builder.mutation({
       query: (info) => ({
-        url: "/applications",
+        // Partner portal: submit application via partner-specific endpoint
+        url: "/partners/applications",
         method: "POST",
         body: info,
       }),
@@ -14,15 +15,14 @@ const applicationApi = baseApi.injectEndpoints({
       query: (params) => {
         const {
           page = 1,
-          limit = 10,
-          sortBy = "createdAt",
-          sortOrder = "desc",
-          ...rest
+          limit = 20,
+          status = "",
+          search = "",
         } = params || {};
         return {
-          url: "/applications/my-applications",
+          url: "/partners/applications",
           method: "GET",
-          params: { page, limit, sortBy, sortOrder, ...rest },
+          params: { page, limit, status, search },
         };
       },
       providesTags: ["applications"],

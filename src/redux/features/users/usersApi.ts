@@ -31,16 +31,21 @@ export type GetStudentsResponse = {
 export type GetStudentsArgs = {
   page?: number;
   limit?: number;
+  /** Optional free-text search (name/email/phone). */
+  search?: string;
 };
 
 const usersApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getStudents: builder.query<GetStudentsResponse, GetStudentsArgs>({
-      query: ({ page = 1, limit = 10 }) => {
+      query: ({ page = 1, limit = 10, search }) => {
         const params = new URLSearchParams();
         params.append("role", "STUDENT");
         params.append("page", page.toString());
         params.append("limit", limit.toString());
+        if (search && search.trim()) {
+          params.append("search", search.trim());
+        }
         return { url: `/users?${params.toString()}` };
       },
       providesTags: ["users"],

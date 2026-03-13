@@ -18,6 +18,20 @@ interface ApplicationRecord {
   createdAt?: string;
 }
 
+const getLogoSrc = (logoUrl?: string | null) => {
+  if (!logoUrl) return undefined;
+  // If backend already returns full URL, use it directly
+  if (logoUrl.startsWith("http://") || logoUrl.startsWith("https://")) {
+    return logoUrl;
+  }
+  // Otherwise, prefix with configured image base URL when available
+  if (config.image_access_url) {
+    return `${config.image_access_url}${logoUrl}`;
+  }
+  // Fallback: return as-is so at least relative URLs can work in dev
+  return logoUrl;
+};
+
 const statusColors: Record<string, string> = {
   REVIEW: "blue",
   APPLY: "cyan",
@@ -30,13 +44,15 @@ const statusColors: Record<string, string> = {
 export default function Applications() {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [limit, setLimit] = useState(20);
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [search, setSearch] = useState<string>("");
 
   const { data, isLoading, isFetching } = useGetMyAllApplicationsQuery({
     page: currentPage,
     limit,
-    sortBy: "createdAt",
-    sortOrder: "desc",
+    status: statusFilter,
+    search,
   });
 
   const tableData = data?.data || [];
@@ -62,20 +78,26 @@ export default function Applications() {
       dataIndex: "course",
       key: "university",
       width: 220,
-      render: (course: ApplicationRecord["course"]) => (
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
-            {course?.university?.UniversityLogo?.url ? (
-              <img
-                src={`${config.image_access_url}${course.university.UniversityLogo.url}`}
-                alt=""
-                className="w-full h-full object-cover"
-              />
-            ) : null}
+      render: (course: ApplicationRecord["course"]) => {
+        const logoUrl = course?.university?.UniversityLogo?.url || undefined;
+        const logoSrc = getLogoSrc(logoUrl);
+        return (
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
+              {logoSrc ? (
+                <img
+                  src={logoSrc}
+                  alt={course?.university?.name || ""}
+                  className="w-full h-full object-cover"
+                />
+              ) : null}
+            </div>
+            <span className="text-sm font-medium">
+              {course?.university?.name || "N/A"}
+            </span>
           </div>
-          <span className="text-sm font-medium">{course?.university?.name || "N/A"}</span>
-        </div>
-      ),
+        );
+      },
     },
     {
       title: "Program",
@@ -150,6 +172,11 @@ export default function Applications() {
           placeholder="Search by ID, course, university or status"
           allowClear
           size="large"
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setCurrentPage(1);
+          }}
         />
       </div>
 
@@ -169,7 +196,7 @@ export default function Applications() {
             pageSizeOptions: ["10", "20", "50"],
             onChange: (page, pageSize) => {
               setCurrentPage(page);
-              setLimit(pageSize || 10);
+              setLimit(pageSize || 20);
             },
           }}
           scroll={{ x: 900 }}

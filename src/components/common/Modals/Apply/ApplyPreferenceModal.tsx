@@ -65,14 +65,15 @@ export default function ApplyPreferenceModal({
 
   const handleContinue = async () => {
     const intake = selectedStartDate || defaultDate;
-    const payload: Record<string, unknown> = {
+    const payload = {
+      studentId: studentId as string | undefined,
       courseId: data.id,
       intake,
-      campus: data.campus,
-      duration: data.duration,
+      campus: data.campus || "Main Campus",
+      duration: data.duration || "1 year",
       studyMode: formatStudyMode(data.modeOfStudy as string),
+      registrationForm: "https://example.com/form.pdf",
     };
-    if (studentId) payload.studentId = studentId;
 
     try {
       const response = await createApplication(payload).unwrap();

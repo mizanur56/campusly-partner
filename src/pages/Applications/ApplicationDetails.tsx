@@ -34,14 +34,23 @@ const ApplicationDetails = () => {
     window.scrollTo(0, 0);
   }, [id]);
 
+  const toLogoSrc = (logoUrl?: string | null) => {
+    if (!logoUrl) return undefined;
+    if (logoUrl.startsWith("http://") || logoUrl.startsWith("https://")) {
+      return logoUrl;
+    }
+    if (config.image_access_url) {
+      return `${config.image_access_url}${logoUrl}`;
+    }
+    return logoUrl;
+  };
+
   const applicationData = {
     id: applicationApiData?.id,
     applicationId: applicationApiData?.applicationId,
     college: {
       name: applicationApiData?.course?.university?.name,
-      logo: applicationApiData?.course?.university?.UniversityLogo?.url
-        ? `${config.image_access_url}${applicationApiData.course.university.UniversityLogo.url}`
-        : undefined,
+      logo: toLogoSrc(applicationApiData?.course?.university?.UniversityLogo?.url || undefined),
       initials: applicationApiData?.course?.university?.name
         ?.split(" ")
         .map((w: string) => w[0])
