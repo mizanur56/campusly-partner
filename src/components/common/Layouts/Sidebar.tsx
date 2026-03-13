@@ -125,9 +125,7 @@ const Sidebar: React.FC = () => {
     data: partnerProfile,
     isLoading: isPartnerProfileLoading,
     isFetching: isPartnerProfileFetching,
-  } = useGetPartnerProfileQuery(undefined, {
-    skip: !user, // Only fetch when user is logged in
-  });
+  } = useGetPartnerProfileQuery(undefined);
 
   // Advisor details from partner profile (for "Managed by" section)
   const advisor = partnerProfile?.advisor;
@@ -145,6 +143,7 @@ const Sidebar: React.FC = () => {
   const handleLogout = () => {
     console.log("Logging out...");
     localStorage.removeItem("token");
+    localStorage.removeItem("partner-preview-mode");
     navigate("/login");
   };
 

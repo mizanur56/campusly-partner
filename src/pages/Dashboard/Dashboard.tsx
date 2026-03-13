@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import PageMeta from "../../components/common/Meta/PageMeta";
 import { Button } from "../../components/ui/button";
 import { usePreviewMode } from "../../context/PreviewModeContext";
@@ -121,11 +121,11 @@ const BASE_ONBOARDING_STEPS = [
 
 const BASE_CONTRACT_STEPS = [
   { id: "view-sign", label: "View and Sign" },
-  { id: "complete", label: "Complete" },
+  { id: "complete", label: "Approved" },
 ];
 
 const Dashboard = () => {
-  const { previewMode } = usePreviewMode();
+  const { previewMode, setPreviewMode } = usePreviewMode();
   const [onboardingOpen, setOnboardingOpen] = useState(true);
   const [contractOpen, setContractOpen] = useState(true);
 
@@ -161,6 +161,8 @@ const Dashboard = () => {
     status === "AWAITING_PARTNER_SIGNATURE" ||
     status === "AWAITING_ADMIN_APPROVAL" ||
     status === "ACTIVE";
+  const hasUnlockedPortal =
+    status === "ACTIVE" && !!formStatus?.portalAccessUnlocked;
   const canAccessContract = isApproved || isContractSignRejected;
 
   let contractCompleted = 0;
@@ -178,6 +180,18 @@ const Dashboard = () => {
     contractCompleted = contractTotal;
   }
 
+  // Decide preview mode ONLY after onboarding status has loaded,
+  // so that login → loading → correct mode (onboarding vs signed) happens once.
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (hasUnlockedPortal && previewMode !== "signed") {
+      setPreviewMode("signed");
+    } else if (!hasUnlockedPortal && previewMode !== "onboarding") {
+      setPreviewMode("onboarding");
+    }
+  }, [hasUnlockedPortal, isLoading, previewMode, setPreviewMode]);
+
   return (
     <>
       <PageMeta
@@ -187,7 +201,7 @@ const Dashboard = () => {
 
       {isLoading ? (
         <DashboardSkeleton />
-      ) : previewMode === "signed" ? (
+      ) : previewMode === "signed" || hasUnlockedPortal ? (
         <SignedDashboardView />
       ) : (
         <div className="min-h-[calc(100vh-4rem)] -mx-4 px-0 py-0 md:-mx-6 md:px-0 lg:-mx-8">

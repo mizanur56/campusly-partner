@@ -61,6 +61,8 @@ export interface OnboardingStatusResponse {
   rejectionReason?: string;
   contractDocumentUrl?: string;
   advisor?: unknown;
+  /** When true, partner has unlocked full dashboard (no onboarding preview). */
+  portalAccessUnlocked?: boolean;
 }
 
 export interface ContractResponse {
@@ -225,6 +227,15 @@ const onboardingFormApi = baseApi.injectEndpoints({
       invalidatesTags: ["partnerOnboarding", "partnerContract"],
     }),
 
+    /** Unlock full portal access after contract is approved. */
+    unlockPortalAccess: builder.mutation<any, void>({
+      query: () => ({
+        url: "/partners/contract/unlock-portal",
+        method: "POST",
+      }),
+      invalidatesTags: ["partnerOnboarding"],
+    }),
+
     /** Get available advisor meeting slots by date range. */
     getAvailableMeetingSlots: builder.query<
       AvailableMeetingSlot[],
@@ -295,4 +306,5 @@ export const {
   useBookMeetingMutation,
   useGetMyMeetingsQuery,
   useCancelMeetingMutation,
+  useUnlockPortalAccessMutation,
 } = onboardingFormApi;

@@ -1,10 +1,10 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Backdrop, Header, Sidebar } from "../components/common/Layouts";
-import { usePreviewMode } from "../context/PreviewModeContext";
-import { PreviewModeProvider } from "../context/PreviewModeContext";
+import { usePreviewMode, PreviewModeProvider } from "../context/PreviewModeContext";
 import { SidebarProvider, useSidebar } from "../context/SidebarContext";
 import { StudentProfileProvider } from "../context/StudentProfileContext";
+import { useGetPartnerProfileQuery } from "../redux/features/profile/partnerProfileApi";
 // import { useRoutePermission } from "../hooks/useRoutePermission";
 
 const ENTER_MS = 500;
@@ -18,6 +18,10 @@ const LayoutContent: React.FC = () => {
   const navigate = useNavigate();
   const { previewMode, togglePreviewMode } = usePreviewMode();
   const [wipePhase, setWipePhase] = useState<"enter" | "exit" | null>(null);
+
+  // Ensure partner profile loads immediately after login (or app load) so
+  // sidebar/header have data without requiring a manual refresh.
+  useGetPartnerProfileQuery(undefined);
 
   const handlePreviewSwitch = () => {
     if (wipePhase) return;

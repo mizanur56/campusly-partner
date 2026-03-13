@@ -123,7 +123,7 @@ export default function OnboardingPage() {
     setStep(5);
   };
   const backHome = () => navigate("/");
-  const proceedToContract = () => navigate("/");
+  const proceedToContract = () => navigate("/contract/signed");
 
   return (
     <OnboardingFormLayout
