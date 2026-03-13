@@ -6,6 +6,7 @@ import {
   logout,
   selectCurrentUser,
 } from "../../../redux/features/auth/authSlice";
+import { baseApi } from "../../../redux/api/baseApi";
 import { Dropdown } from "../../ui/dropdown/Dropdown";
 import { DropdownItem } from "../../ui/dropdown/DropdownItem";
 
@@ -124,8 +125,17 @@ export default function UserDropdown() {
         </ul>
         <button
           onClick={() => {
+            // Clear local auth-related storage
             localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            localStorage.removeItem("partner-preview-mode");
+
+            // Clear Redux auth slice
             dispatch(logout());
+
+            // Clear all RTK Query caches so next login doesn't reuse old responses
+            dispatch(baseApi.util.resetApiState());
+
             closeDropdown();
             navigate("/login");
           }}
