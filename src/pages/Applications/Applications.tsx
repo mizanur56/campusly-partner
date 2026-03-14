@@ -5,12 +5,14 @@ import { useNavigate } from "react-router-dom";
 import { FiEye, FiTrash2 } from "react-icons/fi";
 import { Search } from "lucide-react";
 import { IoFilterSharp } from "react-icons/io5";
+import { useSelector } from "react-redux";
 import PageMeta from "../../components/common/Meta/PageMeta";
 import PageHeader from "../../components/common/Navigation/PageHeader";
 import PrimaryButton from "../../components/common/Button/PrimaryButton";
 import DataTable from "../../components/common/Tables/DataTable";
 import DeleteModal from "../../components/shared/DeleteModal";
 import { useGetMyAllApplicationsQuery } from "../../redux/features/application/applicationApi";
+import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 import { config } from "../../config";
 
 const { Option } = Select;
@@ -50,6 +52,8 @@ const getLogoSrc = (logoUrl?: string | null) => {
 
 export default function Applications() {
   const navigate = useNavigate();
+  const user = useSelector(selectCurrentUser);
+  const isTeamMember = user?.role === "PARTNER_TEAM_MEMBER";
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [searchText, setSearchText] = useState("");
@@ -186,7 +190,11 @@ export default function Applications() {
       />
       <PageHeader
         title="Applications"
-        subtitle="Manage your applications"
+        subtitle={
+          isTeamMember
+            ? "Applications for students assigned to you"
+            : "Manage your applications"
+        }
         breadcrumbs={[
           { title: "Dashboard", path: "/" },
           { title: "Applications" },
