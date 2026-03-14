@@ -103,7 +103,9 @@ export default function TeamMembers() {
     }
   };
 
-  const handleResend = async (record: PartnerTeamMember) => {
+  const handleResend = async (e: React.MouseEvent, record: PartnerTeamMember) => {
+    e.preventDefault();
+    e.stopPropagation();
     try {
       await resendInvite({ id: record.id }).unwrap();
       message.success("Invitation resent successfully.");
@@ -173,16 +175,23 @@ export default function TeamMembers() {
       key: "actions",
       width: 220,
       render: (_: unknown, record: PartnerTeamMember) => (
-        <Space size="small" wrap>
-          <Button size="small" onClick={() => openEditModal(record)}>
+        <Space size="small" wrap onClick={(e) => e.stopPropagation()}>
+          <Button
+            size="small"
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              openEditModal(record);
+            }}
+          >
             Edit
           </Button>
           {record.status === "PENDING" && (
             <Button
               size="small"
-              type="link"
+              type="button"
               loading={isResending}
-              onClick={() => handleResend(record)}
+              onClick={(e) => handleResend(e, record)}
             >
               Resend invite
             </Button>
@@ -191,7 +200,11 @@ export default function TeamMembers() {
             <Button
               size="small"
               danger
-              onClick={() => handleRemove(record)}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRemove(record);
+              }}
             >
               Remove
             </Button>

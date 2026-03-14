@@ -1,5 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
 import MainLayout from "../layout/MainLayout";
+import { selectCurrentUser } from "../redux/features/auth/authSlice";
 import ChangePassword from "../pages/Auth/ChangePassword";
 import ForgetPassword from "../pages/Auth/ForgetPassword";
 import Login from "../pages/Auth/Login";
@@ -39,6 +41,14 @@ function StudentProfileRedirect() {
   return <Navigate to={`/students/${id}/profile`} replace />;
 }
 
+function DashboardOrRedirect() {
+  const user = useSelector(selectCurrentUser);
+  if (user?.role === "PARTNER_TEAM_MEMBER") {
+    return <Navigate to="/my-tasks" replace />;
+  }
+  return <Dashboard />;
+}
+
 function AppRoutes() {
   return (
     <BrowserRouter>
@@ -58,7 +68,7 @@ function AppRoutes() {
           }
           errorElement={<NotFound />}
         >
-          <Route index element={<Dashboard />} />
+          <Route index element={<DashboardOrRedirect />} />
           <Route path="media" element={<AllMediaList />} />
           <Route path="onboarding" element={<OnboardingPage />} />
           <Route path="contract" element={<ContractPage />} />

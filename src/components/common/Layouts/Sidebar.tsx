@@ -17,6 +17,7 @@ const SidebarItems: NavItem[] = [
   { icon: <i className="fa-solid fa-house"></i>, name: "Home", path: "/" },
 ];
 
+/** Full partner sidebar (PARTNER role). */
 const SignedSidebarItems: NavItem[] = [
   { icon: <i className="fa-solid fa-house"></i>, name: "Home", path: "/" },
   {
@@ -63,6 +64,26 @@ const SignedSidebarItems: NavItem[] = [
     path: "/hot-offers",
   },
 ];
+
+/** Restricted sidebar for PARTNER_TEAM_MEMBER: My Tasks first, then Students, Applications. No Home. */
+const TeamMemberSidebarItems: NavItem[] = [
+  {
+    icon: <i className="fa-solid fa-list-check"></i>,
+    name: "My Tasks",
+    path: "/my-tasks",
+  },
+  {
+    icon: <i className="fa-solid fa-users"></i>,
+    name: "Students",
+    path: "/students",
+  },
+  {
+    icon: <i className="fa-solid fa-file-lines"></i>,
+    name: "Applications",
+    path: "/applications",
+  },
+];
+
 const SIGNED_ROUTE_PATHS = [
   "/programs-schools",
   "/students",
@@ -75,6 +96,8 @@ const SIGNED_ROUTE_PATHS = [
   "/academy",
   "/hot-offers",
 ];
+
+const TEAM_MEMBER_ROUTE_PATHS = ["/", "/students", "/applications", "/my-tasks"];
 
 const othersSidebarItems: NavItem[] = [
   {
@@ -139,18 +162,28 @@ const Sidebar: React.FC = () => {
   const hasUnlockedPortal =
     onboardingStatus?.status === "ACTIVE" && !!onboardingStatus?.portalAccessUnlocked;
 
-  // Advisor details from partner profile (for "Managed by" section)
+  const isTeamMember = user?.role === "PARTNER_TEAM_MEMBER";
+
+  // Advisor details from partner profile (for "Managed by" / signed card). For team member, use logged-in user only.
   const advisor = partnerProfile?.advisor;
-  const profileName = advisor?.name ?? fallbackManagedBy.name;
-  const profileEmail = advisor?.email ?? fallbackManagedBy.email;
-  const profilePhone = advisor?.phone ?? fallbackManagedBy.phone;
-  const profilePhotoUrl = advisor?.profile?.url
-    ? advisor.profile.url.startsWith("http")
-      ? advisor.profile.url
-      : `${config.image_access_url}${advisor.profile.url}`
-    : null;
+  const profileName = isTeamMember
+    ? (user?.name ?? "Team Member")
+    : (advisor?.name ?? fallbackManagedBy.name);
+  const profileEmail = isTeamMember
+    ? (user?.email ?? "")
+    : (advisor?.email ?? fallbackManagedBy.email);
+  const profilePhone = isTeamMember
+    ? ""
+    : (advisor?.phone ?? fallbackManagedBy.phone);
+  const profilePhotoUrl = isTeamMember
+    ? null
+    : advisor?.profile?.url
+      ? advisor.profile.url.startsWith("http")
+        ? advisor.profile.url
+        : `${config.image_access_url}${advisor.profile.url}`
+      : null;
   const isManagedByLoading =
-    isPartnerProfileLoading || isPartnerProfileFetching;
+    !isTeamMember && (isPartnerProfileLoading || isPartnerProfileFetching);
 
   const handleLogout = () => {
     console.log("Logging out...");
@@ -184,16 +217,22 @@ const Sidebar: React.FC = () => {
     (location.pathname === "/" && previewMode === "onboarding") ||
     location.pathname.startsWith("/onboarding") ||
     location.pathname.startsWith("/contract");
+  const signedPaths = isTeamMember ? TEAM_MEMBER_ROUTE_PATHS : SIGNED_ROUTE_PATHS;
   const isSignedContext =
     !isStudentContext &&
     !isApplicationDetailContext &&
-    ((location.pathname === "/" && (previewMode === "signed" || hasUnlockedPortal)) ||
-      SIGNED_ROUTE_PATHS.includes(location.pathname) ||
-      location.pathname.startsWith("/payments"));
+    ((location.pathname === "/" && (previewMode === "signed" || hasUnlockedPortal || isTeamMember)) ||
+      signedPaths.includes(location.pathname) ||
+      (!isTeamMember && location.pathname.startsWith("/payments")) ||
+      (isTeamMember && (location.pathname.startsWith("/students/") || location.pathname.startsWith("/applications/"))));
 
   // Application details loading: show loading state (click korar sathe start)
   const isApplicationDetailLoading = isApplicationDetailContext && !student;
-  const baseItems = isSignedContext ? SignedSidebarItems : SidebarItems;
+  const baseItems = isSignedContext
+    ? isTeamMember
+      ? TeamMemberSidebarItems
+      : SignedSidebarItems
+    : SidebarItems;
   const filteredSidebarItems = useFilteredSidebarItems(baseItems);
   const isSignedSidebar = isSignedContext;
 
@@ -497,44 +536,48 @@ const Sidebar: React.FC = () => {
                 </p>
               </div>
               <div className="mt-2.5 space-y-1.5">
-                <a
-                  href={`mailto:${profileEmail}`}
-                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
-                >
-                  <svg
-                    className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                {profileEmail && (
+                  <a
+                    href={`mailto:${profileEmail}`}
+                    className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    />
-                  </svg>
-                  <span className="min-w-0 truncate">{profileEmail}</span>
-                </a>
-                <a
-                  href={`tel:${profilePhone.replace(/\s/g, "")}`}
-                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
-                >
-                  <svg
-                    className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                    <svg
+                      className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                      />
+                    </svg>
+                    <span className="min-w-0 truncate">{profileEmail}</span>
+                  </a>
+                )}
+                {profilePhone && (
+                  <a
+                    href={`tel:${profilePhone.replace(/\s/g, "")}`}
+                    className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                    />
-                  </svg>
-                  <span className="min-w-0 truncate">{profilePhone}</span>
-                </a>
+                    <svg
+                      className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                      />
+                    </svg>
+                    <span className="min-w-0 truncate">{profilePhone}</span>
+                  </a>
+                )}
               </div>
             </>
           )}
@@ -572,44 +615,48 @@ const Sidebar: React.FC = () => {
                 </p>
               </div>
               <div className="mt-2.5 space-y-1.5">
-                <a
-                  href={`mailto:${profileEmail}`}
-                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
-                >
-                  <svg
-                    className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                {profileEmail && (
+                  <a
+                    href={`mailto:${profileEmail}`}
+                    className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    />
-                  </svg>
-                  <span className="min-w-0 truncate">{profileEmail}</span>
-                </a>
-                <a
-                  href={`tel:${profilePhone.replace(/\s/g, "")}`}
-                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
-                >
-                  <svg
-                    className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                    <svg
+                      className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                      />
+                    </svg>
+                    <span className="min-w-0 truncate">{profileEmail}</span>
+                  </a>
+                )}
+                {profilePhone && (
+                  <a
+                    href={`tel:${profilePhone.replace(/\s/g, "")}`}
+                    className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                    />
-                  </svg>
-                  <span className="min-w-0 truncate">{profilePhone}</span>
-                </a>
+                    <svg
+                      className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                      />
+                    </svg>
+                    <span className="min-w-0 truncate">{profilePhone}</span>
+                  </a>
+                )}
               </div>
             </>
           )}

@@ -2,6 +2,7 @@ import { baseApi } from "../../api/baseApi";
 
 export interface PartnerTeamMember {
   id: string;
+  userId?: string | null;
   email: string;
   firstName: string;
   lastName: string;

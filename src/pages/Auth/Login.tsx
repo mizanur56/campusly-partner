@@ -85,7 +85,9 @@ const Login = () => {
           type: userType,
         };
         dispatch(setUser({ user: userData, token: res?.data?.token }));
-        navigate(from, { replace: true });
+        const isTeamMember = userFromResponse?.role === "PARTNER_TEAM_MEMBER";
+        const targetPath = isTeamMember ? "/my-tasks" : from;
+        navigate(targetPath, { replace: true });
         toast.success("Login successful!");
       }
     } catch (err: any) {
