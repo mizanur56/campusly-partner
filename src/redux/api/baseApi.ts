@@ -232,6 +232,7 @@ export const baseApi = createApi({
     "partnerTeams",
     "partnerTasks",
     "hotOffers",
+    "studentProfile",
   ],
   endpoints: () => ({}),
 });

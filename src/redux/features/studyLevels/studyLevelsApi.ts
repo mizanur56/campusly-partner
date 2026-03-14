@@ -29,8 +29,19 @@ const studyLevelsApi = baseApi.injectEndpoints({
       },
       providesTags: ["studyLevels"],
     }),
+    getStudyLevelsByCountry: builder.query({
+      query: (countryId: string) => ({
+        url: `/country-study-levels/country/${countryId}`,
+        method: "GET",
+      }),
+      transformResponse: (response: { data?: unknown }) => response?.data ?? [],
+      providesTags: ["countryStudyLevels"],
+    }),
   }),
 });
 
-export const { useGetStudyLevelsQuery, useLazyGetStudyLevelsQuery } =
-  studyLevelsApi;
+export const {
+  useGetStudyLevelsQuery,
+  useLazyGetStudyLevelsQuery,
+  useGetStudyLevelsByCountryQuery,
+} = studyLevelsApi;
