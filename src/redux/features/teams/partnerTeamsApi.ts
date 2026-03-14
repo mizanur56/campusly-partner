@@ -7,7 +7,7 @@ export interface PartnerTeamMember {
   lastName: string;
   contactNumber?: string | null;
   countryCode?: string | null;
-  status: "PENDING" | "ACTIVE" | "INACTIVE";
+  status: "PENDING" | "ACTIVE";
   invitedAt: string;
   passwordCreatedAt?: string | null;
 }
@@ -40,15 +40,32 @@ type ListParams = {
 export const partnerTeamsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getTeamMembers: builder.query<PaginatedResponse<PartnerTeamMember>, ListParams>({
-      query: ({ page = 1, limit = 10, search = "", status = "" } = {}) => ({
-        url: "/partners/team-members",
-        method: "GET",
-        params: { page, limit, search, status },
-      }),
-      transformResponse: (response: any) => ({
-        data: response?.data || [],
-        meta: response?.meta || { total: 0, page: 1, limit: 10, totalPages: 0 },
-      }),
+      query: (arg = {}) => {
+        const { page = 1, limit = 10, search, status } = arg;
+        const params: Record<string, number | string> = { page, limit };
+        if (search != null && String(search).trim() !== "") params.search = String(search).trim();
+        if (status != null && String(status).trim() !== "") params.status = String(status).trim();
+        return {
+          url: "/partners/team-members",
+          method: "GET",
+          params,
+        };
+      },
+      transformResponse: (response: any) => {
+        const rawData = response?.data;
+        const rawMeta = response?.meta;
+        return {
+          data: Array.isArray(rawData) ? rawData : [],
+          meta: rawMeta && typeof rawMeta === "object"
+            ? {
+                total: Number(rawMeta.total) ?? 0,
+                page: Number(rawMeta.page) ?? 1,
+                limit: Number(rawMeta.limit) ?? 10,
+                totalPages: Number(rawMeta.totalPages) ?? 0,
+              }
+            : { total: 0, page: 1, limit: 10, totalPages: 0 },
+        };
+      },
       providesTags: ["partnerTeams"],
     }),
 
@@ -60,6 +77,15 @@ export const partnerTeamsApi = baseApi.injectEndpoints({
       transformResponse: (response: any) =>
         (response?.data || { total: 0, pending: 0, active: 0 }) as PartnerTeamStats,
       providesTags: ["partnerTeams"],
+    }),
+
+    getTeamMemberById: builder.query<PartnerTeamMember, string>({
+      query: (id) => ({
+        url: `/partners/team-members/${id}`,
+        method: "GET",
+      }),
+      transformResponse: (response: any) => (response?.data || null) as PartnerTeamMember,
+      providesTags: (result, error, id) => [{ type: "partnerTeams", id }],
     }),
 
     inviteTeamMember: builder.mutation<
@@ -107,6 +133,7 @@ export const partnerTeamsApi = baseApi.injectEndpoints({
 export const {
   useGetTeamMembersQuery,
   useGetTeamStatsQuery,
+  useGetTeamMemberByIdQuery,
   useInviteTeamMemberMutation,
   useResendTeamInviteMutation,
   useUpdateTeamMemberMutation,

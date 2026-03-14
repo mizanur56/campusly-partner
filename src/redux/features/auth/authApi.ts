@@ -31,6 +31,13 @@ const authApi = baseApi.injectEndpoints({
         body: userInfo,
       }),
     }),
+    setPasswordByInvitation: builder.mutation({
+      query: (body: { token: string; newPassword: string; confirmPassword: string }) => ({
+        url: "/auth/set-password-by-invitation",
+        method: "POST",
+        body,
+      }),
+    }),
     register: builder.mutation({
       query: (partnerInfo) => ({
         url: "/auth/register",
@@ -46,5 +53,6 @@ export const {
   useForgotPasswordMutation,
   useResetPasswordMutation,
   useChangePasswordMutation,
+  useSetPasswordByInvitationMutation,
   useRegisterMutation,
 } = authApi;

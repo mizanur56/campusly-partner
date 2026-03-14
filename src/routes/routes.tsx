@@ -5,6 +5,7 @@ import ForgetPassword from "../pages/Auth/ForgetPassword";
 import Login from "../pages/Auth/Login";
 import Register from "../pages/Auth/Register";
 import ResetPassword from "../pages/Auth/ResetPassword";
+import SetPasswordByInvite from "../pages/Auth/SetPasswordByInvite";
 import Dashboard from "../pages/Dashboard/Dashboard.tsx";
 import AllMediaList from "../pages/Media/Media";
 import Academy from "../pages/Academy/Academy";
@@ -47,6 +48,7 @@ function AppRoutes() {
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgetPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/set-password" element={<SetPasswordByInvite />} />
         <Route
           path="/"
           element={
