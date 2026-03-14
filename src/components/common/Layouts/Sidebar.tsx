@@ -9,6 +9,7 @@ import { useStudentProfile } from "../../../context/StudentProfileContext";
 import { ChevronDownIcon } from "../../../icons";
 import { selectCurrentUser } from "../../../redux/features/auth/authSlice";
 import { useGetPartnerProfileQuery } from "../../../redux/features/profile/partnerProfileApi";
+import { useGetOnboardingStatusQuery } from "../../../redux/features/onboardingForm";
 import { NavItem, SubMenuItem } from "../../../types/interfaces";
 import { Tooltip } from "antd";
 
@@ -133,6 +134,11 @@ const Sidebar: React.FC = () => {
     isFetching: isPartnerProfileFetching,
   } = useGetPartnerProfileQuery(undefined);
 
+  // Onboarding status: when ACTIVE + portalAccessUnlocked, show signed sidebar even on "/"
+  const { data: onboardingStatus } = useGetOnboardingStatusQuery();
+  const hasUnlockedPortal =
+    onboardingStatus?.status === "ACTIVE" && !!onboardingStatus?.portalAccessUnlocked;
+
   // Advisor details from partner profile (for "Managed by" section)
   const advisor = partnerProfile?.advisor;
   const profileName = advisor?.name ?? fallbackManagedBy.name;
@@ -181,7 +187,7 @@ const Sidebar: React.FC = () => {
   const isSignedContext =
     !isStudentContext &&
     !isApplicationDetailContext &&
-    ((location.pathname === "/" && previewMode === "signed") ||
+    ((location.pathname === "/" && (previewMode === "signed" || hasUnlockedPortal)) ||
       SIGNED_ROUTE_PATHS.includes(location.pathname) ||
       location.pathname.startsWith("/payments"));
 

@@ -231,6 +231,7 @@ export const baseApi = createApi({
     "bankAccounts",
     "partnerTeams",
     "partnerTasks",
+    "hotOffers",
   ],
   endpoints: () => ({}),
 });
