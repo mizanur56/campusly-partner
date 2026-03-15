@@ -41,6 +41,15 @@ interface ApplicationRecord {
   submittedDate: string;
 }
 
+interface StudentProfileData {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  image?: { url?: string };
+  user?: { name?: string; email?: string };
+}
+
 const statusColors: Record<string, string> = {
   Accepted: "bg-green-100 text-green-800",
   Rejected: "bg-red-100 text-red-800",
@@ -88,12 +97,14 @@ export default function StudentProfile() {
   }, [applicationsSearch, isApplicationsSection]);
 
   const {
-    data: profile,
+    data: profileData,
     isLoading: profileLoading,
     isError: profileError,
     error: profileErrorDetail,
     refetch: refetchProfile,
   } = useGetStudentProfileQuery(studentId!, { skip: !studentId });
+
+  const profile = profileData as StudentProfileData | null | undefined;
 
   const {
     data: applicationsResponse,

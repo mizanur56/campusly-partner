@@ -280,7 +280,6 @@ export default function MyTasks() {
         <Space size="small" wrap onClick={(e) => e.stopPropagation()}>
           <Button
             size="small"
-            type="button"
             onClick={(e) => {
               e.stopPropagation();
               openViewModal(record);
@@ -292,7 +291,6 @@ export default function MyTasks() {
             <Button
               size="small"
               danger
-              type="button"
               loading={deleteConfirmId === record.id && isDeleting}
               onClick={(e) => {
                 e.stopPropagation();

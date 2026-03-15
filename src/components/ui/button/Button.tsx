@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 const variantStyles = {
   primary: "btn-primary",
   secondary: "btn-secondary",
+  outline:
+    "btn-base border border-gray-300 bg-transparent text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-white/5",
   ghost:
     "btn-base bg-transparent text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-white/5",
   danger: "btn-base bg-red-600 text-white hover:bg-red-700",

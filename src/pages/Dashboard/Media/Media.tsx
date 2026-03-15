@@ -3,12 +3,12 @@ import { Button, Empty, Modal, Space, message } from "antd";
 import React, { useCallback, useMemo, useState } from "react";
 import { IoMdAdd } from "react-icons/io";
 import { toast } from "react-toastify";
-import Loader from "../../components/common/Loading/Loader";
-import { MediaUploadModal } from "../../components/common/Modals";
-import PageHeader from "../../components/common/Navigation/PageHeader";
-import FolderTree from "../../components/common/media/FolderTree";
-import MediaBreadcrumb from "../../components/common/media/MediaBreadcrumb";
-import MediaCard from "../../components/common/media/MediaCard";
+import Loader from "../../../components/common/Loading/Loader";
+import { MediaUploadModal } from "../../../components/common/Modals";
+import PageHeader from "../../../components/common/Navigation/PageHeader";
+import FolderTree from "../../../components/common/media/FolderTree";
+import MediaBreadcrumb from "../../../components/common/media/MediaBreadcrumb";
+import MediaCard from "../../../components/common/media/MediaCard";
 import {
   useCreateFolderMutation,
   useDeleteFolderMutation,
@@ -17,12 +17,12 @@ import {
   useMediaListQuery,
   useRenameFolderMutation,
   useUploadImageMutation,
-} from "../../redux/features/media/mediaApi";
-import { FolderNode, MediaImage } from "../../types/media";
+} from "../../../redux/features/media/mediaApi";
+import { FolderNode, MediaImage } from "../../../types/media";
 import {
   buildFolderTreeFromFolders,
   filterMediaByFolder,
-} from "../../utils/mediaHelpers";
+} from "../../../utils/mediaHelpers";
 
 const AllMediaList: React.FC = () => {
   const [currentFolder, setCurrentFolder] = useState("Root");
@@ -318,7 +318,7 @@ const AllMediaList: React.FC = () => {
                     <FolderTree
                       data={folderTree}
                       currentPath={currentFolder}
-                      onFolderSelect={(path) => {
+                      onFolderSelect={(path: string) => {
                         setCurrentFolder(path);
                         if (isMobileView) setIsMobileSidebarOpen(false);
                       }}
@@ -345,7 +345,7 @@ const AllMediaList: React.FC = () => {
                   <FolderTree
                     data={folderTree}
                     currentPath={currentFolder}
-                    onFolderSelect={(path) => {
+                    onFolderSelect={(path: string) => {
                       setCurrentFolder(path);
                       if (isMobileView) setIsMobileSidebarOpen(false);
                     }}
@@ -416,7 +416,7 @@ const AllMediaList: React.FC = () => {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {currentFolderImages.map((img) => (
+                    {currentFolderImages.map((img: MediaImage) => (
                       <MediaCard
                         key={img.id}
                         image={img}

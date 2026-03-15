@@ -295,13 +295,13 @@ export default function Applications() {
 
       <DeleteModal
         open={deleteModalOpen}
-        setOpen={setDeleteModalOpen}
-        title="Delete Application"
-        description="Are you sure you want to delete this application?"
-        handleDelete={async () => {
+        onCancel={() => setDeleteModalOpen(false)}
+        onConfirm={async () => {
           // TODO: hook up partner delete API when available
           setDeleteModalOpen(false);
         }}
+        title="Delete Application"
+        message="Are you sure you want to delete this application?"
       />
     </div>
   );

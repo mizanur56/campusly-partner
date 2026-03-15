@@ -74,11 +74,12 @@ export default function EducationHistoryTab({
     }));
   }, [englishTestsData]);
 
+  type DocItem = { documentId?: string; documentRelation?: { category?: { name?: string } } };
   const submittedEnglishTestIds = useMemo(() => {
-    const docs = (studentProfile as { documents?: { documentId?: string; documentRelation?: { category?: { name?: string } } } }[])?.documents ?? [];
+    const docs = (studentProfile as { documents?: DocItem[] })?.documents ?? [];
     return docs
-      .filter((d) => d?.documentRelation?.category?.name === "English Language Tests")
-      .map((d) => d.documentId)
+      .filter((d: DocItem) => d?.documentRelation?.category?.name === "English Language Tests")
+      .map((d: DocItem) => d.documentId)
       .filter(Boolean);
   }, [studentProfile]);
 

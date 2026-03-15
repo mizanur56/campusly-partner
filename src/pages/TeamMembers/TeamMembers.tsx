@@ -178,7 +178,6 @@ export default function TeamMembers() {
         <Space size="small" wrap onClick={(e) => e.stopPropagation()}>
           <Button
             size="small"
-            type="button"
             onClick={(e) => {
               e.stopPropagation();
               openEditModal(record);
@@ -189,7 +188,6 @@ export default function TeamMembers() {
           {record.status === "PENDING" && (
             <Button
               size="small"
-              type="button"
               loading={isResending}
               onClick={(e) => handleResend(e, record)}
             >
@@ -200,7 +198,6 @@ export default function TeamMembers() {
             <Button
               size="small"
               danger
-              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 handleRemove(record);
