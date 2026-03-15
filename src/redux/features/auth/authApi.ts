@@ -39,8 +39,17 @@ const authApi = baseApi.injectEndpoints({
       }),
     }),
     register: builder.mutation({
-      query: (partnerInfo) => ({
-        url: "/auth/register",
+      query: (partnerInfo: {
+        businessName: string;
+        contactPersonName: string;
+        businessEmail: string;
+        country?: string;
+        howDidYouHearAboutUs?: string;
+        password: string;
+        confirmPassword: string;
+      }) => ({
+        // Must hit /api/partners/register (not /api/auth/register). No leading slash so baseUrl is preserved.
+        url: "partners/register",
         method: "POST",
         body: partnerInfo,
       }),
