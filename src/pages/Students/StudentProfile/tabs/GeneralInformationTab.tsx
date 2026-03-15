@@ -3,7 +3,7 @@ import { Button, Card, Spin, Upload } from "antd";
 import type { UploadProps } from "antd";
 import dayjs from "dayjs";
 import { CameraOutlined } from "@ant-design/icons";
-import { FaTimes } from "react-icons/fa";
+import { FaPencilAlt, FaTimes } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { useUpdateStudentProfileMutation } from "../../../../redux/features/profile/studentProfileApi";
 import { useGetCountriesQuery } from "../../../../redux/features/countries/countriesApi";
@@ -105,8 +105,14 @@ export default function GeneralInformationTab({
 
   const qualificationOptions = useMemo(() => {
     const data = Array.isArray(studyLevelsData) ? studyLevelsData : (studyLevelsData as { data?: unknown[] })?.data ?? [];
-    return (data as { studyLevel?: { id?: string; name?: string }; name?: string; studyLevelId?: string }[]).map((item) => ({
-      label: item.studyLevel?.name ?? item.name ?? "",
+    return (data as {
+      studyLevel?: { id?: string; name?: string; description?: string };
+      name?: string;
+      description?: string;
+      countryStudyLevelName?: string;
+      studyLevelId?: string;
+    }[]).map((item) => ({
+      label: item.studyLevel?.description ?? item.studyLevel?.name ?? item.countryStudyLevelName ?? item.description ?? item.name ?? "",
       value: item.studyLevel?.id ?? item.studyLevelId ?? "",
     }));
   }, [studyLevelsData]);
@@ -238,65 +244,74 @@ export default function GeneralInformationTab({
 
   return (
     <div className="space-y-4">
-      {canEdit && (
-        <div className="flex flex-col items-start gap-y-2">
-          <Upload
-            showUploadList={false}
-            accept="image/*"
-            beforeUpload={() => false}
-            onChange={handleImageChange}
-            disabled={isUploadingImage}
-          >
-            <div className="relative w-32 h-32 object-cover rounded-full overflow-hidden cursor-pointer group border-2 border-[#C7CACF] hover:border-primary-500 bg-gray-100 transition-all duration-300">
-              <AntImage src={imageSrc} alt="Profile" preview={false} className="w-full h-full object-cover" />
-              {!isUploadingImage && (
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300">
-                  <CameraOutlined className="text-2xl" style={{ color: "white" }} />
-                </div>
-              )}
-              {isUploadingImage && (
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                  <Spin size="large" />
-                </div>
-              )}
-            </div>
-          </Upload>
-        </div>
-      )}
-
-      <Card
-        title={<span className="font-semibold text-[20px]">Personal Details</span>}
-        extra={
-          canEdit ? (
-            <Button
-              type="text"
-              onClick={() => {
-                if (isPersonalEditing) setEditProfileData(profileData);
-                setIsPersonalEditing(!isPersonalEditing);
-              }}
-              className="p-0 group"
-            >
-              {isPersonalEditing ? (
-                <FaTimes style={{ color: "#EF4444", fontSize: 22 }} />
-              ) : (
-                <img
-                  src="/images/icons/edit.png"
-                  alt="Edit"
-                  className="w-[22px] h-[22px] transition-all group-hover:opacity-70"
-                  style={{
-                    filter:
-                      "brightness(0) saturate(100%) invert(27%) sepia(95%) saturate(1000%) hue-rotate(120deg)",
-                  }}
+      {/* Profile Picture - same as student */}
+      <div className="flex flex-col items-start gap-y-2">
+        <Upload
+          showUploadList={false}
+          accept="image/*"
+          beforeUpload={() => false}
+          onChange={handleImageChange}
+          disabled={!canEdit || isUploadingImage}
+        >
+          <div className="relative w-32 h-32 object-cover rounded-full overflow-hidden cursor-pointer group border-2 border-[#C7CACF] hover:border-primary-500 bg-gray-100 transition-all duration-300">
+            <AntImage
+              src={imageSrc}
+              alt="Profile"
+              preview={false}
+              className="w-full h-full object-cover"
+            />
+            {canEdit && !isUploadingImage && (
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300">
+                <CameraOutlined
+                  className=" text-2xl"
+                  style={{ color: "white" }}
                 />
-              )}
-            </Button>
-          ) : null
-        }
-        bordered
-        className="rounded-lg shadow-none"
-        style={{ borderColor: "#C7CACF", boxShadow: "none" }}
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              </div>
+            )}
+            {isUploadingImage && (
+              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                <Spin size="large" />
+              </div>
+            )}
+          </div>
+        </Upload>
+      </div>
+
+      {/* Personal Details Card - same structure as student */}
+      <div>
+        <Card
+          title={
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-[20px]">
+                Personal Details
+              </span>
+            </div>
+          }
+          extra={
+            canEdit ? (
+              <Button
+                type="text"
+                onClick={() => {
+                  if (isPersonalEditing) {
+                    setEditProfileData(profileData);
+                  }
+                  setIsPersonalEditing(!isPersonalEditing);
+                }}
+                className="p-0 group"
+              >
+                {isPersonalEditing ? (
+                  <FaTimes className="text-red-500 hover:text-red-600 transition-colors" style={{ fontSize: 20 }} aria-label="Close" />
+                ) : (
+                  <FaPencilAlt className="text-[#237D3B] hover:opacity-80 transition-opacity" style={{ fontSize: 18 }} aria-label="Edit" />
+                )}
+              </Button>
+            ) : null
+          }
+          bordered={true}
+          className="rounded-lg shadow-none"
+          style={{ borderColor: "#C7CACF", boxShadow: "none" }}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <InfoField
             label="First Name"
             value={editProfileData.firstName}
@@ -369,25 +384,28 @@ export default function GeneralInformationTab({
           isLoading={updatingField === "contactNumber"}
         />
         {canEdit && isPersonalEditing && (
-          <div className="mt-6">
-            <PrimaryButton
-              text="Save Changes"
-              onClick={handleSaveAll}
-              className="px-8"
-              loading={updatingField === "saving"}
-              disabled={updatingField === "saving"}
-            />
-          </div>
-        )}
-      </Card>
-
-      <QualificationSection
+            <div className="mt-6">
+              <PrimaryButton
+                text="Save Changes"
+                onClick={handleSaveAll}
+                className="px-8"
+                loading={updatingField === "saving"}
+                disabled={updatingField === "saving"}
+              />
+            </div>
+          )}
+        </Card>
+      </div>
+      {/* Qualification Section - same as student */}
+      <div>
+        <QualificationSection
         qualification={getQualificationDisplayName(profileData.qualification)}
         passingYear={profileData.passingYear}
         qualificationOptions={qualificationOptions}
         onSave={handleSaveQualification}
         editable={canEdit}
       />
+      </div>
     </div>
   );
 }

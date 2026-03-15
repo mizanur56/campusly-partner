@@ -6,9 +6,12 @@ import { FileText, ArrowLeft } from "lucide-react";
 import { FaCircleCheck } from "react-icons/fa6";
 import dayjs from "dayjs";
 import PageMeta from "../../../components/common/Meta/PageMeta";
+import PageHeader from "../../../components/common/Navigation/PageHeader";
 import { useStudentProfile } from "../../../context/StudentProfileContext";
-import { useGetStudentProfileQuery } from "../../../redux/features/profile/studentProfileApi";
-import { useGetMyAllApplicationsQuery } from "../../../redux/features/application/applicationApi";
+import {
+  useGetStudentProfileQuery,
+  useGetStudentApplicationsQuery,
+} from "../../../redux/features/profile/studentProfileApi";
 import { selectCurrentUser } from "../../../redux/features/auth/authSlice";
 import { useSelector } from "react-redux";
 import { getApiImageUrl } from "../../../utils/getApiImageUrl";
@@ -25,7 +28,7 @@ type ProfileTabKey =
   | "education"
   | "background"
   | "documents"
-  | "apply";
+  | "apply-now";
 
 interface ApplicationRecord {
   key: string;
@@ -62,20 +65,27 @@ export default function StudentProfile() {
   const [searchParams, setSearchParams] = useSearchParams();
   const tabFromUrl = searchParams.get("tab") || "general";
   const [activeTab, setActiveTab] = useState<ProfileTabKey>(
-    ["general", "education", "background", "documents", "apply"].includes(tabFromUrl)
+    ["general", "education", "background", "documents", "apply-now"].includes(tabFromUrl)
       ? (tabFromUrl as ProfileTabKey)
       : "general"
   );
   const [applicationsSearch, setApplicationsSearch] = useState("");
+  const [applicationsPage, setApplicationsPage] = useState(1);
+  const [applicationsLimit, setApplicationsLimit] = useState(20);
+
+  const section = pathname.split("/")[3] || "profile";
+  const isApplicationsSection = section === "applications";
 
   useEffect(() => {
     const urlTab = searchParams.get("tab") || "general";
-    if (["general", "education", "background", "documents", "apply"].includes(urlTab)) {
+    if (["general", "education", "background", "documents", "apply-now"].includes(urlTab)) {
       setActiveTab(urlTab as ProfileTabKey);
     }
   }, [searchParams]);
 
-  const section = pathname.split("/")[3] || "profile";
+  useEffect(() => {
+    if (isApplicationsSection) setApplicationsPage(1);
+  }, [applicationsSearch, isApplicationsSection]);
 
   const {
     data: profile,
@@ -85,61 +95,49 @@ export default function StudentProfile() {
     refetch: refetchProfile,
   } = useGetStudentProfileQuery(studentId!, { skip: !studentId });
 
-  const { data: applicationsResponse } = useGetMyAllApplicationsQuery(
-    { page: 1, limit: 200, status: "", search: "" },
-    { skip: !studentId }
+  const {
+    data: applicationsResponse,
+    isLoading: applicationsLoading,
+  } = useGetStudentApplicationsQuery(
+    {
+      studentId: studentId!,
+      page: applicationsPage,
+      limit: applicationsLimit,
+      status: "",
+      search: applicationsSearch,
+    },
+    {
+      skip: !studentId || !isApplicationsSection,
+    }
   );
 
-  const applicationsList = applicationsResponse?.data ?? [];
-  const studentApplications = useMemo(() => {
-    if (!studentId || !applicationsList.length) return [];
-    return applicationsList.filter(
-      (app: { student?: { id?: string } }) => app.student?.id === studentId
-    );
-  }, [studentId, applicationsList]);
-
-  const filteredApplications = useMemo(() => {
-    if (!applicationsSearch.trim()) return studentApplications;
-    const q = applicationsSearch.toLowerCase();
-    return studentApplications.filter(
-      (row: {
-        applicationId?: string;
-        course?: { course?: { name?: string }; university?: { name?: string } };
-        status?: string;
-      }) =>
-        (row.applicationId ?? "").toLowerCase().includes(q) ||
-        (row.course?.course?.name ?? "").toLowerCase().includes(q) ||
-        (row.course?.university?.name ?? "").toLowerCase().includes(q) ||
-        (row.status ?? "").toLowerCase().includes(q)
-    );
-  }, [studentApplications, applicationsSearch]);
+  const applicationsPayload = applicationsResponse as
+    | { data?: unknown[]; meta?: { total?: number } }
+    | undefined;
+  const applicationsList = applicationsPayload?.data ?? [];
+  const applicationsTotal = applicationsPayload?.meta?.total ?? 0;
 
   const applicationsTableData: ApplicationRecord[] = useMemo(() => {
-    return filteredApplications.map(
-      (
-        app: {
-          id: string;
-          applicationId?: string;
-          course?: { course?: { name?: string }; university?: { name?: string } };
-          status?: string;
-          createdAt?: string;
-          student?: { user?: { name?: string } };
-        },
-        idx: number
-      ) => ({
-        key: app.id || `app-${idx}`,
-        id: app.id,
-        applicationId: app.applicationId ?? "—",
-        studentName: app.student?.user?.name ?? "—",
-        course: app.course?.course?.name ?? "—",
-        university: app.course?.university?.name ?? "—",
-        status: app.status ?? "—",
-        submittedDate: app.createdAt
-          ? dayjs(app.createdAt).format("DD MMM YYYY")
-          : "—",
-      })
-    );
-  }, [filteredApplications]);
+    return (applicationsList as {
+      id: string;
+      applicationId?: string;
+      course?: { course?: { name?: string }; university?: { name?: string } };
+      status?: string;
+      createdAt?: string;
+      student?: { user?: { name?: string } };
+    }[]).map((app, idx) => ({
+      key: app.id || `app-${idx}`,
+      id: app.id,
+      applicationId: app.applicationId ?? "—",
+      studentName: app.student?.user?.name ?? "—",
+      course: app.course?.course?.name ?? "—",
+      university: app.course?.university?.name ?? "—",
+      status: app.status ?? "—",
+      submittedDate: app.createdAt
+        ? dayjs(app.createdAt).format("DD MMM YYYY")
+        : "—",
+    }));
+  }, [applicationsList]);
 
   const passedStudent = (
     state as { student?: { id?: string; name?: string; email?: string; phone?: string } }
@@ -184,7 +182,7 @@ export default function StudentProfile() {
     { key: "education", label: "Education History" },
     { key: "background", label: "Background Information" },
     { key: "documents", label: "Upload Documents" },
-    { key: "apply", label: "Apply Now" },
+    { key: "apply-now", label: "Apply Now" },
   ];
 
   const handleTabChange = (tabKey: ProfileTabKey) => {
@@ -269,28 +267,34 @@ export default function StudentProfile() {
         <main className="student-profile-main">
           {section === "profile" && (
             <>
-              <div className="student-profile-main-header">
-                <h1 className="student-profile-main-title">Profile</h1>
-                <p className="student-profile-main-subtitle">
-                  View student profile and personal information.
-                </p>
+              <PageHeader
+                title="Profile"
+                subtitle="View student profile and personal information."
+              />
+
+              <div className="border-b border-gray-300 overflow-hidden">
+                <div className="flex gap-3 sm:gap-6 min-w-max sm:min-w-0">
+                  {profileTabs.map((tab) => (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      onClick={() => handleTabChange(tab.key)}
+                      className={`px-2 sm:px-0 py-2 sm:py-3 cursor-pointer text-[15px] font-normal transition-colors duration-200 relative whitespace-nowrap ${
+                        activeTab === tab.key
+                          ? "text-[#237D3B] font-medium"
+                          : "text-[#4B5563] hover:text-gray-700"
+                      }`}
+                    >
+                      {tab.label}
+                      {activeTab === tab.key && (
+                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#237D3B]"></span>
+                      )}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <div className="student-profile-tabs">
-                {profileTabs.map((tab) => (
-                  <button
-                    key={tab.key}
-                    type="button"
-                    className={`student-profile-tab ${
-                      activeTab === tab.key ? "student-profile-tab--active" : ""
-                    }`}
-                    onClick={() => handleTabChange(tab.key)}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-
+              <div className="mt-6">
               {activeTab === "general" && (
                 <GeneralInformationTab
                   studentId={studentId}
@@ -322,21 +326,16 @@ export default function StudentProfile() {
               )}
 
               {activeTab === "documents" && (
-                <div className="student-profile-content student-profile-tab-content">
-                  <UploadDocumentsTab
-                    studentId={studentId}
-                    profile={profile as Parameters<typeof UploadDocumentsTab>[0]["profile"]}
-                    canEdit={!isTeamMember}
-                    onUpdated={() => refetchProfile()}
-                  />
-                </div>
+                <UploadDocumentsTab
+                  studentId={studentId}
+                  profile={profile as Parameters<typeof UploadDocumentsTab>[0]["profile"]}
+                  canEdit={!isTeamMember}
+                  onUpdated={() => refetchProfile()}
+                />
               )}
 
-              {activeTab === "apply" && (
-                <div className="student-profile-content student-profile-tab-content">
-                  <ApplyNowTab />
-                </div>
-              )}
+              {activeTab === "apply-now" && <ApplyNowTab />}
+              </div>
             </>
           )}
 
@@ -374,17 +373,17 @@ export default function StudentProfile() {
                   placeholder="Search by ID, course, university or status"
                   allowClear
                   value={applicationsSearch}
-                  onChange={(e) =>
-                    setApplicationsSearch(e.target.value)}
+                  onChange={(e) => setApplicationsSearch(e.target.value)}
                   size="large"
                 />
               </div>
 
-              <div className="overflow-hidden rounded-[24px] border border-neutral-100 bg-white card-shadow dark:border-gray-800 dark:bg-gray-900">
-                <Table<ApplicationRecord>
-                  className="student-applications-table"
-                  dataSource={applicationsTableData}
-                  columns={[
+              <Spin spinning={applicationsLoading}>
+                <div className="overflow-hidden rounded-[24px] border border-neutral-100 bg-white card-shadow dark:border-gray-800 dark:bg-gray-900">
+                  <Table<ApplicationRecord>
+                    className="student-applications-table"
+                    dataSource={applicationsTableData}
+                    columns={[
                     {
                       title: "Application ID",
                       dataIndex: "applicationId",
@@ -451,20 +450,29 @@ export default function StudentProfile() {
                       ),
                     },
                   ]}
-                  rowKey="key"
-                  pagination={{
-                    pageSize: 10,
-                    showSizeChanger: true,
-                    showTotal: (total) => `Total ${total} applications`,
-                    pageSizeOptions: ["10", "20", "50"],
-                  }}
-                  scroll={{ x: 900 }}
-                  locale={{
-                    emptyText:
-                      "No applications found for this student.",
-                  }}
-                />
-              </div>
+                    rowKey="key"
+                    pagination={{
+                      current: applicationsPage,
+                      pageSize: applicationsLimit,
+                      total: applicationsTotal,
+                      showSizeChanger: true,
+                      showTotal: (total) => `Total ${total} applications`,
+                      pageSizeOptions: ["10", "20", "50"],
+                      onChange: (page, pageSize) => {
+                        setApplicationsPage(page);
+                        setApplicationsLimit(pageSize ?? 20);
+                      },
+                    }}
+                    scroll={{ x: 900 }}
+                    locale={{
+                      emptyText:
+                        applicationsLoading
+                          ? ""
+                          : "No applications found for this student.",
+                    }}
+                  />
+                </div>
+              </Spin>
             </div>
           )}
 

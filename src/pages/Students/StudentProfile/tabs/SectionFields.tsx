@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import PrimaryButton from "../../../../components/common/Button/PrimaryButton";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
-import { FaTimes } from "react-icons/fa";
+import { FaPencilAlt, FaTimes } from "react-icons/fa";
 
 const { Option } = Select;
 
@@ -49,26 +49,33 @@ export const QualificationSection: React.FC<QualificationSectionProps> = ({
 
   return (
     <Card
-      title={<span className="font-semibold text-[20px]">Last Qualification</span>}
+      title={
+        <div className="flex items-center gap-2">
+          <span className="font-semibold text-[20px]">Last Qualification</span>
+        </div>
+      }
       extra={
         editable ? (
-        <Button type="text" onClick={() => (isEditing ? handleCancel() : setIsEditing(true))} className="p-0 group">
-          {isEditing ? (
-            <FaTimes style={{ color: "#EF4444", fontSize: 22 }} />
-          ) : (
-            <img
-              src="/images/icons/edit.png"
-              alt="Edit"
-              className="w-[22px] h-[22px] transition-all group-hover:opacity-70"
-              style={{
-                filter:
-                  "brightness(0) saturate(100%) invert(27%) sepia(95%) saturate(1000%) hue-rotate(120deg)",
-              }}
-            />
-          )}
-        </Button>
-      ) : null}
-      bordered
+          <Button
+            type="text"
+            onClick={() => {
+              if (isEditing) {
+                handleCancel();
+              } else {
+                setIsEditing(true);
+              }
+            }}
+            className="p-0 group"
+          >
+            {isEditing ? (
+              <FaTimes className="text-red-500 hover:text-red-600 transition-colors" style={{ fontSize: 20 }} aria-label="Close" />
+            ) : (
+              <FaPencilAlt className="text-[#237D3B] hover:opacity-80 transition-opacity" style={{ fontSize: 18 }} aria-label="Edit" />
+            )}
+          </Button>
+        ) : null
+      }
+      bordered={true}
       className="rounded-lg shadow-none"
       style={{ borderColor: "#C7CACF", boxShadow: "none" }}
     >
@@ -90,7 +97,7 @@ export const QualificationSection: React.FC<QualificationSectionProps> = ({
         />
       </div>
       {isEditing && (
-        <div className="mt-6">
+        <div className=" mt-6">
           <PrimaryButton text="Save Changes" onClick={handleSave} />
         </div>
       )}

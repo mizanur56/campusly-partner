@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useCallback } from "react";
+import { useState, useRef, useMemo } from "react";
 import { FileTextOutlined, LoadingOutlined } from "@ant-design/icons";
 import { toast } from "react-toastify";
 import { FaCircleCheck } from "react-icons/fa6";
@@ -56,8 +56,6 @@ export default function UploadDocumentsTab({
   onUpdated,
 }: UploadDocumentsTabProps) {
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const pendingUploadItemRef = useRef<DocumentItem | null>(null);
 
   const { data: profileData, refetch } = useGetStudentProfileQuery(studentId);
   const { data: backgroundData } = useGetDocumentsByCategoryQuery(
@@ -70,7 +68,10 @@ export default function UploadDocumentsTab({
   const [updateEducation, { isLoading: educationUpdating }] = useUpdateEducationMutation();
 
   const documents = (profileData as { documents?: unknown[] })?.documents ?? [];
-  const backgroundInformationData = (Array.isArray(backgroundData) ? backgroundData : []) as { id: string; name?: string }[];
+  const backgroundInformationData = useMemo(() => {
+    const raw = Array.isArray(backgroundData) ? backgroundData : (backgroundData as { data?: unknown[] })?.data ?? [];
+    return raw as { id: string; name?: string }[];
+  }, [backgroundData]);
 
   const backgroundInfoItems: DocumentItem[] = useMemo(() => {
     return backgroundInformationData.map((doc: { id: string; name?: string }) => {
@@ -219,22 +220,19 @@ export default function UploadDocumentsTab({
     setActiveItemId(null);
   };
 
-  const onFileSelect = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      e.target.value = "";
-      const item = pendingUploadItemRef.current;
-      if (file && item) handleFileUpload(item, file);
-    },
-    []
-  );
-
-  const DocumentItemRow = ({ item }: { item: DocumentItem }) => {
+  const DocumentItemComponent = ({ item }: { item: DocumentItem }) => {
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const isLoading =
       activeItemId === item.id && (createMediaLoading || profileUpdating || educationUpdating);
 
+    const onFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) await handleFileUpload(item, file);
+      e.target.value = "";
+    };
+
     return (
-      <div className="flex items-center justify-between p-4 bg-white border border-[#C7CACF] rounded-lg transition-all group">
+      <div className="flex items-center justify-between p-4 bg-white border border-[#C7CACF] rounded-lg hover:border-[#237D3B] transition-all group">
         <div className="flex items-center gap-3 flex-1">
           <span className="text-[#4B5563] text-xl group-hover:text-[#237D3B] transition-colors">
             {item.icon}
@@ -250,19 +248,23 @@ export default function UploadDocumentsTab({
           {item.status === "submitted" ? (
             <FaCircleCheck className="text-[24px] text-[#00B561]" />
           ) : canEdit ? (
-            <>
+            <div className="relative">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={onFileSelect}
+                className="hidden"
+                accept=".pdf,.jpg,.jpeg,.png"
+              />
               {isLoading ? (
                 <LoadingOutlined className="text-[22px] text-[#237D3B]" />
               ) : (
                 <FaPlusSquare
-                  className="text-[24px] text-[#237D3B] hover:text-primary-400 cursor-pointer"
-                  onClick={() => {
-                    pendingUploadItemRef.current = item;
-                    fileInputRef.current?.click();
-                  }}
+                  className="text-[24px] text-[#237D3B] hover:text-primary-400 cursor-pointer transition-transform"
+                  onClick={() => fileInputRef.current?.click()}
                 />
               )}
-            </>
+            </div>
           ) : null}
         </div>
       </div>
@@ -271,13 +273,6 @@ export default function UploadDocumentsTab({
 
   return (
     <div className="space-y-8 pb-10">
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={onFileSelect}
-        className="hidden"
-        accept=".pdf,.jpg,.jpeg,.png"
-      />
       {sections.map((section) => (
         <div key={section.id} id={section.id} className="animate-in fade-in duration-500">
           <div className="mb-4">
@@ -293,7 +288,7 @@ export default function UploadDocumentsTab({
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {group.items.map((item) => (
-                      <DocumentItemRow key={item.id} item={item} />
+                      <DocumentItemComponent key={item.id} item={item} />
                     ))}
                   </div>
                 </div>
@@ -301,7 +296,7 @@ export default function UploadDocumentsTab({
             ) : (
               <div className="grid grid-cols-1 gap-4">
                 {section.items?.map((item) => (
-                  <DocumentItemRow key={item.id} item={item} />
+                  <DocumentItemComponent key={item.id} item={item} />
                 ))}
               </div>
             )}
@@ -314,7 +309,7 @@ export default function UploadDocumentsTab({
           text="Next"
           size="large"
           className="h-12 px-10 rounded-lg shadow-md"
-          to={`/students/${studentId}/profile?tab=apply`}
+          to={`/students/${studentId}/profile?tab=apply-now`}
         />
       </div>
     </div>

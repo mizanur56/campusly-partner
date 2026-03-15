@@ -170,6 +170,30 @@ export const partnerStudentProfileApi = baseApi.injectEndpoints({
       ],
     }),
 
+    getStudentApplications: builder.query({
+      query: ({
+        studentId,
+        page = 1,
+        limit = 20,
+        status = "",
+        search = "",
+      }: {
+        studentId: string;
+        page?: number;
+        limit?: number;
+        status?: string;
+        search?: string;
+      }) => ({
+        url: `${PARTNER_STUDENT_BASE}/${studentId}/applications`,
+        method: "GET",
+        params: { page, limit, status, search },
+      }),
+      providesTags: (_result, _err, { studentId }) => [
+        { type: "studentProfile", id: studentId },
+        "applications",
+      ],
+    }),
+
     upsertDocument: builder.mutation({
       query: ({
         studentId,
@@ -217,6 +241,7 @@ export const {
   useDeleteVisaRejectionMutation,
   useGetDocumentsByCategoryQuery,
   useGetEligibleStudyLevelsQuery,
+  useGetStudentApplicationsQuery,
   useUpsertDocumentMutation,
   useDeleteDocumentMutation,
 } = partnerStudentProfileApi;

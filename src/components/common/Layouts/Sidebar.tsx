@@ -134,12 +134,6 @@ const STUDENT_NAV = [
     icon: "fa-solid fa-file-lines",
     path: "applications",
   },
-  {
-    key: "tasks",
-    label: "Tasks",
-    icon: "fa-solid fa-list-check",
-    path: "tasks",
-  },
 ];
 
 const Sidebar: React.FC = () => {
@@ -684,7 +678,7 @@ const Sidebar: React.FC = () => {
       {(isExpanded || isMobileOpen) && showStudentSidebar && studentId && (
         <div className="mx-3 mt-0 rounded-xl border border-gray-200/60 bg-gray-50/80 p-3 dark:border-gray-700 dark:bg-gray-800/40">
           <div className="flex items-center gap-2.5">
-            <div className="relative shrink-0">
+            <div className="shrink-0">
               <img
                 src={
                   student?.avatar ?? `https://i.pravatar.cc/80?u=${studentId}`
@@ -692,9 +686,6 @@ const Sidebar: React.FC = () => {
                 alt=""
                 className="h-12 w-12 rounded-full object-cover"
               />
-              <span className="absolute -bottom-0.5 -right-0.5 flex items-center gap-0.5 rounded-full bg-primary-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                <i className="fa-solid fa-check text-[8px]" /> Verified
-              </span>
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-gray-800 dark:text-gray-100">
