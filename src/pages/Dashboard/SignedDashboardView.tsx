@@ -1,119 +1,83 @@
+import { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { selectCurrentUser } from "../../redux/features/auth/authSlice";
+import {
+  useGetPartnerDashboardQuery,
+  Advisor,
+  PartnerDashboardDestination,
+  PartnerDashboardUniversity,
+  PartnerDashboardSubject,
+} from "../../redux/features/profile/partnerProfileApi";
+import { getApiImageUrl } from "../../utils/getApiImageUrl";
+import CreateStudentModal from "../../components/common/Modals/CreateStudentModal";
 
-const KPI_CARDS = [
+const KPI_CONFIG = [
   {
+    key: "tasks_pending",
     label: "Tasks",
-    value: "0",
     sub: "Pending tasks",
     color: "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
   },
   {
+    key: "applications_total",
     label: "Applications",
-    value: "3",
     sub: "Total submissions",
     color:
       "bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
   },
   {
+    key: "accepted_applications",
     label: "Accepted",
-    value: "20",
     sub: "Approved applications",
     color:
       "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400",
   },
   {
+    key: "rejected_applications",
     label: "Rejected",
-    value: "10",
     sub: "Declined applications",
     color: "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400",
   },
   {
+    key: "active_students",
     label: "Students",
-    value: "20",
     sub: "Active students",
     color:
       "bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
   },
-];
-
-const SUPPORT_PANEL = [
-  {
-    name: "Ramesh Khadka",
-    role: "Account manager (SRM)",
-    phone: "+881787939155",
-    email: "ramesh92@gmail.com",
-    avatar: "RK",
-  },
-  {
-    name: "Dipak Sharma",
-    role: "Application team member",
-    phone: "+881787939155",
-    email: "dipak.s97@gmail.com",
-    avatar: "DS",
-  },
-];
-
-const ANNOUNCEMENTS = [
-  {
-    institution: "European College of Innovation",
-    text: "Dear Team, Key points MOI for...",
-    tag: "INSTITUTIONS UPDATES",
-    date: "9/8/2025",
-  },
-  {
-    institution: "Malita International College",
-    text: "Dear Team, Key points MOI for...",
-    tag: "INSTITUTIONS UPDATES",
-    date: "9/6/2025",
-  },
-  {
-    institution: "Uniplural Academy Ltd",
-    text: "Dear Team, Key points MOI for...",
-    tag: "INSTITUTIONS UPDATES",
-    date: "9/6/2025",
-  },
-];
-
-const TEAM_MEMBERS = [
-  { name: "Suman Thapa", email: "suman@example.com" },
-  { name: "Anish Maharjan", email: "anish@example.com" },
-  { name: "Bikash Rai", email: "bikash@example.com" },
-  { name: "Nirajan KC", email: "nirajan@example.com" },
-  { name: "Aayush Bhandari", email: "aayush@example.com" },
-];
-
-const DESTINATIONS = [
-  { country: "Malta", count: 450 },
-  { country: "Hungary", count: 100 },
-  { country: "United Kingdom", count: 15000 },
-  { country: "United States", count: 500 },
-  { country: "Canada", count: 300 },
-];
-
-const UNIVERSITIES = [
-  { name: "ECI College", location: "Malta" },
-  { name: "Think Talent Institution", location: "Malta" },
-  { name: "Uniplural Academy Ltd", location: "Malta" },
-  { name: "Macquarie University", location: "Australia" },
-  { name: "Monash University", location: "Australia" },
-];
-
-const COURSES = [
-  {
-    course: "Level 5 Diploma in Information...",
-    institution: "European College of Innovation",
-  },
-  {
-    course: "Level 5 Diploma in Business..",
-    institution: "European College of Innovation",
-  },
-];
+] as const;
 
 export default function SignedDashboardView() {
   const user = useSelector(selectCurrentUser);
   const userName = user?.name ?? "Partner User";
+  const navigate = useNavigate();
+  const [createStudentOpen, setCreateStudentOpen] = useState(false);
+  const { data: dashboard, isLoading } = useGetPartnerDashboardQuery();
+
+  const kpiCards = useMemo(
+    () =>
+      KPI_CONFIG.map((cfg) => {
+        const value =
+          (dashboard?.topStats as any)?.[cfg.key] !== undefined
+            ? (dashboard?.topStats as any)?.[cfg.key]
+            : 0;
+        return { ...cfg, value };
+      }),
+    [dashboard],
+  );
+
+  const supportPanel: Advisor[] = dashboard?.supportPanel ?? [];
+  const teamMembers = dashboard?.teamMembers ?? [];
+  const topDestinations: PartnerDashboardDestination[] =
+    dashboard?.topDestinations ?? [];
+  const topUniversities: PartnerDashboardUniversity[] =
+    dashboard?.topUniversities ?? [];
+  const topSubjects: PartnerDashboardSubject[] = dashboard?.topSubjects ?? [];
+
+  const handleCreateStudentSuccess = () => {
+    navigate("/students");
+  };
 
   return (
     <div className="min-h-[calc(100vh-4rem)] -mx-4 px-4 pb-8 pt-0 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8">
@@ -122,28 +86,44 @@ export default function SignedDashboardView() {
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white sm:text-3xl">
             Welcome, {userName} !
           </h1>
-          <Link
-            to="#"
+          <button
+            type="button"
+            onClick={() => setCreateStudentOpen(true)}
             className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700"
           >
             <span>+</span>
             <span>Add Student</span>
-          </Link>
+          </button>
         </div>
+        <CreateStudentModal
+          open={createStudentOpen}
+          onClose={() => setCreateStudentOpen(false)}
+          onSuccess={handleCreateStudentSuccess}
+        />
 
         {/* KPI Cards */}
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          {KPI_CARDS.map((kpi) => (
-            <div
-              key={kpi.label}
-              className={`rounded-xl p-4 card-shadow ${kpi.color}`}
-            >
-              <p className="text-xl font-semibold">
-                {kpi.value} {kpi.label}
-              </p>
-              <p className="mt-0.5 text-sm opacity-90">{kpi.sub}</p>
-            </div>
-          ))}
+          {isLoading
+            ? KPI_CONFIG.map((kpi) => (
+                <div
+                  key={kpi.key}
+                  className={`rounded-xl p-4 card-shadow ${kpi.color} animate-pulse`}
+                >
+                  <div className="h-6 w-16 rounded bg-white/60" />
+                  <div className="mt-2 h-4 w-24 rounded bg-white/40" />
+                </div>
+              ))
+            : kpiCards.map((kpi) => (
+                <div
+                  key={kpi.key}
+                  className={`rounded-xl p-4 card-shadow ${kpi.color}`}
+                >
+                  <p className="text-xl font-semibold">
+                    {kpi.value} {kpi.label}
+                  </p>
+                  <p className="mt-0.5 text-sm opacity-90">{kpi.sub}</p>
+                </div>
+              ))}
         </div>
 
         <div className="mt-8 grid gap-6 lg:grid-cols-3">
@@ -153,76 +133,61 @@ export default function SignedDashboardView() {
               Your Support Panel
             </h2>
             <div className="mt-4 space-y-4">
-              {SUPPORT_PANEL.map((person) => (
-                <div key={person.name} className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                    {person.avatar}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {person.name}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {person.role}
-                    </p>
-                    <div className="mt-2 flex gap-3">
-                      <a
-                        href={`tel:${person.phone.replace(/\s/g, "")}`}
-                        className="text-xs text-primary-600 hover:underline"
-                      >
-                        Call
-                      </a>
-                      <a
-                        href={`mailto:${person.email}`}
-                        className="text-xs text-primary-600 hover:underline"
-                      >
-                        Email
-                      </a>
+              {supportPanel.length === 0 && !isLoading && (
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  No advisor assigned yet.
+                </p>
+              )}
+              {isLoading && supportPanel.length === 0
+                ? Array.from({ length: 2 }).map((_, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-start gap-3 animate-pulse"
+                    >
+                      <div className="h-10 w-10 shrink-0 rounded-full bg-gray-200 dark:bg-gray-700" />
+                      <div className="min-w-0 flex-1 space-y-2">
+                        <div className="h-4 w-32 rounded bg-gray-200 dark:bg-gray-700" />
+                        <div className="h-3 w-40 rounded bg-gray-100 dark:bg-gray-800" />
+                      </div>
                     </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Recent Announcements */}
-          <div className="rounded-[24px] border border-neutral-100 bg-white p-5 card-shadow dark:border-gray-800 dark:bg-gray-900 lg:col-span-2">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-                Recent Announcements
-              </h2>
-              <Link
-                to="#"
-                className="text-sm font-medium text-primary-600 hover:underline"
-              >
-                View all →
-              </Link>
-            </div>
-            <div className="mt-4 space-y-3">
-              {ANNOUNCEMENTS.map((a) => (
-                <div
-                  key={a.institution}
-                  className="flex gap-3 rounded-lg border border-gray-100 p-3 dark:border-gray-800"
-                >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xs font-medium text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-                    Logo
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {a.institution}
-                    </p>
-                    <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                      {a.text}
-                    </p>
-                    <div className="mt-2 flex items-center gap-2">
-                      <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                        {a.tag}
-                      </span>
-                      <span className="text-xs text-gray-400">{a.date}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                  ))
+                : supportPanel.map((person) => {
+                    const initials = person.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("");
+                    return (
+                      <div key={person.id} className="flex items-start gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                          {initials}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">
+                            {person.name}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Account manager
+                          </p>
+                          <div className="mt-2 flex gap-3">
+                            {person.phone && (
+                              <a
+                                href={`tel:${person.phone.replace(/\s/g, "")}`}
+                                className="text-xs text-primary-600 hover:underline"
+                              >
+                                Call
+                              </a>
+                            )}
+                            <a
+                              href={`mailto:${person.email}`}
+                              className="text-xs text-primary-600 hover:underline"
+                            >
+                              Email
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
             </div>
           </div>
         </div>
@@ -234,24 +199,42 @@ export default function SignedDashboardView() {
               Team Members
             </h2>
             <div className="mt-4 space-y-3">
-              {TEAM_MEMBERS.map((m) => (
-                <div key={m.name} className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                    {m.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {m.name}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {m.email}
-                    </p>
-                  </div>
-                </div>
-              ))}
+              {isLoading && teamMembers.length === 0
+                ? Array.from({ length: 4 }).map((_, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center gap-3 animate-pulse"
+                    >
+                      <div className="h-9 w-9 shrink-0 rounded-full bg-gray-200 dark:bg-gray-700" />
+                      <div className="space-y-1">
+                        <div className="h-4 w-28 rounded bg-gray-200 dark:bg-gray-700" />
+                        <div className="h-3 w-32 rounded bg-gray-100 dark:bg-gray-800" />
+                      </div>
+                    </div>
+                  ))
+                : teamMembers.map((m) => (
+                    <div key={m.id} className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                        {m.fullName
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {m.fullName}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {m.email}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+              {!isLoading && teamMembers.length === 0 && (
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  No team members added yet.
+                </p>
+              )}
             </div>
           </div>
 
@@ -261,19 +244,46 @@ export default function SignedDashboardView() {
               Destination
             </h2>
             <div className="mt-4 space-y-2">
-              {DESTINATIONS.map((d) => (
-                <div
-                  key={d.country}
-                  className="flex items-center justify-between"
-                >
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
-                    {d.country}
-                  </span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    {d.count}
-                  </span>
-                </div>
-              ))}
+              {isLoading && topDestinations.length === 0
+                ? Array.from({ length: 4 }).map((_, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between animate-pulse"
+                    >
+                      <span className="h-4 w-24 rounded bg-gray-200 dark:bg-gray-700" />
+                      <span className="h-4 w-8 rounded bg-gray-100 dark:bg-gray-800" />
+                    </div>
+                  ))
+                : topDestinations.map((d) => (
+                    <div
+                      key={d.id}
+                      className="flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                          {d.imageUrl ? (
+                            <img
+                              src={getApiImageUrl(d.imageUrl)}
+                              alt={d.name}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400">
+                              {d.code || d.name.slice(0, 2).toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          {d.name}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+              {!isLoading && topDestinations.length === 0 && (
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  No destination data yet.
+                </p>
+              )}
             </div>
           </div>
 
@@ -283,52 +293,92 @@ export default function SignedDashboardView() {
               Universities
             </h2>
             <div className="mt-4 space-y-2">
-              {UNIVERSITIES.map((u) => (
-                <div key={u.name} className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-gray-100 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-                    Logo
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {u.name}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {u.location}
-                    </p>
-                  </div>
-                </div>
-              ))}
+              {isLoading && topUniversities.length === 0
+                ? Array.from({ length: 4 }).map((_, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center gap-2 animate-pulse"
+                    >
+                      <div className="h-8 w-8 shrink-0 rounded bg-gray-100 dark:bg-gray-800" />
+                      <div className="space-y-1">
+                        <div className="h-4 w-32 rounded bg-gray-200 dark:bg-gray-700" />
+                        <div className="h-3 w-24 rounded bg-gray-100 dark:bg-gray-800" />
+                      </div>
+                    </div>
+                  ))
+                : topUniversities.map((u) => (
+                    <div key={u.id} className="flex items-center gap-2">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded bg-gray-100 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                        {u.logoUrl ? (
+                          <img
+                            src={getApiImageUrl(u.logoUrl)}
+                            alt={u.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-[10px] font-medium">
+                            {u.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")}
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {u.name}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {u.countryName}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+              {!isLoading && topUniversities.length === 0 && (
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  No university data yet.
+                </p>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Courses */}
+        {/* Top Subjects / Courses */}
         <div className="mt-6 rounded-[24px] border border-neutral-100 bg-white p-5 card-shadow dark:border-gray-800 dark:bg-gray-900">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-              Courses
+              Top Subjects
             </h2>
-            <Link
-              to="#"
-              className="text-sm font-medium text-primary-600 hover:underline"
-            >
-              View all →
-            </Link>
           </div>
           <div className="mt-4 space-y-2">
-            {COURSES.map((c, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between rounded-lg border border-gray-100 p-3 dark:border-gray-800"
-              >
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {c.course}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {c.institution}
-                </p>
-              </div>
-            ))}
+            {isLoading && topSubjects.length === 0
+              ? Array.from({ length: 3 }).map((_, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between rounded-lg border border-gray-100 p-3 dark:border-gray-800 animate-pulse"
+                  >
+                    <div className="h-4 w-40 rounded bg-gray-200 dark:bg-gray-700" />
+                    <div className="h-3 w-20 rounded bg-gray-100 dark:bg-gray-800" />
+                  </div>
+                ))
+              : topSubjects.map((c) => (
+                  <div
+                    key={c.id}
+                    className="flex items-center justify-between rounded-lg border border-gray-100 p-3 dark:border-gray-800"
+                  >
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      {c.name}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {c.applicationCount} applications
+                    </p>
+                  </div>
+                ))}
+            {!isLoading && topSubjects.length === 0 && (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                No subject data yet.
+              </p>
+            )}
           </div>
         </div>
       </div>

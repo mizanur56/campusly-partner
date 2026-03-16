@@ -24,7 +24,7 @@ const PermissionDebug = () => {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">Permission Debug Page</h1>
-
+      dgdgdg
       {!user && (
         <Alert
           type="error"
@@ -33,7 +33,6 @@ const PermissionDebug = () => {
           className="mb-4"
         />
       )}
-
       {user && (
         <>
           <Card title="User Information" className="mb-4">
@@ -100,7 +99,7 @@ const PermissionDebug = () => {
                                 ))}
                               </div>
                             </div>
-                          )
+                          ),
                         )}
                       </div>
                     ) : (

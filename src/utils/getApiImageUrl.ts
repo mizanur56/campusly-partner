@@ -13,9 +13,10 @@ export function getApiImageUrl(
   if (!image) return "";
 
   if (typeof image === "string") {
-    return image.includes("http")
-      ? image
-      : `${config.image_access_url}${image.startsWith("/") ? image : `/${image}`}`;
+    if (image.includes("http")) return image;
+    const base = config.image_access_url;
+    if (!base) return image;
+    return `${base}${image.startsWith("/") ? image : `/${image}`}`;
   }
 
   if (!image.url) return "";
@@ -23,5 +24,7 @@ export function getApiImageUrl(
 
   if (url.includes("http")) return url;
 
-  return `${config.image_access_url}${url.startsWith("/") ? url : `/${url}`}`;
+  const base = config.image_access_url;
+  if (!base) return url;
+  return `${base}${url.startsWith("/") ? url : `/${url}`}`;
 }

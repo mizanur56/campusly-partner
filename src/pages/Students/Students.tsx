@@ -1,110 +1,102 @@
 import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Table, Input } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { useSelector } from "react-redux";
 import PageMeta from "../../components/common/Meta/PageMeta";
+import CreateStudentModal from "../../components/common/Modals/CreateStudentModal";
 import "../../components/common/Tables/AntTable.css";
+import { useGetStudentsQuery } from "../../redux/features/users/usersApi";
+import { useGetStudentsWithActiveTasksQuery } from "../../redux/features/tasks/partnerTasksApi";
+import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 import "./Students.css";
 
 interface StudentRecord {
   key: string;
+  id: string;
   name: string;
   email: string;
   phone: string;
-  course: string;
   status: string;
-  appliedDate: string;
+  lastLogin: string;
 }
 
-const MOCK_STUDENTS: StudentRecord[] = [
-  {
-    key: "1",
-    name: "Md Abdul Khalak",
-    email: "md.abdulkhalak@example.com",
-    phone: "+880 1712345678",
-    course: "MBA",
-    status: "Active",
-    appliedDate: "2025-01-15",
-  },
-  {
-    key: "2",
-    name: "Md Abdul Khaliq",
-    email: "abdul.khaliq@example.com",
-    phone: "+880 1812345678",
-    course: "BSc Computer Science",
-    status: "Pending",
-    appliedDate: "2025-02-01",
-  },
-  {
-    key: "3",
-    name: "Tareeq Mahmud",
-    email: "tareeq.mahmud@example.com",
-    phone: "+880 1912345678",
-    course: "MSc Data Science",
-    status: "Active",
-    appliedDate: "2025-01-20",
-  },
-  {
-    key: "4",
-    name: "Fatima Rahman",
-    email: "fatima.rahman@example.com",
-    phone: "+880 1612345678",
-    course: "LLB",
-    status: "Accepted",
-    appliedDate: "2024-12-10",
-  },
-  {
-    key: "5",
-    name: "Hassan Ahmed",
-    email: "hassan.ahmed@example.com",
-    phone: "+880 1512345678",
-    course: "BBA",
-    status: "Active",
-    appliedDate: "2025-02-05",
-  },
-  {
-    key: "6",
-    name: "Suman Thapa",
-    email: "suman@example.com",
-    phone: "+977 9812345678",
-    course: "MBA",
-    status: "Pending",
-    appliedDate: "2025-01-28",
-  },
-  {
-    key: "7",
-    name: "Anish Maharjan",
-    email: "anish@example.com",
-    phone: "+977 9712345678",
-    course: "BSc IT",
-    status: "Accepted",
-    appliedDate: "2024-11-20",
-  },
-  {
-    key: "8",
-    name: "Bikash Rai",
-    email: "bikash@example.com",
-    phone: "+977 9612345678",
-    course: "MSc Engineering",
-    status: "Active",
-    appliedDate: "2025-02-10",
-  },
-];
+interface AssignedStudentRecord {
+  key: string;
+  studentId: string;
+  studentName: string;
+  activeTaskCount: number;
+}
+
+function formatDate(iso: string | null): string {
+  if (!iso) return "—";
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return "—";
+  }
+}
 
 export default function Students() {
-  const [searchText, setSearchText] = useState("");
+  const navigate = useNavigate();
+  const user = useSelector(selectCurrentUser);
+  const isTeamMember = user?.role === "PARTNER_TEAM_MEMBER";
 
-  const filteredData = useMemo(() => {
-    if (!searchText.trim()) return MOCK_STUDENTS;
+  const [searchText, setSearchText] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [createStudentOpen, setCreateStudentOpen] = useState(false);
+
+  const { data, isFetching } = useGetStudentsQuery(
+    { page, limit: pageSize },
+    { skip: isTeamMember }
+  );
+  const { data: assignedStudents = [], isFetching: isFetchingAssigned } =
+    useGetStudentsWithActiveTasksQuery(
+      isTeamMember ? { assignedToMe: true } : undefined,
+      { skip: !isTeamMember }
+    );
+
+  const tableData: StudentRecord[] = useMemo(() => {
+    if (isTeamMember) return [];
+    if (!data?.data) return [];
+    const rows = data.data.map((u) => ({
+      key: u.id,
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      phone: u.phone ?? "—",
+      status: u.isActive ? "Active" : "Inactive",
+      lastLogin: formatDate(u.lastLogin),
+    }));
+    if (!searchText.trim()) return rows;
     const q = searchText.toLowerCase();
-    return MOCK_STUDENTS.filter(
+    return rows.filter(
       (row) =>
         row.name.toLowerCase().includes(q) ||
         row.email.toLowerCase().includes(q) ||
-        row.course.toLowerCase().includes(q) ||
-        row.status.toLowerCase().includes(q) ||
-        row.phone.includes(searchText),
+        row.phone.includes(searchText) ||
+        row.status.toLowerCase().includes(q)
     );
-  }, [searchText]);
+  }, [data?.data, searchText, isTeamMember]);
+
+  const assignedTableData: AssignedStudentRecord[] = useMemo(() => {
+    if (!isTeamMember) return [];
+    const rows = assignedStudents.map((s) => ({
+      key: s.studentId,
+      studentId: s.studentId,
+      studentName: s.studentName,
+      activeTaskCount: s.activeTaskCount,
+    }));
+    if (!searchText.trim()) return rows;
+    const q = searchText.toLowerCase();
+    return rows.filter((row) => row.studentName.toLowerCase().includes(q));
+  }, [assignedStudents, searchText, isTeamMember]);
 
   const columns: ColumnsType<StudentRecord> = [
     {
@@ -116,7 +108,6 @@ export default function Students() {
     },
     { title: "Email", dataIndex: "email", key: "email", width: 220 },
     { title: "Phone", dataIndex: "phone", key: "phone", width: 140 },
-    { title: "Course", dataIndex: "course", key: "course", width: 180 },
     {
       title: "Status",
       dataIndex: "status",
@@ -126,12 +117,8 @@ export default function Students() {
         <span
           className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
             status === "Active"
-              ? "bg-green-100 text-green-800"
-              : status === "Accepted"
-                ? "bg-blue-100 text-blue-800"
-                : status === "Pending"
-                  ? "bg-amber-100 text-amber-800"
-                  : "bg-gray-100 text-gray-800"
+              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+              : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400"
           }`}
         >
           {status}
@@ -139,12 +126,34 @@ export default function Students() {
       ),
     },
     {
-      title: "Applied Date",
-      dataIndex: "appliedDate",
-      key: "appliedDate",
+      title: "Last Login",
+      dataIndex: "lastLogin",
+      key: "lastLogin",
       width: 120,
     },
   ];
+
+  const assignedColumns: ColumnsType<AssignedStudentRecord> = [
+    {
+      title: "Student",
+      dataIndex: "studentName",
+      key: "studentName",
+      width: 280,
+    },
+    {
+      title: "Active tasks",
+      dataIndex: "activeTaskCount",
+      key: "activeTaskCount",
+      width: 120,
+      render: (n: number) => (
+        <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+          {n} task{n !== 1 ? "s" : ""}
+        </span>
+      ),
+    },
+  ];
+
+  const loading = isTeamMember ? isFetchingAssigned : isFetching;
 
   return (
     <div className="students-page">
@@ -158,20 +167,35 @@ export default function Students() {
             Students
           </h1>
           <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-            Easily manage every student you onboard and support.
+            {isTeamMember
+              ? "Students with tasks assigned to you."
+              : "Easily manage every student you onboard and support."}
           </p>
         </div>
-        <button
-          type="button"
-          className="inline-flex items-center justify-center rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-        >
-          + Add student
-        </button>
+        {!isTeamMember && (
+          <>
+            <button
+              type="button"
+              onClick={() => setCreateStudentOpen(true)}
+              className="inline-flex items-center justify-center rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            >
+              + Add student
+            </button>
+            <CreateStudentModal
+              open={createStudentOpen}
+              onClose={() => setCreateStudentOpen(false)}
+            />
+          </>
+        )}
       </div>
 
       <div className="mb-6 max-w-sm">
         <Input
-          placeholder="Search by name, email, course, status or phone"
+          placeholder={
+            isTeamMember
+              ? "Search by student name"
+              : "Search by name, email, status or phone"
+          }
           allowClear
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
@@ -180,19 +204,62 @@ export default function Students() {
       </div>
 
       <div className="overflow-hidden rounded-[24px] border border-neutral-100 bg-white card-shadow dark:border-gray-800 dark:bg-gray-900">
-        <Table
-          className="students-table"
-          dataSource={filteredData}
-          columns={columns}
-          rowKey="key"
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            showTotal: (total) => `Total ${total} students`,
-            pageSizeOptions: ["10", "20", "50"],
-          }}
-          scroll={{ x: 900 }}
-        />
+        {isTeamMember ? (
+          <Table<AssignedStudentRecord>
+            className="students-table"
+            dataSource={assignedTableData}
+            columns={assignedColumns}
+            rowKey="key"
+            loading={loading}
+            onRow={(record) => ({
+              onClick: () =>
+                navigate(`/students/${record.studentId}/profile`, {
+                  state: { student: { id: record.studentId, name: record.studentName } },
+                }),
+              style: { cursor: "pointer" },
+            })}
+            pagination={
+              assignedTableData.length > 10
+                ? {
+                    pageSize: 10,
+                    showTotal: (total) => `Total ${total} students`,
+                  }
+                : false
+            }
+            scroll={{ x: 500 }}
+            locale={{
+              emptyText: "No students with tasks assigned to you.",
+            }}
+          />
+        ) : (
+          <Table
+            className="students-table"
+            dataSource={tableData}
+            columns={columns}
+            rowKey="key"
+            loading={loading}
+            onRow={(record) => ({
+              onClick: () =>
+                navigate(`/students/${record.id}/profile`, {
+                  state: { student: record },
+                }),
+              style: { cursor: "pointer" },
+            })}
+            pagination={{
+              current: page,
+              pageSize,
+              total: data?.meta?.total ?? 0,
+              showSizeChanger: true,
+              showTotal: (total) => `Total ${total} students`,
+              pageSizeOptions: ["10", "20", "50"],
+              onChange: (newPage, newPageSize) => {
+                setPage(newPage);
+                setPageSize(newPageSize ?? 10);
+              },
+            }}
+            scroll={{ x: 900 }}
+          />
+        )}
       </div>
     </div>
   );

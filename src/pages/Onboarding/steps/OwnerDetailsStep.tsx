@@ -1,6 +1,11 @@
 import { Form } from "antd";
+import { useEffect } from "react";
 import { Button } from "../../../components/ui/button";
 import { FormInput, PhoneInput, phoneButtonStyle, phoneInputStyle } from "../sharedFormProps";
+import { toast } from "react-toastify";
+import { useGetStepDataQuery, usePatchStep1Mutation } from "../../../redux/features/onboardingForm/onboardingFormApi";
+import type { Step1Payload } from "../../../redux/features/onboardingForm/onboardingFormApi";
+import OnboardingFormSkeleton from "../OnboardingFormSkeleton";
 
 const formItemLayout = {
   className:
@@ -8,17 +13,57 @@ const formItemLayout = {
 };
 
 interface Props {
+  apiStep: number;
   onNext: () => void;
 }
 
-export default function OwnerDetailsStep({ onNext }: Props) {
+export default function OwnerDetailsStep({ apiStep, onNext }: Props) {
   const [form] = Form.useForm();
+  const { data: stepData, isFetching } = useGetStepDataQuery(apiStep);
+  const [patchStep1, { isLoading: isSaving }] = usePatchStep1Mutation();
+
+  useEffect(() => {
+    // API shape: { success, status, message, data: { step, currentStep, status, data: { ...fields } } }
+    const payload = stepData?.data && (stepData.data as any).data;
+    if (payload && typeof payload === "object") {
+      form.setFieldsValue(payload as Partial<Step1Payload>);
+    }
+  }, [stepData, form]);
 
   const handleNext = () => {
-    form.validateFields().then(() => {
-      onNext();
-    }).catch(() => {});
+    form
+      .validateFields()
+      .then(async (values) => {
+        try {
+          await patchStep1(values as Step1Payload).unwrap();
+          onNext();
+        } catch (err: any) {
+          const raw =
+            err?.data?.message ||
+            (typeof err?.error === "string" ? err.error : "") ||
+            "";
+          const message = String(raw);
+
+          if (
+            message.toLowerCase().includes("onboarding form already submitted")
+          ) {
+            toast.info("Your onboarding form is already submitted.");
+            return;
+          }
+
+          if (message) {
+            toast.error(message);
+          } else {
+            toast.error("Failed to save company details. Please try again.");
+          }
+        }
+      })
+      .catch(() => {});
   };
+
+  if (isFetching && !stepData) {
+    return <OnboardingFormSkeleton rows={3} />;
+  }
 
   return (
     <Form form={form} layout="vertical" {...formItemLayout}>
@@ -42,8 +87,8 @@ export default function OwnerDetailsStep({ onNext }: Props) {
         <FormInput name="instagram" label="Instagram" placeholder="Enter instagram url" />
       </div>
       <div className="mt-8 flex justify-end gap-3">
-        <Button type="button" variant="primary" size="sm" onClick={handleNext}>
-          Next →
+        <Button type="button" variant="primary" size="sm" onClick={handleNext} disabled={isSaving}>
+          {isSaving ? "Saving…" : "Next →"}
         </Button>
       </div>
     </Form>

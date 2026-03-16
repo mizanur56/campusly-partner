@@ -7,7 +7,7 @@ export const STEP_LIST_FOR_STEPPER = [
   { path: "/onboarding/contact", label: "Main Contact Details" },
   { path: "/onboarding/compliance", label: "Regular Compliance" },
   { path: "/onboarding/declaration", label: "Declaration" },
-  { path: null, label: "Under Review" },
+  { path: null, label: "Contract" },
 ];
 
 export const STEP_TITLES: Record<number, string> = {
@@ -16,8 +16,8 @@ export const STEP_TITLES: Record<number, string> = {
   2: "Main Contact Details",
   3: "Regular Compliance",
   4: "Declaration",
-  5: "Onboarding Form Submitted",
-  6: "Onboarding Form Verified",
+  5: "Contract",
+  6: "Complete",
 };
 
 export const STEP_SUBTITLES: Record<number, string> = {
@@ -27,5 +27,5 @@ export const STEP_SUBTITLES: Record<number, string> = {
   3: "Please upload your ID proof, which will be verified by our legal team",
   4: "",
   5: "",
-  6: "Your onboarding information has been reviewed and approved.",
+  6: "Your partnership has been approved and activated.",
 };

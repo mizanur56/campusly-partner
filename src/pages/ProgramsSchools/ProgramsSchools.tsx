@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import { toast } from "react-toastify";
 import StudyPreferenceFilters, {
   FilterState,
 } from "../../components/courses/StudyPreferenceFilters";
 import StudentSelectBlock from "../../components/courses/StudentSelectBlock";
 import type { SelectedStudent } from "../../components/courses/SelectedStudentCard";
+import type { CourseForApply } from "../../components/courses/CoursesResultsView";
 import CoursesResultsView from "../../components/courses/CoursesResultsView";
 import InstitutionsResultsView from "../../components/courses/InstitutionsResultsView";
+import ApplyPreferenceModal from "../../components/common/Modals/Apply/ApplyPreferenceModal";
 import { useAppSelector } from "../../redux/features/hooks";
 
 export default function ProgramsSchoolsPage() {
@@ -21,8 +24,19 @@ export default function ProgramsSchoolsPage() {
   const [filters, setFilters] = useState<FilterState | undefined>(undefined);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<SelectedStudent | null>(null);
+  const [applyModalOpen, setApplyModalOpen] = useState(false);
+  const [selectedCourseForApply, setSelectedCourseForApply] = useState<CourseForApply | null>(null);
 
   const metaData = useAppSelector((state) => state.searchMeta);
+
+  const handleStartApplication = (course: CourseForApply) => {
+    if (!selectedStudent) {
+      toast.error("Please select a student first");
+      return;
+    }
+    setSelectedCourseForApply(course);
+    setApplyModalOpen(true);
+  };
   const coursesCount = metaData.courses || 0;
   const institutionsCount = metaData.universities || 0;
 
@@ -183,7 +197,11 @@ export default function ProgramsSchoolsPage() {
             </div>
 
             {activeTab === "courses" && (
-              <CoursesResultsView searchQuery={searchQuery} filters={filters} />
+              <CoursesResultsView
+                searchQuery={searchQuery}
+                filters={filters}
+                onStartApplication={handleStartApplication}
+              />
             )}
             {activeTab === "institutions" && (
               <InstitutionsResultsView
@@ -194,6 +212,24 @@ export default function ProgramsSchoolsPage() {
           </div>
         </div>
       </div>
+
+      {applyModalOpen && selectedCourseForApply && (
+        <ApplyPreferenceModal
+          open={applyModalOpen}
+          onClose={() => {
+            setApplyModalOpen(false);
+            setSelectedCourseForApply(null);
+          }}
+          studentId={selectedStudent?.id}
+          data={{
+            id: selectedCourseForApply.id,
+            startDates: selectedCourseForApply.startDates || selectedCourseForApply.intake,
+            campus: selectedCourseForApply.campus || selectedCourseForApply.institution?.location,
+            duration: selectedCourseForApply.duration,
+            modeOfStudy: selectedCourseForApply.modeOfStudy,
+          }}
+        />
+      )}
     </div>
   );
 }

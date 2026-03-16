@@ -4,12 +4,11 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { HelmetProvider } from "react-helmet-async";
 import { Provider } from "react-redux";
-import { RouterProvider } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { PersistGate } from "redux-persist/integration/react";
 import { persistor, store } from "./redux/features/store";
-import router from "./routes/routes";
+import AppRoutes from "./routes/routes";
 import "./styles/index.css";
 
 const config = {
@@ -38,13 +37,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               pauseOnHover
               theme="colored"
             />
-            <RouterProvider
-              //  React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
-              future={{
-                v7_startTransition: true,
-              }}
-              router={router}
-            />
+            <AppRoutes />
           </PersistGate>
         </Provider>
       </HelmetProvider>

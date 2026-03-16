@@ -1,0 +1,38 @@
+/* Same table design: wrapper border only, 24px rounded (no shadow) */
+.team-members-table-wrapper {
+  border: 1px solid var(--neutral-100, #f5f5f5) !important;
+}
+.team-members-table-wrapper .ant-table-wrapper {
+  border-radius: 24px;
+  overflow: hidden;
+  border: none !important;
+  box-shadow: none !important;
+}
+.team-members-table-wrapper .ant-table-container {
+  border-radius: 24px;
+  overflow: hidden;
+}
+.team-members-table-wrapper .ant-table {
+  border: none !important;
+}
+/* First header cell: top-left rounded */
+.team-members-table-wrapper .ant-table-thead > tr > th:first-child {
+  border-radius: 24px 0 0 0;
+}
+/* Last header cell: top-right rounded */
+.team-members-table-wrapper .ant-table-thead > tr > th:last-child {
+  border-radius: 0 24px 0 0;
+}
+/* First body cell in last row: bottom-left rounded */
+.team-members-table-wrapper .ant-table-tbody > tr:last-child > td:first-child {
+  border-radius: 0 0 0 24px;
+}
+/* Last body cell in last row: bottom-right rounded */
+.team-members-table-wrapper .ant-table-tbody > tr:last-child > td:last-child {
+  border-radius: 0 0 24px 0;
+}
+/* Header same as Students */
+.team-members-table-wrapper .ant-table-thead > tr > th {
+  background-color: var(--neutral-50, #f8f9fa) !important;
+  font-weight: 600;
+}

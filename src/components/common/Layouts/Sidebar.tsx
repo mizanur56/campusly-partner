@@ -5,8 +5,11 @@ import { config } from "../../../config";
 import { usePreviewMode } from "../../../context/PreviewModeContext";
 import { useSidebar } from "../../../context/SidebarContext";
 import { useFilteredSidebarItems } from "../../../hooks/useFilteredSidebarItems";
+import { useStudentProfile } from "../../../context/StudentProfileContext";
 import { ChevronDownIcon } from "../../../icons";
 import { selectCurrentUser } from "../../../redux/features/auth/authSlice";
+import { useGetPartnerProfileQuery } from "../../../redux/features/profile/partnerProfileApi";
+import { useGetOnboardingStatusQuery } from "../../../redux/features/onboardingForm";
 import { NavItem, SubMenuItem } from "../../../types/interfaces";
 import { Tooltip } from "antd";
 
@@ -14,6 +17,7 @@ const SidebarItems: NavItem[] = [
   { icon: <i className="fa-solid fa-house"></i>, name: "Home", path: "/" },
 ];
 
+/** Full partner sidebar (PARTNER role). */
 const SignedSidebarItems: NavItem[] = [
   { icon: <i className="fa-solid fa-house"></i>, name: "Home", path: "/" },
   {
@@ -25,6 +29,11 @@ const SignedSidebarItems: NavItem[] = [
     icon: <i className="fa-solid fa-users"></i>,
     name: "Students",
     path: "/students",
+  },
+  {
+    icon: <i className="fa-solid fa-users-gear"></i>,
+    name: "Team Members",
+    path: "/team-members",
   },
   {
     icon: <i className="fa-solid fa-file-lines"></i>,
@@ -55,9 +64,30 @@ const SignedSidebarItems: NavItem[] = [
     path: "/hot-offers",
   },
 ];
+
+/** Restricted sidebar for PARTNER_TEAM_MEMBER: My Tasks first, then Students, Applications. No Home. */
+const TeamMemberSidebarItems: NavItem[] = [
+  {
+    icon: <i className="fa-solid fa-list-check"></i>,
+    name: "My Tasks",
+    path: "/my-tasks",
+  },
+  {
+    icon: <i className="fa-solid fa-users"></i>,
+    name: "Students",
+    path: "/students",
+  },
+  {
+    icon: <i className="fa-solid fa-file-lines"></i>,
+    name: "Applications",
+    path: "/applications",
+  },
+];
+
 const SIGNED_ROUTE_PATHS = [
   "/programs-schools",
   "/students",
+  "/team-members",
   "/applications",
   "/my-tasks",
   "/payments",
@@ -66,6 +96,8 @@ const SIGNED_ROUTE_PATHS = [
   "/academy",
   "/hot-offers",
 ];
+
+const TEAM_MEMBER_ROUTE_PATHS = ["/", "/students", "/applications", "/my-tasks"];
 
 const othersSidebarItems: NavItem[] = [
   {
@@ -83,36 +115,124 @@ const fallbackManagedBy = {
   avatar: "/images/logo/logo-icon.svg",
 };
 
+const STUDENT_NAV = [
+  {
+    key: "activity",
+    label: "Activity",
+    icon: "fa-solid fa-chart-line",
+    path: "activity",
+  },
+  {
+    key: "profile",
+    label: "Profile",
+    icon: "fa-solid fa-user",
+    path: "profile",
+  },
+  {
+    key: "applications",
+    label: "Applications",
+    icon: "fa-solid fa-file-lines",
+    path: "applications",
+  },
+];
+
 const Sidebar: React.FC = () => {
   const { isExpanded, isMobileOpen } = useSidebar();
   const { previewMode } = usePreviewMode();
   const location = useLocation();
   const navigate = useNavigate();
+  const { student } = useStudentProfile();
   const user = useSelector(selectCurrentUser);
-  const profileName = user?.name ?? fallbackManagedBy.name;
-  const profileEmail = user?.email ?? fallbackManagedBy.email;
-  const profilePhone = fallbackManagedBy.phone;
-  const profilePhotoUrl = user?.profile_photo
-    ? user.profile_photo.startsWith("http")
-      ? user.profile_photo
-      : `${config.image_access_url || ""}${user.profile_photo}`
-    : `https://i.pravatar.cc/80?u=${user?.id || encodeURIComponent(profileEmail) || "user"}`;
+
+  // Fetch partner profile to get advisor details
+  const {
+    data: partnerProfile,
+    isLoading: isPartnerProfileLoading,
+    isFetching: isPartnerProfileFetching,
+  } = useGetPartnerProfileQuery(undefined);
+
+  // Onboarding status: when ACTIVE + portalAccessUnlocked, show signed sidebar even on "/"
+  const { data: onboardingStatus } = useGetOnboardingStatusQuery();
+  const hasUnlockedPortal =
+    onboardingStatus?.status === "ACTIVE" && !!onboardingStatus?.portalAccessUnlocked;
+
+  const isTeamMember = user?.role === "PARTNER_TEAM_MEMBER";
+
+  // Advisor details from partner profile (for "Managed by" / signed card). For team member, use logged-in user only.
+  const advisor = partnerProfile?.advisor;
+  const profileName = isTeamMember
+    ? (user?.name ?? "Team Member")
+    : (advisor?.name ?? fallbackManagedBy.name);
+  const profileEmail = isTeamMember
+    ? (user?.email ?? "")
+    : (advisor?.email ?? fallbackManagedBy.email);
+  const profilePhone = isTeamMember
+    ? ""
+    : (advisor?.phone ?? fallbackManagedBy.phone);
+  const profilePhotoUrl = isTeamMember
+    ? null
+    : advisor?.profile?.url
+      ? advisor.profile.url.startsWith("http")
+        ? advisor.profile.url
+        : `${config.image_access_url}${advisor.profile.url}`
+      : null;
+  const isManagedByLoading =
+    !isTeamMember && (isPartnerProfileLoading || isPartnerProfileFetching);
+
+  // Signed sidebar: always show logged-in user's own profile info
+  const signedProfileName = user?.name ?? profileName;
+  const signedProfileEmail = user?.email ?? profileEmail;
 
   const handleLogout = () => {
     console.log("Logging out...");
     localStorage.removeItem("token");
+    localStorage.removeItem("partner-preview-mode");
     navigate("/login");
   };
 
-  const baseItems =
-    (location.pathname === "/" && previewMode === "signed") ||
-    SIGNED_ROUTE_PATHS.includes(location.pathname)
-      ? SignedSidebarItems
-      : SidebarItems;
+  /* Sidebar mode by context:
+   * - STUDENT: /students/:id/* → only student card + Activity/Profile/Applications/Tasks
+   * - APPLICATION DETAIL: /applications/:id/* → student card (from application) + Activity/Profile/Applications/Tasks
+   * - UNSIGNED (onboarding): / or /onboarding or /contract → partner card + Home
+   * - SIGNED: dashboard routes → partner card + full nav
+   */
+  const isStudentContext = /^\/students\/[^/]+(\/|$)/.test(location.pathname);
+  const isApplicationDetailContext = /^\/applications\/[^/]+(\/|$)/.test(
+    location.pathname,
+  );
+  const studentIdFromPath = isStudentContext
+    ? location.pathname.split("/")[2]
+    : null;
+  const studentId = isStudentContext
+    ? studentIdFromPath
+    : isApplicationDetailContext
+      ? student?.id
+      : null;
+  const showStudentSidebar =
+    (isStudentContext && studentIdFromPath) ||
+    (isApplicationDetailContext && student);
+  const isOnboardingContext =
+    (location.pathname === "/" && previewMode === "onboarding") ||
+    location.pathname.startsWith("/onboarding") ||
+    location.pathname.startsWith("/contract");
+  const signedPaths = isTeamMember ? TEAM_MEMBER_ROUTE_PATHS : SIGNED_ROUTE_PATHS;
+  const isSignedContext =
+    !isStudentContext &&
+    !isApplicationDetailContext &&
+    ((location.pathname === "/" && (previewMode === "signed" || hasUnlockedPortal || isTeamMember)) ||
+      signedPaths.includes(location.pathname) ||
+      (!isTeamMember && location.pathname.startsWith("/payments")) ||
+      (isTeamMember && (location.pathname.startsWith("/students/") || location.pathname.startsWith("/applications/"))));
+
+  // Application details loading: show loading state (click korar sathe start)
+  const isApplicationDetailLoading = isApplicationDetailContext && !student;
+  const baseItems = isSignedContext
+    ? isTeamMember
+      ? TeamMemberSidebarItems
+      : SignedSidebarItems
+    : SidebarItems;
   const filteredSidebarItems = useFilteredSidebarItems(baseItems);
-  const isSignedSidebar =
-    (location.pathname === "/" && previewMode === "signed") ||
-    SIGNED_ROUTE_PATHS.includes(location.pathname);
+  const isSignedSidebar = isSignedContext;
 
   const [openSubmenu, setOpenSubmenu] = useState<{
     type: "main" | "others";
@@ -380,92 +500,231 @@ const Sidebar: React.FC = () => {
         </Link>
       </div>
 
-      {/* User profile — shown when sidebar is expanded (onboarding + signed phase) */}
-      {(isExpanded || isMobileOpen) && (
+      {/* Sidebar preview: UNSIGNED (onboarding) partner view – "Managed by" card */}
+      {(isExpanded || isMobileOpen) && isOnboardingContext && (
         <div className="mx-3 mt-0 rounded-xl bg-gray-50/80 p-3 dark:bg-gray-800/40">
           <p className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-            {isSignedSidebar ? "" : "Managed by"}
+            Managed by
           </p>
-          <div className="mt-2 flex items-center gap-2.5">
-            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-              <img
-                src={profilePhotoUrl}
-                alt={profileName}
-                className="h-full w-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
-                  const fallback = e.currentTarget
-                    .nextElementSibling as HTMLElement;
-                  if (fallback) fallback.style.display = "flex";
-                }}
-              />
-              <span
-                className="text-sm font-semibold text-gray-600 dark:text-gray-300"
-                style={{
-                  display: "none",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "100%",
-                  height: "100%",
-                }}
-              >
-                {profileName.charAt(0)}
-              </span>
+          {isManagedByLoading ? (
+            <div className="mt-2 animate-pulse">
+              <div className="flex items-center gap-2.5">
+                <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700" />
+                <div className="h-4 w-28 rounded bg-gray-200 dark:bg-gray-700" />
+              </div>
+              <div className="mt-3 space-y-2">
+                <div className="h-3.5 w-full rounded bg-gray-200 dark:bg-gray-700" />
+                <div className="h-3.5 w-4/5 rounded bg-gray-200 dark:bg-gray-700" />
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="mt-2 flex items-center gap-2.5">
+                {profilePhotoUrl ? (
+                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                    <img
+                      src={profilePhotoUrl}
+                      alt={profileName}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                ) : null}
+                <p className="min-w-0 flex-1 truncate text-sm font-medium text-gray-800 dark:text-gray-100">
+                  {profileName}
+                </p>
+              </div>
+              <div className="mt-2.5 space-y-1.5">
+                {profileEmail && (
+                  <a
+                    href={`mailto:${profileEmail}`}
+                    className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
+                  >
+                    <svg
+                      className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                      />
+                    </svg>
+                    <span className="min-w-0 truncate">{profileEmail}</span>
+                  </a>
+                )}
+                {profilePhone && (
+                  <a
+                    href={`tel:${profilePhone.replace(/\s/g, "")}`}
+                    className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
+                  >
+                    <svg
+                      className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                      />
+                    </svg>
+                    <span className="min-w-0 truncate">{profilePhone}</span>
+                  </a>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Sidebar preview: SIGNED view – show own profile info (logged-in user) */}
+      {(isExpanded || isMobileOpen) && isSignedContext && (
+        <div className="mx-3 mt-0 rounded-xl bg-gray-50/80 p-3 dark:bg-gray-800/40">
+          <div className="mt-0 flex items-center gap-2.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-100">
+              {signedProfileName
+                .split(" ")
+                .map((n) => n[0])
+                .join("")}
             </div>
             <p className="min-w-0 flex-1 truncate text-sm font-medium text-gray-800 dark:text-gray-100">
-              {profileName}
+              {signedProfileName}
             </p>
           </div>
           <div className="mt-2.5 space-y-1.5">
-            <a
-              href={`mailto:${profileEmail}`}
-              className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
-            >
-              <svg
-                className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+            {signedProfileEmail && (
+              <a
+                href={`mailto:${signedProfileEmail}`}
+                className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                />
-              </svg>
-              <span className="min-w-0 truncate">{profileEmail}</span>
-            </a>
-            <a
-              href={`tel:${profilePhone.replace(/\s/g, "")}`}
-              className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
-            >
-              <svg
-                className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                />
-              </svg>
-              <span className="min-w-0 truncate">{profilePhone}</span>
-            </a>
+                <svg
+                  className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  />
+                </svg>
+                <span className="min-w-0 truncate">{signedProfileEmail}</span>
+              </a>
+            )}
           </div>
         </div>
       )}
 
-      {/* Navigation */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <div className="flex-1 overflow-y-auto px-3 py-4 no-scrollbar">
-          <nav className="flex flex-col gap-1">
-            {renderMenuItems(filteredSidebarItems, "main")}
+      {/* Sidebar preview: APPLICATION DETAIL (loading skeleton while student sidebar data loads) */}
+      {(isExpanded || isMobileOpen) && isApplicationDetailLoading && (
+        <div className="mx-3 mt-0 rounded-xl border border-gray-200/60 bg-gray-50/80 p-3 dark:border-gray-700 dark:bg-gray-800/40 animate-pulse">
+          <div className="flex items-center gap-2.5">
+            <div className="h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-700" />
+            <div className="flex-1 space-y-2">
+              <div className="h-3 w-24 rounded bg-gray-200 dark:bg-gray-700" />
+              <div className="h-2 w-32 rounded bg-gray-200 dark:bg-gray-700" />
+            </div>
+          </div>
+          <div className="mt-3 space-y-2">
+            <div className="h-2 w-full rounded bg-gray-200 dark:bg-gray-700" />
+            <div className="h-2 w-2/3 rounded bg-gray-200 dark:bg-gray-700" />
+          </div>
+        </div>
+      )}
+
+      {/* Sidebar preview: STUDENT / APPLICATION DETAIL – student profile card + Activity/Profile/Applications/Tasks */}
+      {(isExpanded || isMobileOpen) && showStudentSidebar && studentId && (
+        <div className="mx-3 mt-0 rounded-xl border border-gray-200/60 bg-gray-50/80 p-3 dark:border-gray-700 dark:bg-gray-800/40">
+          <div className="flex items-center gap-2.5">
+            <div className="shrink-0">
+              <img
+                src={
+                  student?.avatar ?? `https://i.pravatar.cc/80?u=${studentId}`
+                }
+                alt=""
+                className="h-12 w-12 rounded-full object-cover"
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-gray-800 dark:text-gray-100">
+                {student?.name ?? "Student"}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 leading-snug break-words">
+                {student?.address ?? "Dhaka North City Corporation, Dhaka"}
+              </p>
+              <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-300">
+                Status: <strong>{student?.status ?? "SQL"}</strong>
+              </p>
+            </div>
+          </div>
+          <nav className="mt-3 space-y-0.5">
+            {STUDENT_NAV.map((item) => {
+              const path = `/students/${studentId}/${item.path}`;
+              const isActiveNav = location.pathname === path;
+              return (
+                <Link
+                  key={item.key}
+                  to={path}
+                  className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-[0.9375rem] font-medium transition-colors ${
+                    isActiveNav
+                      ? "bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400"
+                      : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700/50"
+                  }`}
+                >
+                  <i className={`${item.icon} w-4 text-center`} />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
           </nav>
         </div>
+      )}
+
+      {/* Sidebar preview nav: UNSIGNED → Home only | SIGNED → full partner nav | STUDENT/APPLICATION → hidden (handled by student sidebar above) */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {isApplicationDetailLoading && (
+          <div className="flex-1 overflow-y-auto px-3 py-4 no-scrollbar">
+            <div className="flex flex-col gap-2 animate-pulse">
+              {[1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className="h-10 rounded-lg bg-gray-200 dark:bg-gray-700"
+                />
+              ))}
+            </div>
+          </div>
+        )}
+        {!showStudentSidebar && !isApplicationDetailLoading && (
+          <div className="flex-1 overflow-y-auto px-3 py-4 no-scrollbar">
+            <nav className="flex flex-col gap-1">
+              {renderMenuItems(filteredSidebarItems, "main")}
+            </nav>
+          </div>
+        )}
+
+        {/* Sidebar preview: STUDENT / APPLICATION – back link below student sidebar */}
+        {showStudentSidebar && studentId && (
+          <div className="flex-1 px-3 py-4">
+            <Link
+              to={isApplicationDetailContext ? "/applications" : "/students"}
+              className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[0.9375rem] font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:hover:bg-gray-700/50 dark:hover:text-gray-100 transition-colors"
+            >
+              <i className="fa-solid fa-arrow-left w-4 text-center" />
+              <span>
+                {isApplicationDetailContext
+                  ? "Back to Applications"
+                  : "Back to Students"}
+              </span>
+            </Link>
+          </div>
+        )}
 
         <div className="px-3 py-3">
           <button

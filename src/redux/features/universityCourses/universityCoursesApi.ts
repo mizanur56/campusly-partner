@@ -1,5 +1,52 @@
 import { baseApi } from "../../api/baseApi";
 
+export type SingleUniversityCourseApiResponse = {
+  success: boolean;
+  status: number;
+  message: string;
+  data: {
+    id: string;
+    universityId: string;
+    courseId: string;
+    studyLevelId: string | null;
+    description: string;
+    duration: number;
+    tuition: number;
+    studyMode: string;
+    campusLocation: string;
+    startDates: string | null;
+    englishReq: string | null;
+    university: {
+      id: string;
+      name: string;
+      slug: string;
+      UniversityLogo?: { url?: string };
+      upcomingIntake?: string;
+      city?: { name?: string };
+      englishRequirements?: string;
+    };
+    course: {
+      id: string;
+      name: string;
+      slug: string;
+      description: string | null;
+    };
+    relatedCourses?: Array<{
+      id: string;
+      tuition: number;
+      course: { id: string; name: string; slug: string; description?: string | null };
+      description?: string | null;
+    }>;
+    universityCourseDocuments?: Array<{
+      document?: {
+        id?: string;
+        name?: string;
+        category?: { id?: string; slug?: string; name?: string };
+      };
+    }>;
+  };
+};
+
 type UniversityCourse = {
   id: string;
   universityId: string;

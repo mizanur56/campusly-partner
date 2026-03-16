@@ -34,6 +34,8 @@ export default function DataTable(props: any) {
     expandable,
     actions, // Array of action items: [{ key, label, icon, onClick, danger? }]
     pagination: paginationProp, // Pagination config object
+    onRow, // Optional row props (e.g. onClick, style for clickable rows)
+    noInnerBorder = false, // When true, table has no border/radius (wrapper provides it, e.g. Team Members like Students)
   } = props;
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
@@ -143,12 +145,14 @@ export default function DataTable(props: any) {
     ? (data || []).slice((currentPageNum - 1) * pageSize, currentPageNum * pageSize)
     : data || [];
 
+  const tableClassName = noInnerBorder
+    ? (isExpanded ? "sidebar-expanded" : "sidebar-collapsed")
+    : `border rounded-lg ${isExpanded ? "sidebar-expanded" : "sidebar-collapsed"}`;
+
   return (
     <Table
       loading={loading}
-      className={`border rounded-lg ${
-        isExpanded ? "sidebar-expanded" : "sidebar-collapsed"
-      }`}
+      className={tableClassName}
       rowKey={rowKey ? rowKey : "_id"}
       rowSelection={selectRow ? rowSelection : undefined}
       dataSource={paginatedData}
@@ -184,6 +188,7 @@ export default function DataTable(props: any) {
           : false
       }
       showHeader={showHeader}
+      onRow={onRow}
     />
   );
 }

@@ -1,210 +1,272 @@
-import React, { useMemo, useState } from "react";
-import { Table, Input, Select, Modal, Tooltip } from "antd";
+import React, { useState, useEffect } from "react";
+import {
+  Table,
+  Input,
+  Select,
+  Modal,
+  Form,
+  Button,
+  Space,
+  Tag,
+  Tooltip,
+  message,
+} from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { useNavigate } from "react-router-dom";
-import { UserOutlined } from "@ant-design/icons";
 import PageMeta from "../../components/common/Meta/PageMeta";
+import DataTable from "../../components/common/Tables/DataTable";
+import {
+  useGetPartnerTasksQuery,
+  useGetTaskByIdQuery,
+  useCreateTaskMutation,
+  useUpdateTaskStatusMutation,
+  useDeleteTaskMutation,
+  PartnerTaskListItem,
+  CreateTaskBody,
+} from "../../redux/features/tasks/partnerTasksApi";
+import { useGetTeamMembersQuery } from "../../redux/features/teams/partnerTeamsApi";
+import { useGetPartnerProfileQuery } from "../../redux/features/profile/partnerProfileApi";
+import { useGetStudentsQuery } from "../../redux/features/users/usersApi";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 import "../../components/common/Tables/AntTable.css";
 import "./MyTasks.css";
 
-interface TaskRecord {
-  key: string;
-  taskId: string;
-  studentId: string;
-  studentName: string;
-  email: string;
-  phone: string;
-  description: string;
-  createdBy: string;
-  createdAt: string;
-  assignedTo: string;
-  status: string;
-}
-
-const MOCK_TASKS: TaskRecord[] = [
-  {
-    key: "1",
-    taskId: "T-001",
-    studentId: "STU-2025-001",
-    studentName: "Md Abdul Khalak",
-    email: "md.abdulkhalak@example.com",
-    phone: "+880 1712345678",
-    description: "Passport copy required for visa application.",
-    createdBy: "Tahsan Tamim",
-    createdAt: "06 Jul 2025, 1:16 PM",
-    assignedTo: "Suchita Roxy",
-    status: "Pending",
-  },
-  {
-    key: "2",
-    taskId: "T-002",
-    studentId: "STU-2025-002",
-    studentName: "Fatima Rahman",
-    email: "fatima.rahman@example.com",
-    phone: "+880 1612345678",
-    description: "Hey! create fir tgusadf",
-    createdBy: "Tahsan Tamim",
-    createdAt: "05 Jul 2025, 10:30 AM",
-    assignedTo: "Ramesh Khadka",
-    status: "In Progress",
-  },
-  {
-    key: "3",
-    taskId: "T-003",
-    studentId: "STU-2025-003",
-    studentName: "Tareeq Mahmud",
-    email: "tareeq.mahmud@example.com",
-    phone: "+880 1912345678",
-    description: "Verify academic documents with university.",
-    createdBy: "Dipak Sharma",
-    createdAt: "04 Jul 2025, 3:45 PM",
-    assignedTo: "Suchita Roxy",
-    status: "Completed",
-  },
-  {
-    key: "4",
-    taskId: "T-004",
-    studentId: "STU-2025-004",
-    studentName: "Hassan Ahmed",
-    email: "hassan.ahmed@example.com",
-    phone: "+880 1512345678",
-    description: "Follow up on offer letter.",
-    createdBy: "Tahsan Tamim",
-    createdAt: "03 Jul 2025, 11:00 AM",
-    assignedTo: "Dipak Sharma",
-    status: "Pending",
-  },
-  {
-    key: "5",
-    taskId: "T-005",
-    studentId: "STU-2025-005",
-    studentName: "Suman Thapa",
-    email: "suman@example.com",
-    phone: "+977 9812345678",
-    description: "IELTS result upload pending.",
-    createdBy: "Ramesh Khadka",
-    createdAt: "02 Jul 2025, 2:20 PM",
-    assignedTo: "Suchita Roxy",
-    status: "In Progress",
-  },
-  {
-    key: "6",
-    taskId: "T-006",
-    studentId: "STU-2024-120",
-    studentName: "Anish Maharjan",
-    email: "anish@example.com",
-    phone: "+977 9712345678",
-    description: "CAS request submitted – awaiting response.",
-    createdBy: "Dipak Sharma",
-    createdAt: "01 Jul 2025, 9:15 AM",
-    assignedTo: "Ramesh Khadka",
-    status: "Completed",
-  },
-  {
-    key: "7",
-    taskId: "T-007",
-    studentId: "STU-2025-006",
-    studentName: "Rita Islam",
-    email: "rita.islam@example.com",
-    phone: "+880 1812345678",
-    description: "Bank statement for visa.",
-    createdBy: "Tahsan Tamim",
-    createdAt: "30 Jun 2025, 4:00 PM",
-    assignedTo: "Suchita Roxy",
-    status: "Pending",
-  },
-];
-
 const STATUS_OPTIONS = [
   { value: "", label: "All statuses" },
-  { value: "Pending", label: "Pending" },
-  { value: "In Progress", label: "In Progress" },
-  { value: "Completed", label: "Completed" },
+  { value: "PENDING", label: "Pending" },
+  { value: "IN_PROGRESS", label: "In Progress" },
+  { value: "COMPLETED", label: "Completed" },
 ];
 
+const TASK_TYPE_OPTIONS = [
+  { value: "TO_DO", label: "To Do" },
+  { value: "FOLLOW_UP", label: "Follow Up" },
+  { value: "REMINDER", label: "Reminder" },
+  { value: "INTERNAL_TASK", label: "Internal Task" },
+];
+
+const PRIORITY_OPTIONS = [
+  { value: "LOW", label: "Low" },
+  { value: "MEDIUM", label: "Medium" },
+  { value: "HIGH", label: "High" },
+];
+
+function formatDateTime(iso: string | undefined | null): string {
+  if (!iso) return "—";
+  try {
+    const d = new Date(iso);
+    return isNaN(d.getTime()) ? "—" : d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+  } catch {
+    return "—";
+  }
+}
+
+function formatDate(iso: string | undefined | null): string {
+  if (!iso) return "—";
+  try {
+    const d = new Date(iso);
+    return isNaN(d.getTime()) ? "—" : d.toLocaleDateString();
+  } catch {
+    return "—";
+  }
+}
+
 export default function MyTasks() {
-  const navigate = useNavigate();
-  const [searchText, setSearchText] = useState("");
+  const user = useSelector(selectCurrentUser);
+  const isTeamMember = user?.role === "PARTNER_TEAM_MEMBER";
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [statusFilter, setStatusFilter] = useState<string>("");
-  const [selectedTask, setSelectedTask] = useState<TaskRecord | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [assignedToMe, setAssignedToMe] = useState<boolean | undefined>(undefined);
+  const [createdByMe, setCreatedByMe] = useState<boolean | undefined>(undefined);
 
-  const filteredData = useMemo(() => {
-    let list = MOCK_TASKS;
-    if (searchText.trim()) {
-      const q = searchText.toLowerCase();
-      list = list.filter(
-        (row) =>
-          row.studentId.toLowerCase().includes(q) ||
-          row.email.toLowerCase().includes(q) ||
-          row.phone.includes(searchText) ||
-          row.studentName.toLowerCase().includes(q),
-      );
-    }
-    if (statusFilter) {
-      list = list.filter((row) => row.status === statusFilter);
-    }
-    return list;
-  }, [searchText, statusFilter]);
+  useEffect(() => {
+    if (isTeamMember) setAssignedToMe(true);
+  }, [isTeamMember]);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [createForm] = Form.useForm();
 
-  const columns: ColumnsType<TaskRecord> = [
-    {
-      title: "Student ID",
-      dataIndex: "studentId",
-      key: "studentId",
-      width: 120,
-    },
-    {
-      title: "Student Name",
-      dataIndex: "studentName",
-      key: "studentName",
-      width: 160,
-      sorter: (a, b) => a.studentName.localeCompare(b.studentName),
-    },
-    { title: "Email", dataIndex: "email", key: "email", width: 200 },
+  const { data: profile } = useGetPartnerProfileQuery();
+  const { data: studentsResponse } = useGetStudentsQuery({ page: 1, limit: 100 });
+  const { data: teamMembersData } = useGetTeamMembersQuery({
+    page: 1,
+    limit: 100,
+    status: "ACTIVE",
+  });
+  const {
+    data: tasksData,
+    isLoading: tasksLoading,
+    isFetching: tasksFetching,
+  } = useGetPartnerTasksQuery({
+    page,
+    limit,
+    status: statusFilter.trim() || undefined,
+    assignedToMe: isTeamMember ? true : assignedToMe,
+    createdByMe,
+  });
+  const { data: taskDetail, isLoading: detailLoading } = useGetTaskByIdQuery(
+    selectedTaskId ?? "",
+    { skip: !selectedTaskId }
+  );
+
+  const [createTask, { isLoading: isCreating }] = useCreateTaskMutation();
+  const [updateTaskStatus, { isLoading: isUpdatingStatus }] = useUpdateTaskStatusMutation();
+  const [deleteTask, { isLoading: isDeleting }] = useDeleteTaskMutation();
+
+  const tasks: PartnerTaskListItem[] = tasksData?.data ?? [];
+  const meta = tasksData?.meta;
+  const total = meta?.total ?? 0;
+
+  const assigneeOptions = React.useMemo(() => {
+    const options: { value: string; label: string }[] = [];
+    if (profile?.userId) {
+      options.push({
+        value: profile.userId,
+        label: (profile as { name?: string }).name ?? "Me",
+      });
+    }
+    const members = teamMembersData?.data ?? [];
+    members
+      .filter((m) => m.status === "ACTIVE" && m.userId)
+      .forEach((m) => {
+        const label = [m.firstName, m.lastName].filter(Boolean).join(" ").trim() || m.email;
+        options.push({ value: m.userId!, label });
+      });
+    return options;
+  }, [profile, teamMembersData?.data]);
+
+  const studentOptions = React.useMemo(() => {
+    const list = studentsResponse?.data ?? [];
+    return list.map((s) => ({
+      value: s.id,
+      label: s.name ? `${s.name}${s.email ? ` (${s.email})` : ""}` : s.email || s.id,
+    }));
+  }, [studentsResponse?.data]);
+
+  const openViewModal = (record: PartnerTaskListItem) => {
+    setSelectedTaskId(record.id);
+    setIsViewModalOpen(true);
+  };
+
+  const closeViewModal = () => {
+    setSelectedTaskId(null);
+    setIsViewModalOpen(false);
+  };
+
+  const handleStatusChange = async (taskId: string, newStatus: string) => {
+    try {
+      await updateTaskStatus({ id: taskId, status: newStatus }).unwrap();
+      message.success("Status updated.");
+      if (selectedTaskId === taskId) {
+        // Refetch will happen via invalidatesTags
+      }
+    } catch {
+      // baseApi toast
+    }
+  };
+
+  const handleDelete = async (taskId: string) => {
+    try {
+      await deleteTask(taskId).unwrap();
+      message.success("Task removed.");
+      setDeleteConfirmId(null);
+      if (selectedTaskId === taskId) closeViewModal();
+    } catch {
+      // baseApi toast
+    }
+  };
+
+  const handleCreateSubmit = async () => {
+    try {
+      const values = await createForm.validateFields();
+      const body: CreateTaskBody = {
+        title: values.title,
+        description: values.description,
+        assignedToUserId: values.assignedToUserId,
+        taskType: values.taskType,
+        priority: values.priority,
+        dueDate: values.dueDate,
+        dueTime: values.dueTime,
+      };
+      if (values.studentId) body.studentId = values.studentId;
+      await createTask(body).unwrap();
+      message.success("Task created.");
+      setIsCreateModalOpen(false);
+      createForm.resetFields();
+    } catch {
+      // validation or baseApi toast
+    }
+  };
+
+  const columns: ColumnsType<PartnerTaskListItem> = [
     {
       title: "Task",
-      dataIndex: "description",
-      key: "description",
+      dataIndex: "task_title",
+      key: "task_title",
       width: 220,
       ellipsis: true,
     },
     {
-      title: "Created by",
-      dataIndex: "createdBy",
-      key: "createdBy",
-      width: 120,
-    },
-    { title: "Date", dataIndex: "createdAt", key: "createdAt", width: 140 },
-    {
       title: "Assigned to",
-      dataIndex: "assignedTo",
-      key: "assignedTo",
-      width: 120,
+      dataIndex: "assigned_member_name",
+      key: "assigned_member_name",
+      width: 140,
       render: (name: string) => (
         <span className="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/40 dark:text-green-300">
-          {name}
+          {name || "—"}
         </span>
       ),
+    },
+    {
+      title: "Created",
+      dataIndex: "created_date_time",
+      key: "created_date_time",
+      width: 160,
+      render: (v: string) => formatDateTime(v),
+    },
+    {
+      title: "Due",
+      key: "due",
+      width: 140,
+      render: (_: unknown, r: PartnerTaskListItem) => {
+        const d = formatDate(r.dueDate);
+        const t = r.dueTime ? ` ${r.dueTime}` : "";
+        return d !== "—" ? d + t : "—";
+      },
+    },
+    {
+      title: "Priority",
+      dataIndex: "priority",
+      key: "priority",
+      width: 100,
+      render: (p: string | null) => (p ? <Tag>{p}</Tag> : "—"),
+    },
+    {
+      title: "Type",
+      dataIndex: "taskType",
+      key: "taskType",
+      width: 120,
+      render: (t: string | null) => (t ? String(t).replace(/_/g, " ") : "—"),
     },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      width: 110,
+      width: 120,
       render: (status: string) => (
         <span
           className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-            status === "Completed"
+            status === "COMPLETED"
               ? "bg-green-100 text-green-800"
-              : status === "In Progress"
+              : status === "IN_PROGRESS"
                 ? "bg-blue-100 text-blue-800"
-                : status === "Pending"
-                  ? "bg-amber-100 text-amber-800"
-                  : "bg-gray-100 text-gray-800"
+                : "bg-amber-100 text-amber-800"
           }`}
         >
-          {status}
+          {status === "IN_PROGRESS" ? "In Progress" : status === "COMPLETED" ? "Completed" : "Pending"}
         </span>
       ),
     },
@@ -213,28 +275,40 @@ export default function MyTasks() {
       key: "actions",
       width: 160,
       fixed: "right",
-      render: (_: unknown, record) => (
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className="cursor-pointer text-xs font-medium text-primary-600 hover:text-primary-700"
-            onClick={() => {
-              setSelectedTask(record);
-              setIsModalOpen(true);
+      render: (_: unknown, record: PartnerTaskListItem) => (
+        <Space size="small" wrap onClick={(e) => e.stopPropagation()}>
+          <Button
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              openViewModal(record);
             }}
           >
             View task
-          </button>
-          <Tooltip title="View student profile">
-            <button
-              type="button"
-              className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-neutral-200 text-gray-500 hover:border-primary-500 hover:text-primary-600"
-              onClick={() => {}}
+          </Button>
+          <Tooltip title="Remove task">
+            <Button
+              size="small"
+              danger
+              loading={deleteConfirmId === record.id && isDeleting}
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeleteConfirmId(record.id);
+                Modal.confirm({
+                  title: "Remove task?",
+                  content: "This task will be removed. This action cannot be undone.",
+                  okText: "Remove",
+                  okType: "danger",
+                  cancelText: "Cancel",
+                  onOk: () => handleDelete(record.id),
+                  onCancel: () => setDeleteConfirmId(null),
+                });
+              }}
             >
-              <UserOutlined className="text-xs" />
-            </button>
+              Delete
+            </Button>
           </Tooltip>
-        </div>
+        </Space>
       ),
     },
   ];
@@ -243,7 +317,7 @@ export default function MyTasks() {
     <div className="my-tasks-page">
       <PageMeta
         title="My Tasks - Campus Transfer Partner"
-        description="View your latest task updates and alerts. Find tasks by student ID, email or phone."
+        description="View and manage your tasks. Filter by status, assigned to me, or created by me."
       />
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -251,117 +325,223 @@ export default function MyTasks() {
             My Tasks
           </h1>
           <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-            View your latest task updates and alerts.
+            View and manage your tasks
           </p>
         </div>
         <button
           type="button"
+          onClick={() => setIsCreateModalOpen(true)}
           className="inline-flex items-center justify-center rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
         >
           + Create task
         </button>
       </div>
 
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-        <Input
-          placeholder="Search by Student ID, email or phone"
-          allowClear
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          className="max-w-sm"
-          size="large"
-        />
+      <div className="mb-6 flex flex-wrap items-center gap-3">
         <Select
           placeholder="Status"
           value={statusFilter || undefined}
-          onChange={(v) => setStatusFilter(v ?? "")}
-          options={STATUS_OPTIONS}
-          className="w-full sm:w-40"
-          size="large"
-          allowClear
-        />
-      </div>
-
-      <div className="overflow-hidden rounded-[24px] border border-neutral-100 bg-white card-shadow dark:border-gray-800 dark:bg-gray-900">
-        <Table
-          className="my-tasks-table"
-          dataSource={filteredData}
-          columns={columns}
-          rowKey="key"
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            showTotal: (total) => `Total ${total} tasks`,
-            pageSizeOptions: ["10", "20", "50"],
+          onChange={(v) => {
+            setStatusFilter(v ?? "");
+            setPage(1);
           }}
-          scroll={{ x: 1200 }}
+          options={STATUS_OPTIONS}
+          allowClear
+          size="large"
+          style={{ width: 200 }}
+        />
+        <button
+          type="button"
+          onClick={() => {
+            setAssignedToMe(assignedToMe === true ? undefined : true);
+            setPage(1);
+          }}
+          className={`flex h-10 items-center rounded-lg border px-4 py-2 text-sm ${
+            assignedToMe === true
+              ? "border-primary-500 bg-primary-500 text-white hover:bg-primary-600"
+              : "border-gray-300 bg-white hover:bg-gray-50"
+          }`}
+        >
+          Assigned to me
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setCreatedByMe(createdByMe === true ? undefined : true);
+            setPage(1);
+          }}
+          className={`flex h-10 items-center rounded-lg border px-4 py-2 text-sm ${
+            createdByMe === true
+              ? "border-primary-500 bg-primary-500 text-white hover:bg-primary-600"
+              : "border-gray-300 bg-white hover:bg-gray-50"
+          }`}
+        >
+          Created by me
+        </button>
+      </div>
+
+      <div className="my-tasks-table-wrapper overflow-hidden rounded-[24px] border border-neutral-100 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <DataTable
+          data={tasks}
+          columns={columns}
+          rowKey="id"
+          currentPage={page}
+          setCurrentPage={setPage}
+          limit={limit}
+          setLimit={setLimit}
+          total={total}
+          loading={tasksLoading || tasksFetching}
+          isPaginate
+          showHeader
+          showSizeChanger
+          noInnerBorder
+          pagination={{ pageSizeOptions: ["10", "20", "50"] }}
         />
       </div>
 
+      {/* View / Detail modal */}
       <Modal
-        open={isModalOpen}
+        open={isViewModalOpen}
         title="Task details"
-        onCancel={() => setIsModalOpen(false)}
+        onCancel={closeViewModal}
         footer={null}
         centered
         width={520}
       >
-        {selectedTask && (
+        {detailLoading && !taskDetail ? (
+          <div className="py-8 text-center text-gray-500">Loading...</div>
+        ) : taskDetail ? (
           <div className="space-y-5 text-sm">
-            {/* Task summary */}
             <section className="space-y-1 border-b border-neutral-100 pb-3">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">
-                Task
-              </p>
-              <p className="leading-relaxed text-gray-900">
-                {selectedTask.description}
-              </p>
+              <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">Task</p>
+              <p className="font-medium text-gray-900">{taskDetail.task_title}</p>
+              {taskDetail.task_description && (
+                <p className="mt-1 leading-relaxed text-gray-600">{taskDetail.task_description}</p>
+              )}
             </section>
-
-            {/* Student info */}
-            <section className="rounded-lg bg-neutral-50 px-3 py-3">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">
-                Student
-              </p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">
-                {selectedTask.studentName}
-              </p>
-              <div className="mt-1 space-y-0.5 text-xs text-neutral-600">
-                <p>ID: {selectedTask.studentId}</p>
-                <p>{selectedTask.email}</p>
-                <p>{selectedTask.phone}</p>
-              </div>
-            </section>
-
-            {/* Meta info */}
+            {taskDetail.associated_with && (
+              <section className="rounded-lg bg-neutral-50 px-3 py-3">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">Associated with</p>
+                <p className="mt-1 text-gray-900">{taskDetail.associated_with}</p>
+              </section>
+            )}
             <section className="grid grid-cols-1 gap-4 border-t border-neutral-100 pt-4 text-xs sm:grid-cols-2">
               <div className="space-y-1">
-                <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">
-                  Created by
-                </p>
-                <p className="text-gray-900">{selectedTask.createdBy}</p>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">Created by</p>
+                <p className="text-gray-900">{taskDetail.created_by ?? "—"}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">
-                  Created at
-                </p>
-                <p className="text-gray-900">{selectedTask.createdAt}</p>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">Assigned to</p>
+                <p className="text-gray-900">{taskDetail.assignedTo?.name ?? taskDetail.assignedTo?.email ?? "—"}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">
-                  Assigned to
+                <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">Due</p>
+                <p className="text-gray-900">
+                  {formatDate(taskDetail.due_date)}
+                  {taskDetail.due_time ? ` ${taskDetail.due_time}` : ""}
                 </p>
-                <p className="text-gray-900">{selectedTask.assignedTo}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">
-                  Status
-                </p>
-                <p className="text-gray-900">{selectedTask.status}</p>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">Status</p>
+                <Space>
+                  <Select
+                    value={taskDetail.status}
+                    onChange={(v) => handleStatusChange(taskDetail.id, v)}
+                    options={[
+                      { value: "PENDING", label: "Pending" },
+                      { value: "IN_PROGRESS", label: "In Progress" },
+                      { value: "COMPLETED", label: "Completed" },
+                    ]}
+                    loading={isUpdatingStatus}
+                    style={{ minWidth: 140 }}
+                  />
+                </Space>
               </div>
             </section>
+            <div className="flex justify-end gap-2 border-t pt-4">
+              <Button
+                danger
+                loading={isDeleting && deleteConfirmId === taskDetail.id}
+                onClick={() => {
+                  Modal.confirm({
+                    title: "Remove task?",
+                    content: "This action cannot be undone.",
+                    okText: "Remove",
+                    okType: "danger",
+                    onOk: () => handleDelete(taskDetail.id),
+                  });
+                }}
+              >
+                Delete task
+              </Button>
+            </div>
           </div>
-        )}
+        ) : null}
+      </Modal>
+
+      {/* Create task modal */}
+      <Modal
+        open={isCreateModalOpen}
+        title="Create task"
+        onCancel={() => {
+          setIsCreateModalOpen(false);
+          createForm.resetFields();
+        }}
+        onOk={handleCreateSubmit}
+        okText="Create"
+        okButtonProps={{ loading: isCreating }}
+        destroyOnHidden
+      >
+        <Form form={createForm} layout="vertical">
+          <Form.Item
+            name="title"
+            label="Title"
+            rules={[{ required: true, message: "Title is required" }]}
+          >
+            <Input placeholder="e.g. Follow up with student" />
+          </Form.Item>
+          <Form.Item name="description" label="Description">
+            <Input.TextArea rows={2} placeholder="Optional description" />
+          </Form.Item>
+          <Form.Item
+            name="assignedToUserId"
+            label="Assign to"
+            rules={[{ required: true, message: "Assign to is required" }]}
+          >
+            <Select
+              placeholder="Select team member"
+              options={assigneeOptions}
+              showSearch
+              optionFilterProp="label"
+            />
+          </Form.Item>
+          <Form.Item
+            name="studentId"
+            label="Student (optional)"
+            help="Link this task to a student. Same list as in Programs & Schools."
+          >
+            <Select
+              placeholder="Select student"
+              options={studentOptions}
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              notFoundContent={studentsResponse?.data?.length === 0 ? "No students found." : undefined}
+            />
+          </Form.Item>
+          <Form.Item name="taskType" label="Type">
+            <Select placeholder="Task type" options={TASK_TYPE_OPTIONS} allowClear />
+          </Form.Item>
+          <Form.Item name="priority" label="Priority">
+            <Select placeholder="Priority" options={PRIORITY_OPTIONS} allowClear />
+          </Form.Item>
+          <Form.Item name="dueDate" label="Due date">
+            <Input type="date" />
+          </Form.Item>
+          <Form.Item name="dueTime" label="Due time">
+            <Input placeholder="e.g. 12:04 PM" />
+          </Form.Item>
+        </Form>
       </Modal>
     </div>
   );

@@ -60,7 +60,7 @@ const getClientDetails = async (): Promise<ClientDetails> => {
 // Base Query
 // ======================
 const rawBaseQuery = fetchBaseQuery({
-  baseUrl: config.api,
+  baseUrl: config.api, // from src/config — single source for API base
   credentials: "include",
   prepareHeaders: async (headers, { getState, endpoint }) => {
     const token = (getState() as RootState).auth.token;
@@ -134,7 +134,7 @@ const baseQueryWithRefreshToken: BaseQueryFn<
       // Show specific message for permission updates
       toast.error(
         "Your permissions have been updated. Please login again to continue.",
-        { autoClose: 5000 }
+        { autoClose: 5000 },
       );
     } else {
       // Show generic unauthorized message
@@ -171,7 +171,7 @@ const baseQueryWithRefreshToken: BaseQueryFn<
         typeof result.error.data === "object" &&
         "message" in result.error.data
         ? (result.error.data as { message?: string }).message || "Not found."
-        : "Not found."
+        : "Not found.",
     );
   }
 
@@ -222,6 +222,17 @@ export const baseApi = createApi({
     "countryStudyLevels",
     "countryDocuments",
     "search",
+    "applications",
+    "invoices",
+    "partnerOnboarding",
+    "partnerProfile",
+    "partnerContract",
+    "partnerPayments",
+    "bankAccounts",
+    "partnerTeams",
+    "partnerTasks",
+    "hotOffers",
+    "studentProfile",
   ],
   endpoints: () => ({}),
 });

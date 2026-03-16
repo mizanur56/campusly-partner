@@ -1,7 +1,7 @@
 import React from "react";
 import CourseCard from "./CourseCard";
 
-interface Course {
+export interface Course {
   id: string;
   title: string;
   level: string;
@@ -14,12 +14,14 @@ interface Course {
   intake?: string;
   duration?: string;
   startDates?: string;
+  campus?: string;
+  modeOfStudy?: string;
 }
 
 interface CourseListProps {
   courses: Course[];
-  onStartApplication?: (courseId: string) => void;
-  onViewDetails?: (courseId: string) => void;
+  onStartApplication?: (course: Course) => void;
+  onViewDetails?: (course: Course) => void;
 }
 
 const CourseList: React.FC<CourseListProps> = ({
@@ -39,8 +41,8 @@ const CourseList: React.FC<CourseListProps> = ({
           intake={course.intake}
           duration={course.duration}
           startDates={course.startDates}
-          onStartApplication={() => onStartApplication?.(course.id)}
-          onViewDetails={() => onViewDetails?.(course.id)}
+          onStartApplication={() => onStartApplication?.(course)}
+          onViewDetails={() => onViewDetails?.(course)}
         />
       ))}
     </div>

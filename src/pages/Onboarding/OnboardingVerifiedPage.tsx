@@ -25,7 +25,7 @@ export default function OnboardingVerifiedPage() {
         <p className="text-neutral-500 text-base max-w-md leading-relaxed mb-8">
           Your onboarding information has been reviewed and approved.
         </p>
-        <Link to="/">
+        <Link to="/contract/signed">
           <button
             type="button"
             className="btn-primary"

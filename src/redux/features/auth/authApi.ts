@@ -31,9 +31,25 @@ const authApi = baseApi.injectEndpoints({
         body: userInfo,
       }),
     }),
+    setPasswordByInvitation: builder.mutation({
+      query: (body: { token: string; newPassword: string; confirmPassword: string }) => ({
+        url: "/auth/set-password-by-invitation",
+        method: "POST",
+        body,
+      }),
+    }),
     register: builder.mutation({
-      query: (partnerInfo) => ({
-        url: "/auth/register",
+      query: (partnerInfo: {
+        businessName: string;
+        contactPersonName: string;
+        businessEmail: string;
+        country?: string;
+        howDidYouHearAboutUs?: string;
+        password: string;
+        confirmPassword: string;
+      }) => ({
+        // Must hit /api/partners/register (not /api/auth/register). No leading slash so baseUrl is preserved.
+        url: "partners/register",
         method: "POST",
         body: partnerInfo,
       }),
@@ -46,5 +62,6 @@ export const {
   useForgotPasswordMutation,
   useResetPasswordMutation,
   useChangePasswordMutation,
+  useSetPasswordByInvitationMutation,
   useRegisterMutation,
 } = authApi;

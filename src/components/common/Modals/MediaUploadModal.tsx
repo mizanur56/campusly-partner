@@ -303,7 +303,7 @@ const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
   return (
     <Modal
       open={open}
-      destroyOnClose={true}
+      destroyOnHidden
       maskClosable={false}
       keyboard={true}
       width={isMobileView ? "100%" : "100%"}

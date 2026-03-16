@@ -1,21 +1,29 @@
-import { MailOutlined, PhoneOutlined, UserOutlined } from "@ant-design/icons";
+import { LockOutlined, MailOutlined, UserOutlined } from "@ant-design/icons";
 import { Button, Checkbox, Form, Input, Select, Typography } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useState, useEffect } from "react";
 import PageMeta from "../../components/common/Meta/PageMeta";
 import AuthIllustration from "../../components/auth/AuthIllustration";
 import { useRegisterMutation } from "../../redux/features/auth/authApi";
+import { setUser } from "../../redux/features/auth/authSlice";
+import { useAppDispatch } from "../../redux/features/hooks";
+import { Button as UIButton } from "../../components/ui/button";
 
 const { Link: AntLink } = Typography;
 
-interface RegisterFormValues {
+interface Step1Values {
   businessName: string;
   contactPersonName: string;
   businessEmail: string;
-  primaryContactNumber: string;
   country: string;
   howDidYouHear: string;
   agreeTerms: boolean;
+}
+
+interface Step2Values {
+  password: string;
+  confirmPassword: string;
 }
 
 const countryOptions = [
@@ -38,22 +46,41 @@ const howDidYouHearOptions = [
 ];
 
 const Register = () => {
-  const [form] = Form.useForm<RegisterFormValues>();
+  const [form] = Form.useForm<Step1Values & Step2Values>();
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const [registerPartner, { isLoading }] = useRegisterMutation();
+  const [step, setStep] = useState<1 | 2>(1);
+  const [step1Values, setStep1Values] = useState<Step1Values | null>(null);
 
-  const onFinish = async (values: RegisterFormValues) => {
+  const onStep1Finish = (values: Step1Values) => {
+    setStep1Values(values);
+    setStep(2);
+  };
+
+  const onStep2Finish = async (values: Step2Values) => {
+    const step1 = step1Values!;
     try {
-      await registerPartner({
-        businessName: values.businessName,
-        contactPersonName: values.contactPersonName,
-        businessEmail: values.businessEmail,
-        primaryContactNumber: values.primaryContactNumber,
-        country: values.country,
-        howDidYouHear: values.howDidYouHear,
+      const res = await registerPartner({
+        businessName: step1.businessName,
+        contactPersonName: step1.contactPersonName,
+        businessEmail: step1.businessEmail,
+        country: step1.country,
+        howDidYouHearAboutUs: step1.howDidYouHear,
+        password: values.password,
+        confirmPassword: values.confirmPassword,
       }).unwrap();
-      toast.success("Registration successful! Please check your email.");
-      navigate("/login");
+
+      if (res?.data?.token && res?.data?.user) {
+        localStorage.setItem("token", res.data.token);
+        const userData = { ...res.data.user, type: "user" as const };
+        dispatch(setUser({ user: userData, token: res.data.token }));
+        toast.success("Registration successful! Welcome.");
+        navigate("/", { replace: true });
+      } else {
+        toast.success("Registration successful! Please log in.");
+        navigate("/login", { replace: true });
+      }
     } catch (err: any) {
       toast.error(
         err?.data?.errors ||
@@ -63,224 +90,277 @@ const Register = () => {
     }
   };
 
+  const goBack = () => setStep(1);
+
+  useEffect(() => {
+    if (step === 1 && step1Values) {
+      form.setFieldsValue(step1Values);
+    }
+  }, [step, step1Values, form]);
+
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row mx-auto max-w-[950px] px-4 sm:px-6 lg:px-0 bg-white">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-slate-50 px-4 sm:px-6">
       <PageMeta
         title="Partner Registration | Campus Transfer"
         description="Recruitment Partner Registration - Campus Transfer Partner Dashboard"
       />
-      <AuthIllustration />
 
-      <div className="w-full lg:w-1/2 flex items-center justify-center pt-2 pb-8 sm:pt-4 sm:pb-12 lg:min-h-screen">
-        <div className="w-full max-w-[563px] px-4 sm:px-6 lg:px-0">
-          <div className="flex gap-6 mb-4 border-b border-neutral-200">
-            <a
-              href="https://campustransfer.com/auth/register"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="pb-3 text-sm font-medium text-neutral-500 hover:text-neutral-700 transition-colors"
-            >
-              Student
-            </a>
-            <span className="pb-3 text-sm font-medium text-neutral-900 border-b-2 border-primary-600">
-              Recruitment Partner
-            </span>
-          </div>
-          <div className="rounded-[24px] sm:rounded-[32px] border border-neutral-100 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)] p-4 sm:p-5 md:p-6">
-            <div className="mb-4 sm:mb-5">
-              <h1 className="text-xl md:text-2xl font-semibold text-neutral-900 mb-1">
-                Partner Registration
-              </h1>
-              <p className="text-sm text-neutral-600">
-                Start your educational journey
-              </p>
-            </div>
+      <div className="flex w-full max-w-[980px] flex-col overflow-hidden rounded-3xl lg:flex-row">
+        <AuthIllustration />
 
-            <Form
-              form={form}
-              name="register"
-              requiredMark={false}
-              onFinish={onFinish}
-              layout="vertical"
-              size="large"
-              className="space-y-6"
-              initialValues={{
-                country: "bangladesh",
-                howDidYouHear: "facebook",
-              }}
-            >
-              <Form.Item
-                label={
-                  <span className="text-sm font-medium text-neutral-700">
-                    Business Name
-                  </span>
-                }
-                name="businessName"
-                rules={[
-                  { required: true, message: "Please enter your business name!" },
-                ]}
-              >
-                <Input
-                  prefix={<UserOutlined className="text-neutral-400" />}
-                  placeholder="Enter business name"
-                  className="rounded-lg"
-                />
-              </Form.Item>
+        <div className="flex w-full lg:w-1/2 items-center justify-center py-8 sm:py-10 lg:py-12 lg:min-h-[520px]">
+          <div className="w-full max-w-[563px] px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col rounded-3xl bg-white p-6 shadow-sm">
+              <div className="mb-5">
+                <h1 className="mb-1 text-xl font-semibold text-neutral-900">
+                  Partner Registration
+                </h1>
+                <p className="text-sm text-neutral-500">
+                  {step === 1
+                    ? "Enter your business details to get started"
+                    : "Set your password to complete registration"}
+                </p>
+              </div>
 
-              <Form.Item
-                label={
-                  <span className="text-sm font-medium text-neutral-700">
-                    Contact Person Name
-                  </span>
-                }
-                name="contactPersonName"
-                rules={[
-                  {
-                    required: true,
-                    message: "Please enter contact person name!",
-                  },
-                ]}
-              >
-                <Input
-                  prefix={<UserOutlined className="text-neutral-400" />}
-                  placeholder="Enter contact person name"
-                  className="rounded-lg"
-                />
-              </Form.Item>
-
-              <Form.Item
-                label={
-                  <span className="text-sm font-medium text-neutral-700">
-                    Business Email
-                  </span>
-                }
-                name="businessEmail"
-                rules={[
-                  { required: true, message: "Please enter business email!" },
-                  { type: "email", message: "Please enter a valid email!" },
-                ]}
-              >
-                <Input
-                  prefix={<MailOutlined className="text-neutral-400" />}
-                  placeholder="Enter business email"
-                  className="rounded-lg"
-                />
-              </Form.Item>
-
-              <Form.Item
-                label={
-                  <span className="text-sm font-medium text-neutral-700">
-                    Primary Contact Number
-                  </span>
-                }
-                name="primaryContactNumber"
-                rules={[
-                  {
-                    required: true,
-                    message: "Please enter primary contact number!",
-                  },
-                ]}
-              >
-                <Input
-                  prefix={<PhoneOutlined className="text-neutral-400" />}
-                  placeholder="Enter primary contact number"
-                  className="rounded-lg"
-                />
-              </Form.Item>
-
-              <Form.Item
-                label={
-                  <span className="text-sm font-medium text-neutral-700">
-                    Country
-                  </span>
-                }
-                name="country"
-                rules={[
-                  { required: true, message: "Please select your country!" },
-                ]}
-              >
-                <Select
-                  placeholder="Select country"
-                  options={countryOptions}
-                  className="rounded-lg w-full"
-                  allowClear={false}
-                />
-              </Form.Item>
-
-              <Form.Item
-                label={
-                  <span className="text-sm font-medium text-neutral-700">
-                    How did you hear about us
-                  </span>
-                }
-                name="howDidYouHear"
-                rules={[
-                  {
-                    required: true,
-                    message: "Please select an option!",
-                  },
-                ]}
-              >
-                <Select
-                  placeholder="Select an option"
-                  options={howDidYouHearOptions}
-                  className="rounded-lg w-full"
-                  allowClear={false}
-                />
-              </Form.Item>
-
-              <Form.Item
-                name="agreeTerms"
-                valuePropName="checked"
-                rules={[
-                  {
-                    required: true,
-                    message: "You must agree to the Terms & Conditions",
-                  },
-                ]}
-              >
-                <Checkbox className="text-sm text-neutral-600">
-                  I agree to the{" "}
-                  <AntLink
-                    href="https://campustransfer.com/terms"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary-600 font-medium"
-                  >
-                    Terms & Conditions
-                  </AntLink>{" "}
-                  and{" "}
-                  <AntLink
-                    href="https://campustransfer.com/privacy"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary-600 font-medium"
-                  >
-                    Privacy Policy
-                  </AntLink>
-                </Checkbox>
-              </Form.Item>
-
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={isLoading}
-                className="w-full h-9 rounded-lg font-normal text-sm bg-primary-600 hover:bg-primary-700 border-0"
-              >
-                Create Account
-              </Button>
-            </Form>
-
-            <div className="mt-4 sm:mt-5 text-center">
-              <p className="text-sm text-neutral-600">
-                Already have an account?{" "}
-                <Link
-                  to="/login"
-                  className="text-primary-600 font-medium hover:text-primary-700 hover:underline"
+              {step === 1 ? (
+                <Form
+                  form={form}
+                  name="register-step1"
+                  requiredMark={false}
+                  onFinish={onStep1Finish}
+                  layout="vertical"
+                  size="large"
+                  initialValues={{
+                    country: "bangladesh",
+                    howDidYouHear: "facebook",
+                  }}
                 >
-                  Login here
-                </Link>
-              </p>
+                  <Form.Item
+                    label={
+                      <span className="text-sm font-medium text-neutral-700">
+                        Business Name
+                      </span>
+                    }
+                    name="businessName"
+                    rules={[
+                      { required: true, message: "Please enter your business name!" },
+                    ]}
+                  >
+                    <Input
+                      prefix={<UserOutlined className="text-neutral-400" />}
+                      placeholder="Enter business name"
+                      className="rounded-lg"
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    label={
+                      <span className="text-sm font-medium text-neutral-700">
+                        Contact Person Name
+                      </span>
+                    }
+                    name="contactPersonName"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please enter contact person name!",
+                      },
+                    ]}
+                  >
+                    <Input
+                      prefix={<UserOutlined className="text-neutral-400" />}
+                      placeholder="Enter contact person name"
+                      className="rounded-lg"
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    label={
+                      <span className="text-sm font-medium text-neutral-700">
+                        Business Email
+                      </span>
+                    }
+                    name="businessEmail"
+                    rules={[
+                      { required: true, message: "Please enter business email!" },
+                      { type: "email", message: "Please enter a valid email!" },
+                    ]}
+                  >
+                    <Input
+                      prefix={<MailOutlined className="text-neutral-400" />}
+                      placeholder="Enter business email"
+                      className="rounded-lg"
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    label={
+                      <span className="text-sm font-medium text-neutral-700">
+                        Country
+                      </span>
+                    }
+                    name="country"
+                    rules={[
+                      { required: true, message: "Please select your country!" },
+                    ]}
+                  >
+                    <Select
+                      placeholder="Select country"
+                      options={countryOptions}
+                      className="rounded-lg w-full"
+                      allowClear={false}
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    label={
+                      <span className="text-sm font-medium text-neutral-700">
+                        How did you hear about us
+                      </span>
+                    }
+                    name="howDidYouHear"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please select an option!",
+                      },
+                    ]}
+                  >
+                    <Select
+                      placeholder="Select an option"
+                      options={howDidYouHearOptions}
+                      className="rounded-lg w-full"
+                      allowClear={false}
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    name="agreeTerms"
+                    valuePropName="checked"
+                    rules={[
+                      {
+                        required: true,
+                        message: "You must agree to the Terms & Conditions",
+                      },
+                    ]}
+                  >
+                    <Checkbox className="text-sm text-neutral-600">
+                      I agree to the{" "}
+                      <AntLink
+                        href="https://campustransfer.com/terms"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary-600 font-medium"
+                      >
+                        Terms & Conditions
+                      </AntLink>{" "}
+                      and{" "}
+                      <AntLink
+                        href="https://campustransfer.com/privacy"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary-600 font-medium"
+                      >
+                        Privacy Policy
+                      </AntLink>
+                    </Checkbox>
+                  </Form.Item>
+
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    className="w-full h-10 rounded-lg font-semibold text-sm bg-primary-600 hover:bg-primary-700 border-0"
+                  >
+                    Next – Set Password
+                  </Button>
+                </Form>
+              ) : (
+                <Form
+                  form={form}
+                  name="register-step2"
+                  requiredMark={false}
+                  onFinish={onStep2Finish}
+                  layout="vertical"
+                  size="large"
+                >
+                  <Form.Item
+                    label={
+                      <span className="text-sm font-medium text-neutral-700">
+                        Password
+                      </span>
+                    }
+                    name="password"
+                    rules={[
+                      { required: true, message: "Please enter your password!" },
+                      { min: 6, message: "Password must be at least 6 characters!" },
+                    ]}
+                  >
+                    <Input.Password
+                      prefix={<LockOutlined className="text-neutral-400" />}
+                      placeholder="Enter password"
+                      className="rounded-lg"
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    label={
+                      <span className="text-sm font-medium text-neutral-700">
+                        Confirm Password
+                      </span>
+                    }
+                    name="confirmPassword"
+                    dependencies={["password"]}
+                    rules={[
+                      { required: true, message: "Please confirm your password!" },
+                      ({ getFieldValue }) => ({
+                        validator(_, value) {
+                          if (!value || getFieldValue("password") === value) {
+                            return Promise.resolve();
+                          }
+                          return Promise.reject(new Error("Passwords do not match!"));
+                        },
+                      }),
+                    ]}
+                  >
+                    <Input.Password
+                      prefix={<LockOutlined className="text-neutral-400" />}
+                      placeholder="Confirm password"
+                      className="rounded-lg"
+                    />
+                  </Form.Item>
+
+                  <div className="flex gap-3">
+                    <UIButton
+                      type="button"
+                      variant="outline"
+                      onClick={goBack}
+                      className="flex-1 h-10 text-sm font-semibold"
+                    >
+                      Back
+                    </UIButton>
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      loading={isLoading}
+                      className="flex-1 h-10 rounded-lg font-semibold text-sm bg-primary-600 hover:bg-primary-700 border-0"
+                    >
+                      Create Account
+                    </Button>
+                  </div>
+                </Form>
+              )}
+
+              <div className="mt-4 text-center">
+                <p className="text-sm text-neutral-500">
+                  Already have an account?{" "}
+                  <Link
+                    to="/login"
+                    className="font-medium text-primary-600 hover:text-primary-700"
+                  >
+                    Login here
+                  </Link>
+                </p>
+              </div>
             </div>
           </div>
         </div>

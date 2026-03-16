@@ -1,6 +1,11 @@
 import { Form, Checkbox } from "antd";
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../../../components/ui/button";
+import { toast } from "react-toastify";
+import { useGetStepDataQuery, usePatchStep5Mutation, useSubmitOnboardingMutation } from "../../../redux/features/onboardingForm/onboardingFormApi";
+import type { Step5Payload } from "../../../redux/features/onboardingForm/onboardingFormApi";
+import OnboardingFormSkeleton from "../OnboardingFormSkeleton";
 
 const formItemLayout = {
   className:
@@ -8,12 +13,67 @@ const formItemLayout = {
 };
 
 interface Props {
+  apiStep: number;
   onPrev: () => void;
   onSubmit: () => void;
 }
 
-export default function DeclarationStep({ onPrev, onSubmit }: Props) {
+export default function DeclarationStep({ apiStep, onPrev, onSubmit }: Props) {
   const [form] = Form.useForm();
+  const { data: stepData, isFetching } = useGetStepDataQuery(apiStep);
+  const [patchStep5, { isLoading: isPatching }] = usePatchStep5Mutation();
+  const [submitOnboarding, { isLoading: isSubmitting }] = useSubmitOnboardingMutation();
+
+  useEffect(() => {
+    const payload =
+      stepData?.data && (stepData.data as any).data;
+    if (payload && typeof payload === "object") {
+      const d = payload as Record<string, unknown>;
+      form.setFieldsValue({
+        verifyInfo: d.verifyInformation,
+        allowData: d.agreePrivacyPolicy,
+        receiveUpdates: d.agreeCommunicationUpdates,
+      });
+    }
+  }, [stepData, form]);
+
+  const handleSubmit = async () => {
+    try {
+      const values = await form.validateFields();
+      const payload: Step5Payload = {
+        verifyInformation: values.verifyInfo,
+        agreePrivacyPolicy: values.allowData,
+        agreeCommunicationUpdates: values.receiveUpdates,
+      };
+      await patchStep5(payload).unwrap();
+      await submitOnboarding().unwrap();
+      onSubmit();
+    } catch (err: any) {
+      // Handle case: onboarding already submitted
+      const message =
+        err?.data?.message ||
+        (typeof err?.error === "string" ? err.error : "") ||
+        "";
+
+      if (message.toLowerCase().includes("onboarding form already submitted")) {
+        toast.info("Your onboarding form is already submitted.");
+        // Move to submitted state so UI reflects backend status
+        onSubmit();
+        return;
+      }
+
+      // Generic fallback
+      if (message) {
+        toast.error(message);
+      } else {
+        toast.error("Failed to submit onboarding form. Please try again.");
+      }
+    }
+  };
+
+  if (isFetching && !stepData) {
+    return <OnboardingFormSkeleton rows={2} />;
+  }
 
   return (
     <>
@@ -30,7 +90,7 @@ export default function DeclarationStep({ onPrev, onSubmit }: Props) {
           <Link to="#" className="text-primary-600 hover:underline">Privacy Policy</Link>.
         </p>
       </div>
-      <Form form={form} layout="vertical" onFinish={onSubmit} {...formItemLayout}>
+      <Form form={form} layout="vertical" onFinish={handleSubmit} {...formItemLayout}>
         <Form.Item name="verifyInfo" valuePropName="checked" rules={[{ required: true, message: "Required" }]}>
           <Checkbox className="[&_.ant-checkbox-inner]:rounded [&_.ant-checkbox-checked_.ant-checkbox-inner]:bg-primary-500 [&_.ant-checkbox-checked_.ant-checkbox-inner]:border-primary-500">
             I verify that all the information provided is accurate and legitimate. <span className="text-red-500">*</span>
@@ -52,8 +112,8 @@ export default function DeclarationStep({ onPrev, onSubmit }: Props) {
           <Button type="button" variant="secondary" size="sm" onClick={onPrev}>
             ← Previous
           </Button>
-          <Button type="submit" variant="primary" size="sm">
-            Submit
+          <Button type="submit" variant="primary" size="sm" disabled={isPatching || isSubmitting}>
+            {isPatching || isSubmitting ? "Submitting…" : "Submit"}
           </Button>
         </div>
       </Form>

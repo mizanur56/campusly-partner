@@ -2,34 +2,10 @@ import React, { useState, useRef, useEffect } from "react";
 import SelectedStudentCard, {
   type SelectedStudent,
 } from "./SelectedStudentCard";
-
-export const DUMMY_STUDENTS: SelectedStudent[] = [
-  {
-    id: "1",
-    name: "Md Abdul Khalak",
-    email: "md.abdulkhalakfgvc1999@gmail.com",
-  },
-  {
-    id: "2",
-    name: "Md Abdul Khaliq",
-    email: "abdul.khaliq@example.com",
-  },
-  {
-    id: "3",
-    name: "Tareeq Mahmud",
-    email: "tareeq.mahmud@example.com",
-  },
-  {
-    id: "4",
-    name: "Fatima Rahman",
-    email: "fatima.rahman@example.com",
-  },
-  {
-    id: "5",
-    name: "Hassan Ahmed",
-    email: "hassan.ahmed@example.com",
-  },
-];
+import {
+  useGetStudentsQuery,
+  type StudentUser,
+} from "../../redux/features/users/usersApi";
 
 interface StudentSelectBlockProps {
   selectedStudent: SelectedStudent | null;
@@ -41,7 +17,15 @@ export default function StudentSelectBlock({
   onSelect,
 }: StudentSelectBlockProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const {
+    data: studentsResponse,
+    isLoading,
+    isError,
+  } = useGetStudentsQuery({ page: 1, limit: 50, search });
+  const students: StudentUser[] = studentsResponse?.data || [];
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -66,8 +50,11 @@ export default function StudentSelectBlock({
     <div className="relative" ref={containerRef}>
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          if (!isLoading && !isError) setIsOpen(!isOpen);
+        }}
         className="w-full rounded-lg border border-dashed border-gray-300 bg-gray-50/80 p-3.5 text-left hover:border-primary-300 hover:bg-primary-50/40 transition-colors"
+        disabled={isLoading || isError}
       >
         <div className="flex items-center gap-2.5">
           <span className="flex w-8 h-8 items-center justify-center rounded-full bg-primary-100 text-primary-600">
@@ -90,7 +77,11 @@ export default function StudentSelectBlock({
               Select Student
             </span>
             <p className="text-xs text-gray-500 mt-0.5">
-              We&apos;ll pre-fill the data from their profile.
+              {isLoading
+                ? "Loading students..."
+                : isError
+                  ? "Unable to load students."
+                  : "We&apos;ll pre-fill the data from their profile."}
             </p>
           </div>
           <svg
@@ -111,31 +102,54 @@ export default function StudentSelectBlock({
 
       {isOpen && (
         <div className="absolute z-20 mt-1.5 w-full rounded-lg border border-gray-200 bg-white py-1 max-h-52 overflow-y-auto no-scrollbar">
-          {DUMMY_STUDENTS.map((student) => (
-            <button
-              key={student.id}
-              type="button"
-              onClick={() => {
-                onSelect(student);
-                setIsOpen(false);
-              }}
-              className="w-full px-3 py-2.5 text-left hover:bg-primary-50/80 flex items-center gap-3 transition-colors rounded-md mx-1"
-            >
-              <div className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden bg-gray-100">
-                <img
-                  src={`https://i.pravatar.cc/80?u=${student.id}`}
-                  alt=""
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="min-w-0 flex-1 text-left">
-                <p className="font-medium text-sm text-gray-900 truncate">
-                  {student.name}
-                </p>
-                <p className="text-xs text-gray-500 truncate">{student.email}</p>
-              </div>
-            </button>
-          ))}
+          <div className="px-2 pb-1">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by email or name"
+              className="w-full rounded-md border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+            />
+          </div>
+          {students.map((student) => {
+            const mapped: SelectedStudent = {
+              id: student.id,
+              name: student.name,
+              email: student.email,
+            };
+            return (
+              <button
+                key={student.id}
+                type="button"
+                onClick={() => {
+                  onSelect(mapped);
+                  setIsOpen(false);
+                }}
+                className="w-full px-3 py-2.5 text-left hover:bg-primary-50/80 flex items-center gap-3 transition-colors rounded-md mx-1"
+              >
+                <div className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden bg-gray-100">
+                  <img
+                    src={`https://i.pravatar.cc/80?u=${student.id}`}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="min-w-0 flex-1 text-left">
+                  <p className="font-medium text-sm text-gray-900 truncate">
+                    {student.name}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">
+                    {student.email}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+          {!isLoading && !isError && students.length === 0 && (
+            <div className="px-3 py-2 text-xs text-gray-500">
+              No students found.
+            </div>
+          )}
         </div>
       )}
     </div>
