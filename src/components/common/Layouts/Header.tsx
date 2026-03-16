@@ -32,7 +32,7 @@ const mockCourses = [
 
 const SCROLL_THRESHOLD = 8;
 
-const SIGNED_HEADER_PATHS = ["/programs-schools", "/students", "/applications", "/my-tasks", "/academy", "/hot-offers"];
+const SIGNED_HEADER_PATHS = ["/programs-schools", "/students", "/applications", "/my-tasks", "/academy", "/hot-offers", "/team-members"];
 
 const Header: React.FC = () => {
   const { pathname } = useLocation();
@@ -49,7 +49,7 @@ const Header: React.FC = () => {
     pathname === "/" ||
     pathname.startsWith("/onboarding") ||
     pathname.startsWith("/contract") ||
-    ["/programs-schools", "/students", "/applications", "/my-tasks", "/academy", "/hot-offers"].includes(pathname) ||
+    ["/programs-schools", "/students", "/applications", "/my-tasks", "/academy", "/hot-offers", "/team-members"].includes(pathname) ||
     pathname.startsWith("/payments") ||
     pathname.startsWith("/students/") ||
     pathname.startsWith("/applications/");

@@ -7,9 +7,8 @@ import { Search } from "lucide-react";
 import { IoFilterSharp } from "react-icons/io5";
 import { useSelector } from "react-redux";
 import PageMeta from "../../components/common/Meta/PageMeta";
-import PageHeader from "../../components/common/Navigation/PageHeader";
-import PrimaryButton from "../../components/common/Button/PrimaryButton";
 import DataTable from "../../components/common/Tables/DataTable";
+import "./Applications.css";
 import DeleteModal from "../../components/shared/DeleteModal";
 import { useGetMyAllApplicationsQuery } from "../../redux/features/application/applicationApi";
 import { selectCurrentUser } from "../../redux/features/auth/authSlice";
@@ -188,92 +187,82 @@ export default function Applications() {
         title="Applications - Campus Transfer Partner"
         description="View and manage student applications, status, and submissions in the Campus Transfer Partner panel."
       />
-      <PageHeader
-        title="Applications"
-        subtitle={
-          isTeamMember
-            ? "Applications for students assigned to you"
-            : "Manage your applications"
-        }
-        breadcrumbs={[
-          { title: "Dashboard", path: "/" },
-          { title: "Applications" },
-        ]}
-        extra={
-          <PrimaryButton
-            text="Find More Programs"
-            onClick={() => navigate("/programs-schools")}
-          />
-        }
-      />
-
-      <div className="bg-[#FFFFFF] rounded-lg border border-[#C7CACF] p-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <div className="w-full sm:w-1/2">
-            <Input
-              placeholder="Search by ID, course, university or status"
-              prefix={<Search size={16} className="text-[#4B5563]" />}
-              value={searchText}
-              onChange={(e) => {
-                setSearchText(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full search-input"
-              styles={{
-                input: {
-                  padding: "10px",
-                  fontSize: "12px",
-                  fontWeight: 500,
-                  color: "#4B5563",
-                },
-              }}
-            />
-          </div>
-
-          <Space>
-            <Dropdown
-              open={isFilterDropdownOpen}
-              onOpenChange={setIsFilterDropdownOpen}
-              menu={{
-                items: [
-                  {
-                    key: "status_filter",
-                    label: (
-                      <div
-                        className="px-2 py-1"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <div className="text-xs text-gray-500 mb-1">Status</div>
-                        <Select
-                          placeholder="Select status"
-                          value={selectedStatus}
-                          onChange={handleStatusFilterChange}
-                          style={{ width: 200 }}
-                          allowClear
-                        >
-                          <Option value="REVIEW">Review</Option>
-                          <Option value="PENDING">Pending</Option>
-                          <Option value="SUCCESS">Success</Option>
-                          <Option value="REJECTED">Rejected</Option>
-                        </Select>
-                      </div>
-                    ),
-                  },
-                ],
-              }}
-              trigger={["click"]}
-            >
-              <button
-                type="button"
-                className="flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                <IoFilterSharp size={16} />
-                <span>Filter</span>
-              </button>
-            </Dropdown>
-          </Space>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
+            Applications
+          </h1>
+          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+            {isTeamMember
+              ? "Applications for students assigned to you"
+              : "Manage your applications"}
+          </p>
         </div>
+        <button
+          type="button"
+          onClick={() => navigate("/programs-schools")}
+          className="inline-flex items-center justify-center rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+        >
+          Find More Programs
+        </button>
+      </div>
 
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <Input
+          placeholder="Search by ID, course, university or status"
+          prefix={<Search size={16} className="text-[#4B5563]" />}
+          value={searchText}
+          onChange={(e) => {
+            setSearchText(e.target.value);
+            setCurrentPage(1);
+          }}
+          allowClear
+          size="large"
+          style={{ width: 200 }}
+        />
+        <Dropdown
+          open={isFilterDropdownOpen}
+          onOpenChange={setIsFilterDropdownOpen}
+          menu={{
+            items: [
+              {
+                key: "status_filter",
+                label: (
+                  <div
+                    className="px-2 py-1"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="text-xs text-gray-500 mb-1">Status</div>
+                    <Select
+                      placeholder="Select status"
+                      value={selectedStatus}
+                      onChange={handleStatusFilterChange}
+                      style={{ width: 200 }}
+                      allowClear
+                    >
+                      <Option value="REVIEW">Review</Option>
+                      <Option value="PENDING">Pending</Option>
+                      <Option value="SUCCESS">Success</Option>
+                      <Option value="REJECTED">Rejected</Option>
+                    </Select>
+                  </div>
+                ),
+              },
+            ],
+          }}
+          trigger={["click"]}
+        >
+          <button
+            type="button"
+            className="flex h-10 items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50"
+          >
+            <IoFilterSharp size={16} />
+            <span>Filter</span>
+          </button>
+        </Dropdown>
+      </div>
+
+      <div className="applications-table-wrapper overflow-hidden rounded-[24px] border border-neutral-100 bg-white dark:border-gray-800 dark:bg-gray-900">
         <DataTable
           data={tableData}
           columns={columns}
@@ -287,6 +276,7 @@ export default function Applications() {
           isPaginate
           showHeader={false}
           showSizeChanger
+          noInnerBorder
           pagination={{
             pageSizeOptions: ["10", "20", "50"],
           }}

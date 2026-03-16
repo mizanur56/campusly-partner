@@ -2,8 +2,8 @@ import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import PageMeta from "../../components/common/Meta/PageMeta";
 import PageHeader from "../../components/common/Navigation/PageHeader";
-import PageLoader from "../../components/ui/PageLoader";
 import { useGetHotOffersQuery } from "../../redux/features/hotOffers/hotOffersApi";
+import HotOffersSkeleton from "./HotOffersSkeleton";
 import { getApiImageUrl } from "../../utils/getApiImageUrl";
 
 function getImageUrl(url: string | null | undefined): string {
@@ -51,7 +51,7 @@ export default function HotOffers() {
       />
 
       {isPageLoading ? (
-        <PageLoader fullScreen={false} />
+        <HotOffersSkeleton />
       ) : (
         <div className="space-y-8 pb-8">
           {/* Country Tabs */}
@@ -317,23 +317,13 @@ export default function HotOffers() {
 
           {/* Banner */}
           {banner && banner.status === "ACTIVE" && (
-            <section className="rounded-[24px] overflow-hidden border border-neutral-100 shadow-sm w-full">
-              <div className="grid grid-cols-1 md:grid-cols-2 min-h-[120px] md:min-h-[140px]">
-                <div className="bg-primary-700 p-4 md:p-5 flex flex-col justify-center">
-                  <h2 className="text-xl md:text-2xl font-bold text-white mb-1.5">
-                    {banner.title}
-                  </h2>
-                  <p className="text-primary-100 text-base mb-3 max-w-md">{banner.description}</p>
-                  <a
-                    href={banner.buttonUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex w-fit items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-primary-700 hover:bg-primary-50 transition-colors"
-                  >
-                    {banner.buttonText}
-                  </a>
-                </div>
-                <div className="min-h-[100px] md:min-h-[140px] bg-neutral-200 overflow-hidden">
+            <section className="w-full rounded-[24px] overflow-hidden border border-neutral-100 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.12)]">
+              <div className="relative flex flex-col md:flex-row-reverse min-h-[180px] md:min-h-[200px]">
+                {/* Decorative background glow */}
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary-50/70 via-transparent to-primary-100/80" />
+
+                {/* Image side */}
+                <div className="relative z-10 w-full md:w-[340px] shrink-0 h-44 md:h-auto md:min-h-[200px] bg-neutral-100 overflow-hidden">
                   {banner.imageUrl ? (
                     <img
                       src={getImageUrl(banner.imageUrl)}
@@ -341,8 +331,35 @@ export default function HotOffers() {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="h-full w-full bg-neutral-300" />
+                    <div className="h-full w-full bg-gradient-to-br from-neutral-100 to-neutral-200" />
                   )}
+                </div>
+
+                {/* Content side */}
+                <div className="relative z-10 flex-1 flex flex-col justify-center gap-3 px-6 py-6 md:px-8 md:py-8 bg-gradient-to-br from-primary-700 via-primary-700 to-primary-600">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-primary-50 backdrop-blur-sm border border-white/20 w-fit">
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    Limited-time Partner Offer
+                  </div>
+                  <h2 className="text-xl md:text-2xl font-bold text-white leading-tight">
+                    {banner.title}
+                  </h2>
+                  <p className="text-primary-100 text-sm md:text-base max-w-xl leading-relaxed">
+                    {banner.description}
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-3">
+                    <a
+                      href={banner.buttonUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition-all hover:bg-primary-50 hover:shadow-md"
+                    >
+                      {banner.buttonText}
+                    </a>
+                    <span className="text-xs md:text-sm text-primary-100/80">
+                      Help your students secure these offers before seats run out.
+                    </span>
+                  </div>
                 </div>
               </div>
             </section>

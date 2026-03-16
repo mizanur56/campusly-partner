@@ -12,8 +12,8 @@ import {
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import PageMeta from "../../components/common/Meta/PageMeta";
-import PageHeader from "../../components/common/Navigation/PageHeader";
 import DataTable from "../../components/common/Tables/DataTable";
+import "./TeamMembers.css";
 import {
   useGetTeamMembersQuery,
   useGetTeamStatsQuery,
@@ -212,27 +212,31 @@ export default function TeamMembers() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div>
       <PageMeta
         title="Team Members - Campus Transfer Partner"
         description="Manage your partner team members, invitations, and roles."
       />
-      <PageHeader
-        title="Team Members"
-        subtitle="Invite and manage your partner team."
-        breadcrumbs={[
-          { title: "Home", path: "/" },
-          { title: "Team Members" },
-        ]}
-        extra={
-          <Button type="primary" onClick={() => setIsInviteModalOpen(true)}>
-            Invite Team Member
-          </Button>
-        }
-      />
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
+            Team Members
+          </h1>
+          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+            Invite and manage your partner team.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsInviteModalOpen(true)}
+          className="inline-flex items-center justify-center rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+        >
+          Invite Team Member
+        </button>
+      </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <div className="text-xs text-gray-500 mb-1">Total Members</div>
           <div className="text-2xl font-semibold text-gray-900">
@@ -253,18 +257,20 @@ export default function TeamMembers() {
         </div>
       </div>
 
-      {/* Search and filter */}
-      <div className="flex flex-wrap items-center gap-3">
-        <Input
-          placeholder="Search by name or email"
-          allowClear
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
-          style={{ maxWidth: 280 }}
-        />
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <div className="max-w-sm">
+          <Input
+            placeholder="Search by name or email"
+            allowClear
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            size="large"
+            style={{ width: 200 }}
+          />
+        </div>
         <Select
           placeholder="Filter by status"
           allowClear
@@ -273,7 +279,8 @@ export default function TeamMembers() {
             setStatusFilter(value ?? "");
             setPage(1);
           }}
-          style={{ width: 160 }}
+          size="large"
+          style={{ width: 200 }}
           options={[
             { value: "PENDING", label: "Pending" },
             { value: "ACTIVE", label: "Active" },
@@ -281,23 +288,26 @@ export default function TeamMembers() {
         />
       </div>
 
-      <DataTable
-        data={members}
-        columns={columns}
-        rowKey="id"
-        currentPage={page}
-        setCurrentPage={setPage}
-        limit={limit}
-        setLimit={setLimit}
-        total={meta?.total ?? 0}
-        loading={isLoading || isFetching}
-        isPaginate
-        showHeader
-        showSizeChanger
-        pagination={{
-          pageSizeOptions: ["10", "20", "50"],
-        }}
-      />
+      <div className="team-members-table-wrapper overflow-hidden rounded-[24px] border border-neutral-100 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <DataTable
+          data={members}
+          columns={columns}
+          rowKey="id"
+          currentPage={page}
+          setCurrentPage={setPage}
+          limit={limit}
+          setLimit={setLimit}
+          total={meta?.total ?? 0}
+          loading={isLoading || isFetching}
+          isPaginate
+          showHeader
+          showSizeChanger
+          noInnerBorder
+          pagination={{
+            pageSizeOptions: ["10", "20", "50"],
+          }}
+        />
+      </div>
 
       {/* Invite modal */}
       <Modal
@@ -310,7 +320,7 @@ export default function TeamMembers() {
         onOk={handleInviteSubmit}
         okText="Send invitation"
         okButtonProps={{ loading: isInviting }}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form layout="vertical" form={form}>
           <Form.Item
@@ -357,7 +367,7 @@ export default function TeamMembers() {
         onOk={handleEditSubmit}
         okText="Save"
         okButtonProps={{ loading: isUpdating }}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form layout="vertical" form={editForm}>
           <Form.Item

@@ -179,6 +179,10 @@ const Sidebar: React.FC = () => {
   const isManagedByLoading =
     !isTeamMember && (isPartnerProfileLoading || isPartnerProfileFetching);
 
+  // Signed sidebar: always show logged-in user's own profile info
+  const signedProfileName = user?.name ?? profileName;
+  const signedProfileEmail = user?.email ?? profileEmail;
+
   const handleLogout = () => {
     console.log("Logging out...");
     localStorage.removeItem("token");
@@ -578,82 +582,43 @@ const Sidebar: React.FC = () => {
         </div>
       )}
 
-      {/* Sidebar preview: SIGNED partner view – partner card (no "Managed by" label) */}
+      {/* Sidebar preview: SIGNED view – show own profile info (logged-in user) */}
       {(isExpanded || isMobileOpen) && isSignedContext && (
         <div className="mx-3 mt-0 rounded-xl bg-gray-50/80 p-3 dark:bg-gray-800/40">
-          {isManagedByLoading ? (
-            <div className="animate-pulse">
-              <div className="flex items-center gap-2.5">
-                <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700" />
-                <div className="h-4 w-28 rounded bg-gray-200 dark:bg-gray-700" />
-              </div>
-              <div className="mt-3 space-y-2">
-                <div className="h-3.5 w-full rounded bg-gray-200 dark:bg-gray-700" />
-                <div className="h-3.5 w-4/5 rounded bg-gray-200 dark:bg-gray-700" />
-              </div>
+          <div className="mt-0 flex items-center gap-2.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-100">
+              {signedProfileName
+                .split(" ")
+                .map((n) => n[0])
+                .join("")}
             </div>
-          ) : (
-            <>
-              <div className="mt-0 flex items-center gap-2.5">
-                {profilePhotoUrl ? (
-                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-                    <img
-                      src={profilePhotoUrl}
-                      alt={profileName}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                ) : null}
-                <p className="min-w-0 flex-1 truncate text-sm font-medium text-gray-800 dark:text-gray-100">
-                  {profileName}
-                </p>
-              </div>
-              <div className="mt-2.5 space-y-1.5">
-                {profileEmail && (
-                  <a
-                    href={`mailto:${profileEmail}`}
-                    className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
-                  >
-                    <svg
-                      className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                      />
-                    </svg>
-                    <span className="min-w-0 truncate">{profileEmail}</span>
-                  </a>
-                )}
-                {profilePhone && (
-                  <a
-                    href={`tel:${profilePhone.replace(/\s/g, "")}`}
-                    className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
-                  >
-                    <svg
-                      className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                      />
-                    </svg>
-                    <span className="min-w-0 truncate">{profilePhone}</span>
-                  </a>
-                )}
-              </div>
-            </>
-          )}
+            <p className="min-w-0 flex-1 truncate text-sm font-medium text-gray-800 dark:text-gray-100">
+              {signedProfileName}
+            </p>
+          </div>
+          <div className="mt-2.5 space-y-1.5">
+            {signedProfileEmail && (
+              <a
+                href={`mailto:${signedProfileEmail}`}
+                className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
+              >
+                <svg
+                  className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  />
+                </svg>
+                <span className="min-w-0 truncate">{signedProfileEmail}</span>
+              </a>
+            )}
+          </div>
         </div>
       )}
 

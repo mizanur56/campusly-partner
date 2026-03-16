@@ -13,7 +13,6 @@ import {
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import PageMeta from "../../components/common/Meta/PageMeta";
-import PageHeader from "../../components/common/Navigation/PageHeader";
 import DataTable from "../../components/common/Tables/DataTable";
 import {
   useGetPartnerTasksQuery,
@@ -320,18 +319,25 @@ export default function MyTasks() {
         title="My Tasks - Campus Transfer Partner"
         description="View and manage your tasks. Filter by status, assigned to me, or created by me."
       />
-      <PageHeader
-        title="My Tasks"
-        subtitle="View and manage your tasks"
-        breadcrumbs={[{ title: "Dashboard", path: "/" }, { title: "My Tasks" }]}
-        extra={
-          <Button type="primary" onClick={() => setIsCreateModalOpen(true)}>
-            + Create task
-          </Button>
-        }
-      />
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
+            My Tasks
+          </h1>
+          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+            View and manage your tasks
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsCreateModalOpen(true)}
+          className="inline-flex items-center justify-center rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+        >
+          + Create task
+        </button>
+      </div>
 
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+      <div className="mb-6 flex flex-wrap items-center gap-3">
         <Select
           placeholder="Status"
           value={statusFilter || undefined}
@@ -340,46 +346,58 @@ export default function MyTasks() {
             setPage(1);
           }}
           options={STATUS_OPTIONS}
-          className="w-full sm:w-40"
           allowClear
+          size="large"
+          style={{ width: 200 }}
         />
-        <Space>
-          <Button
-            type={assignedToMe === true ? "primary" : "default"}
-            onClick={() => {
-              setAssignedToMe(assignedToMe === true ? undefined : true);
-              setPage(1);
-            }}
-          >
-            Assigned to me
-          </Button>
-          <Button
-            type={createdByMe === true ? "primary" : "default"}
-            onClick={() => {
-              setCreatedByMe(createdByMe === true ? undefined : true);
-              setPage(1);
-            }}
-          >
-            Created by me
-          </Button>
-        </Space>
+        <button
+          type="button"
+          onClick={() => {
+            setAssignedToMe(assignedToMe === true ? undefined : true);
+            setPage(1);
+          }}
+          className={`flex h-10 items-center rounded-lg border px-4 py-2 text-sm ${
+            assignedToMe === true
+              ? "border-primary-500 bg-primary-500 text-white hover:bg-primary-600"
+              : "border-gray-300 bg-white hover:bg-gray-50"
+          }`}
+        >
+          Assigned to me
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setCreatedByMe(createdByMe === true ? undefined : true);
+            setPage(1);
+          }}
+          className={`flex h-10 items-center rounded-lg border px-4 py-2 text-sm ${
+            createdByMe === true
+              ? "border-primary-500 bg-primary-500 text-white hover:bg-primary-600"
+              : "border-gray-300 bg-white hover:bg-gray-50"
+          }`}
+        >
+          Created by me
+        </button>
       </div>
 
-      <DataTable
-        data={tasks}
-        columns={columns}
-        rowKey="id"
-        currentPage={page}
-        setCurrentPage={setPage}
-        limit={limit}
-        setLimit={setLimit}
-        total={total}
-        loading={tasksLoading || tasksFetching}
-        isPaginate
-        showHeader
-        showSizeChanger
-        pagination={{ pageSizeOptions: ["10", "20", "50"] }}
-      />
+      <div className="my-tasks-table-wrapper overflow-hidden rounded-[24px] border border-neutral-100 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <DataTable
+          data={tasks}
+          columns={columns}
+          rowKey="id"
+          currentPage={page}
+          setCurrentPage={setPage}
+          limit={limit}
+          setLimit={setLimit}
+          total={total}
+          loading={tasksLoading || tasksFetching}
+          isPaginate
+          showHeader
+          showSizeChanger
+          noInnerBorder
+          pagination={{ pageSizeOptions: ["10", "20", "50"] }}
+        />
+      </div>
 
       {/* View / Detail modal */}
       <Modal
@@ -472,7 +490,7 @@ export default function MyTasks() {
         onOk={handleCreateSubmit}
         okText="Create"
         okButtonProps={{ loading: isCreating }}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={createForm} layout="vertical">
           <Form.Item

@@ -51,7 +51,12 @@ function DashboardOrRedirect() {
 
 function AppRoutes() {
   return (
-    <BrowserRouter>
+    <BrowserRouter
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
       <Routes>
         <Route path="/404" element={<NotFound />} />
         <Route path="/login" element={<Login />} />

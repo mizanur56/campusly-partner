@@ -7,8 +7,32 @@ const PARTNER_STUDENT_BASE = "/partners/students";
  * Base: /partners/students/:studentId (GET profile, PUT profile, educations, visa-rejections, documents).
  * Auth: PARTNER (full), PARTNER_TEAM_MEMBER (GET profile only).
  */
+export type CreateStudentPayload = {
+  email: string;
+  fullName: string;
+  password?: string;
+  phone?: string;
+};
+
+export type CreateStudentResponse = {
+  studentId: string;
+  userId: string;
+  email: string;
+  fullName: string;
+  temporaryPassword?: string;
+};
+
 export const partnerStudentProfileApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
+    createStudent: builder.mutation<CreateStudentResponse, CreateStudentPayload>({
+      query: (body) => ({
+        url: PARTNER_STUDENT_BASE,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["users"],
+    }),
+
     getStudentProfile: builder.query({
       query: (studentId: string) => ({
         url: `${PARTNER_STUDENT_BASE}/${studentId}/profile`,
@@ -230,6 +254,7 @@ export const partnerStudentProfileApi = baseApi.injectEndpoints({
 });
 
 export const {
+  useCreateStudentMutation,
   useGetStudentProfileQuery,
   useUpdateStudentProfileMutation,
   useLazyGetStudentProfileQuery,

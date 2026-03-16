@@ -22,6 +22,57 @@ export interface PartnerProfileResponse {
   [key: string]: unknown;
 }
 
+export interface PartnerDashboardTopStats {
+  tasks_pending: number;
+  applications_total: number;
+  accepted_applications: number;
+  rejected_applications: number;
+  active_students: number;
+}
+
+export interface PartnerDashboardTeamMember {
+  id: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  email: string;
+  status: string;
+  contactNumber: string | null;
+  countryCode: string | null;
+  invitedAt: string;
+}
+
+export interface PartnerDashboardDestination {
+  id: string;
+  name: string;
+  code: string | null;
+  priority: number;
+  imageUrl: string | null;
+}
+
+export interface PartnerDashboardSubject {
+  id: string;
+  name: string;
+  applicationCount: number;
+}
+
+export interface PartnerDashboardUniversity {
+  id: string;
+  name: string;
+  countryName: string;
+  logoUrl: string | null;
+  applicationCount: number;
+}
+
+export interface PartnerDashboardResponse {
+  topStats: PartnerDashboardTopStats;
+  supportPanel: Advisor[];
+  teamMembers: PartnerDashboardTeamMember[];
+  topDestinations: PartnerDashboardDestination[];
+  topSubjects: PartnerDashboardSubject[];
+  topUniversities: PartnerDashboardUniversity[];
+}
+
 const partnerProfileApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     /** Get current partner's profile including advisor details */
@@ -34,8 +85,22 @@ const partnerProfileApi = baseApi.injectEndpoints({
         (response?.data || {}) as PartnerProfileResponse,
       providesTags: ["partnerProfile"],
     }),
+
+    /** Signed dashboard data (KPIs, support, team members, top destinations/subjects/universities) */
+    getPartnerDashboard: builder.query<PartnerDashboardResponse, void>({
+      query: () => ({
+        url: "/partners/dashboard",
+        method: "GET",
+      }),
+      transformResponse: (response: any) =>
+        (response?.data || {}) as PartnerDashboardResponse,
+      providesTags: ["partnerProfile"],
+    }),
   }),
 });
 
-export const { useGetPartnerProfileQuery, useLazyGetPartnerProfileQuery } =
-  partnerProfileApi;
+export const {
+  useGetPartnerProfileQuery,
+  useLazyGetPartnerProfileQuery,
+  useGetPartnerDashboardQuery,
+} = partnerProfileApi;

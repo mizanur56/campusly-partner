@@ -1,25 +1,33 @@
-.my-tasks-page .my-tasks-table .ant-table-thead > tr > th {
-  background-color: var(--neutral-50, #f8f9fa) !important;
-  font-weight: 600;
+/* Same table design as Team Members / Applications: wrapper border only, 24px rounded (no shadow) */
+.my-tasks-table-wrapper {
+  border: 1px solid var(--neutral-100, #f5f5f5) !important;
 }
-
-.my-tasks-page .my-tasks-table.ant-table-wrapper {
+.my-tasks-table-wrapper .ant-table-wrapper {
+  border-radius: 24px;
+  overflow: hidden;
+  border: none !important;
+  box-shadow: none !important;
+}
+.my-tasks-table-wrapper .ant-table-container {
   border-radius: 24px;
   overflow: hidden;
 }
-.my-tasks-page .my-tasks-table .ant-table-container {
-  border-radius: 24px;
-  overflow: hidden;
+.my-tasks-table-wrapper .ant-table {
+  border: none !important;
 }
-.my-tasks-page .my-tasks-table .ant-table-thead > tr > th:first-child {
+.my-tasks-table-wrapper .ant-table-thead > tr > th:first-child {
   border-radius: 24px 0 0 0;
 }
-.my-tasks-page .my-tasks-table .ant-table-thead > tr > th:last-child {
+.my-tasks-table-wrapper .ant-table-thead > tr > th:last-child {
   border-radius: 0 24px 0 0;
 }
-.my-tasks-page .my-tasks-table .ant-table-tbody > tr:last-child > td:first-child {
+.my-tasks-table-wrapper .ant-table-tbody > tr:last-child > td:first-child {
   border-radius: 0 0 0 24px;
 }
-.my-tasks-page .my-tasks-table .ant-table-tbody > tr:last-child > td:last-child {
+.my-tasks-table-wrapper .ant-table-tbody > tr:last-child > td:last-child {
   border-radius: 0 0 24px 0;
+}
+.my-tasks-table-wrapper .ant-table-thead > tr > th {
+  background-color: var(--neutral-50, #f8f9fa) !important;
+  font-weight: 600;
 }

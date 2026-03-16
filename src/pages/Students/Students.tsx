@@ -4,6 +4,7 @@ import { Table, Input } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useSelector } from "react-redux";
 import PageMeta from "../../components/common/Meta/PageMeta";
+import CreateStudentModal from "../../components/common/Modals/CreateStudentModal";
 import "../../components/common/Tables/AntTable.css";
 import { useGetStudentsQuery } from "../../redux/features/users/usersApi";
 import { useGetStudentsWithActiveTasksQuery } from "../../redux/features/tasks/partnerTasksApi";
@@ -49,6 +50,7 @@ export default function Students() {
   const [searchText, setSearchText] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [createStudentOpen, setCreateStudentOpen] = useState(false);
 
   const { data, isFetching } = useGetStudentsQuery(
     { page, limit: pageSize },
@@ -171,12 +173,19 @@ export default function Students() {
           </p>
         </div>
         {!isTeamMember && (
-          <button
-            type="button"
-            className="inline-flex items-center justify-center rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-          >
-            + Add student
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => setCreateStudentOpen(true)}
+              className="inline-flex items-center justify-center rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            >
+              + Add student
+            </button>
+            <CreateStudentModal
+              open={createStudentOpen}
+              onClose={() => setCreateStudentOpen(false)}
+            />
+          </>
         )}
       </div>
 
