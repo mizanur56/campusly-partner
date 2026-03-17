@@ -73,9 +73,12 @@ export default function UserDropdown() {
         <ul className="flex flex-col gap-1 pt-3 pb-3 border-t border-gray-200 dark:border-gray-800">
           <li>
             <DropdownItem
-              onItemClick={closeDropdown}
+              onItemClick={() => {
+                closeDropdown();
+                navigate("/settings/profile");
+              }}
               tag="a"
-              to="/profile"
+              to="/settings/profile"
               className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 dark:text-gray-300"
             >
               <svg
