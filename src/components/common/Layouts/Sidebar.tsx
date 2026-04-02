@@ -144,6 +144,8 @@ const Sidebar: React.FC = () => {
   const { student } = useStudentProfile();
   const user = useSelector(selectCurrentUser);
 
+
+
   // Fetch partner profile to get advisor details
   const {
     data: partnerProfile,

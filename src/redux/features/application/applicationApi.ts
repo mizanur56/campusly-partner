@@ -53,6 +53,25 @@ const applicationApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["applications", "invoices"],
     }),
+
+    getAllInvoicePayments: builder.query({
+      query: (args?: { name: string; value: any }[]) => {
+        const params = new URLSearchParams();
+        if (args) {
+          args.forEach((item) => {
+            if (item.value !== undefined && item.value !== null) {
+              params.append(item.name, item.value);
+            }
+          });
+        }
+        return {
+          url: `/invoice-payments`,
+          method: "GET",
+          params: params,
+        };
+      },
+      providesTags: ["applications", "invoices"],
+    }),
   }),
 });
 
@@ -62,4 +81,5 @@ export const {
   useGetApplicationByIdQuery,
   useApplicationDocumentUploadMutation,
   useSubmitPaymentReceiptMutation,
+  useGetAllInvoicePaymentsQuery,
 } = applicationApi;

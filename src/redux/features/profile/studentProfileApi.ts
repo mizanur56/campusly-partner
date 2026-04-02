@@ -250,6 +250,20 @@ export const partnerStudentProfileApi = baseApi.injectEndpoints({
         { type: "studentProfile", id: studentId },
       ],
     }),
+
+    getEligibleStudyLevelsByCountry: builder.query({
+      query: ({ countryId, studentId }) => ({
+        url: `/students/eligible-study-levels`,
+        method: "GET",
+        params: {
+          countryId,
+          studentId, // ✅ এখানে দিতে হবে
+        },
+      }),
+      providesTags: ["countryStudyLevels"],
+    }),
+  
+
   }),
 });
 
@@ -269,4 +283,5 @@ export const {
   useGetStudentApplicationsQuery,
   useUpsertDocumentMutation,
   useDeleteDocumentMutation,
+  useGetEligibleStudyLevelsByCountryQuery,
 } = partnerStudentProfileApi;
