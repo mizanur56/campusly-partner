@@ -1,10 +1,12 @@
-import React from "react";
-import { useSelector } from "react-redux";
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Navigate, useLocation } from "react-router-dom";
 import {
+  logout,
   selectCurrentUser,
   useCurrentToken,
 } from "../redux/features/auth/authSlice";
+import { clearLogoutCookie, hasLogoutCookie } from "../lib/logoutCookie";
 
 interface ProtectedRouteProps {
   roles?: string[];
@@ -23,6 +25,21 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const user = useSelector(selectCurrentUser);
   const token = useSelector(useCurrentToken);
   const location = useLocation();
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    const check = () => {
+      if (hasLogoutCookie()) {
+        clearLogoutCookie();
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        dispatch(logout());
+      }
+    };
+    check();
+    window.addEventListener("focus", check);
+    return () => window.removeEventListener("focus", check);
+  }, [dispatch]);
 
   // Check if token exists in both Redux and localStorage
   const hasToken = token && localStorage.getItem("token");

@@ -7,6 +7,7 @@ import {
   selectCurrentUser,
 } from "../../../redux/features/auth/authSlice";
 import { baseApi } from "../../../redux/api/baseApi";
+import { callLogoutApi, setLogoutCookie } from "../../../lib/logoutCookie";
 import { Dropdown } from "../../ui/dropdown/Dropdown";
 import { DropdownItem } from "../../ui/dropdown/DropdownItem";
 
@@ -127,7 +128,9 @@ export default function UserDropdown() {
           </li> */}
         </ul>
         <button
-          onClick={() => {
+          onClick={async () => {
+            await callLogoutApi();
+            setLogoutCookie();
             // Clear local auth-related storage
             localStorage.removeItem("token");
             localStorage.removeItem("user");
