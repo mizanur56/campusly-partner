@@ -102,6 +102,33 @@ export default function UserDropdown() {
             </DropdownItem>
           </li>
 
+          <li>
+            <DropdownItem
+              onItemClick={() => {
+                closeDropdown();
+                window.location.href = `https://${config.app_domain}`;
+              }}
+              tag="button"
+              className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 dark:text-gray-300"
+            >
+              <svg
+                className="fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300 shrink-0"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden
+              >
+                <path
+                  d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-4h4v4a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"
+                  fill="currentColor"
+                />
+              </svg>
+              Back to website
+            </DropdownItem>
+          </li>
+
           {/* <li>
             <DropdownItem
               onItemClick={closeDropdown}
