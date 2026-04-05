@@ -68,17 +68,27 @@ interface CommissionTransactionRecord {
 
 export default function Payments() {
   const { pathname } = useLocation();
-  const topTab: TopTabKey = pathname.includes("/commission") ? "commission" : "purchase";
-  const [purchaseTab, setPurchaseTab] = useState<PurchaseTabKey>("applications");
-  const [commissionTab, setCommissionTab] = useState<CommissionTabKey>("earned");
+  const topTab: TopTabKey = pathname.includes("/commission")
+    ? "commission"
+    : "purchase";
+  const [purchaseTab, setPurchaseTab] =
+    useState<PurchaseTabKey>("applications");
+  const [commissionTab, setCommissionTab] =
+    useState<CommissionTabKey>("earned");
   const [searchText, setSearchText] = useState("");
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isBankModalOpen, setIsBankModalOpen] = useState(false);
-  const [uploadCommissionId, setUploadCommissionId] = useState<string | null>(null);
+  const [uploadCommissionId, setUploadCommissionId] = useState<string | null>(
+    null,
+  );
   const [uploadInvoiceFile, setUploadInvoiceFile] = useState<File | null>(null);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
-  const [selectedPurchaseKeys, setSelectedPurchaseKeys] = useState<React.Key[]>([]);
-  const [selectedPurchaseRecords, setSelectedPurchaseRecords] = useState<PurchaseApplicationRecord[]>([]);
+  const [selectedPurchaseKeys, setSelectedPurchaseKeys] = useState<React.Key[]>(
+    [],
+  );
+  const [selectedPurchaseRecords, setSelectedPurchaseRecords] = useState<
+    PurchaseApplicationRecord[]
+  >([]);
 
   const [purchasePage, setPurchasePage] = useState(1);
   const [purchasePageSize, setPurchasePageSize] = useState(10);
@@ -87,7 +97,8 @@ export default function Payments() {
   const [commissionPage, setCommissionPage] = useState(1);
   const [commissionPageSize, setCommissionPageSize] = useState(10);
   const [commissionHistoryPage, setCommissionHistoryPage] = useState(1);
-  const [commissionHistoryPageSize, setCommissionHistoryPageSize] = useState(10);
+  const [commissionHistoryPageSize, setCommissionHistoryPageSize] =
+    useState(10);
 
   const { data: bankAccount } = useGetActiveBankAccountQuery();
   const { data: purchaseStats } = useGetPurchaseStatsQuery();
@@ -119,7 +130,8 @@ export default function Payments() {
 
   const [paySelectedApplications, { isLoading: isPaying }] =
     usePaySelectedApplicationsMutation();
-  const [claimCommission, { isLoading: isClaiming }] = useClaimCommissionMutation();
+  const [claimCommission, { isLoading: isClaiming }] =
+    useClaimCommissionMutation();
 
   const handleResetSearchOnTabChange = () => {
     setSearchText("");
@@ -138,8 +150,8 @@ export default function Payments() {
         statusRaw === "PAID"
           ? "Paid"
           : statusRaw === "UNDER_REVIEW"
-          ? "Under Review"
-          : "Unpaid";
+            ? "Under Review"
+            : "Unpaid";
       return {
         key: fee.id || `${index}`,
         feeId: fee.id,
@@ -161,7 +173,9 @@ export default function Payments() {
       return {
         key: txn.id || `${index}`,
         transactionId: txn.txnRef || "",
-        date: txn.createdAt ? new Date(txn.createdAt).toISOString().slice(0, 10) : "",
+        date: txn.createdAt
+          ? new Date(txn.createdAt).toISOString().slice(0, 10)
+          : "",
         applicationId: firstApp?.applicationId
           ? String(firstApp.applicationId)
           : "—",
@@ -185,8 +199,8 @@ export default function Payments() {
         statusRaw === "PAID"
           ? "Paid"
           : statusRaw === "PENDING"
-          ? "Pending"
-          : "Unpaid";
+            ? "Pending"
+            : "Unpaid";
       return {
         key: c.id || `${index}`,
         commissionId: c.id,
@@ -269,8 +283,18 @@ export default function Payments() {
 
   const purchaseApplicationsColumns: ColumnsType<PurchaseApplicationRecord> = [
     { title: "#", dataIndex: "key", key: "key", width: 60 },
-    { title: "Application ID", dataIndex: "applicationId", key: "applicationId", width: 140 },
-    { title: "Student Name", dataIndex: "studentName", key: "studentName", width: 180 },
+    {
+      title: "Application ID",
+      dataIndex: "applicationId",
+      key: "applicationId",
+      width: 140,
+    },
+    {
+      title: "Student Name",
+      dataIndex: "studentName",
+      key: "studentName",
+      width: 180,
+    },
     {
       title: "Fee",
       dataIndex: "fee",
@@ -304,8 +328,8 @@ export default function Payments() {
             status === "Paid"
               ? "success"
               : status === "Under Review"
-              ? "warning"
-              : "default"
+                ? "warning"
+                : "default"
           }
         >
           {status}
@@ -316,9 +340,19 @@ export default function Payments() {
 
   const purchaseTransactionsColumns: ColumnsType<PurchaseTransactionRecord> = [
     { title: "#", dataIndex: "key", key: "key", width: 60 },
-    { title: "Transaction ID", dataIndex: "transactionId", key: "transactionId", width: 140 },
+    {
+      title: "Transaction ID",
+      dataIndex: "transactionId",
+      key: "transactionId",
+      width: 140,
+    },
     { title: "Date", dataIndex: "date", key: "date", width: 140 },
-    { title: "Application ID", dataIndex: "applicationId", key: "applicationId", width: 140 },
+    {
+      title: "Application ID",
+      dataIndex: "applicationId",
+      key: "applicationId",
+      width: 140,
+    },
     {
       title: "Amount",
       dataIndex: "amount",
@@ -332,7 +366,10 @@ export default function Payments() {
       key: "status",
       width: 130,
       render: (status: PurchaseTransactionRecord["status"]) => (
-        <Tag className="payments-status-tag" color={status === "Completed" ? "success" : "default"}>
+        <Tag
+          className="payments-status-tag"
+          color={status === "Completed" ? "success" : "default"}
+        >
           {status}
         </Tag>
       ),
@@ -342,10 +379,7 @@ export default function Payments() {
       key: "receipt",
       width: 120,
       render: () => (
-        <button
-          type="button"
-          className="payments-link-button"
-        >
+        <button type="button" className="payments-link-button">
           Download
         </button>
       ),
@@ -354,8 +388,18 @@ export default function Payments() {
 
   const commissionEarnedColumns: ColumnsType<CommissionEarnedRecord> = [
     { title: "#", dataIndex: "key", key: "key", width: 60 },
-    { title: "Application ID", dataIndex: "applicationId", key: "applicationId", width: 140 },
-    { title: "Student Name", dataIndex: "studentName", key: "studentName", width: 180 },
+    {
+      title: "Application ID",
+      dataIndex: "applicationId",
+      key: "applicationId",
+      width: 140,
+    },
+    {
+      title: "Student Name",
+      dataIndex: "studentName",
+      key: "studentName",
+      width: 180,
+    },
     {
       title: "Earned",
       dataIndex: "earned",
@@ -375,8 +419,8 @@ export default function Payments() {
             status === "Paid"
               ? "success"
               : status === "Pending"
-              ? "warning"
-              : "default"
+                ? "warning"
+                : "default"
           }
         >
           {status}
@@ -391,11 +435,11 @@ export default function Payments() {
         <button
           type="button"
           className="payments-primary-button"
-                  onClick={() => {
-                    setUploadCommissionId(record.commissionId);
-                    setIsUploadModalOpen(true);
-                    setUploadInvoiceFile(null);
-                  }}
+          onClick={() => {
+            setUploadCommissionId(record.commissionId);
+            setIsUploadModalOpen(true);
+            setUploadInvoiceFile(null);
+          }}
         >
           Upload Invoice
         </button>
@@ -403,30 +447,44 @@ export default function Payments() {
     },
   ];
 
-  const commissionTransactionsColumns: ColumnsType<CommissionTransactionRecord> = [
-    { title: "#", dataIndex: "key", key: "key", width: 60 },
-    { title: "Transaction ID", dataIndex: "transactionId", key: "transactionId", width: 140 },
-    { title: "Date", dataIndex: "date", key: "date", width: 140 },
-    { title: "Application ID", dataIndex: "applicationId", key: "applicationId", width: 140 },
-    {
-      title: "Amount",
-      dataIndex: "amount",
-      key: "amount",
-      width: 120,
-      render: (value: number) => `€${value}`,
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      width: 130,
-      render: (status: CommissionTransactionRecord["status"]) => (
-        <Tag className="payments-status-tag" color={status === "Completed" ? "success" : "default"}>
-          {status}
-        </Tag>
-      ),
-    },
-  ];
+  const commissionTransactionsColumns: ColumnsType<CommissionTransactionRecord> =
+    [
+      { title: "#", dataIndex: "key", key: "key", width: 60 },
+      {
+        title: "Transaction ID",
+        dataIndex: "transactionId",
+        key: "transactionId",
+        width: 140,
+      },
+      { title: "Date", dataIndex: "date", key: "date", width: 140 },
+      {
+        title: "Application ID",
+        dataIndex: "applicationId",
+        key: "applicationId",
+        width: 140,
+      },
+      {
+        title: "Amount",
+        dataIndex: "amount",
+        key: "amount",
+        width: 120,
+        render: (value: number) => `€${value}`,
+      },
+      {
+        title: "Status",
+        dataIndex: "status",
+        key: "status",
+        width: 130,
+        render: (status: CommissionTransactionRecord["status"]) => (
+          <Tag
+            className="payments-status-tag"
+            color={status === "Completed" ? "success" : "default"}
+          >
+            {status}
+          </Tag>
+        ),
+      },
+    ];
 
   const renderPurchaseApplicationsToolbar = () => (
     <div className="payments-toolbar">
@@ -449,7 +507,9 @@ export default function Payments() {
         <button
           type="button"
           className="payments-primary-button"
-          disabled={selectedPurchaseRecords.length === 0 || selectedTotalPayable <= 0}
+          disabled={
+            selectedPurchaseRecords.length === 0 || selectedTotalPayable <= 0
+          }
           onClick={() => setIsBankModalOpen(true)}
         >
           {selectedTotalPayable > 0
@@ -750,7 +810,11 @@ export default function Payments() {
     <div className="payments-page">
       <PageMeta
         title={`${topTab === "purchase" ? "Purchase" : "Commission"} - Payments | Campus Transfer Partner`}
-        description={topTab === "purchase" ? "Manage application payments and transaction history." : "View earned commissions and commission transaction history."}
+        description={
+          topTab === "purchase"
+            ? "Manage application payments and transaction history."
+            : "View earned commissions and commission transaction history."
+        }
       />
 
       <header className="payments-header">
@@ -767,17 +831,13 @@ export default function Payments() {
       </header>
 
       {/* Inner tabs: Applications / Transaction History or Earned Commissions / Transaction History */}
-      <div className="payments-inner-tabs-wrapper">
-        {renderInnerTabs()}
-      </div>
+      <div className="payments-inner-tabs-wrapper">{renderInnerTabs()}</div>
 
       {/* KPI cards */}
       {renderTopCards()}
 
       {/* Table + toolbar */}
-      <section className="payments-section">
-        {renderTableSection()}
-      </section>
+      <section className="payments-section">{renderTableSection()}</section>
 
       {/* Upload Invoice modal */}
       <Modal
@@ -812,7 +872,9 @@ export default function Payments() {
             <p className="ant-upload-drag-icon">
               <InboxOutlined />
             </p>
-            <p className="payments-dragger-title">Drag &amp; drop your Invoice</p>
+            <p className="payments-dragger-title">
+              Drag &amp; drop your Invoice
+            </p>
             <button type="button" className="payments-primary-button mt-2">
               Choose file
             </button>
@@ -915,4 +977,3 @@ export default function Payments() {
     </div>
   );
 }
-

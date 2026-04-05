@@ -1,10 +1,15 @@
-import React from "react";
-import { useSelector } from "react-redux";
-import { Navigate, useLocation } from "react-router-dom";
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Navigate } from "react-router-dom";
 import {
+  logout,
   selectCurrentUser,
   useCurrentToken,
 } from "../redux/features/auth/authSlice";
+import { clearAuthLocalStorage } from "../lib/authLocalStorage";
+import { clearLogoutCookie, hasLogoutCookie } from "../lib/logoutCookie";
+import { config } from "../config";
+import { redirectToCorrectPortalIfNeeded } from "../lib/portalRouting";
 
 interface ProtectedRouteProps {
   roles?: string[];
@@ -22,19 +27,31 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 }) => {
   const user = useSelector(selectCurrentUser);
   const token = useSelector(useCurrentToken);
-  const location = useLocation();
+  const dispatch = useDispatch();
 
-  // Check if token exists in both Redux and localStorage
+  useEffect(() => {
+    const check = () => {
+      if (hasLogoutCookie()) {
+        clearLogoutCookie();
+        clearAuthLocalStorage();
+        dispatch(logout());
+      }
+    };
+    check();
+    window.addEventListener("focus", check);
+    return () => window.removeEventListener("focus", check);
+  }, [dispatch]);
+
   const hasToken = token && localStorage.getItem("token");
 
-  // If no token, redirect to login
-  if (!hasToken) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  if (!hasToken || !user) {
+    // SessionRestoreProvider already attempted a restore — give up and send to main website
+    window.location.href = `https://${config.app_domain}/auth/login`;
+    return null;
   }
 
-  // If no user data, redirect to login
-  if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  if (redirectToCorrectPortalIfNeeded(user)) {
+    return null;
   }
 
   // Check if user has required access
@@ -52,7 +69,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 const checkAccess = (
   user: any,
   roles?: string[],
-  employeePermissions?: { module: string; action: string }
+  employeePermissions?: { module: string; action: string },
 ): boolean => {
   // If no restrictions, allow access
   if (!roles && !employeePermissions) {
@@ -68,7 +85,7 @@ const checkAccess = (
   if (employeePermissions && user.type === "employee" && user.designation) {
     const { module, action } = employeePermissions;
     const modulePermission = user.designation.permissions?.find(
-      (p: any) => p.module === module
+      (p: any) => p.module === module,
     );
 
     if (modulePermission && modulePermission.actions.includes(action)) {

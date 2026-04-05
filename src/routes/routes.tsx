@@ -16,6 +16,7 @@ import NotFound from "../pages/OtherPage/NotFound";
 import UnderDevelopment from "../pages/OtherPage/UnderDevelopment";
 import ProgramsSchools from "../pages/ProgramsSchools/ProgramsSchools";
 import ProtectedRoute from "./ProtectedRoute";
+import GuestOnlyAuthRoute from "./GuestOnlyAuthRoute";
 import { OnboardingPage } from "../pages/Onboarding";
 import ContractPage from "../pages/Contract/ContractPage";
 import ContractSignedPage from "../pages/Contract/ContractSignedPage";
@@ -35,6 +36,7 @@ import VisaSuccessPage from "../pages/Applications/ApplicationStep/VisaSuccessPa
 import MyTasks from "../pages/MyTasks/MyTasks";
 import TeamMembers from "../pages/TeamMembers/TeamMembers";
 import Payments from "../pages/Payments/Payments";
+import ProfileSettings from "../pages/Settings/ProfileSettings";
 
 function StudentProfileRedirect() {
   const { id } = useParams();
@@ -59,11 +61,46 @@ function AppRoutes() {
     >
       <Routes>
         <Route path="/404" element={<NotFound />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgetPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/set-password" element={<SetPasswordByInvite />} />
+        <Route
+          path="/login"
+          element={
+            <GuestOnlyAuthRoute>
+              <Login />
+            </GuestOnlyAuthRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <GuestOnlyAuthRoute>
+              <Register />
+            </GuestOnlyAuthRoute>
+          }
+        />
+        <Route
+          path="/forgot-password"
+          element={
+            <GuestOnlyAuthRoute>
+              <ForgetPassword />
+            </GuestOnlyAuthRoute>
+          }
+        />
+        <Route
+          path="/reset-password"
+          element={
+            <GuestOnlyAuthRoute>
+              <ResetPassword />
+            </GuestOnlyAuthRoute>
+          }
+        />
+        <Route
+          path="/set-password"
+          element={
+            <GuestOnlyAuthRoute>
+              <SetPasswordByInvite />
+            </GuestOnlyAuthRoute>
+          }
+        />
         <Route
           path="/"
           element={
@@ -106,6 +143,7 @@ function AppRoutes() {
           <Route path="payments/commission" element={<Payments />} />
           <Route path="academy" element={<Academy />} />
           <Route path="hot-offers" element={<HotOffers />} />
+          <Route path="settings/profile" element={<ProfileSettings />} />
           <Route path="*" element={<UnderDevelopment />} />
         </Route>
       </Routes>

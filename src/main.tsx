@@ -9,6 +9,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { PersistGate } from "redux-persist/integration/react";
 import { persistor, store } from "./redux/features/store";
 import AppRoutes from "./routes/routes";
+import SessionRestoreProvider from "./providers/SessionRestoreProvider";
 import "./styles/index.css";
 
 const config = {
@@ -25,19 +26,21 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <HelmetProvider>
         <Provider store={store}>
           <PersistGate loading={null} persistor={persistor}>
-            <ToastContainer
-              position="bottom-right"
-              autoClose={5000}
-              hideProgressBar={false}
-              newestOnTop={false}
-              closeOnClick
-              rtl={false}
-              pauseOnFocusLoss
-              draggable
-              pauseOnHover
-              theme="colored"
-            />
-            <AppRoutes />
+            <SessionRestoreProvider>
+              <ToastContainer
+                position="bottom-right"
+                autoClose={5000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="colored"
+              />
+              <AppRoutes />
+            </SessionRestoreProvider>
           </PersistGate>
         </Provider>
       </HelmetProvider>
