@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { config } from "../config";
 import { persistAuthLocalStorage } from "../lib/authLocalStorage";
@@ -12,7 +12,10 @@ import {
   setUser,
   useCurrentToken,
 } from "../redux/features/auth/authSlice";
-import { redirectToCorrectPortalIfNeeded } from "../lib/portalRouting";
+import {
+  redirectFromPortalRoleCookieIfNeeded,
+  redirectToCorrectPortalIfNeeded,
+} from "../lib/portalRouting";
 
 const MAIN_LOGIN = `https://${config.app_domain}/auth/login`;
 const apiBase = (config.api ?? "").replace(/\/$/, "");
@@ -29,8 +32,13 @@ function isPublicAuthPath(): boolean {
   if (typeof window === "undefined") return false;
   const p = window.location.pathname;
   return PUBLIC_AUTH_PATHS.some(
-    (prefix) => p === prefix || p.startsWith(`${prefix}/`)
+    (prefix) => p === prefix || p.startsWith(`${prefix}/`),
   );
+}
+
+function getInitialSessionGateStatus(): "checking" | "done" {
+  if (typeof window === "undefined") return "checking";
+  return isPublicAuthPath() ? "done" : "checking";
 }
 
 async function callMe(token: string): Promise<Response> {
@@ -49,7 +57,7 @@ async function callRefresh(): Promise<Response> {
 
 function localSessionMatchesRedux(
   user: unknown,
-  token: string | null | undefined
+  token: string | null | undefined,
 ): boolean {
   if (!user || !token) return false;
   const lsToken = localStorage.getItem("token");
@@ -73,11 +81,20 @@ export default function SessionRestoreProvider({
   const user = useSelector(selectCurrentUser);
   const token = useSelector(useCurrentToken);
 
-  const storageAligned = localSessionMatchesRedux(user, token ?? undefined);
   const [status, setStatus] = useState<"checking" | "done">(
-    user && token && storageAligned ? "done" : "checking"
+    getInitialSessionGateStatus,
   );
   const attempted = useRef(false);
+
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") return;
+    if (isPublicAuthPath()) return;
+    if (redirectFromPortalRoleCookieIfNeeded()) return;
+    if (user && token && localSessionMatchesRedux(user, token)) {
+      if (redirectToCorrectPortalIfNeeded(user as any)) return;
+      setStatus("done");
+    }
+  }, [user, token]);
 
   useEffect(() => {
     if (user && token && localSessionMatchesRedux(user, token)) {
@@ -89,10 +106,7 @@ export default function SessionRestoreProvider({
     if (attempted.current) return;
 
     const publicAnonymous =
-      isPublicAuthPath() &&
-      !user &&
-      !token &&
-      !localStorage.getItem("token");
+      isPublicAuthPath() && !user && !token && !localStorage.getItem("token");
 
     if (publicAnonymous) {
       setStatus("done");

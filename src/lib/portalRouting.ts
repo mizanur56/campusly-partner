@@ -78,15 +78,33 @@ export function readPortalRoleCookie(): string | null {
   return null;
 }
 
-export function resolveEffectiveRole(user: {
+export function redirectFromPortalRoleCookieIfNeeded(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    if (!localStorage.getItem("token")) return false;
+  } catch {
+    return false;
+  }
+  const raw = readPortalRoleCookie();
+  if (!raw?.trim()) return false;
+  const home = homePortalForRole(raw.trim());
+  const current = inferCurrentPortal();
+  if (!home || home === current) return false;
+  const target = getPortalOrigin(home, config.app_domain);
+  if (!target) return false;
+  window.location.replace(`${target}/`);
+  return true;
+}
+
+export function resolvePortalRoleForRedirect(user: {
   role?: string;
   type?: string;
 }): string | null {
   if (user?.type === "employee") return "EMPLOYEE";
-  const redux = user?.role ? String(user.role).trim() : "";
-  if (redux) return redux;
   const fromCookie = readPortalRoleCookie();
   if (fromCookie && fromCookie.trim()) return fromCookie.trim();
+  const redux = user?.role ? String(user.role).trim() : "";
+  if (redux) return redux;
   return null;
 }
 
@@ -109,7 +127,7 @@ export function redirectToCorrectPortalIfNeeded(user: {
   role?: string;
   type?: string;
 }): boolean {
-  const role = resolveEffectiveRole(user);
+  const role = resolvePortalRoleForRedirect(user);
   const home = homePortalForRole(role);
   const current = inferCurrentPortal();
 
