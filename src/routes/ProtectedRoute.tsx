@@ -9,6 +9,7 @@ import {
 import { clearAuthLocalStorage } from "../lib/authLocalStorage";
 import { clearLogoutCookie, hasLogoutCookie } from "../lib/logoutCookie";
 import { config } from "../config";
+import { redirectToCorrectPortalIfNeeded } from "../lib/portalRouting";
 
 interface ProtectedRouteProps {
   roles?: string[];
@@ -49,6 +50,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return null;
   }
 
+  if (redirectToCorrectPortalIfNeeded(user)) {
+    return null;
+  }
+
   // Check if user has required access
   const hasAccess = checkAccess(user, roles, employeePermissions);
 
@@ -64,7 +69,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 const checkAccess = (
   user: any,
   roles?: string[],
-  employeePermissions?: { module: string; action: string }
+  employeePermissions?: { module: string; action: string },
 ): boolean => {
   // If no restrictions, allow access
   if (!roles && !employeePermissions) {
@@ -80,7 +85,7 @@ const checkAccess = (
   if (employeePermissions && user.type === "employee" && user.designation) {
     const { module, action } = employeePermissions;
     const modulePermission = user.designation.permissions?.find(
-      (p: any) => p.module === module
+      (p: any) => p.module === module,
     );
 
     if (modulePermission && modulePermission.actions.includes(action)) {

@@ -10,6 +10,7 @@ import { useLoginMutation } from "../../redux/features/auth/authApi";
 import { setUser } from "../../redux/features/auth/authSlice";
 import { useAppDispatch } from "../../redux/features/hooks";
 import { cn } from "../../utils/utils";
+import { redirectToCorrectPortalIfNeeded } from "../../lib/portalRouting";
 
 interface LoginFormValues {
   email: string;
@@ -49,6 +50,7 @@ const Login = () => {
         const accessToken = res?.data?.token;
         persistAuthLocalStorage(userData, accessToken);
         dispatch(setUser({ user: userData, token: accessToken }));
+        if (redirectToCorrectPortalIfNeeded(userData)) return;
         const isTeamMember = userFromResponse?.role === "PARTNER_TEAM_MEMBER";
         const targetPath = isTeamMember ? "/my-tasks" : from;
         navigate(targetPath, { replace: true });

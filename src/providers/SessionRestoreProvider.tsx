@@ -12,6 +12,7 @@ import {
   setUser,
   useCurrentToken,
 } from "../redux/features/auth/authSlice";
+import { redirectToCorrectPortalIfNeeded } from "../lib/portalRouting";
 
 const MAIN_LOGIN = `https://${config.app_domain}/auth/login`;
 const apiBase = (config.api ?? "").replace(/\/$/, "");
@@ -80,6 +81,7 @@ export default function SessionRestoreProvider({
 
   useEffect(() => {
     if (user && token && localSessionMatchesRedux(user, token)) {
+      if (redirectToCorrectPortalIfNeeded(user as any)) return;
       setStatus("done");
       return;
     }
@@ -168,12 +170,14 @@ export default function SessionRestoreProvider({
           }
           dispatch(setUser({ user: userData as any, token: fromRefresh }));
           persistAuthLocalStorage(userData, fromRefresh);
+          if (redirectToCorrectPortalIfNeeded(userData as any)) return;
           setStatus("done");
           return;
         }
 
         dispatch(setUser({ user: userData as any, token: sessionToken }));
         persistAuthLocalStorage(userData, sessionToken);
+        if (redirectToCorrectPortalIfNeeded(userData as any)) return;
         setStatus("done");
       } catch {
         goLoginOrStayOnPublicAuth();
