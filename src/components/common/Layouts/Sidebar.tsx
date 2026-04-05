@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { config } from "../../../config";
+import { clearAuthLocalStorage } from "../../../lib/authLocalStorage";
 import { usePreviewMode } from "../../../context/PreviewModeContext";
 import { useSidebar } from "../../../context/SidebarContext";
 import { useFilteredSidebarItems } from "../../../hooks/useFilteredSidebarItems";
@@ -191,7 +192,7 @@ const Sidebar: React.FC = () => {
 
   const handleLogout = () => {
     console.log("Logging out...");
-    localStorage.removeItem("token");
+    clearAuthLocalStorage();
     localStorage.removeItem("partner-preview-mode");
     navigate("/login");
   };

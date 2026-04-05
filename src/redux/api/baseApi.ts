@@ -7,6 +7,8 @@ import {
 } from "@reduxjs/toolkit/query/react";
 import { toast } from "react-toastify";
 import { config } from "../../config";
+import { refreshAuthSession } from "../../lib/authSessionRefresh";
+import { clearAuthLocalStorage } from "../../lib/authLocalStorage";
 import { logout } from "../features/auth/authSlice";
 import { RootState } from "../features/store";
 
@@ -56,6 +58,25 @@ const getClientDetails = async (): Promise<ClientDetails> => {
   };
 };
 
+// Mutations that return 401 for invalid credentials — do not chain refresh
+const NO_REFRESH_ON_401_ENDPOINTS = new Set([
+  "login",
+  "register",
+  "forgotPassword",
+  "resetPassword",
+  "setPasswordByInvitation",
+]);
+
+function is401Result(result: { error?: FetchBaseQueryError }): boolean {
+  if (result?.error?.status === 401) return true;
+  const data = result?.error?.data;
+  if (data && typeof data === "object" && "error" in data) {
+    const err = (data as { error?: { statusCode?: number } }).error;
+    return err?.statusCode === 401;
+  }
+  return false;
+}
+
 // ======================
 // Base Query
 // ======================
@@ -79,102 +100,105 @@ const rawBaseQuery = fetchBaseQuery({
   },
 });
 
-// ======================
-// Custom Base Query with Token Refresh
-// ======================
-const baseQueryWithRefreshToken: BaseQueryFn<
-  string | FetchArgs, // request type
-  unknown, // response type
-  FetchBaseQueryError // error type
-> = async (args, api, extraOptions) => {
-  const result = await rawBaseQuery(args, api, extraOptions);
+function handle401Logout(
+  api: Parameters<BaseQueryFn>[1],
+  result: { error?: FetchBaseQueryError },
+) {
+  let errorMessage = "Unauthorized. Please log in.";
 
-  // Check for 401 errors - can be status 401 or nested in error.data
-  const is401Error =
-    result?.error?.status === 401 ||
-    (result?.error?.data &&
-      typeof result.error.data === "object" &&
-      "error" in result.error.data &&
-      (result.error.data as any).error?.statusCode === 401);
-
-  if (is401Error) {
-    // Extract error message - handle multiple possible structures
-    let errorMessage = "Unauthorized. Please log in.";
-
-    if (result?.error?.data) {
-      if (typeof result?.error?.data === "string") {
-        errorMessage = result.error.data;
-      } else if (typeof result.error.data === "object") {
-        // Check for message at root level
-        if ("message" in result.error.data) {
-          errorMessage =
-            (result.error.data as { message?: string }).message || errorMessage;
-        }
-        // Check for message in nested error object
-        else if (
-          "error" in result.error.data &&
-          typeof (result.error.data as any).error === "object" &&
-          "message" in (result.error.data as any).error
-        ) {
-          errorMessage =
-            (result.error.data as any).error.message || errorMessage;
-        }
+  if (result?.error?.data) {
+    if (typeof result?.error?.data === "string") {
+      errorMessage = result.error.data;
+    } else if (typeof result.error.data === "object") {
+      if ("message" in result.error.data) {
+        errorMessage =
+          (result.error.data as { message?: string }).message || errorMessage;
+      } else if (
+        "error" in result.error.data &&
+        typeof (result.error.data as any).error === "object" &&
+        "message" in (result.error.data as any).error
+      ) {
+        errorMessage =
+          (result.error.data as any).error.message || errorMessage;
       }
     }
-
-    // Check if this is a session invalidation (permissions updated)
-    const isSessionExpired =
-      errorMessage?.toLowerCase().includes("session expired") ||
-      errorMessage?.toLowerCase().includes("session has been invalidated") ||
-      errorMessage?.toLowerCase().includes("updated permissions") ||
-      errorMessage?.toLowerCase().includes("re-login") ||
-      errorMessage?.toLowerCase().includes("please login again");
-
-    if (isSessionExpired) {
-      // Show specific message for permission updates
-      toast.error(
-        "Your permissions have been updated. Please login again to continue.",
-        { autoClose: 5000 },
-      );
-    } else {
-      // Show generic unauthorized message
-      toast.error(errorMessage || "Unauthorized. Please log in.");
-    }
-
-    // Clear auth state
-    api.dispatch(logout());
-
-    // Clear local storage
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-
-    try {
-      // Preserve the current path so user can be redirected back after login
-      const currentPath = window.location.pathname + window.location.search;
-      const encoded = encodeURIComponent(currentPath);
-      const basename = "/";
-
-      // Small delay to ensure toast shows
-      setTimeout(() => {
-        window.location.href = `${basename}/login?redirect=${encoded}`;
-      }, 100);
-    } catch (err) {
-      console.error("Error during redirect:", err);
-      const basename = "/";
-      window.location.href = `${basename}/login`;
-    }
   }
 
-  if (result?.error?.status === 404) {
+  const isSessionExpired =
+    errorMessage?.toLowerCase().includes("session expired") ||
+    errorMessage?.toLowerCase().includes("session has been invalidated") ||
+    errorMessage?.toLowerCase().includes("updated permissions") ||
+    errorMessage?.toLowerCase().includes("re-login") ||
+    errorMessage?.toLowerCase().includes("please login again");
+
+  if (isSessionExpired) {
     toast.error(
-      result.error.data &&
-        typeof result.error.data === "object" &&
-        "message" in result.error.data
-        ? (result.error.data as { message?: string }).message || "Not found."
-        : "Not found.",
+      "Your permissions have been updated. Please login again to continue.",
+      { autoClose: 5000 },
     );
+  } else {
+    toast.error(errorMessage || "Unauthorized. Please log in.");
   }
 
+  api.dispatch(logout());
+  clearAuthLocalStorage();
+
+  try {
+    setTimeout(() => {
+      window.location.href = `https://${config.app_domain}/auth/login`;
+    }, 100);
+  } catch (err) {
+    console.error("Error during redirect:", err);
+    window.location.href = `https://${config.app_domain}/auth/login`;
+  }
+}
+
+// ======================
+// Custom Base Query with Token Refresh + retry
+// ======================
+const baseQueryWithRefreshToken: BaseQueryFn<
+  string | FetchArgs,
+  unknown,
+  FetchBaseQueryError
+> = async (args, api, extraOptions) => {
+  let result = await rawBaseQuery(args, api, extraOptions);
+
+  if (!is401Result(result)) {
+    if (result?.error?.status === 404) {
+      toast.error(
+        result.error.data &&
+          typeof result.error.data === "object" &&
+          "message" in result.error.data
+          ? (result.error.data as { message?: string }).message || "Not found."
+          : "Not found.",
+      );
+    }
+    return result;
+  }
+
+  const skipRefresh = NO_REFRESH_ON_401_ENDPOINTS.has(api.endpoint);
+
+  if (!skipRefresh) {
+    const refreshed = await refreshAuthSession(api);
+    if (refreshed) {
+      result = await rawBaseQuery(args, api, extraOptions);
+      if (!is401Result(result)) {
+        if (result?.error?.status === 404) {
+          toast.error(
+            result.error.data &&
+              typeof result.error.data === "object" &&
+              "message" in result.error.data
+              ? (result.error.data as { message?: string }).message ||
+                "Not found."
+              : "Not found.",
+          );
+        }
+        return result;
+      }
+    }
+  }
+
+  handle401Logout(api, result);
   return result;
 };
 

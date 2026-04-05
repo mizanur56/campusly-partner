@@ -7,6 +7,7 @@ import {
   selectCurrentUser,
 } from "../../../redux/features/auth/authSlice";
 import { baseApi } from "../../../redux/api/baseApi";
+import { clearAuthLocalStorage } from "../../../lib/authLocalStorage";
 import { callLogoutApi, setLogoutCookie } from "../../../lib/logoutCookie";
 import { Dropdown } from "../../ui/dropdown/Dropdown";
 import { DropdownItem } from "../../ui/dropdown/DropdownItem";
@@ -131,19 +132,12 @@ export default function UserDropdown() {
           onClick={async () => {
             await callLogoutApi();
             setLogoutCookie();
-            // Clear local auth-related storage
-            localStorage.removeItem("token");
-            localStorage.removeItem("user");
+            clearAuthLocalStorage();
             localStorage.removeItem("partner-preview-mode");
-
-            // Clear Redux auth slice
             dispatch(logout());
-
-            // Clear all RTK Query caches so next login doesn't reuse old responses
             dispatch(baseApi.util.resetApiState());
-
             closeDropdown();
-            navigate("/login");
+            window.location.href = `https://${config.app_domain}/auth/login`;
           }}
           className="mt-2 flex w-full items-center gap-3 px-3 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
         >

@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { useState, useEffect } from "react";
 import PageMeta from "../../components/common/Meta/PageMeta";
 import AuthIllustration from "../../components/auth/AuthIllustration";
+import { persistAuthLocalStorage } from "../../lib/authLocalStorage";
 import { useRegisterMutation } from "../../redux/features/auth/authApi";
 import { setUser } from "../../redux/features/auth/authSlice";
 import { useAppDispatch } from "../../redux/features/hooks";
@@ -72,8 +73,8 @@ const Register = () => {
       }).unwrap();
 
       if (res?.data?.token && res?.data?.user) {
-        localStorage.setItem("token", res.data.token);
         const userData = { ...res.data.user, type: "user" as const };
+        persistAuthLocalStorage(userData, res.data.token);
         dispatch(setUser({ user: userData, token: res.data.token }));
         toast.success("Registration successful! Welcome.");
         navigate("/", { replace: true });

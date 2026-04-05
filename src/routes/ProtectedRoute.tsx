@@ -1,12 +1,14 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import {
   logout,
   selectCurrentUser,
   useCurrentToken,
 } from "../redux/features/auth/authSlice";
+import { clearAuthLocalStorage } from "../lib/authLocalStorage";
 import { clearLogoutCookie, hasLogoutCookie } from "../lib/logoutCookie";
+import { config } from "../config";
 
 interface ProtectedRouteProps {
   roles?: string[];
@@ -24,15 +26,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 }) => {
   const user = useSelector(selectCurrentUser);
   const token = useSelector(useCurrentToken);
-  const location = useLocation();
   const dispatch = useDispatch();
 
   useEffect(() => {
     const check = () => {
       if (hasLogoutCookie()) {
         clearLogoutCookie();
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        clearAuthLocalStorage();
         dispatch(logout());
       }
     };
@@ -41,17 +41,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return () => window.removeEventListener("focus", check);
   }, [dispatch]);
 
-  // Check if token exists in both Redux and localStorage
   const hasToken = token && localStorage.getItem("token");
 
-  // If no token, redirect to login
-  if (!hasToken) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  // If no user data, redirect to login
-  if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  if (!hasToken || !user) {
+    // SessionRestoreProvider already attempted a restore — give up and send to main website
+    window.location.href = `https://${config.app_domain}/auth/login`;
+    return null;
   }
 
   // Check if user has required access

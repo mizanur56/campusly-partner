@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import PageMeta from "../../components/common/Meta/PageMeta";
 import AuthIllustration from "../../components/auth/AuthIllustration";
 import { Button } from "../../components/ui/button";
+import { persistAuthLocalStorage } from "../../lib/authLocalStorage";
 import { useLoginMutation } from "../../redux/features/auth/authApi";
 import { setUser } from "../../redux/features/auth/authSlice";
 import { useAppDispatch } from "../../redux/features/hooks";
@@ -38,7 +39,6 @@ const Login = () => {
       const res = await login(data).unwrap();
 
       if (res) {
-        localStorage.setItem("token", res?.data?.token);
         const userFromResponse = res?.data?.user;
         const userType =
           userFromResponse?.role === "EMPLOYEE" ? "employee" : "user";
@@ -46,7 +46,9 @@ const Login = () => {
           ...userFromResponse,
           type: userType,
         };
-        dispatch(setUser({ user: userData, token: res?.data?.token }));
+        const accessToken = res?.data?.token;
+        persistAuthLocalStorage(userData, accessToken);
+        dispatch(setUser({ user: userData, token: accessToken }));
         const isTeamMember = userFromResponse?.role === "PARTNER_TEAM_MEMBER";
         const targetPath = isTeamMember ? "/my-tasks" : from;
         navigate(targetPath, { replace: true });
