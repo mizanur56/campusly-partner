@@ -123,10 +123,10 @@ export function inferCurrentPortal(): PortalKind {
   return PORTAL_THIS_APP;
 }
 
-export function redirectToCorrectPortalIfNeeded(user: {
-  role?: string;
-  type?: string;
-}): boolean {
+export function redirectToCorrectPortalIfNeeded(
+  user: { role?: string; type?: string } | null | undefined
+): boolean {
+  if (!user) return false;
   const role = resolvePortalRoleForRedirect(user);
   const home = homePortalForRole(role);
   const current = inferCurrentPortal();
