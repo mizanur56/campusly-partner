@@ -191,7 +191,7 @@ const LanguageTestCard: React.FC<Props> = ({
 
   /* ================= UI ================= */
   return (
-    <div className="bg-white border border-[#C7CACF] rounded-lg mb-6 overflow-hidden">
+    <div className="bg-[#FFFFFF] border border-[#C7CACF] rounded-lg mb-6 overflow-hidden">
       {/* Header */}
       <div className="flex justify-between items-center px-6 py-4 border-b">
         <h3 className="text-[16px] font-semibold text-[#20242A]">{type}</h3>
