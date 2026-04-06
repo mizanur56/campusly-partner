@@ -26,5 +26,6 @@ export default defineConfig({
         secure: true,
       },
     },
+    allowedHosts: ["partner.gubdi.com"],
   },
 });

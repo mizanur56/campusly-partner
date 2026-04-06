@@ -3,6 +3,8 @@ import { Link, useLocation } from "react-router-dom";
 import { usePreviewMode } from "../../../context/PreviewModeContext";
 import { useSidebar } from "../../../context/SidebarContext";
 import UserDropdown from "../Dropdowns/UserDropdown";
+import { useGetPartnerProfileQuery } from "../../../redux/features/profile/partnerProfileApi";
+import { getApiImageUrl } from "../../../utils/getApiImageUrl";
 
 // Mock Data
 const mockCountries = [
@@ -32,7 +34,16 @@ const mockCourses = [
 
 const SCROLL_THRESHOLD = 8;
 
-const SIGNED_HEADER_PATHS = ["/programs-schools", "/students", "/applications", "/my-tasks", "/academy", "/hot-offers", "/team-members"];
+const SIGNED_HEADER_PATHS = [
+  "/programs-schools",
+  "/students",
+  "/applications",
+  "/my-tasks",
+  "/academy",
+  "/hot-offers",
+  "/team-members",
+  "/settings/profile",
+];
 
 const Header: React.FC = () => {
   const { pathname } = useLocation();
@@ -49,7 +60,16 @@ const Header: React.FC = () => {
     pathname === "/" ||
     pathname.startsWith("/onboarding") ||
     pathname.startsWith("/contract") ||
-    ["/programs-schools", "/students", "/applications", "/my-tasks", "/academy", "/hot-offers", "/team-members"].includes(pathname) ||
+    [
+      "/programs-schools",
+      "/students",
+      "/applications",
+      "/my-tasks",
+      "/academy",
+      "/hot-offers",
+      "/team-members",
+      "/settings/profile",
+    ].includes(pathname) ||
     pathname.startsWith("/payments") ||
     pathname.startsWith("/students/") ||
     pathname.startsWith("/applications/");
@@ -58,6 +78,12 @@ const Header: React.FC = () => {
   const countryOptions = countries;
 
   const universitiesCourse = { data: mockCourses };
+
+  const { data: partnerProfile } = useGetPartnerProfileQuery();
+  const brandName = partnerProfile?.businessName || "Partner portal";
+  const brandLogoUrl = partnerProfile?.businessPhoto
+    ? getApiImageUrl(partnerProfile.businessPhoto as string)
+    : null;
 
   const handleToggle = () => {
     if (window.innerWidth >= 1024) {
@@ -104,14 +130,26 @@ const Header: React.FC = () => {
         {/* Dashboard / Onboarding: Partner branding */}
         {isDashboardOrOnboarding ? (
           <div className="flex items-center gap-3">
-            <img
-              src="https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=80&h=80&fit=crop"
-              alt="Window Nepal Education"
-              className="h-10 w-10 shrink-0 rounded-xl object-cover"
-            />
+            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-xs font-semibold text-gray-600 dark:text-gray-200">
+              {brandLogoUrl ? (
+                <img
+                  src={brandLogoUrl}
+                  alt={brandName}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span>
+                  {brandName
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .slice(0, 3)}
+                </span>
+              )}
+            </div>
             <div>
               <span className="block text-base font-semibold tracking-tight text-gray-900 dark:text-white">
-                Window Nepal Education
+                {brandName}
               </span>
               <span className="block text-sm text-gray-500 dark:text-gray-400">
                 Partner portal
@@ -337,8 +375,8 @@ const Header: React.FC = () => {
           </nav>
           )}
 
-          {/* Signed mode: Announcements, Documents, Marking, Notifications */}
-          {isSignedMode ? (
+          {/* Signed mode: only announcements + notifications */}
+          {isSignedMode && (
             <>
               <button
                 type="button"
@@ -349,33 +387,19 @@ const Header: React.FC = () => {
               </button>
               <button
                 type="button"
-                className="flex items-center justify-center rounded-full p-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-                aria-label="Documents"
-              >
-                <i className="fa-solid fa-file-lines text-[18px]" />
-              </button>
-              <button
-                type="button"
-                className="flex items-center justify-center rounded-full p-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-                aria-label="Marking"
-              >
-                <i className="fa-solid fa-clipboard-check text-[18px]" />
-              </button>
-              <button
-                type="button"
                 className="relative flex items-center justify-center rounded-full p-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
                 aria-label="Notifications"
               >
-                <i className="fa-solid fa-bell text-[18px]" />
+                <i className="fa-solid fa-bell text-[18px]" aria-hidden />
                 <span className="absolute right-1 top-1 flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-400 opacity-75" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-primary-500 ring-2 ring-white dark:ring-gray-900" />
                 </span>
               </button>
             </>
-          ) : null}
+          )}
 
-          {/* Notification — when not signed (signed has bell in "others" above) */}
+          {/* Notification — only when not signed */}
           {!isSignedMode && (
             <button
               type="button"
