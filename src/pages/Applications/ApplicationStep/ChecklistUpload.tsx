@@ -6,28 +6,65 @@ import PrimaryButton from "../../../components/common/Button/PrimaryButton";
 import { FaRegCircle } from "react-icons/fa";
 import { BiExport } from "react-icons/bi";
 import { BsFileEarmarkBarGraph } from "react-icons/bs";
-import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
-import { useApplicationDocumentUploadMutation } from "../../../redux/features/application/applicationApi";
 import { toast } from "react-toastify";
 import { config } from "../../../config";
+import { useApplicationDocumentUploadMutation } from "../../../redux/features/application/applicationApi";
+import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
+
+
+
 
 const ChecklistUpload: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = React.useState(true);
-  const [uploadingId, setUploadingId] = React.useState<string | null>(null);
-  const [expandedDocuments, setExpandedDocuments] = React.useState<Record<string, boolean>>({});
 
-  const { applicationApiData } = useOutletContext<{ applicationApiData: any }>();
+  // স্পেসিফিক লোডিং স্টেট
+  const [uploadingId, setUploadingId] = React.useState<string | null>(null);
+  const [expandedDocuments, setExpandedDocuments] = React.useState<
+    Record<string, boolean>
+  >({});
+
+  const { applicationApiData } = useOutletContext<{
+    applicationApiData: any;
+  }>();
 
   const [createMedia] = useCreateMediaMutation();
   const [uploadDocument] = useApplicationDocumentUploadMutation();
   const [fileSizes, setFileSizes] = React.useState<Record<string, string>>({});
 
-  const toggleDocuments = (docId: string) => {
-    setExpandedDocuments((prev) => ({ ...prev, [docId]: !prev[docId] }));
+  const toggleDocuments = (id: string) => {
+    setExpandedDocuments((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
   };
 
+  /* ================= Get File Size from URL ================= */
+  const getFileSize = React.useCallback(
+    async (url: string): Promise<string> => {
+      try {
+        const response = await fetch(url, { method: "HEAD" });
+        const contentLength = response.headers.get("content-length");
+
+        if (contentLength) {
+          const bytes = parseInt(contentLength, 10);
+          return formatFileSize(bytes);
+        }
+
+        // Fallback: fetch the file to get size
+        const blobResponse = await fetch(url);
+        const blob = await blobResponse.blob();
+        return formatFileSize(blob.size);
+      } catch (error) {
+        console.error("Error getting file size:", error);
+        return "—";
+      }
+    },
+    [],
+  );
+
+  /* ================= Format File Size ================= */
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
@@ -36,88 +73,133 @@ const ChecklistUpload: React.FC = () => {
     return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   };
 
-  const getFileSize = React.useCallback(async (url: string): Promise<string> => {
-    try {
-      const response = await fetch(url, { method: "HEAD" });
-      const contentLength = response.headers.get("content-length");
-      if (contentLength) return formatFileSize(parseInt(contentLength, 10));
-      const blobResponse = await fetch(url);
-      const blob = await blobResponse.blob();
-      return formatFileSize(blob.size);
-    } catch (error) {
-      console.error("Error getting file size:", error);
-      return "—";
-    }
-  }, []);
-
+  /* ================= Fetch File Sizes ================= */
   React.useEffect(() => {
     const fetchSizes = async () => {
       const sizes: Record<string, string> = {};
-      if (applicationApiData?.vfsAppointmentLetter) sizes.vfsAppointmentLetter = await getFileSize(applicationApiData.vfsAppointmentLetter);
-      if (applicationApiData?.bankStatement) sizes.bankStatement = await getFileSize(applicationApiData.bankStatement);
-      if (applicationApiData?.affidavit) sizes.affidavit = await getFileSize(applicationApiData.affidavit);
-      if (applicationApiData?.sponsor) sizes.sponsor = await getFileSize(applicationApiData.sponsor);
-      if (applicationApiData?.internationalBankCard) sizes.internationalBankCard = await getFileSize(applicationApiData.internationalBankCard);
+
+      // Fetch sizes for all document URLs
+      if (applicationApiData?.vfsAppointmentLetter) {
+        sizes.vfsAppointmentLetter = await getFileSize(
+          applicationApiData.vfsAppointmentLetter,
+        );
+      }
+      if (applicationApiData?.bankStatement) {
+        sizes.bankStatement = await getFileSize(
+          applicationApiData.bankStatement,
+        );
+      }
+      if (applicationApiData?.affidavit) {
+        sizes.affidavit = await getFileSize(applicationApiData.affidavit);
+      }
+      if (applicationApiData?.sponsor) {
+        sizes.sponsor = await getFileSize(applicationApiData.sponsor);
+      }
+      if (applicationApiData?.internationalBankCard) {
+        sizes.internationalBankCard = await getFileSize(
+          applicationApiData.internationalBankCard,
+        );
+      }
+
       setFileSizes(sizes);
     };
-    if (applicationApiData) fetchSizes();
-  }, [applicationApiData, getFileSize]);
 
+    if (applicationApiData) {
+      fetchSizes();
+    }
+  }, [applicationApiData, getFileSize]);
   const sections = React.useMemo(
     () => [
       {
         id: "vfs_appointment",
         title: "VFS Appointment",
         category: "vfsAppointmentLetter",
-        description: "Here is a guideline how to book an appointment. Check out the video. Also you can read the manual guideline.",
-        url: applicationApiData?.vfsAppointmentLetter,
+        description:
+          "Here is a guideline how to book an appointment. Check out the video. Also you can read the manual guideline.",
+        // যদি লেটার থাকে তবেই URL জেনারেট হবে, নাহলে null
+        url: applicationApiData?.vfsAppointmentLetter
+          ? `${config.image_access_url}${applicationApiData.vfsAppointmentLetter}`
+          : null,
+        // Strict Check: null না হওয়া এবং খালি স্ট্রিং না হওয়া নিশ্চিত করে
+        isCompleted:
+          Boolean(applicationApiData?.vfsAppointmentLetter) &&
+          applicationApiData?.vfsAppointmentLetter !== "",
       },
       {
         id: "bank_statement",
         title: "Bank Statement",
         category: "bankStatement",
-        description: "Sponsor's bank statement for the last 3 months, along with a recent bank certificate. The ending balance should be converted into Euros.",
-        url: applicationApiData?.bankStatement,
-        isCompleted: !!applicationApiData?.bankStatement,
+        description:
+          "Sponsor’s bank statement for the last 3 months, along with a recent bank certificate. The ending balance should be converted into Euros.",
+        url:
+          applicationApiData?.bankStatement &&
+          `${config.image_access_url}${applicationApiData.bankStatement}`,
+        isCompleted:
+          Boolean(applicationApiData?.bankStatement) &&
+          applicationApiData?.bankStatement !== "",
       },
       {
         id: "affidavit",
         title: "Affidavit",
         category: "affidavit",
         description: "Signed Declaration letter from sponsor.",
-        url: applicationApiData?.affidavit,
-        isCompleted: !!applicationApiData?.affidavit,
+        url:
+          applicationApiData?.affidavit &&
+          `${config.image_access_url}${applicationApiData.affidavit}`,
+        isCompleted:
+          Boolean(applicationApiData?.affidavit) &&
+          applicationApiData?.affidavit !== "",
       },
       {
         id: "sponsor_identification",
         title: "Sponsor Identification",
         category: "sponsor",
-        description: "Copy of identification of sponsor (front and back). If it is not English you have to upload it.",
-        url: applicationApiData?.sponsor,
-        isCompleted: !!applicationApiData?.sponsor,
+        description:
+          "Copy of identification of sponsor (front and back). If it is not English you have to upload it.",
+        url:
+          applicationApiData?.sponsor &&
+          `${config.image_access_url}${applicationApiData.sponsor}`,
+        isCompleted:
+          Boolean(applicationApiData?.sponsor) &&
+          applicationApiData?.sponsor !== "",
       },
       {
         id: "international_bank_card",
         title: "International Bank Card",
         category: "internationalBankCard",
-        description: "International Bank card corresponding with bank statement provided (Front & Back).",
-        url: applicationApiData?.internationalBankCard,
-        isCompleted: !!applicationApiData?.internationalBankCard,
+        description:
+          "International Bank card corresponding with bank statement provided (Front & Back).",
+        url:
+          applicationApiData?.internationalBankCard &&
+          `${config.image_access_url}${applicationApiData.internationalBankCard}`,
+        isCompleted:
+          Boolean(applicationApiData?.internationalBankCard) &&
+          applicationApiData?.internationalBankCard !== "",
       },
     ],
-    [applicationApiData]
+    [applicationApiData],
   );
-
+  /** ================= Upload Handler ================= */
   const handleFileUpload = async (categoryKey: string, file: File) => {
     setUploadingId(categoryKey);
     try {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("category", "document");
+
       const response = await createMedia(formData).unwrap();
-      const documentUrl = `${config.image_access_url}${response.data.url}`;
-      const payload = { id: applicationApiData.id, [categoryKey]: documentUrl };
-      await uploadDocument(payload).unwrap();
+      // const documentUrl = `${config.image_access_url}${response.data.url}`;
+      const documentUrl = response.data.url;
+
+      const payload = {
+        id: applicationApiData.id,
+        [categoryKey]: documentUrl,
+      };
+
+      const res = await uploadDocument(payload).unwrap();
+      // if (res.success || res) {
+      //   toast.success(`${categoryKey.toUpperCase()} uploaded successfully`);
+      // }
     } catch (err) {
       console.error("Upload failed:", err);
       toast.error("Upload failed");
@@ -131,11 +213,14 @@ const ChecklistUpload: React.FC = () => {
     input.type = "file";
     input.accept = ".pdf,.doc,.docx,.jpg,.png";
     input.onchange = () => {
-      if (input.files && input.files.length > 0) handleFileUpload(categoryKey, input.files[0]);
+      if (input.files && input.files.length > 0) {
+        handleFileUpload(categoryKey, input.files[0]);
+      }
     };
     input.click();
   };
 
+  // const isAllRequiredCompleted = sections.every((cat) => cat.isCompleted);
   const isAllRequiredCompleted = sections.every((section) => !!section.url);
 
   return (
@@ -143,10 +228,18 @@ const ChecklistUpload: React.FC = () => {
       <div className="border border-[#C7CACF] rounded-lg overflow-hidden">
         <div className="bg-[#E9F2EB] p-6 flex items-center justify-between">
           <div>
-            <h3 className="text-[20px] font-semibold text-[#20242A]">Checklist Upload</h3>
-            <p className="text-[14px] text-[#4B5563]">Your documents are under review. Once complete, we will send them to the college.</p>
+            <h3 className="text-[20px] font-semibold text-[#20242A]">
+              Checklist Upload
+            </h3>
+            <p className="text-[14px] text-[#4B5563]">
+              Your documents are under review. Once complete, we will send them
+              to the college.
+            </p>
           </div>
-          <div onClick={() => setIsExpanded((prev) => !prev)} className="cursor-pointer">
+          <div
+            onClick={() => setIsExpanded((prev) => !prev)}
+            className="cursor-pointer"
+          >
             {isExpanded ? <UpOutlined /> : <DownOutlined />}
           </div>
         </div>
@@ -158,12 +251,25 @@ const ChecklistUpload: React.FC = () => {
               const isSectionUploading = uploadingId === section.category;
 
               return (
-                <div key={section.id} className="bg-white border border-[#D1D5DB] rounded-xl p-6">
+                <div
+                  key={section.id}
+                  className="bg-white border border-[#D1D5DB] rounded-xl p-6"
+                >
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                      {isCompleted ? <IoCheckmarkCircleSharp size={24} className="text-[#16A34A]" /> : <FaRegCircle size={22} className="text-gray-300" />}
-                      <h4 className="text-[18px] font-semibold text-[#111827]">{section.title}</h4>
+                      {isCompleted ? (
+                        <IoCheckmarkCircleSharp
+                          size={24}
+                          className="text-[#16A34A]"
+                        />
+                      ) : (
+                        <FaRegCircle size={22} className="text-gray-300" />
+                      )}
+                      <h4 className="text-[18px] font-semibold text-[#111827]">
+                        {section.title}
+                      </h4>
                     </div>
+
                     <button
                       disabled={!!uploadingId}
                       onClick={() => triggerFileInput(section.category)}
@@ -177,28 +283,52 @@ const ChecklistUpload: React.FC = () => {
                     </button>
                   </div>
 
-                  <p className="text-[14px] text-[#4B5563] mb-4 leading-relaxed">{section.description}</p>
+                  <p className="text-[14px] text-[#4B5563] mb-4 leading-relaxed">
+                    {section.description}
+                  </p>
 
+                  {/* ফাইল আপলোড করা থাকলে তবেই Read More দেখাবে */}
                   {isCompleted && (
                     <>
                       <div className="flex justify-end mb-3">
-                        <button onClick={() => toggleDocuments(section.id)} className="flex items-center gap-1 cursor-pointer text-[#237D3B] font-medium text-[14px]">
-                          {expandedDocuments[section.id] ? "Read less" : "Read more"}
-                          {expandedDocuments[section.id] ? <UpOutlined /> : <DownOutlined />}
+                        <button
+                          onClick={() => toggleDocuments(section.id)}
+                          className="flex items-center gap-1 cursor-pointer text-[#237D3B] font-medium text-[14px]"
+                        >
+                          {expandedDocuments[section.id]
+                            ? "Read less"
+                            : "Read more"}
+                          {expandedDocuments[section.id] ? (
+                            <UpOutlined />
+                          ) : (
+                            <DownOutlined />
+                          )}
                         </button>
                       </div>
+
                       {expandedDocuments[section.id] && (
-                        <div>
-                          <p className="text-[16px] font-semibold text-[#111827] mb-3">Attached Documents:</p>
+                        <div className="">
+                          <p className="text-[16px] font-semibold text-[#111827] mb-3">
+                            Attached Documents:
+                          </p>
                           <div className="flex items-center justify-between border border-[#D1D5DB] rounded-lg p-4 w-full md:w-2/3 lg:w-1/2">
                             <div className="flex items-center gap-3">
                               <BsFileEarmarkBarGraph className="text-[20px]" />
                               <div>
-                                <p className="text-[14px] font-medium text-[#20242A] truncate max-w-37.5">{section.title}.pdf</p>
-                                <p className="text-[12px] text-[#6B7280]">{fileSizes[section.category] || "—"}</p>
+                                <p className="text-[14px] font-medium text-[#20242A] truncate max-w-37.5">
+                                  {section.title}
+                                </p>
+                                <p className="text-[12px] text-[#6B7280]">
+                                  {fileSizes[section.category] || "—"}
+                                </p>
                               </div>
                             </div>
-                            <button onClick={() => window.open(section.url, "_blank")} className="text-[#4B5563] hover:text-[#237D3B] cursor-pointer">
+                            <button
+                              onClick={() =>
+                                window.open(section?.url, "_blank")
+                              }
+                              className="text-[#4B5563] hover:text-[#237D3B] cursor-pointer"
+                            >
                               <DownloadOutlined style={{ fontSize: 18 }} />
                             </button>
                           </div>
@@ -214,9 +344,13 @@ const ChecklistUpload: React.FC = () => {
       </div>
 
       <div className="flex justify-end gap-3 pt-4">
-        <button onClick={() => navigate(`/applications/${id}/apply`)} className="px-6 py-2 cursor-pointer border border-[#D1D5DB] rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50 transition">
+        <button
+          onClick={() => navigate(`/applications/${id}/apply`)}
+          className="px-6 py-2 cursor-pointer border border-[#D1D5DB] rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50 transition"
+        >
           Previous
         </button>
+
         <div className={!isAllRequiredCompleted ? "cursor-not-allowed" : ""}>
           <PrimaryButton
             text="Next"

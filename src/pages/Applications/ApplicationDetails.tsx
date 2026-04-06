@@ -339,7 +339,7 @@ const ApplicationDetails = () => {
       {
         id: "enroll",
         name: "Enroll",
-        isCompleted: applicationApiData?.status === "ENROLLED",
+        isCompleted: applicationApiData?.status === "SUCCESS",
       },
     ],
     [applicationApiData, profileData],

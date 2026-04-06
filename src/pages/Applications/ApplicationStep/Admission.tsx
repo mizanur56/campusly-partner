@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 // import React from "react";
 // import { DownOutlined, UpOutlined, DownloadOutlined } from "@ant-design/icons";
 // import { IoCheckmarkCircleSharp } from "react-icons/io5";
@@ -458,7 +459,6 @@
 
 // export default Admission;
 
-
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React from "react";
 import { DownOutlined, UpOutlined, DownloadOutlined } from "@ant-design/icons";
@@ -478,7 +478,11 @@ import { FaPlusSquare } from "react-icons/fa";
 import { FaCircleCheck } from "react-icons/fa6";
 import { FiEdit } from "react-icons/fi";
 import ModalContent from "../../../components/applicationStep/ModalContent";
-import { useGetEligibleStudyLevelsByCountryQuery, useGetStudentProfileQuery, useUpdateEducationMutation } from "../../../redux/features/profile/studentProfileApi";
+import {
+  useGetEligibleStudyLevelsByCountryQuery,
+  useGetStudentProfileQuery,
+  useUpdateEducationMutation,
+} from "../../../redux/features/profile/studentProfileApi";
 import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
 import { useGetCountriesQuery } from "../../../redux/features/countries/countriesApi";
 
@@ -527,7 +531,7 @@ const Admission: React.FC = () => {
     ) => boolean;
   }>();
 
-  const studentId = applicationApiData?.studentId
+  const studentId = applicationApiData?.studentId;
 
   const { data: profileApiData, refetch: refetchProfile } =
     useGetStudentProfileQuery(studentId!);
@@ -548,18 +552,17 @@ const Admission: React.FC = () => {
     return matchedCountry ? matchedCountry.id : null;
   }, [studentProfile, countries]);
 
-const userId = applicationApiData?.student?.userId
+  const userId = applicationApiData?.student?.userId;
 
-  const { data: studyLevelsRes } =
-  useGetEligibleStudyLevelsByCountryQuery(
- {
-  countryId: selectedCountryId,
-  studentId: userId,
- },
+  const { data: studyLevelsRes } = useGetEligibleStudyLevelsByCountryQuery(
+    {
+      countryId: selectedCountryId,
+      studentId: userId,
+    },
     {
       refetchOnMountOrArgChange: true,
       skip: !selectedCountryId || !studentId,
-    }
+    },
   );
   const studyLevelData = studyLevelsRes?.data || [];
 
@@ -568,35 +571,26 @@ const userId = applicationApiData?.student?.userId
   const [uploadDocument] = useApplicationDocumentUploadMutation();
   const [updateEducation, { isLoading: isUpdatingEducation }] =
     useUpdateEducationMutation();
-
-  /* ================= States ================= */
   const [isExpanded, setIsExpanded] = React.useState(true);
-
-  // Qualifications modal — same flow as Profile UploadDocuments + ModalContent
   const [isQualificationModalOpen, setIsQualificationModalOpen] =
     React.useState(false);
-  const [selectedQualificationStudyLevelId, setSelectedQualificationStudyLevelId] =
-    React.useState<string | null>(null);
-  const [activeQualificationField, setActiveQualificationField] = React.useState<
-    "marksheet" | "certificate" | null
-  >(null);
-
-  // File sizes state
+  const [
+    selectedQualificationStudyLevelId,
+    setSelectedQualificationStudyLevelId,
+  ] = React.useState<string | null>(null);
+  const [activeQualificationField, setActiveQualificationField] =
+    React.useState<"marksheet" | "certificate" | null>(null);
   const [fileSizes, setFileSizes] = React.useState<Record<string, string>>({});
 
-  /* ================= Get File Size from URL ================= */
   const getFileSize = React.useCallback(
     async (url: string): Promise<string> => {
       try {
         const response = await fetch(url, { method: "HEAD" });
         const contentLength = response.headers.get("content-length");
-
         if (contentLength) {
           const bytes = parseInt(contentLength, 10);
           return formatFileSize(bytes);
         }
-
-        // Fallback: fetch the file to get size
         const blobResponse = await fetch(url);
         const blob = await blobResponse.blob();
         return formatFileSize(blob.size);
@@ -607,8 +601,6 @@ const userId = applicationApiData?.student?.userId
     },
     [],
   );
-
-  /* ================= Format File Size ================= */
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
@@ -622,7 +614,6 @@ const userId = applicationApiData?.student?.userId
     const fetchSizes = async () => {
       const sizes: Record<string, string> = {};
 
-      // Passport file
       if (applicationApiData?.passportFile) {
         sizes.passportFile = await getFileSize(applicationApiData.passportFile);
       }
@@ -671,8 +662,6 @@ const userId = applicationApiData?.student?.userId
     fetchQualificationSizes();
   }, [educationData, getFileSize]);
 
- 
-
   // 🔥 category wise expand state
   const [expandedCategories, setExpandedCategories] = React.useState<
     Record<string, boolean>
@@ -693,8 +682,6 @@ const userId = applicationApiData?.student?.userId
   /* ================= Generate Qualification Documents ================= */
   const qualificationDocuments = React.useMemo(() => {
     if (!educationData || !Array.isArray(educationData)) return [];
-
-  
 
     const documents: Document[] = [];
 
@@ -762,7 +749,6 @@ const userId = applicationApiData?.student?.userId
   /* ================= Dummy Data ================= */
   const documentCategories: DocumentCategory[] = React.useMemo(
     () => [
-   
       {
         id: "registrationForm",
         title: "Registration Form",
@@ -865,8 +851,6 @@ const userId = applicationApiData?.student?.userId
       formData.append("category", "document");
       const response = await createMedia(formData).unwrap();
       const documentUrl = response.data.url;
-
-    
 
       const fieldName =
         categoryId === "motivation-letter" ? "motivationLetter" : categoryId;
@@ -1134,8 +1118,7 @@ const userId = applicationApiData?.student?.userId
 
             <p className="text-[14px] text-[#4B5563]">
               Select an education level, then upload marksheet and certificate
-              using the same form as on your profile (academic details +
-              files).
+              using the same form as on your profile (academic details + files).
             </p>
 
             <div className="space-y-2">
@@ -1198,7 +1181,9 @@ const userId = applicationApiData?.student?.userId
                                 className="border border-[#CFCACF] cursor-pointer p-1 flex items-center hover:border-[#237D3B] hover:text-[#237D3B] rounded-lg text-[#237D3B]"
                                 onClick={() =>
                                   setActiveQualificationField(
-                                    item.category as "marksheet" | "certificate",
+                                    item.category as
+                                      | "marksheet"
+                                      | "certificate",
                                   )
                                 }
                               >

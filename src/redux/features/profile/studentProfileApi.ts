@@ -24,7 +24,10 @@ export type CreateStudentResponse = {
 
 export const partnerStudentProfileApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    createStudent: builder.mutation<CreateStudentResponse, CreateStudentPayload>({
+    createStudent: builder.mutation<
+      CreateStudentResponse,
+      CreateStudentPayload
+    >({
       query: (body) => ({
         url: PARTNER_STUDENT_BASE,
         method: "POST",
@@ -38,14 +41,21 @@ export const partnerStudentProfileApi = baseApi.injectEndpoints({
         url: `${PARTNER_STUDENT_BASE}/${studentId}/profile`,
         method: "GET",
       }),
-      transformResponse: (response: { data?: unknown }) => response?.data ?? null,
+      transformResponse: (response: { data?: unknown }) =>
+        response?.data ?? null,
       providesTags: (_result, _err, studentId) => [
         { type: "studentProfile", id: studentId },
       ],
     }),
 
     updateStudentProfile: builder.mutation({
-      query: ({ studentId, body }: { studentId: string; body: Record<string, unknown> }) => ({
+      query: ({
+        studentId,
+        body,
+      }: {
+        studentId: string;
+        body: Record<string, unknown>;
+      }) => ({
         url: `${PARTNER_STUDENT_BASE}/${studentId}/profile`,
         method: "PUT",
         body,
@@ -78,7 +88,7 @@ export const partnerStudentProfileApi = baseApi.injectEndpoints({
         educationId,
         body,
       }: {
-        studentId: string;
+        studentId: any;
         educationId: string;
         body: Record<string, unknown>;
       }) => ({
@@ -160,17 +170,12 @@ export const partnerStudentProfileApi = baseApi.injectEndpoints({
     }),
 
     getDocumentsByCategory: builder.query({
-      query: ({
-        studentId,
-        slug,
-      }: {
-        studentId: string;
-        slug: string;
-      }) => ({
+      query: ({ studentId, slug }: { studentId: string; slug: string }) => ({
         url: `${PARTNER_STUDENT_BASE}/${studentId}/documents-by-category/${slug}`,
         method: "GET",
       }),
-      transformResponse: (response: { data?: unknown }) => response?.data ?? null,
+      transformResponse: (response: { data?: unknown }) =>
+        response?.data ?? null,
       providesTags: (_result, _err, { studentId }) => [
         { type: "studentProfile", id: studentId },
       ],
@@ -188,7 +193,8 @@ export const partnerStudentProfileApi = baseApi.injectEndpoints({
         method: "GET",
         params: countryId ? { countryId } : undefined,
       }),
-      transformResponse: (response: { data?: unknown }) => response?.data ?? null,
+      transformResponse: (response: { data?: unknown }) =>
+        response?.data ?? null,
       providesTags: (_result, _err, { studentId }) => [
         { type: "studentProfile", id: studentId },
       ],
@@ -257,13 +263,11 @@ export const partnerStudentProfileApi = baseApi.injectEndpoints({
         method: "GET",
         params: {
           countryId,
-          studentId, // ✅ এখানে দিতে হবে
+          studentId,
         },
       }),
       providesTags: ["countryStudyLevels"],
     }),
-  
-
   }),
 });
 

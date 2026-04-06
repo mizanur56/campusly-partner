@@ -8,8 +8,8 @@ import { BiExport } from "react-icons/bi";
 import { BsFileEarmarkBarGraph } from "react-icons/bs";
 import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
 import { useApplicationDocumentUploadMutation } from "../../../redux/features/application/applicationApi";
-import { toast } from "react-toastify";
 import { config } from "../../../config";
+import { toast } from "react-toastify";
 
 const VisaOutcome: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,12 +17,39 @@ const VisaOutcome: React.FC = () => {
   const [isExpanded, setIsExpanded] = React.useState(true);
   const [uploadingId, setUploadingId] = React.useState<string | null>(null);
 
-  const { applicationApiData } = useOutletContext<{ applicationApiData: any }>();
+  const { applicationApiData } = useOutletContext<{
+    applicationApiData: any;
+  }>();
 
   const [createMedia] = useCreateMediaMutation();
   const [uploadDocument] = useApplicationDocumentUploadMutation();
   const [fileSizes, setFileSizes] = React.useState<Record<string, string>>({});
 
+  /* ================= Get File Size from URL ================= */
+  const getFileSize = React.useCallback(
+    async (url: string): Promise<string> => {
+      try {
+        const response = await fetch(url, { method: "HEAD" });
+        const contentLength = response.headers.get("content-length");
+
+        if (contentLength) {
+          const bytes = parseInt(contentLength, 10);
+          return formatFileSize(bytes);
+        }
+
+        // Fallback: fetch the file to get size
+        const blobResponse = await fetch(url);
+        const blob = await blobResponse.blob();
+        return formatFileSize(blob.size);
+      } catch (error) {
+        console.error("Error getting file size:", error);
+        return "—";
+      }
+    },
+    [],
+  );
+
+  /* ================= Format File Size ================= */
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
@@ -31,32 +58,35 @@ const VisaOutcome: React.FC = () => {
     return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   };
 
-  const getFileSize = React.useCallback(async (url: string): Promise<string> => {
-    try {
-      const response = await fetch(url, { method: "HEAD" });
-      const contentLength = response.headers.get("content-length");
-      if (contentLength) return formatFileSize(parseInt(contentLength, 10));
-      const blobResponse = await fetch(url);
-      const blob = await blobResponse.blob();
-      return formatFileSize(blob.size);
-    } catch (error) {
-      console.error("Error getting file size:", error);
-      return "—";
-    }
-  }, []);
-
+  /* ================= Fetch File Sizes ================= */
   React.useEffect(() => {
     const fetchSizes = async () => {
       const sizes: Record<string, string> = {};
-      if (applicationApiData?.visaCopy) sizes.visaCopy = await getFileSize(applicationApiData.visaCopy);
-      if (applicationApiData?.visaRejectedSlip) sizes.visaRejectedSlip = await getFileSize(applicationApiData.visaRejectedSlip);
+
+      if (applicationApiData?.visaCopy) {
+        sizes.visaCopy = await getFileSize(applicationApiData.visaCopy);
+      }
+      if (applicationApiData?.visaRejectedSlip) {
+        sizes.visaRejectedSlip = await getFileSize(
+          applicationApiData.visaRejectedSlip,
+        );
+      }
+
       setFileSizes(sizes);
     };
-    if (applicationApiData) fetchSizes();
+
+    if (applicationApiData) {
+      fetchSizes();
+    }
   }, [applicationApiData, getFileSize]);
 
+  // Initial Selection Logic: যদি এপিআই-তে ডাটা থাকে তবে সেটি অটো সিলেক্ট হবে
   const [selectedSub, setSelectedSub] = React.useState<string | null>(
-    applicationApiData?.visaCopy ? "visa_issued" : applicationApiData?.visaRejectedSlip ? "visa_rejected" : null
+    applicationApiData?.visaCopy
+      ? "visa_issued"
+      : applicationApiData?.visaRejectedSlip
+        ? "visa_rejected"
+        : null,
   );
 
   const sections = React.useMemo(
@@ -64,8 +94,11 @@ const VisaOutcome: React.FC = () => {
       {
         id: "visa_outcome",
         title: "Visa Outcome",
-        description: "Please select your visa result and upload the corresponding document.",
-        isCompleted: !!(applicationApiData?.visaCopy || applicationApiData?.visaRejectedSlip),
+        description:
+          "Please select your visa result and upload the corresponding document.",
+        isCompleted: !!(
+          applicationApiData?.visaCopy || applicationApiData?.visaRejectedSlip
+        ),
         subSections: [
           {
             id: "visa_issued",
@@ -74,7 +107,10 @@ const VisaOutcome: React.FC = () => {
             description: "Your visa application has been approved",
             docTitle: "Visa Copy",
             docDesc: "Upload your approved visa copy issued by the embassy.",
-            url: applicationApiData?.visaCopy,
+
+            url:
+              applicationApiData?.visaCopy &&
+              `${config.image_access_url}${applicationApiData?.visaCopy}`,
           },
           {
             id: "visa_rejected",
@@ -84,30 +120,41 @@ const VisaOutcome: React.FC = () => {
             category_actual: "visaRejectedSlip",
             description: "Your visa application was declined",
             docTitle: "Visa Rejection Slip",
-            docDesc: "Upload the rejection letter or slip provided by the embassy.",
-            url: applicationApiData?.visaRejectedSlip,
+            docDesc:
+              "Upload the rejection letter or slip provided by the embassy.",
+            url:
+              applicationApiData?.visaRejectedSlip &&
+              `${config.image_access_url}${applicationApiData?.visaRejectedSlip}`,
           },
         ],
       },
     ],
-    [applicationApiData]
+    [applicationApiData],
   );
 
-  const selectedData = sections[0].subSections.find((s) => s.id === selectedSub) || null;
+  const selectedData =
+    sections[0].subSections.find((s) => s.id === selectedSub) || null;
   const isAllRequiredCompleted = !!selectedData?.url;
-  const isVisaRejected = selectedSub === "visa_rejected" && !!applicationApiData?.visaRejectedSlip;
-
+  /** ================= Upload Handler ================= */
   const handleFileUpload = async (categoryKey: string, file: File) => {
     setUploadingId(categoryKey);
     try {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("category", "document");
+
       const response = await createMedia(formData).unwrap();
-      const documentUrl = `${config.image_access_url}${response.data.url}`;
-      const actualKey = categoryKey === "visa_rejected" ? "visaRejectedSlip" : categoryKey;
-      const payload = { id: applicationApiData.id, [actualKey]: documentUrl };
-      await uploadDocument(payload).unwrap();
+      // const documentUrl = `${config.image_access_url}${response.data.url}`;
+      const documentUrl = response.data.url;
+
+      const payload = {
+        id: applicationApiData.id,
+        [categoryKey]: documentUrl,
+      };
+      
+
+      const res = await uploadDocument(payload).unwrap();
+      
     } catch (err) {
       console.error("Upload failed:", err);
       toast.error("Upload failed");
@@ -122,22 +169,35 @@ const VisaOutcome: React.FC = () => {
     input.accept = ".pdf,.doc,.docx,.jpg,.png";
     input.onchange = () => {
       if (input.files && input.files.length > 0) {
-        const actualKey = categoryKey === "visa_rejected" ? "visaRejectedSlip" : categoryKey;
+        // actual category key পাঠানো হচ্ছে (visaCopy অথবা visaRejectedSlip)
+        const actualKey =
+          categoryKey === "visa_rejected" ? "visaRejectedSlip" : categoryKey;
         handleFileUpload(actualKey, input.files[0]);
       }
     };
     input.click();
   };
 
+  const isVisaRejected =
+    selectedSub === "visa_rejected" && !!applicationApiData?.visaRejectedSlip;
+
   return (
     <>
       <div className="border border-[#C7CACF] rounded-lg overflow-hidden">
+        {/* Header */}
         <div className="bg-[#E9F2EB] p-6 flex items-center justify-between">
           <div>
-            <h3 className="text-[20px] font-semibold text-[#20242A]">Visa Outcome</h3>
-            <p className="text-[14px] text-[#4B5563]">Please upload your visa outcome documents once available.</p>
+            <h3 className="text-[20px] font-semibold text-[#20242A]">
+              Visa Outcome
+            </h3>
+            <p className="text-[14px] text-[#4B5563]">
+              Please upload your visa outcome documents once available.
+            </p>
           </div>
-          <div onClick={() => setIsExpanded((prev) => !prev)} className="cursor-pointer">
+          <div
+            onClick={() => setIsExpanded((prev) => !prev)}
+            className="cursor-pointer"
+          >
             {isExpanded ? <UpOutlined /> : <DownOutlined />}
           </div>
         </div>
@@ -145,14 +205,29 @@ const VisaOutcome: React.FC = () => {
         {isExpanded && (
           <div className="p-4 space-y-4">
             {sections.map((section) => (
-              <div key={section.id} className="bg-white border border-[#D1D5DB] rounded-xl p-6">
+              <div
+                key={section.id}
+                className="bg-white border border-[#D1D5DB] rounded-xl p-6"
+              >
                 <div className="flex items-center gap-2 mb-4">
-                  {section.isCompleted ? <IoCheckmarkCircleSharp size={24} className="text-[#16A34A]" /> : <FaRegCircle size={22} className="text-gray-300" />}
-                  <h4 className="text-[18px] font-semibold text-[#111827]">{section.title}</h4>
+                  {section.isCompleted ? (
+                    <IoCheckmarkCircleSharp
+                      size={24}
+                      className="text-[#16A34A]"
+                    />
+                  ) : (
+                    <FaRegCircle size={22} className="text-gray-300" />
+                  )}
+                  <h4 className="text-[18px] font-semibold text-[#111827]">
+                    {section.title}
+                  </h4>
                 </div>
 
-                <p className="text-[14px] text-[#4B5563] mb-6">{section.description}</p>
+                <p className="text-[14px] text-[#4B5563] mb-6">
+                  {section.description}
+                </p>
 
+                {/* Sub section cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {section.subSections.map((sub) => {
                     const isSelected = selectedSub === sub.id;
@@ -160,13 +235,28 @@ const VisaOutcome: React.FC = () => {
                       <div
                         key={sub.id}
                         onClick={() => setSelectedSub(sub.id)}
-                        className={`cursor-pointer border rounded-lg p-4 transition ${isSelected ? "border-[#16A34A] bg-[#F0FDF4]" : "border-[#D1D5DB]"}`}
+                        className={`cursor-pointer border rounded-lg p-4 transition ${
+                          isSelected
+                            ? "border-[#16A34A] bg-[#F0FDF4]"
+                            : "border-[#D1D5DB]"
+                        }`}
                       >
                         <div className="flex items-center gap-3">
-                          {isSelected ? <IoCheckmarkCircleSharp size={22} className="text-[#16A34A]" /> : <FaRegCircle size={20} className="text-gray-300" />}
+                          {isSelected ? (
+                            <IoCheckmarkCircleSharp
+                              size={22}
+                              className="text-[#16A34A]"
+                            />
+                          ) : (
+                            <FaRegCircle size={20} className="text-gray-300" />
+                          )}
                           <div>
-                            <p className="text-[14px] font-semibold text-[#20242A]">{sub.subTitle}</p>
-                            <p className="text-[12px] text-[#6B7280]">{sub.description}</p>
+                            <p className="text-[14px] font-semibold text-[#20242A]">
+                              {sub.subTitle}
+                            </p>
+                            <p className="text-[12px] text-[#6B7280]">
+                              {sub.description}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -174,19 +264,28 @@ const VisaOutcome: React.FC = () => {
                   })}
                 </div>
 
+                {/* Document Upload & Display Section */}
                 {selectedData && (
                   <div className="mt-6 border border-[#D1D5DB] rounded-xl p-6 w-full">
                     <div className="flex justify-between items-start mb-4">
                       <div>
-                        <p className="text-[16px] font-semibold text-[#20242A]">{selectedData.docTitle}</p>
-                        <p className="text-[14px] text-[#6B7280]">{selectedData.docDesc}</p>
+                        <p className="text-[16px] font-semibold text-[#20242A]">
+                          {selectedData.docTitle}
+                        </p>
+                        <p className="text-[14px] text-[#6B7280]">
+                          {selectedData.docDesc}
+                        </p>
                       </div>
+
                       <button
                         disabled={!!uploadingId}
                         onClick={() => triggerFileInput(selectedData.category)}
                         className="border border-[#237D3B] text-[#237D3B] rounded-md cursor-pointer p-2 hover:bg-[#F0FDF4] transition disabled:opacity-50"
                       >
-                        {uploadingId === (selectedData.id === "visa_rejected" ? "visaRejectedSlip" : selectedData.category) ? (
+                        {uploadingId ===
+                        (selectedData.id === "visa_rejected"
+                          ? "visaRejectedSlip"
+                          : selectedData.category) ? (
                           <div className="animate-spin h-5 w-5 border-2 border-[#237D3B] border-t-transparent rounded-full"></div>
                         ) : (
                           <BiExport size={18} />
@@ -194,20 +293,32 @@ const VisaOutcome: React.FC = () => {
                       </button>
                     </div>
 
+                    {/* এপিআই-তে ফাইল থাকলে তবেই "Attached Documents" দেখাবে */}
                     {selectedData.url && (
                       <>
-                        <p className="text-[16px] font-semibold text-[#111827] mb-3">Attached Documents:</p>
+                        <p className="text-[16px] font-semibold text-[#111827] mb-3">
+                          Attached Documents:
+                        </p>
                         <div className="flex items-center justify-between border border-[#D1D5DB] rounded-lg p-4 w-full md:w-1/3 min-w-70">
                           <div className="flex items-center gap-3">
                             <BsFileEarmarkBarGraph className="text-[20px]" />
                             <div>
-                              <p className="text-[14px] font-medium text-[#20242A] truncate max-w-37.5">{selectedData.docTitle}.pdf</p>
+                              <p className="text-[14px] font-medium text-[#20242A] truncate max-w-37.5">
+                                {selectedData.docTitle}
+                              </p>
                               <p className="text-[12px] text-[#6B7280]">
-                                {selectedData.id === "visa_rejected" ? (fileSizes.visaRejectedSlip || "—") : (fileSizes.visaCopy || "—")}
+                                {selectedData.id === "visa_rejected"
+                                  ? fileSizes.visaRejectedSlip || "—"
+                                  : fileSizes.visaCopy || "—"}
                               </p>
                             </div>
                           </div>
-                          <button onClick={() => window.open(selectedData.url, "_blank")} className="text-[#4B5563] hover:text-[#237D3B] cursor-pointer">
+                          <button
+                            onClick={() =>
+                              window.open(selectedData?.url, "_blank")
+                            }
+                            className="text-[#4B5563] hover:text-[#237D3B] cursor-pointer"
+                          >
                             <DownloadOutlined style={{ fontSize: 18 }} />
                           </button>
                         </div>
@@ -221,18 +332,28 @@ const VisaOutcome: React.FC = () => {
         )}
       </div>
 
+      {/* Footer */}
       <div className="flex justify-end gap-3 pt-4">
-        <button onClick={() => navigate(`/applications/${id}/embassy`)} className="px-6 py-2 border border-[#D1D5DB] rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50 transition">
+        <button
+          onClick={() => navigate(`/applications/${id}/embassy`)}
+          className="px-6 py-2 cursor-pointer border border-[#D1D5DB] rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50 transition"
+        >
           Previous
         </button>
+        {/* <PrimaryButton
+          text="Next"
+          onClick={() => navigate(`/applications/${id}/enroll`)}
+        /> */}
         <div className={!isAllRequiredCompleted ? "cursor-not-allowed" : ""}>
           <PrimaryButton
             text={isVisaRejected ? "Continue" : "Next"}
             disabled={!isAllRequiredCompleted}
-            className={`${!isAllRequiredCompleted ? "opacity-50 pointer-events-none" : ""}`}
+            className={`${
+              !isAllRequiredCompleted ? "opacity-50 pointer-events-none" : ""
+            }`}
             onClick={() => {
               if (isVisaRejected) {
-                navigate("/visa-reject");
+                navigate(`/visa-reject`);
               } else {
                 navigate(`/applications/${id}/enroll`);
               }

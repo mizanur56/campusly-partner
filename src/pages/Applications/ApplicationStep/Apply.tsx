@@ -317,28 +317,21 @@ const DocumentCard: React.FC<{
   doc: Document;
 }> = ({ doc }) => {
   // সরাসরি ডাউনলোড করার ফাংশন
-  const handleDownload = async () => {
+  const handleDownload = () => {
     if (!doc?.url) return;
-
-    try {
-      const response = await fetch(doc.url);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      // ফাইলের নাম সেট করা
-      link.setAttribute("download", doc.name || "download.pdf");
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode?.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Download failed:", error);
-      // ফেইল করলে অন্তত নতুন ট্যাবে ওপেন করার চেষ্টা করবে
-      window.open(doc.url, "_blank");
-    }
+  
+    const link = document.createElement("a");
+    link.href = doc.url;
+  
+    // filename ঠিক করে দাও (important)
+    const fileName = doc.name || doc.url.split("/").pop() || "file";
+  
+    link.setAttribute("download", fileName);
+  
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
-
   return (
     <div className="flex items-center justify-between border border-[#D1D5DB] rounded-lg p-4">
       <div className="flex items-center gap-3">
@@ -513,7 +506,7 @@ const Apply: React.FC = () => {
           ? [
               {
                 id: "col-1",
-                name: "Conditional Offer Letter.pdf",
+                name: "Conditional Letter",
                 size: fileSizes.conditionalOfferLetter || "—",
                 url: `${config.image_access_url}${applicationApiData.conditionalOfferLetter}`,
               },
@@ -542,7 +535,7 @@ const Apply: React.FC = () => {
         documents: [
           applicationFee?.invoiceFile && {
             id: "inv-1",
-            name: "Application Fee Invoice.pdf",
+            name: "Application Fee Invoice",
             size: fileSizes.applicationInvoice || "—",
             url: `${config.image_access_url}${applicationFee.invoiceFile}`,
           },
@@ -577,7 +570,7 @@ const Apply: React.FC = () => {
         documents: [
           tuitionFee?.invoiceFile && {
             id: "inv-t-1",
-            name: "Tuition Fee Invoice.pdf",
+            name: "Tuition Fee Invoice",
             size: fileSizes.tuitionInvoice || "—",
             url: `${config.image_access_url}${tuitionFee.invoiceFile}`,
           },

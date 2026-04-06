@@ -268,7 +268,6 @@
 
 // export default QualificationForm;
 
-
 // import React, { useState, useEffect } from "react";
 // import { Form, Button, Tooltip } from "antd";
 // import dayjs from "dayjs";
@@ -582,12 +581,14 @@ import { Form, Button, Tooltip } from "antd";
 import dayjs from "dayjs";
 import { toast } from "react-toastify";
 
-
 import { FormDatePicker, FormInput, FormSelect } from "../../common/Forms";
 import PrimaryButton from "../../common/Button/PrimaryButton";
 import { FaRegEdit } from "react-icons/fa";
 import { FiChevronUp } from "react-icons/fi";
-import { useCreateEducationMutation, useUpdateEducationMutation } from "../../../redux/features/profile/studentProfileApi";
+import {
+  useCreateEducationMutation,
+  useUpdateEducationMutation,
+} from "../../../redux/features/profile/studentProfileApi";
 import { useGetCountriesQuery } from "../../../redux/features/countries/countriesApi";
 
 interface QualificationFormProps {
@@ -596,6 +597,9 @@ interface QualificationFormProps {
   studyLevelId: string;
   educationData?: any;
   refetch: () => void;
+  studentId?: any;
+  onUpdated?: () => void;
+  canEdit?: boolean;
   hideHeader?: boolean; // এই প্রপসটি দিয়ে আমরা কন্ট্রোল করব
 }
 
@@ -614,6 +618,9 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
   studyLevelId,
   educationData,
   refetch,
+  studentId,
+  onUpdated,
+  canEdit,
   hideHeader = false, // ডিফল্টভাবে false যাতে অন্য জায়গায় ব্রেক না করে
 }) => {
   // যদি hideHeader true হয়, তবে সবসময় expanded এবং editing true থাকবে
@@ -623,12 +630,17 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
 
   const [form] = Form.useForm();
   const selectedGrade = Form.useWatch("outOfGrade", form);
-  const studentId = profileData?.userId;
-  console.log(profileData);
+
 
   const [createEducation] = useCreateEducationMutation();
   const [updateEducation] = useUpdateEducationMutation();
-  const { data: countries } = useGetCountriesQuery({ page: 1, limit: 1000 });
+  const {
+    data: countries,
+    isLoading,
+    isError,
+  } = useGetCountriesQuery({ page: 1, limit: 1000 });
+
+ 
 
   const countriesOptions =
     countries?.data?.map((country: any) => ({
@@ -686,7 +698,7 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
         certificate: educationData?.certificate || "",
       };
 
-      let response;
+      let response: { success?: boolean } | undefined;
       if (educationData?.id) {
         response = await updateEducation({
           studentId,
@@ -695,10 +707,15 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
         }).unwrap();
         await refetch();
       } else {
-        response = await createEducation(payload as any).unwrap();
+        // Same normalized body as update — raw `values` keeps outOfGrade as number from Select.
+        response = await createEducation({
+          studentId,
+          body: payload,
+        }).unwrap();
+        await refetch();
       }
 
-      if (response.success) {
+      if (response?.success !== false) {
         toast.success(
           educationData?.id ? "Education updated!" : "Education saved!",
         );
