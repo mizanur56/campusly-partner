@@ -11,6 +11,7 @@ import { refreshAuthSession } from "../../lib/authSessionRefresh";
 import { clearAuthLocalStorage } from "../../lib/authLocalStorage";
 import { logout } from "../features/auth/authSlice";
 import { RootState } from "../features/store";
+import { getPortalLoginUrl } from "../../lib/portalRouting";
 
 // ======================
 // IP Fetch
@@ -145,11 +146,11 @@ function handle401Logout(
 
   try {
     setTimeout(() => {
-      window.location.href = `https://${config.app_domain}/auth/login`;
+      window.location.href = getPortalLoginUrl();
     }, 100);
   } catch (err) {
     console.error("Error during redirect:", err);
-    window.location.href = `https://${config.app_domain}/auth/login`;
+    window.location.href = getPortalLoginUrl();
   }
 }
 

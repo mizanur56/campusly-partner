@@ -1,23 +1,27 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { config } from "../config";
-import { persistAuthLocalStorage } from "../lib/authLocalStorage";
+import {
+  clearAuthLocalStorage,
+  persistAuthLocalStorage,
+} from "../lib/authLocalStorage";
 import {
   buildUserData,
   extractAccessTokenFromRefreshJson,
   extractUserFromMeJson,
 } from "../lib/authSessionRefresh";
 import {
+  logout,
   selectCurrentUser,
   setUser,
   useCurrentToken,
 } from "../redux/features/auth/authSlice";
 import {
+  getPortalLoginUrl,
+  isPartnerPortalSession,
   redirectFromPortalRoleCookieIfNeeded,
   redirectToCorrectPortalIfNeeded,
 } from "../lib/portalRouting";
-
-const MAIN_LOGIN = `https://${config.app_domain}/auth/login`;
 const apiBase = (config.api ?? "").replace(/\/$/, "");
 
 const PUBLIC_AUTH_PATHS = [
@@ -120,7 +124,7 @@ export default function SessionRestoreProvider({
         setStatus("done");
         return;
       }
-      window.location.href = MAIN_LOGIN;
+      window.location.href = getPortalLoginUrl();
     };
 
     const restore = async () => {
@@ -182,16 +186,28 @@ export default function SessionRestoreProvider({
             goLoginOrStayOnPublicAuth();
             return;
           }
+          if (redirectToCorrectPortalIfNeeded(userData as any)) return;
+          if (!isPartnerPortalSession(userData as any)) {
+            clearAuthLocalStorage();
+            dispatch(logout());
+            window.location.href = getPortalLoginUrl();
+            return;
+          }
           dispatch(setUser({ user: userData as any, token: fromRefresh }));
           persistAuthLocalStorage(userData, fromRefresh);
-          if (redirectToCorrectPortalIfNeeded(userData as any)) return;
           setStatus("done");
           return;
         }
 
+        if (redirectToCorrectPortalIfNeeded(userData as any)) return;
+        if (!isPartnerPortalSession(userData as any)) {
+          clearAuthLocalStorage();
+          dispatch(logout());
+          window.location.href = getPortalLoginUrl();
+          return;
+        }
         dispatch(setUser({ user: userData as any, token: sessionToken }));
         persistAuthLocalStorage(userData, sessionToken);
-        if (redirectToCorrectPortalIfNeeded(userData as any)) return;
         setStatus("done");
       } catch {
         goLoginOrStayOnPublicAuth();

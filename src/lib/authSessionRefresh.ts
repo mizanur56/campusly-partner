@@ -1,7 +1,12 @@
 import type { BaseQueryApi } from "@reduxjs/toolkit/query";
 import { config } from "../config";
-import { setUser } from "../redux/features/auth/authSlice";
-import { persistAuthLocalStorage } from "./authLocalStorage";
+import { logout, setUser } from "../redux/features/auth/authSlice";
+import { clearAuthLocalStorage, persistAuthLocalStorage } from "./authLocalStorage";
+import {
+  getPortalLoginUrl,
+  isPartnerPortalSession,
+  redirectToCorrectPortalIfNeeded,
+} from "./portalRouting";
 
 const apiBase = (config.api ?? "").replace(/\/$/, "");
 
@@ -90,6 +95,13 @@ async function performRefreshSession(api: BaseQueryApi): Promise<boolean> {
     if (!rawUser) return false;
 
     const userData = buildUserData(rawUser);
+    if (redirectToCorrectPortalIfNeeded(userData as any)) return true;
+    if (!isPartnerPortalSession(userData as any)) {
+      clearAuthLocalStorage();
+      api.dispatch(logout());
+      window.location.href = getPortalLoginUrl();
+      return false;
+    }
     api.dispatch(setUser({ user: userData as any, token: newToken }));
     persistAuthLocalStorage(userData, newToken);
     return true;

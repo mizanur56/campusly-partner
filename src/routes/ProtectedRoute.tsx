@@ -8,8 +8,12 @@ import {
 } from "../redux/features/auth/authSlice";
 import { clearAuthLocalStorage } from "../lib/authLocalStorage";
 import { clearLogoutCookie, hasLogoutCookie } from "../lib/logoutCookie";
-import { config } from "../config";
-import { redirectToCorrectPortalIfNeeded } from "../lib/portalRouting";
+import {
+  getPortalLoginUrl,
+  inferCurrentPortal,
+  isPartnerPortalSession,
+  redirectToCorrectPortalIfNeeded,
+} from "../lib/portalRouting";
 
 interface ProtectedRouteProps {
   roles?: string[];
@@ -45,8 +49,18 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const hasToken = token && localStorage.getItem("token");
 
   if (!hasToken || !user) {
-    // SessionRestoreProvider already attempted a restore — give up and send to main website
-    window.location.href = `https://${config.app_domain}/auth/login`;
+    // Session restore failed — stay on this portal's login, not apex or another subdomain
+    window.location.href = getPortalLoginUrl();
+    return null;
+  }
+
+  if (
+    inferCurrentPortal() === "partner" &&
+    !isPartnerPortalSession(user)
+  ) {
+    clearAuthLocalStorage();
+    dispatch(logout());
+    window.location.href = getPortalLoginUrl();
     return null;
   }
 
