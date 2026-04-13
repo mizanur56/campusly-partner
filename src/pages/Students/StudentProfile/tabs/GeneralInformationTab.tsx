@@ -105,6 +105,7 @@ export default function GeneralInformationTab({
 
   const qualificationOptions = useMemo(() => {
     const data = Array.isArray(studyLevelsData) ? studyLevelsData : (studyLevelsData as { data?: unknown[] })?.data ?? [];
+
     return (data as {
       studyLevel?: { id?: string; name?: string; description?: string };
       name?: string;
@@ -112,7 +113,7 @@ export default function GeneralInformationTab({
       countryStudyLevelName?: string;
       studyLevelId?: string;
     }[]).map((item) => ({
-      label: item.studyLevel?.description ?? item.studyLevel?.name ?? item.countryStudyLevelName ?? item.description ?? item.name ?? "",
+      label:item.countryStudyLevelName  ?? item.name ?? "",
       value: item.studyLevel?.id ?? item.studyLevelId ?? "",
     }));
   }, [studyLevelsData]);
@@ -241,6 +242,7 @@ export default function GeneralInformationTab({
   const imageSrc = profileData?.image
     ? (profileData.image.startsWith("http") ? profileData.image : `${config.image_access_url || ""}${profileData.image}`)
     : "/images/user.jpg";
+
 
   return (
     <div className="space-y-4">
