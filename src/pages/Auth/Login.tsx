@@ -9,8 +9,11 @@ import { persistAuthLocalStorage } from "../../lib/authLocalStorage";
 import { useLoginMutation } from "../../redux/features/auth/authApi";
 import { setUser } from "../../redux/features/auth/authSlice";
 import { useAppDispatch } from "../../redux/features/hooks";
-import { cn } from "../../utils/utils";
-import { redirectToCorrectPortalIfNeeded } from "../../lib/portalRouting";
+import {
+  getPortalRoleMismatchMessage,
+  isPartnerPortalSession,
+  redirectToCorrectPortalIfNeeded,
+} from "../../lib/portalRouting";
 
 interface LoginFormValues {
   email: string;
@@ -48,6 +51,10 @@ const Login = () => {
           type: userType,
         };
         const accessToken = res?.data?.token;
+        if (!isPartnerPortalSession(userData)) {
+          toast.error(getPortalRoleMismatchMessage(userFromResponse?.role));
+          return;
+        }
         persistAuthLocalStorage(userData, accessToken);
         dispatch(setUser({ user: userData, token: accessToken }));
         if (redirectToCorrectPortalIfNeeded(userData)) return;

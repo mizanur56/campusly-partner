@@ -10,6 +10,10 @@ import { useRegisterMutation } from "../../redux/features/auth/authApi";
 import { setUser } from "../../redux/features/auth/authSlice";
 import { useAppDispatch } from "../../redux/features/hooks";
 import { Button as UIButton } from "../../components/ui/button";
+import {
+  getPortalRoleMismatchMessage,
+  isPartnerPortalSession,
+} from "../../lib/portalRouting";
 
 const { Link: AntLink } = Typography;
 
@@ -74,6 +78,10 @@ const Register = () => {
 
       if (res?.data?.token && res?.data?.user) {
         const userData = { ...res.data.user, type: "user" as const };
+        if (!isPartnerPortalSession(userData)) {
+          toast.error(getPortalRoleMismatchMessage(userData.role));
+          return;
+        }
         persistAuthLocalStorage(userData, res.data.token);
         dispatch(setUser({ user: userData, token: res.data.token }));
         toast.success("Registration successful! Welcome.");
