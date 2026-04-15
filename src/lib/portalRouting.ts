@@ -20,6 +20,14 @@ const SUB = {
 
 const PORTAL_THIS_APP: PortalKind = "partner";
 
+/** Login route for this SPA — guests must not be sent to apex or another subdomain. */
+export const PORTAL_LOGIN_PATH = "/login";
+
+export function getPortalLoginUrl(): string {
+  if (typeof window === "undefined") return PORTAL_LOGIN_PATH;
+  return `${window.location.origin}${PORTAL_LOGIN_PATH}`;
+}
+
 export const ROLE_HOME_PORTAL: Record<string, PortalKind> = {
   ADMIN: "admin",
   SUPER_ADMIN: "admin",
@@ -85,6 +93,10 @@ export function redirectFromPortalRoleCookieIfNeeded(): boolean {
   } catch {
     return false;
   }
+  // Partner subdomain: never jump to admin/student via cookie — validate session here; else /login
+  if (inferCurrentPortal() === "partner") {
+    return false;
+  }
   const raw = readPortalRoleCookie();
   if (!raw?.trim()) return false;
   const home = homePortalForRole(raw.trim());
@@ -100,6 +112,15 @@ export function resolvePortalRoleForRedirect(user: {
   role?: string;
   type?: string;
 }): string | null {
+  // Admin SPA: HQ employees always resolve as EMPLOYEE for home-portal checks
+  if (user?.type === "employee" && inferCurrentPortal() === "admin") {
+    return "EMPLOYEE";
+  }
+  if (user?.type === "employee" && inferCurrentPortal() === "partner") {
+    const redux = user?.role ? String(user.role).trim() : "";
+    if (redux) return redux;
+    return "EMPLOYEE";
+  }
   if (user?.type === "employee") return "EMPLOYEE";
   const fromCookie = readPortalRoleCookie();
   if (fromCookie && fromCookie.trim()) return fromCookie.trim();
@@ -123,17 +144,78 @@ export function inferCurrentPortal(): PortalKind {
   return PORTAL_THIS_APP;
 }
 
+/** Whether this account's home portal matches the SPA we are running (student vs partner). */
+export function isRoleAllowedOnThisPortal(
+  role: string | undefined | null,
+): boolean {
+  const current = inferCurrentPortal();
+  const key = role ? normalizeRoleKey(role) : "";
+  // Partner org staff use API role EMPLOYEE but belong on the partner portal (not admin HQ)
+  if (current === "partner" && key === "EMPLOYEE") {
+    return true;
+  }
+  const home = homePortalForRole(role);
+  return Boolean(home && home === current);
+}
+
+/** Partner dashboard: partner roles + org employees (type employee). Not student / HQ admin-only accounts. */
+export function isPartnerPortalSession(user: {
+  role?: string;
+  type?: string;
+} | null | undefined): boolean {
+  if (!user) return false;
+  if (user.type === "employee") return true;
+  return isRoleAllowedOnThisPortal(user.role ?? null);
+}
+
+/** Message when login succeeds but the account belongs on another portal (same idea as campustransfer-frontend LoginPage). */
+export function getPortalRoleMismatchMessage(
+  role: string | undefined | null,
+): string {
+  const home = homePortalForRole(role);
+  const current = inferCurrentPortal();
+
+  if (current === "student") {
+    if (home === "partner") {
+      return "This email belongs to a partner account. Please sign in on the partner portal.";
+    }
+    if (home === "admin") {
+      return "This email belongs to a staff account. Please use the admin portal to sign in.";
+    }
+    return "This account is not for the student portal.";
+  }
+  if (current === "partner") {
+    if (home === "student") {
+      return "This email belongs to a student account. Please sign in on the student portal.";
+    }
+    if (home === "admin") {
+      return "This email belongs to a staff account. Please use the admin portal to sign in.";
+    }
+    return "This account is not for the partner portal.";
+  }
+  return "This account is not for this portal.";
+}
+
 export function redirectToCorrectPortalIfNeeded(
   user: { role?: string; type?: string } | null | undefined
 ): boolean {
   if (!user) return false;
+  const current = inferCurrentPortal();
+  // Partner SPA: designation-based employees stay here; do not send to admin subdomain
+  if (current === "partner" && user.type === "employee") {
+    return false;
+  }
   const role = resolvePortalRoleForRedirect(user);
   const home = homePortalForRole(role);
-  const current = inferCurrentPortal();
 
   if (!home) return false;
 
   if (home === current) return false;
+
+  // Partner subdomain: never auto-open admin/student apps — non-partner sessions use /login here
+  if (current === "partner") {
+    return false;
+  }
 
   const target = getPortalOrigin(home, config.app_domain);
   if (!target) return false;

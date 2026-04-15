@@ -8,6 +8,7 @@ import {
 } from "../../../redux/features/auth/authSlice";
 import { baseApi } from "../../../redux/api/baseApi";
 import { clearAuthLocalStorage } from "../../../lib/authLocalStorage";
+import { getPortalLoginUrl } from "../../../lib/portalRouting";
 import { callLogoutApi, setLogoutCookie } from "../../../lib/logoutCookie";
 import { Dropdown } from "../../ui/dropdown/Dropdown";
 import { DropdownItem } from "../../ui/dropdown/DropdownItem";
@@ -164,7 +165,7 @@ export default function UserDropdown() {
             dispatch(logout());
             dispatch(baseApi.util.resetApiState());
             closeDropdown();
-            window.location.href = `https://${config.app_domain}/auth/login`;
+            window.location.href = getPortalLoginUrl();
           }}
           className="mt-2 flex w-full items-center gap-3 px-3 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
         >
