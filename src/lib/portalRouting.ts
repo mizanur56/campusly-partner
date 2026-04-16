@@ -20,7 +20,7 @@ export const PORTAL_LOGIN_PATH = "/login";
 
 export function getPortalLoginUrl(): string {
   if (typeof window === "undefined") return PORTAL_LOGIN_PATH;
-  return `${import.meta.env.PROD ? `https://${config.app_domain}/auth` : window.location.origin}${PORTAL_LOGIN_PATH}`;
+  return `${import.meta.env.PROD ? `https://${config.app_domain}/auth/login` : window.location.origin}${PORTAL_LOGIN_PATH}`;
 }
 
 export const ROLE_HOME_PORTAL: Record<string, PortalKind> = {
