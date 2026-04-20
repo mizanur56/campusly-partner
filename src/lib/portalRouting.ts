@@ -15,14 +15,14 @@ const SUB = {
 
 const PORTAL_THIS_APP: PortalKind = "partner";
 
-/** Login route for this SPA — guests must not be sent to apex or another subdomain. */
-export const PORTAL_LOGIN_PATH = "/login";
+/** Portal login on app domain with explicit partner tab fallback. */
+export const PORTAL_LOGIN_PATH = "/auth/login/?tab=partner";
 
 export function getPortalLoginUrl(): string {
   if (typeof window === "undefined") return PORTAL_LOGIN_PATH;
   if (config.node_env === "production") {
     const host = normalizeAppDomain(config.app_domain);
-    return host ? `https://${host}/auth/login` : PORTAL_LOGIN_PATH;
+    return host ? `https://${host}${PORTAL_LOGIN_PATH}` : PORTAL_LOGIN_PATH;
   }
   return `${window.location.origin}${PORTAL_LOGIN_PATH}`;
 }
@@ -92,15 +92,6 @@ export function readPortalRoleCookie(): string | null {
 
 export function redirectFromPortalRoleCookieIfNeeded(): boolean {
   if (typeof window === "undefined") return false;
-  try {
-    if (!localStorage.getItem("token")) return false;
-  } catch {
-    return false;
-  }
-  // Partner subdomain: never jump to admin/student via cookie — validate session here; else /login
-  if (inferCurrentPortal() === "partner") {
-    return false;
-  }
   const raw = readPortalRoleCookie();
   if (!raw?.trim()) return false;
   const home = homePortalForRole(raw.trim());
@@ -220,11 +211,6 @@ export function redirectToCorrectPortalIfNeeded(
   if (!home) return false;
 
   if (home === current) return false;
-
-  // Partner subdomain: never auto-open admin/student apps — non-partner sessions use /login here
-  if (current === "partner") {
-    return false;
-  }
 
   const target = getPortalOrigin(home, config.app_domain);
   if (!target) return false;

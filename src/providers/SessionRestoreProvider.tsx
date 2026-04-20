@@ -92,8 +92,8 @@ export default function SessionRestoreProvider({
 
   useLayoutEffect(() => {
     if (typeof window === "undefined") return;
-    if (isPublicAuthPath()) return;
     if (redirectFromPortalRoleCookieIfNeeded()) return;
+    if (isPublicAuthPath()) return;
     if (user && token && localSessionMatchesRedux(user, token)) {
       if (redirectToCorrectPortalIfNeeded(user as any)) return;
       setStatus("done");
@@ -124,6 +124,7 @@ export default function SessionRestoreProvider({
         setStatus("done");
         return;
       }
+      if (redirectFromPortalRoleCookieIfNeeded()) return;
       window.location.href = getPortalLoginUrl();
     };
 
