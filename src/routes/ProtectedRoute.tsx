@@ -12,6 +12,7 @@ import {
   getPortalLoginUrl,
   inferCurrentPortal,
   isPartnerPortalSession,
+  redirectFromPortalRoleCookieIfNeeded,
   redirectToCorrectPortalIfNeeded,
 } from "../lib/portalRouting";
 
@@ -49,17 +50,15 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const hasToken = token && localStorage.getItem("token");
 
   if (!hasToken || !user) {
-    // Session restore failed — stay on this portal's login, not apex or another subdomain
+    if (redirectFromPortalRoleCookieIfNeeded()) return null;
     window.location.href = getPortalLoginUrl();
     return null;
   }
 
-  if (
-    inferCurrentPortal() === "partner" &&
-    !isPartnerPortalSession(user)
-  ) {
+  if (inferCurrentPortal() === "partner" && !isPartnerPortalSession(user)) {
     clearAuthLocalStorage();
     dispatch(logout());
+    if (redirectFromPortalRoleCookieIfNeeded()) return null;
     window.location.href = getPortalLoginUrl();
     return null;
   }
