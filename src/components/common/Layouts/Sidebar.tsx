@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { config } from "../../../config";
 import { clearAuthLocalStorage } from "../../../lib/authLocalStorage";
+import { getPortalLoginUrl } from "../../../lib/portalRouting";
 import { usePreviewMode } from "../../../context/PreviewModeContext";
 import { useSidebar } from "../../../context/SidebarContext";
 import { useFilteredSidebarItems } from "../../../hooks/useFilteredSidebarItems";
@@ -152,7 +153,6 @@ const Sidebar: React.FC = () => {
   const { isExpanded, isMobileOpen } = useSidebar();
   const { previewMode } = usePreviewMode();
   const location = useLocation();
-  const navigate = useNavigate();
   const { student } = useStudentProfile();
   const user = useSelector(selectCurrentUser);
 
@@ -197,28 +197,9 @@ const Sidebar: React.FC = () => {
   const signedProfileEmail = user?.email ?? profileEmail;
 
   const handleLogout = () => {
-    console.log("Logging out...");
-    console.log("PROD:", import.meta.env.PROD);
-    console.log("VITE_NODE_ENV:", import.meta.env.VITE_NODE_ENV);
     clearAuthLocalStorage();
     localStorage.removeItem("partner-preview-mode");
-
-    const isProduction = import.meta.env.VITE_NODE_ENV === "production";
-    console.log("isProduction:", isProduction);
-
-    if (isProduction) {
-      // Production: redirect to external auth login URL
-      const baseUrl =
-        config.app_domain?.replace(/^https?:\/\//i, "").replace(/\/$/, "") ||
-        "";
-      const authUrl = `https://${baseUrl}/auth/login`;
-      console.log("Redirecting to production auth:", authUrl);
-      window.location.href = authUrl;
-    } else {
-      // Development: redirect to internal login route
-      console.log("Development mode - redirecting to /login");
-      navigate("/login");
-    }
+    window.location.href = getPortalLoginUrl();
   };
 
   /* Sidebar mode by context:
