@@ -17,6 +17,8 @@ const PORTAL_THIS_APP: PortalKind = "partner";
 
 /** Portal login on app domain with explicit partner tab fallback. */
 export const PORTAL_LOGIN_PATH = "/auth/login/?tab=partner";
+/** Development: SPA-local login route (no /auth prefix, no tab query). */
+export const DEV_PORTAL_LOGIN_PATH = "/login";
 
 export function getPortalLoginUrl(): string {
   if (typeof window === "undefined") return PORTAL_LOGIN_PATH;
@@ -24,7 +26,7 @@ export function getPortalLoginUrl(): string {
     const host = normalizeAppDomain(config.app_domain);
     return host ? `https://${host}${PORTAL_LOGIN_PATH}` : PORTAL_LOGIN_PATH;
   }
-  return `${window.location.origin}${PORTAL_LOGIN_PATH}`;
+  return `${window.location.origin}${DEV_PORTAL_LOGIN_PATH}`;
 }
 
 export const ROLE_HOME_PORTAL: Record<string, PortalKind> = {

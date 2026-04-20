@@ -222,12 +222,13 @@ UserDropdown ─▶ callLogoutApi()           (POST /auth/logout, cookie cleared
 `getPortalLoginUrl()` is the single source for where to send unauthenticated users:
 
 ```ts
-PORTAL_LOGIN_PATH = "/auth/login/?tab=partner";
+PORTAL_LOGIN_PATH     = "/auth/login/?tab=partner"; // production hub
+DEV_PORTAL_LOGIN_PATH = "/login";                   // dev (SPA-local route)
 
 // production (VITE_NODE_ENV=production):
 //   https://<normalized app_domain>/auth/login/?tab=partner
 // development:
-//   <window.location.origin>/auth/login/?tab=partner
+//   <window.location.origin>/login
 ```
 
 This URL is used by: `SessionRestoreProvider`, `ProtectedRoute`, `GuestOnlyAuthRoute`, `UserDropdown` logout, `baseApi` 401 handler, and `authSessionRefresh` when the refreshed session is not a partner session.
