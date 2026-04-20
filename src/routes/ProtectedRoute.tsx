@@ -55,10 +55,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return null;
   }
 
-  if (
-    inferCurrentPortal() === "partner" &&
-    !isPartnerPortalSession(user)
-  ) {
+  if (inferCurrentPortal() === "partner" && !isPartnerPortalSession(user)) {
     clearAuthLocalStorage();
     dispatch(logout());
     if (redirectFromPortalRoleCookieIfNeeded()) return null;

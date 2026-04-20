@@ -12,62 +12,62 @@ End-to-end reference for the partner SPA's auth: which files participate, what e
 
 ### 1.1 Config
 
-| File | Responsibility |
-|---|---|
-| `src/config/index.ts` | Exports the `config` object: `api`, `app_domain`, `node_env`, `image_access_url`, `tiny_api_key`. Single source for env-derived values. |
+| File                    | Responsibility                                                                                                                                                                                     |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/config/index.ts`   | Exports the `config` object: `api`, `app_domain`, `node_env`, `image_access_url`, `tiny_api_key`. Single source for env-derived values.                                                            |
 | `.env` / `.env-example` | `VITE_API_URL`, `VITE_PUBLIC_APP_DOMAIN`, `VITE_NODE_ENV`, and optional overrides `VITE_SUBDOMAIN_ADMIN / STUDENT / PARTNER`, `VITE_PORTAL_ROLE_COOKIE`, `VITE_DASHBOARD_PROTOCOL`, `VITE_PORTAL`. |
 
 ### 1.2 Redux state + API
 
-| File | Responsibility |
-|---|---|
-| `src/redux/features/auth/authSlice.ts` | `auth` slice with `{ user, token }`, actions `setUser`, `logout`, `setProfile`, `setRole`, and selectors `selectCurrentUser`, `useCurrentToken`. |
-| `src/redux/features/auth/authApi.ts` | RTK Query endpoints: `login`, `register`, `forgotPassword`, `resetPassword`, `changePassword`, `setPasswordByInvitation`. |
-| `src/redux/api/baseApi.ts` | `fetchBaseQuery` with `credentials: "include"`, `Authorization: Bearer <token>` header, `X-Client-Details` (IP + UA + URL + timestamp), `X-Action` (endpoint name). Implements **401 → refresh → retry → 401 ⇒ global logout**. |
+| File                                   | Responsibility                                                                                                                                                                                                                  |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/redux/features/auth/authSlice.ts` | `auth` slice with `{ user, token }`, actions `setUser`, `logout`, `setProfile`, `setRole`, and selectors `selectCurrentUser`, `useCurrentToken`.                                                                                |
+| `src/redux/features/auth/authApi.ts`   | RTK Query endpoints: `login`, `register`, `forgotPassword`, `resetPassword`, `changePassword`, `setPasswordByInvitation`.                                                                                                       |
+| `src/redux/api/baseApi.ts`             | `fetchBaseQuery` with `credentials: "include"`, `Authorization: Bearer <token>` header, `X-Client-Details` (IP + UA + URL + timestamp), `X-Action` (endpoint name). Implements **401 → refresh → retry → 401 ⇒ global logout**. |
 
 ### 1.3 Auth libraries (`src/lib`)
 
-| File | Responsibility |
-|---|---|
-| `authLocalStorage.ts` | `persistAuthLocalStorage(user, token)` / `clearAuthLocalStorage()` — writes/clears `localStorage["token"]` and `localStorage["user"]`. |
-| `authSessionRefresh.ts` | Shape helpers (`buildUserData`, `extractAccessTokenFromRefreshJson`, `extractUserFromMeJson`) and `refreshAuthSession(api)` — a mutex-guarded refresh → `/auth/me` → Redux + localStorage update. |
-| `logoutCookie.ts` | Cross-subdomain logout broadcast cookie `ct_logout` (60 s): `setLogoutCookie`, `clearLogoutCookie`, `hasLogoutCookie`, plus `callLogoutApi()` → `POST /auth/logout`. |
-| `portalRouting.ts` | Heart of cross-portal routing. Resolves current portal from subdomain / `VITE_PORTAL`, maps roles → home portal, reads the `role_msbhh` cookie, and provides `getPortalLoginUrl`, `redirectFromPortalRoleCookieIfNeeded`, `redirectToCorrectPortalIfNeeded`, `isPartnerPortalSession`, `getPortalRoleMismatchMessage`. |
+| File                    | Responsibility                                                                                                                                                                                                                                                                                                         |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `authLocalStorage.ts`   | `persistAuthLocalStorage(user, token)` / `clearAuthLocalStorage()` — writes/clears `localStorage["token"]` and `localStorage["user"]`.                                                                                                                                                                                 |
+| `authSessionRefresh.ts` | Shape helpers (`buildUserData`, `extractAccessTokenFromRefreshJson`, `extractUserFromMeJson`) and `refreshAuthSession(api)` — a mutex-guarded refresh → `/auth/me` → Redux + localStorage update.                                                                                                                      |
+| `logoutCookie.ts`       | Cross-subdomain logout broadcast cookie `ct_logout` (60 s): `setLogoutCookie`, `clearLogoutCookie`, `hasLogoutCookie`, plus `callLogoutApi()` → `POST /auth/logout`.                                                                                                                                                   |
+| `portalRouting.ts`      | Heart of cross-portal routing. Resolves current portal from subdomain / `VITE_PORTAL`, maps roles → home portal, reads the `role_msbhh` cookie, and provides `getPortalLoginUrl`, `redirectFromPortalRoleCookieIfNeeded`, `redirectToCorrectPortalIfNeeded`, `isPartnerPortalSession`, `getPortalRoleMismatchMessage`. |
 
 ### 1.4 Providers & Routes
 
-| File | Responsibility |
-|---|---|
+| File                                       | Responsibility                                                                                                                                                                                                                                                                      |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/providers/SessionRestoreProvider.tsx` | Wraps the app. On mount: (a) cookie-based cross-portal redirect, (b) match Redux ↔ localStorage, (c) call `/auth/me` with bearer, (d) on 401 call `/auth/refresh-token`, (e) re-hydrate Redux + localStorage, (f) fall back to partner login URL. Shows a spinner while `checking`. |
-| `src/routes/ProtectedRoute.tsx` | For authenticated routes. Listens for `ct_logout` on focus, then enforces: token present → user is a partner session → role/permission check → render children, or redirect to the correct portal / login. |
-| `src/routes/GuestOnlyAuthRoute.tsx` | For `/login`, `/register`, `/forgot-password`, `/reset-password`, `/set-password`. If already authenticated, redirects to home or to the correct portal. |
-| `src/routes/routes.tsx` | Route tree. Guest routes wrap with `GuestOnlyAuthRoute`; everything else under `/` uses `ProtectedRoute`. |
+| `src/routes/ProtectedRoute.tsx`            | For authenticated routes. Listens for `ct_logout` on focus, then enforces: token present → user is a partner session → role/permission check → render children, or redirect to the correct portal / login.                                                                          |
+| `src/routes/GuestOnlyAuthRoute.tsx`        | For `/login`, `/register`, `/forgot-password`, `/reset-password`, `/set-password`. If already authenticated, redirects to home or to the correct portal.                                                                                                                            |
+| `src/routes/routes.tsx`                    | Route tree. Guest routes wrap with `GuestOnlyAuthRoute`; everything else under `/` uses `ProtectedRoute`.                                                                                                                                                                           |
 
 ### 1.5 Pages
 
-| File | Responsibility |
-|---|---|
-| `src/pages/Auth/Login.tsx` | Login form (Ant Design) → `useLoginMutation` → mismatch-guard via `isPartnerPortalSession` → persist + dispatch `setUser` → `redirectToCorrectPortalIfNeeded` → navigate to `/` or `/my-tasks` (team members). |
-| `src/pages/Auth/Register.tsx` | Partner onboarding self-signup (`partners/register`). |
-| `src/pages/Auth/ForgetPassword.tsx` / `ResetPassword.tsx` / `ChangePassword.tsx` / `SetPasswordByInvite.tsx` | Password lifecycle flows against the same `authApi` endpoints. |
+| File                                                                                                         | Responsibility                                                                                                                                                                                                 |
+| ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/pages/Auth/Login.tsx`                                                                                   | Login form (Ant Design) → `useLoginMutation` → mismatch-guard via `isPartnerPortalSession` → persist + dispatch `setUser` → `redirectToCorrectPortalIfNeeded` → navigate to `/` or `/my-tasks` (team members). |
+| `src/pages/Auth/Register.tsx`                                                                                | Partner onboarding self-signup (`partners/register`).                                                                                                                                                          |
+| `src/pages/Auth/ForgetPassword.tsx` / `ResetPassword.tsx` / `ChangePassword.tsx` / `SetPasswordByInvite.tsx` | Password lifecycle flows against the same `authApi` endpoints.                                                                                                                                                 |
 
 ### 1.6 UI touch-points
 
-| File | Responsibility |
-|---|---|
+| File                                               | Responsibility                                                                                                                                                                                                                       |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `src/components/common/Dropdowns/UserDropdown.tsx` | Profile / "Back to website" / **Logout**. Logout calls `callLogoutApi()`, `setLogoutCookie()`, `clearAuthLocalStorage()`, dispatches `logout()` + `baseApi.util.resetApiState()`, then `window.location.href = getPortalLoginUrl()`. |
 
 ---
 
 ## 2. Cookies & Storage
 
-| Storage | Name | Scope | Set by | Purpose |
-|---|---|---|---|---|
-| Cookie | `refreshToken` | `.<app_domain>` (httpOnly, secure) | API on login/refresh | Silent session refresh. |
-| Cookie | `role_msbhh` *(`VITE_PORTAL_ROLE_COOKIE`)* | `.<app_domain>` | API on login | Cross-subdomain role hint (`STUDENT`, `PARTNER`, `ADMIN`, …). Used by the SPA to redirect a visitor to the right portal **without** needing a token on the current subdomain. |
-| Cookie | `ct_logout` | `.<app_domain>` (60 s) | SPA on logout | Broadcasts "you were logged out elsewhere" to sibling tabs/portals. |
-| localStorage | `token` | per-origin | SPA | Bearer access token. |
-| localStorage | `user` | per-origin | SPA | Cached user object to hydrate Redux before `/auth/me` returns. |
+| Storage      | Name                                       | Scope                              | Set by               | Purpose                                                                                                                                                                       |
+| ------------ | ------------------------------------------ | ---------------------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cookie       | `refreshToken`                             | `.<app_domain>` (httpOnly, secure) | API on login/refresh | Silent session refresh.                                                                                                                                                       |
+| Cookie       | `role_msbhh` _(`VITE_PORTAL_ROLE_COOKIE`)_ | `.<app_domain>`                    | API on login         | Cross-subdomain role hint (`STUDENT`, `PARTNER`, `ADMIN`, …). Used by the SPA to redirect a visitor to the right portal **without** needing a token on the current subdomain. |
+| Cookie       | `ct_logout`                                | `.<app_domain>` (60 s)             | SPA on logout        | Broadcasts "you were logged out elsewhere" to sibling tabs/portals.                                                                                                           |
+| localStorage | `token`                                    | per-origin                         | SPA                  | Bearer access token.                                                                                                                                                          |
+| localStorage | `user`                                     | per-origin                         | SPA                  | Cached user object to hydrate Redux before `/auth/me` returns.                                                                                                                |
 
 > Because `refreshToken` and `role_msbhh` are set on `.<app_domain>`, every subdomain (partner / student / admin) sees them. `token` and `user` in localStorage are per-origin, so each SPA holds its own session.
 
@@ -84,6 +84,7 @@ ROLE_HOME_PORTAL = {
 ```
 
 Extra rules:
+
 - `isPartnerPortalSession(user)` — true when `user.type === "employee"` (partner-org staff authenticated as `EMPLOYEE`) **or** the user's role resolves to the partner portal.
 - `EMPLOYEE` is treated as "admin" HQ staff **except** when this SPA runs as partner and `user.type === "employee"` — those are partner-org staff and stay here.
 - Unknown roles that contain `PARTNER` also resolve to partner.
@@ -95,7 +96,7 @@ Extra rules:
 ```
 Partner SPA                  API                Redux / localStorage
 ──────────────              ─────               ───────────────────
-POST /auth/login  ───────▶                                 
+POST /auth/login  ───────▶
                    ◀─────── { data: { user, token } }
                                                  setUser(user, token)
                                                  persistAuthLocalStorage(user, token)
@@ -120,7 +121,7 @@ Runs once per app boot. Status starts as `"checking"` (except on public auth pat
 
 Fires before paint so we can redirect without flashing protected UI.
 
-1. `redirectFromPortalRoleCookieIfNeeded()` — if the `role_msbhh` cookie points to a portal **other than the current subdomain**, `window.location.replace` to that portal. Returns immediately. *(This check runs even for public auth paths so a student landing on `partner.<app_domain>/login` still gets routed to `student.<app_domain>`.)*
+1. `redirectFromPortalRoleCookieIfNeeded()` — if the `role_msbhh` cookie points to a portal **other than the current subdomain**, `window.location.replace` to that portal. Returns immediately. _(This check runs even for public auth paths so a student landing on `partner.<app_domain>/login` still gets routed to `student.<app_domain>`.)_
 2. If on a public auth path, stop.
 3. If Redux+localStorage session already matches, optionally call `redirectToCorrectPortalIfNeeded(user)` then mark `done`.
 
@@ -204,15 +205,15 @@ UserDropdown ─▶ callLogoutApi()           (POST /auth/logout, cookie cleared
 
 ## 9. Cross-Portal Redirect Decision Table
 
-| Scenario (current = `partner.<app_domain>`) | `role_msbhh` cookie | local token/user | Outcome |
-|---|---|---|---|
-| Landing on `/` | `STUDENT` | none | Redirect to `https://student.<app_domain>/` via `redirectFromPortalRoleCookieIfNeeded` (layout effect). |
-| Landing on `/login` | `ADMIN` | none | Same — redirect to `https://admin.<app_domain>/`. |
-| Landing on `/` | `PARTNER` | none | Cookie matches current → no redirect. Session restore → `/auth/me` 401 → refresh → success or fallback to `/auth/login/?tab=partner`. |
-| Landing on `/` | none | none | No cookie to follow → `getPortalLoginUrl()` → `<app_domain>/auth/login/?tab=partner`. |
-| Signed-in as `STUDENT` (e.g. after refresh response) | any | present | `redirectToCorrectPortalIfNeeded(user)` sends to `student.<app_domain>`. |
-| Signed-in as `PARTNER` | `PARTNER` | present | Passes all guards, renders dashboard. |
-| Any, after logout elsewhere | `ct_logout=1` | present | On focus → clear local session → next guard run falls through to login flow. |
+| Scenario (current = `partner.<app_domain>`)          | `role_msbhh` cookie | local token/user | Outcome                                                                                                                               |
+| ---------------------------------------------------- | ------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Landing on `/`                                       | `STUDENT`           | none             | Redirect to `https://student.<app_domain>/` via `redirectFromPortalRoleCookieIfNeeded` (layout effect).                               |
+| Landing on `/login`                                  | `ADMIN`             | none             | Same — redirect to `https://admin.<app_domain>/`.                                                                                     |
+| Landing on `/`                                       | `PARTNER`           | none             | Cookie matches current → no redirect. Session restore → `/auth/me` 401 → refresh → success or fallback to `/auth/login/?tab=partner`. |
+| Landing on `/`                                       | none                | none             | No cookie to follow → `getPortalLoginUrl()` → `<app_domain>/auth/login/?tab=partner`.                                                 |
+| Signed-in as `STUDENT` (e.g. after refresh response) | any                 | present          | `redirectToCorrectPortalIfNeeded(user)` sends to `student.<app_domain>`.                                                              |
+| Signed-in as `PARTNER`                               | `PARTNER`           | present          | Passes all guards, renders dashboard.                                                                                                 |
+| Any, after logout elsewhere                          | `ct_logout=1`       | present          | On focus → clear local session → next guard run falls through to login flow.                                                          |
 
 ---
 
@@ -247,23 +248,23 @@ This URL is used by: `SessionRestoreProvider`, `ProtectedRoute`, `GuestOnlyAuthR
 
 ```ts
 // portalRouting.ts
-getPortalLoginUrl()                        // where to send guests
-inferCurrentPortal()                       // "admin" | "student" | "partner"
-homePortalForRole(role)                    // role → portal
-isPartnerPortalSession(user)               // does this user belong here?
-redirectFromPortalRoleCookieIfNeeded()     // cookie-only redirect (pre-login)
-redirectToCorrectPortalIfNeeded(user)      // post-login redirect
-getPortalRoleMismatchMessage(role)         // toast copy on wrong portal
+getPortalLoginUrl(); // where to send guests
+inferCurrentPortal(); // "admin" | "student" | "partner"
+homePortalForRole(role); // role → portal
+isPartnerPortalSession(user); // does this user belong here?
+redirectFromPortalRoleCookieIfNeeded(); // cookie-only redirect (pre-login)
+redirectToCorrectPortalIfNeeded(user); // post-login redirect
+getPortalRoleMismatchMessage(role); // toast copy on wrong portal
 
 // authSessionRefresh.ts
-refreshAuthSession(api)                    // mutex-guarded refresh + /auth/me
-buildUserData(raw)                         // normalize API user shape
+refreshAuthSession(api); // mutex-guarded refresh + /auth/me
+buildUserData(raw); // normalize API user shape
 
 // authLocalStorage.ts
-persistAuthLocalStorage(user, token)
-clearAuthLocalStorage()
+persistAuthLocalStorage(user, token);
+clearAuthLocalStorage();
 
 // logoutCookie.ts
-callLogoutApi()
-setLogoutCookie() / clearLogoutCookie() / hasLogoutCookie()
+callLogoutApi();
+setLogoutCookie() / clearLogoutCookie() / hasLogoutCookie();
 ```
