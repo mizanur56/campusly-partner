@@ -1,8 +1,3 @@
-/**
- * Cross-portal routing: server sets optional cookie (default name `role_msbhh`).
- * Add new roles to ROLE_HOME_PORTAL in all three apps (admin / student / partner).
- */
-
 import { config } from "../config";
 
 export type PortalKind = "admin" | "student" | "partner";
@@ -25,7 +20,7 @@ export const PORTAL_LOGIN_PATH = "/login";
 
 export function getPortalLoginUrl(): string {
   if (typeof window === "undefined") return PORTAL_LOGIN_PATH;
-  return `${window.location.origin}${PORTAL_LOGIN_PATH}`;
+  return `${import.meta.env.PROD ? `https://${config.app_domain}/auth/login` : window.location.origin}${PORTAL_LOGIN_PATH}`;
 }
 
 export const ROLE_HOME_PORTAL: Record<string, PortalKind> = {
@@ -52,7 +47,10 @@ function subdomainForPortal(portal: PortalKind): string {
   return SUB[portal];
 }
 
-export function getPortalOrigin(portal: PortalKind, appDomain?: string): string {
+export function getPortalOrigin(
+  portal: PortalKind,
+  appDomain?: string,
+): string {
   const domain = normalizeAppDomain(appDomain ?? config.app_domain);
   if (!domain) return "";
   return `${PROTOCOL}://${subdomainForPortal(portal)}.${domain}`;
@@ -62,7 +60,9 @@ export function normalizeRoleKey(role: string): string {
   return role.trim().toUpperCase().replace(/\s+/g, "_");
 }
 
-export function homePortalForRole(role: string | undefined | null): PortalKind | null {
+export function homePortalForRole(
+  role: string | undefined | null,
+): PortalKind | null {
   if (!role) return null;
   const key = normalizeRoleKey(role);
   if (ROLE_HOME_PORTAL[key]) return ROLE_HOME_PORTAL[key];
@@ -159,10 +159,15 @@ export function isRoleAllowedOnThisPortal(
 }
 
 /** Partner dashboard: partner roles + org employees (type employee). Not student / HQ admin-only accounts. */
-export function isPartnerPortalSession(user: {
-  role?: string;
-  type?: string;
-} | null | undefined): boolean {
+export function isPartnerPortalSession(
+  user:
+    | {
+        role?: string;
+        type?: string;
+      }
+    | null
+    | undefined,
+): boolean {
   if (!user) return false;
   if (user.type === "employee") return true;
   return isRoleAllowedOnThisPortal(user.role ?? null);
@@ -197,7 +202,7 @@ export function getPortalRoleMismatchMessage(
 }
 
 export function redirectToCorrectPortalIfNeeded(
-  user: { role?: string; type?: string } | null | undefined
+  user: { role?: string; type?: string } | null | undefined,
 ): boolean {
   if (!user) return false;
   const current = inferCurrentPortal();

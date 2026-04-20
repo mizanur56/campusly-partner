@@ -101,10 +101,15 @@ const SIGNED_ROUTE_PATHS = [
   "/payments/commission",
   "/academy",
   "/hot-offers",
-   "/settings/profile",
+  "/settings/profile",
 ];
 
-const TEAM_MEMBER_ROUTE_PATHS = ["/", "/students", "/applications", "/my-tasks"];
+const TEAM_MEMBER_ROUTE_PATHS = [
+  "/",
+  "/students",
+  "/applications",
+  "/my-tasks",
+];
 
 const othersSidebarItems: NavItem[] = [
   {
@@ -151,8 +156,6 @@ const Sidebar: React.FC = () => {
   const { student } = useStudentProfile();
   const user = useSelector(selectCurrentUser);
 
-
-
   // Fetch partner profile to get advisor details
   const {
     data: partnerProfile,
@@ -163,7 +166,8 @@ const Sidebar: React.FC = () => {
   // Onboarding status: when ACTIVE + portalAccessUnlocked, show signed sidebar even on "/"
   const { data: onboardingStatus } = useGetOnboardingStatusQuery();
   const hasUnlockedPortal =
-    onboardingStatus?.status === "ACTIVE" && !!onboardingStatus?.portalAccessUnlocked;
+    onboardingStatus?.status === "ACTIVE" &&
+    !!onboardingStatus?.portalAccessUnlocked;
 
   const isTeamMember = user?.role === "PARTNER_TEAM_MEMBER";
 
@@ -194,9 +198,27 @@ const Sidebar: React.FC = () => {
 
   const handleLogout = () => {
     console.log("Logging out...");
+    console.log("PROD:", import.meta.env.PROD);
+    console.log("VITE_NODE_ENV:", import.meta.env.VITE_NODE_ENV);
     clearAuthLocalStorage();
     localStorage.removeItem("partner-preview-mode");
-    navigate("/login");
+
+    const isProduction = import.meta.env.VITE_NODE_ENV === "production";
+    console.log("isProduction:", isProduction);
+
+    if (isProduction) {
+      // Production: redirect to external auth login URL
+      const baseUrl =
+        config.app_domain?.replace(/^https?:\/\//i, "").replace(/\/$/, "") ||
+        "";
+      const authUrl = `https://${baseUrl}/auth/login`;
+      console.log("Redirecting to production auth:", authUrl);
+      window.location.href = authUrl;
+    } else {
+      // Development: redirect to internal login route
+      console.log("Development mode - redirecting to /login");
+      navigate("/login");
+    }
   };
 
   /* Sidebar mode by context:
@@ -224,14 +246,19 @@ const Sidebar: React.FC = () => {
     (location.pathname === "/" && previewMode === "onboarding") ||
     location.pathname.startsWith("/onboarding") ||
     location.pathname.startsWith("/contract");
-  const signedPaths = isTeamMember ? TEAM_MEMBER_ROUTE_PATHS : SIGNED_ROUTE_PATHS;
+  const signedPaths = isTeamMember
+    ? TEAM_MEMBER_ROUTE_PATHS
+    : SIGNED_ROUTE_PATHS;
   const isSignedContext =
     !isStudentContext &&
     !isApplicationDetailContext &&
-    ((location.pathname === "/" && (previewMode === "signed" || hasUnlockedPortal || isTeamMember)) ||
+    ((location.pathname === "/" &&
+      (previewMode === "signed" || hasUnlockedPortal || isTeamMember)) ||
       signedPaths.includes(location.pathname) ||
       (!isTeamMember && location.pathname.startsWith("/payments")) ||
-      (isTeamMember && (location.pathname.startsWith("/students/") || location.pathname.startsWith("/applications/"))));
+      (isTeamMember &&
+        (location.pathname.startsWith("/students/") ||
+          location.pathname.startsWith("/applications/"))));
 
   // Application details loading: show loading state (click korar sathe start)
   const isApplicationDetailLoading = isApplicationDetailContext && !student;
