@@ -19,6 +19,7 @@ import {
 import {
   getPortalLoginUrl,
   isPartnerPortalSession,
+  isPortalRoleCookieMissingInProduction,
   redirectFromPortalRoleCookieIfNeeded,
   redirectToCorrectPortalIfNeeded,
 } from "../lib/portalRouting";
@@ -92,6 +93,10 @@ export default function SessionRestoreProvider({
 
   useLayoutEffect(() => {
     if (typeof window === "undefined") return;
+    if (isPortalRoleCookieMissingInProduction()) {
+      clearAuthLocalStorage();
+      dispatch(logout());
+    }
     if (redirectFromPortalRoleCookieIfNeeded()) return;
     if (isPublicAuthPath()) return;
     if (user && token && localSessionMatchesRedux(user, token)) {

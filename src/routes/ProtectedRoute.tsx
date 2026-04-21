@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useLayoutEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Navigate } from "react-router-dom";
 import {
@@ -12,6 +12,7 @@ import {
   getPortalLoginUrl,
   inferCurrentPortal,
   isPartnerPortalSession,
+  isPortalRoleCookieMissingInProduction,
   redirectFromPortalRoleCookieIfNeeded,
   redirectToCorrectPortalIfNeeded,
 } from "../lib/portalRouting";
@@ -33,6 +34,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const user = useSelector(selectCurrentUser);
   const token = useSelector(useCurrentToken);
   const dispatch = useDispatch();
+
+  useLayoutEffect(() => {
+    if (isPortalRoleCookieMissingInProduction()) {
+      clearAuthLocalStorage();
+      dispatch(logout());
+    }
+  }, [dispatch]);
 
   useEffect(() => {
     const check = () => {

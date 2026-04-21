@@ -32,14 +32,14 @@ End-to-end reference for the partner SPA's auth: which files participate, what e
 | `authLocalStorage.ts`   | `persistAuthLocalStorage(user, token)` / `clearAuthLocalStorage()` — writes/clears `localStorage["token"]` and `localStorage["user"]`.                                                                                                                                                                                 |
 | `authSessionRefresh.ts` | Shape helpers (`buildUserData`, `extractAccessTokenFromRefreshJson`, `extractUserFromMeJson`) and `refreshAuthSession(api)` — a mutex-guarded refresh → `/auth/me` → Redux + localStorage update.                                                                                                                      |
 | `logoutCookie.ts`       | Cross-subdomain logout broadcast cookie `ct_logout` (60 s): `setLogoutCookie`, `clearLogoutCookie`, `hasLogoutCookie`, plus `callLogoutApi()` → `POST /auth/logout`.                                                                                                                                                   |
-| `portalRouting.ts`      | Heart of cross-portal routing. Resolves current portal from subdomain / `VITE_PORTAL`, maps roles → home portal, reads the `role_msbhh` cookie, and provides `getPortalLoginUrl`, `redirectFromPortalRoleCookieIfNeeded`, `redirectToCorrectPortalIfNeeded`, `isPartnerPortalSession`, `getPortalRoleMismatchMessage`. |
+| `portalRouting.ts`      | Heart of cross-portal routing. Resolves current portal from subdomain / `VITE_PORTAL`, maps roles → home portal, reads the `role_msbhh` cookie, and provides `getPortalLoginUrl`, `redirectFromPortalRoleCookieIfNeeded`, `redirectToCorrectPortalIfNeeded`, `isPartnerPortalSession`, `getPortalRoleMismatchMessage`, `isPortalRoleCookieMissingInProduction` (used to drop stale client auth when the role cookie is absent in production). |
 
 ### 1.4 Providers & Routes
 
 | File                                       | Responsibility                                                                                                                                                                                                                                                                      |
 | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/providers/SessionRestoreProvider.tsx` | Wraps the app. On mount: (a) cookie-based cross-portal redirect, (b) match Redux ↔ localStorage, (c) call `/auth/me` with bearer, (d) on 401 call `/auth/refresh-token`, (e) re-hydrate Redux + localStorage, (f) fall back to partner login URL. Shows a spinner while `checking`. |
-| `src/routes/ProtectedRoute.tsx`            | For authenticated routes. Listens for `ct_logout` on focus, then enforces: token present → user is a partner session → role/permission check → render children, or redirect to the correct portal / login.                                                                          |
+| `src/providers/SessionRestoreProvider.tsx` | Wraps the app. On mount: (a) in **production**, if the portal role cookie is missing or empty → `clearAuthLocalStorage()` + `logout()`; (b) cookie-based cross-portal redirect; (c) match Redux ↔ localStorage; (d) call `/auth/me` with bearer; (e) on 401 call `/auth/refresh-token`; (f) re-hydrate Redux + localStorage; (g) fall back to partner login URL. Shows a spinner while `checking`. |
+| `src/routes/ProtectedRoute.tsx`            | For authenticated routes. In production, `useLayoutEffect` applies the same “no role cookie → clear local auth” rule as `SessionRestoreProvider`. Listens for `ct_logout` on focus, then enforces: token present → user is a partner session → role/permission check → render children, or redirect to the correct portal / login.                                                                          |
 | `src/routes/GuestOnlyAuthRoute.tsx`        | For `/login`, `/register`, `/forgot-password`, `/reset-password`, `/set-password`. If already authenticated, redirects to home or to the correct portal.                                                                                                                            |
 | `src/routes/routes.tsx`                    | Route tree. Guest routes wrap with `GuestOnlyAuthRoute`; everything else under `/` uses `ProtectedRoute`.                                                                                                                                                                           |
 
@@ -70,6 +70,8 @@ End-to-end reference for the partner SPA's auth: which files participate, what e
 | localStorage | `user`                                     | per-origin                         | SPA                  | Cached user object to hydrate Redux before `/auth/me` returns.                                                                                                                |
 
 > Because `refreshToken` and `role_msbhh` are set on `.<app_domain>`, every subdomain (partner / student / admin) sees them. `token` and `user` in localStorage are per-origin, so each SPA holds its own session.
+
+**Production — missing portal role cookie:** If `role_msbhh` (or `VITE_PORTAL_ROLE_COOKIE`) is **absent or empty** while `config.node_env === "production"`, the SPA treats mirrored client auth as stale: it runs `clearAuthLocalStorage()` (removes `token` and `user`) and dispatches `logout()` so redux-persist does not leave a ghost session. This runs in `SessionRestoreProvider` (first `useLayoutEffect`, before public-path short-circuit) and again in `ProtectedRoute` (`useLayoutEffect`). **Development** skips this rule so localhost (where the cookie often never appears) keeps working.
 
 ---
 
@@ -121,9 +123,10 @@ Runs once per app boot. Status starts as `"checking"` (except on public auth pat
 
 Fires before paint so we can redirect without flashing protected UI.
 
-1. `redirectFromPortalRoleCookieIfNeeded()` — if the `role_msbhh` cookie points to a portal **other than the current subdomain**, `window.location.replace` to that portal. Returns immediately. _(This check runs even for public auth paths so a student landing on `partner.<app_domain>/login` still gets routed to `student.<app_domain>`.)_
-2. If on a public auth path, stop.
-3. If Redux+localStorage session already matches, optionally call `redirectToCorrectPortalIfNeeded(user)` then mark `done`.
+1. **Production only:** if `isPortalRoleCookieMissingInProduction()` — `clearAuthLocalStorage()` and `dispatch(logout())` so orphan `token`/`user` keys and persisted Redux auth are cleared when the role cookie is gone.
+2. `redirectFromPortalRoleCookieIfNeeded()` — if the `role_msbhh` cookie points to a portal **other than the current subdomain**, `window.location.replace` to that portal. Returns immediately. _(This check runs even for public auth paths so a student landing on `partner.<app_domain>/login` still gets routed to `student.<app_domain>`.)_
+3. If on a public auth path, stop.
+4. If Redux+localStorage session already matches, optionally call `redirectToCorrectPortalIfNeeded(user)` then mark `done`.
 
 ### 5.2 Async phase — `useEffect`
 
@@ -168,12 +171,13 @@ Every RTK Query request is routed through `baseQueryWithRefreshToken`:
 
 ### 7.1 `ProtectedRoute`
 
-1. Focus/mount: if `ct_logout` cookie exists → clear local session and dispatch `logout()`.
-2. If there is no `token` or `user` → try `redirectFromPortalRoleCookieIfNeeded()` (send student/admin visitors home); if that does nothing → `window.location.href = getPortalLoginUrl()`.
-3. If running as partner but `!isPartnerPortalSession(user)` → clear, then same cookie-redirect-or-login fallback.
-4. `redirectToCorrectPortalIfNeeded(user)` — if the signed-in user actually belongs to admin/student, send them there.
-5. `checkAccess(user, roles, employeePermissions)` — hard-denies with `<Navigate to="/404" />` when the route specifies `roles` or `employeePermissions` that this user does not satisfy.
-6. Render children.
+1. `useLayoutEffect` (production): if the portal role cookie is missing or empty → `clearAuthLocalStorage()` and `dispatch(logout())` (same invariant as `SessionRestoreProvider`).
+2. Focus/mount: if `ct_logout` cookie exists → clear local session and dispatch `logout()`.
+3. If there is no `token` or `user` → try `redirectFromPortalRoleCookieIfNeeded()` (send student/admin visitors home); if that does nothing → `window.location.href = getPortalLoginUrl()`.
+4. If running as partner but `!isPartnerPortalSession(user)` → clear, then same cookie-redirect-or-login fallback.
+5. `redirectToCorrectPortalIfNeeded(user)` — if the signed-in user actually belongs to admin/student, send them there.
+6. `checkAccess(user, roles, employeePermissions)` — hard-denies with `<Navigate to="/404" />` when the route specifies `roles` or `employeePermissions` that this user does not satisfy.
+7. Render children.
 
 ### 7.2 `GuestOnlyAuthRoute`
 
@@ -203,6 +207,8 @@ UserDropdown ─▶ callLogoutApi()           (POST /auth/logout, cookie cleared
 
 ---
 
+> **Dev mode note:** when `VITE_NODE_ENV !== "production"`, cross-subdomain redirects (both cookie-based and user-based) are skipped — the SPA stays on the dev origin and sends mismatched visitors to the local `/login` route instead of another subdomain. The “missing `role_msbhh` → clear `token`/`user` + logout” rule is **also skipped** in non-production so local dev is not logged out on every load when the cookie cannot be set on `localhost`.
+
 ## 9. Cross-Portal Redirect Decision Table
 
 | Scenario (current = `partner.<app_domain>`)          | `role_msbhh` cookie | local token/user | Outcome                                                                                                                               |
@@ -211,6 +217,7 @@ UserDropdown ─▶ callLogoutApi()           (POST /auth/logout, cookie cleared
 | Landing on `/login`                                  | `ADMIN`             | none             | Same — redirect to `https://admin.<app_domain>/`.                                                                                     |
 | Landing on `/`                                       | `PARTNER`           | none             | Cookie matches current → no redirect. Session restore → `/auth/me` 401 → refresh → success or fallback to `/auth/login/?tab=partner`. |
 | Landing on `/`                                       | none                | none             | No cookie to follow → `getPortalLoginUrl()` → `<app_domain>/auth/login/?tab=partner`.                                                 |
+| Production, any route                                  | none / empty        | present (LS)   | `clearAuthLocalStorage()` + `logout()` in layout effects; then guards / restore fall through to login or sibling portal if applicable. |
 | Signed-in as `STUDENT` (e.g. after refresh response) | any                 | present          | `redirectToCorrectPortalIfNeeded(user)` sends to `student.<app_domain>`.                                                              |
 | Signed-in as `PARTNER`                               | `PARTNER`           | present          | Passes all guards, renders dashboard.                                                                                                 |
 | Any, after logout elsewhere                          | `ct_logout=1`       | present          | On focus → clear local session → next guard run falls through to login flow.                                                          |
@@ -256,6 +263,7 @@ isPartnerPortalSession(user); // does this user belong here?
 redirectFromPortalRoleCookieIfNeeded(); // cookie-only redirect (pre-login)
 redirectToCorrectPortalIfNeeded(user); // post-login redirect
 getPortalRoleMismatchMessage(role); // toast copy on wrong portal
+isPortalRoleCookieMissingInProduction(); // prod + no/empty role cookie → caller clears LS + logout
 
 // authSessionRefresh.ts
 refreshAuthSession(api); // mutex-guarded refresh + /auth/me

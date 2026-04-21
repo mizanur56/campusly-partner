@@ -92,6 +92,12 @@ export function readPortalRoleCookie(): string | null {
   return null;
 }
 
+/** True when we expect a portal role cookie (production) but it is missing or empty. */
+export function isPortalRoleCookieMissingInProduction(): boolean {
+  if (config.node_env !== "production") return false;
+  return !readPortalRoleCookie()?.trim();
+}
+
 export function redirectFromPortalRoleCookieIfNeeded(): boolean {
   if (typeof window === "undefined") return false;
   const raw = readPortalRoleCookie();
@@ -99,6 +105,10 @@ export function redirectFromPortalRoleCookieIfNeeded(): boolean {
   const home = homePortalForRole(raw.trim());
   const current = inferCurrentPortal();
   if (!home || home === current) return false;
+  if (config.node_env !== "production") {
+    window.location.replace(DEV_PORTAL_LOGIN_PATH);
+    return true;
+  }
   const target = getPortalOrigin(home, config.app_domain);
   if (!target) return false;
   window.location.replace(`${target}/`);
@@ -213,6 +223,11 @@ export function redirectToCorrectPortalIfNeeded(
   if (!home) return false;
 
   if (home === current) return false;
+
+  if (config.node_env !== "production") {
+    window.location.replace(DEV_PORTAL_LOGIN_PATH);
+    return true;
+  }
 
   const target = getPortalOrigin(home, config.app_domain);
   if (!target) return false;
