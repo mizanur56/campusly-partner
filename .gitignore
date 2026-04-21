@@ -13,6 +13,8 @@ dist-ssr
 *.local
 # *.env
 
+docs/AUTH_SESSION_RESTORE.md
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
