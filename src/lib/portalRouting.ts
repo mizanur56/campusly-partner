@@ -92,12 +92,6 @@ export function readPortalRoleCookie(): string | null {
   return null;
 }
 
-/** True when we expect a portal role cookie (production) but it is missing or empty. */
-export function isPortalRoleCookieMissingInProduction(): boolean {
-  if (config.node_env !== "production") return false;
-  return !readPortalRoleCookie()?.trim();
-}
-
 export function redirectFromPortalRoleCookieIfNeeded(): boolean {
   if (typeof window === "undefined") return false;
   const raw = readPortalRoleCookie();

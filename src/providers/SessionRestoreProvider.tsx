@@ -19,7 +19,6 @@ import {
 import {
   getPortalLoginUrl,
   isPartnerPortalSession,
-  isPortalRoleCookieMissingInProduction,
   redirectFromPortalRoleCookieIfNeeded,
   redirectToCorrectPortalIfNeeded,
 } from "../lib/portalRouting";
@@ -60,23 +59,6 @@ async function callRefresh(): Promise<Response> {
   });
 }
 
-function localSessionMatchesRedux(
-  user: unknown,
-  token: string | null | undefined,
-): boolean {
-  if (!user || !token) return false;
-  const lsToken = localStorage.getItem("token");
-  const lsUserRaw = localStorage.getItem("user");
-  if (!lsToken || lsToken !== token || !lsUserRaw) return false;
-  try {
-    const parsed = JSON.parse(lsUserRaw) as { id?: string };
-    const u = user as { id?: string };
-    return Boolean(parsed?.id && u?.id && parsed.id === u.id);
-  } catch {
-    return false;
-  }
-}
-
 export default function SessionRestoreProvider({
   children,
 }: {
@@ -93,25 +75,10 @@ export default function SessionRestoreProvider({
 
   useLayoutEffect(() => {
     if (typeof window === "undefined") return;
-    if (isPortalRoleCookieMissingInProduction()) {
-      clearAuthLocalStorage();
-      dispatch(logout());
-    }
     if (redirectFromPortalRoleCookieIfNeeded()) return;
-    if (isPublicAuthPath()) return;
-    if (user && token && localSessionMatchesRedux(user, token)) {
-      if (redirectToCorrectPortalIfNeeded(user as any)) return;
-      setStatus("done");
-    }
-  }, [user, token]);
+  }, []);
 
   useEffect(() => {
-    if (user && token && localSessionMatchesRedux(user, token)) {
-      if (redirectToCorrectPortalIfNeeded(user as any)) return;
-      setStatus("done");
-      return;
-    }
-
     if (attempted.current) return;
 
     const publicAnonymous =
@@ -125,6 +92,8 @@ export default function SessionRestoreProvider({
     attempted.current = true;
 
     const goLoginOrStayOnPublicAuth = () => {
+      clearAuthLocalStorage();
+      dispatch(logout());
       if (isPublicAuthPath()) {
         setStatus("done");
         return;
@@ -135,6 +104,7 @@ export default function SessionRestoreProvider({
 
     const restore = async () => {
       try {
+        let sessionRestoredVia401Refresh = false;
         let bearer = (token ?? localStorage.getItem("token") ?? "").trim();
 
         // ── 1) /auth/me (cookie-only session uses empty Authorization) ──
@@ -164,6 +134,7 @@ export default function SessionRestoreProvider({
             goLoginOrStayOnPublicAuth();
             return;
           }
+          sessionRestoredVia401Refresh = true;
         } else if (!meRes.ok) {
           goLoginOrStayOnPublicAuth();
           return;
@@ -175,6 +146,21 @@ export default function SessionRestoreProvider({
         if (!rawUser) {
           goLoginOrStayOnPublicAuth();
           return;
+        }
+
+        // Access token can still validate /auth/me while the HttpOnly refresh cookie is gone.
+        // If we did not just obtain the session via 401→refresh, require refresh to succeed once.
+        if (!sessionRestoredVia401Refresh) {
+          const refreshProof = await callRefresh();
+          if (!refreshProof.ok) {
+            goLoginOrStayOnPublicAuth();
+            return;
+          }
+          const proofJson = await refreshProof.json().catch(() => null);
+          const rotated = extractAccessTokenFromRefreshJson(proofJson);
+          if (rotated?.trim()) {
+            bearer = rotated.trim();
+          }
         }
 
         const userData = buildUserData(rawUser as Record<string, unknown>);
