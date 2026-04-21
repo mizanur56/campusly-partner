@@ -1,7 +1,14 @@
 import { Form } from "antd";
 import { useEffect } from "react";
 import { Button } from "../../../components/ui/button";
-import { FormInput, PhoneInput, phoneButtonStyle, phoneInputStyle } from "../sharedFormProps";
+import {
+  FormInput,
+  PhoneInput,
+  phoneButtonStyle,
+  phoneInputGetValueFromEvent,
+  phoneInputStyle,
+  PHONE_BD_INITIAL_VALUE,
+} from "../sharedFormProps";
 import { toast } from "react-toastify";
 import { useGetStepDataQuery, usePatchStep2Mutation } from "../../../redux/features/onboardingForm/onboardingFormApi";
 import type { Step2Payload } from "../../../redux/features/onboardingForm/onboardingFormApi";
@@ -28,11 +35,12 @@ export default function DirectorDetailsStep({ apiStep, onPrev, onNext }: Props) 
       stepData?.data && (stepData.data as any).data;
     if (payload && typeof payload === "object") {
       const d = payload as Record<string, unknown>;
+      const mobileDigits = String(d.mobileNumber ?? "").replace(/\D/g, "");
       form.setFieldsValue({
         fullName: d.fullName,
         whatsapp: d.whatsappNumber ?? d.whatsapp,
         email: d.email,
-        mobileNumber: d.mobileNumber,
+        mobileNumber: mobileDigits || PHONE_BD_INITIAL_VALUE,
       });
     }
   }, [stepData, form]);
@@ -80,15 +88,30 @@ export default function DirectorDetailsStep({ apiStep, onPrev, onNext }: Props) 
   }
 
   return (
-    <Form form={form} layout="vertical" {...formItemLayout}>
+    <Form
+      form={form}
+      layout="vertical"
+      initialValues={{ mobileNumber: PHONE_BD_INITIAL_VALUE }}
+      {...formItemLayout}
+    >
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <FormInput name="fullName" label="Full name" placeholder="Enter full name" rules={[{ required: true, message: "Required" }]} />
         <FormInput name="whatsapp" label="Whatsapp (If Applicable)" placeholder="Enter whatsapp number" />
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <FormInput name="email" label="Email" placeholder="Enter email" rules={[{ required: true, message: "Required", type: "email" }]} />
-        <Form.Item name="mobileNumber" label="Mobile number" rules={[{ required: true, message: "Required" }]}>
-          <PhoneInput country="de" inputStyle={phoneInputStyle} buttonStyle={phoneButtonStyle} />
+        <Form.Item
+          name="mobileNumber"
+          label="Mobile number"
+          rules={[{ required: true, message: "Required" }]}
+          getValueFromEvent={phoneInputGetValueFromEvent}
+        >
+          <PhoneInput
+            country="bd"
+            disableCountryGuess
+            inputStyle={phoneInputStyle}
+            buttonStyle={phoneButtonStyle}
+          />
         </Form.Item>
       </div>
       <div className="mt-8 flex justify-end gap-3">

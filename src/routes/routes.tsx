@@ -8,6 +8,7 @@ import Login from "../pages/Auth/Login";
 import Register from "../pages/Auth/Register";
 import ResetPassword from "../pages/Auth/ResetPassword";
 import SetPasswordByInvite from "../pages/Auth/SetPasswordByInvite";
+import RegistrationWelcomePage from "../pages/Auth/RegistrationWelcomePage";
 import Dashboard from "../pages/Dashboard/Dashboard.tsx";
 import AllMediaList from "../pages/Media/Media";
 import Academy from "../pages/Academy/Academy";
@@ -18,6 +19,7 @@ import ProgramsSchools from "../pages/ProgramsSchools/ProgramsSchools";
 import ProtectedRoute from "./ProtectedRoute";
 import GuestOnlyAuthRoute from "./GuestOnlyAuthRoute";
 import { OnboardingPage } from "../pages/Onboarding";
+import RegularCompliancePage from "../pages/Onboarding/RegularCompliancePage";
 import ContractPage from "../pages/Contract/ContractPage";
 import ContractSignedPage from "../pages/Contract/ContractSignedPage";
 import Students from "../pages/Students/Students";
@@ -102,6 +104,14 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/register/welcome"
+          element={
+            <ProtectedRoute>
+              <RegistrationWelcomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/"
           element={
             <ProtectedRoute>
@@ -112,6 +122,7 @@ function AppRoutes() {
         >
           <Route index element={<DashboardOrRedirect />} />
           <Route path="media" element={<AllMediaList />} />
+          <Route path="onboarding/compliance" element={<RegularCompliancePage />} />
           <Route path="onboarding" element={<OnboardingPage />} />
           <Route path="contract" element={<ContractPage />} />
           <Route path="contract/signed" element={<ContractSignedPage />} />

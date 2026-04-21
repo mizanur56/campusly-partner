@@ -1,6 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 import { Input, Modal, message } from "antd";
 import { useNavigate } from "react-router-dom";
+import { FaRegFileAlt } from "react-icons/fa";
+import { FaRegUser } from "react-icons/fa6";
+import { LuNotebookPen } from "react-icons/lu";
+import { LuPenTool } from "react-icons/lu";
+
+import {
+  FiChevronLeft,
+  FiChevronRight,
+  FiCheck,
+  FiEye,
+  FiCalendar,
+  FiDownload,
+  FiEdit2,
+  FiZoomIn,
+  FiZoomOut,
+} from "react-icons/fi";
 import { config } from "../../config";
 import { Button } from "../../components/ui/button";
 import { SignaturePad } from "../../components/contract/SignaturePad";
@@ -22,6 +38,8 @@ export default function ContractPage() {
   const [signatureImageDataUrl, setSignatureImageDataUrl] = useState<
     string | null
   >(null);
+  const [pdfPage, setPdfPage] = useState(1);
+  const [pdfZoom, setPdfZoom] = useState(60);
   const [showSignaturePad, setShowSignaturePad] = useState(false);
   const [signedAt, setSignedAt] = useState<string | null>(null);
   const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
@@ -82,10 +100,56 @@ export default function ContractPage() {
   const [cancelMeeting, { isLoading: isCancelingMeeting }] =
     useCancelMeetingMutation();
 
-  // Build full PDF URL
-  const contractPdfUrl = contractData?.contractDocumentUrl
-    ? `${config.image_access_url}${contractData.contractDocumentUrl}`
-    : null;
+  // Build contract document URL (pdf/image).
+  const contractPdfUrl = useMemo(() => {
+    const raw = contractData?.contractDocumentUrl;
+    if (!raw) return null;
+    if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
+
+    const path = raw.replace(/^\/+/, "");
+
+    // In dev, prefer same-origin `/uploads/...` so pdf.js can fetch without CORS.
+    if (import.meta.env.DEV) {
+      const withUploadsPrefix = path.startsWith("uploads/")
+        ? `/${path}`
+        : `/uploads/${path}`;
+      return withUploadsPrefix;
+    }
+
+    const base = (config.image_access_url ?? "").replace(/\/+$/, "");
+    return `${base}/${path}`;
+  }, [contractData?.contractDocumentUrl]);
+
+  useEffect(() => {
+    setPdfPage(1);
+    setPdfZoom(80);
+  }, [contractPdfUrl]);
+
+  const contractKnownTotalPages = useMemo(() => {
+    const raw =
+      (contractData as any)?.totalPages ??
+      (contractData as any)?.pageCount ??
+      (contractData as any)?.pages;
+    const n = Number(raw);
+    return Number.isFinite(n) && n > 0 ? n : undefined;
+  }, [contractData]);
+
+  const canGoPrev = pdfPage > 1;
+  const canGoNext = contractKnownTotalPages
+    ? pdfPage < contractKnownTotalPages
+    : true;
+
+  const contractFileExt = useMemo(() => {
+    if (!contractPdfUrl) return null;
+    const clean = contractPdfUrl.split("#")[0]?.split("?")[0] ?? contractPdfUrl;
+    const ext = clean.split(".").pop()?.toLowerCase();
+    return ext ?? null;
+  }, [contractPdfUrl]);
+
+  const isContractPdf = contractFileExt === "pdf";
+  const isContractImage = contractFileExt
+    ? ["png", "jpg", "jpeg", "webp", "gif", "svg"].includes(contractFileExt)
+    : false;
 
   const hasSigned = !!signatureImageDataUrl;
   const isContractSignRejected =
@@ -356,35 +420,33 @@ export default function ContractPage() {
     });
   };
 
+  console.log(contractPdfUrl);
+
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-gray-50/50 px-4 py-8 dark:bg-gray-950/30 md:px-6 md:py-10">
+    <div className="min-h-[calc(100vh-4rem)] bg-gray-50/50 py-2 dark:bg-gray-950/30">
       <div className="mx-auto flex max-w-5xl flex-col gap-8 lg:flex-row lg:gap-10">
         {/* Left: Contract progress card */}
         <aside className="w-full shrink-0 lg:w-56 xl:w-64">
-          <div className="lg:sticky lg:top-24 rounded-[24px] border border-neutral-100 bg-white p-5 card-shadow dark:border-gray-800 dark:bg-gray-900">
-            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+          <div className="lg:sticky lg:top-24 rounded-[16px] border border-[#C7CACF] bg-[#FFFFFF] p-5 card-shadow dark:border-gray-800 dark:bg-gray-900">
+            <h2 className="text-[18px] font-semibold text-[#20242A] dark:text-gray-200">
               Contract
             </h2>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {hasSigned ? "2" : "1"}/2 steps •{" "}
-              <span className="font-medium text-primary-600 dark:text-primary-400">
-                {hasSigned ? "Complete" : "View and Sign"}
-              </span>
-            </p>
+
             <ul className="mt-4 space-y-3">
               <li className="flex items-center gap-3 text-sm">
                 <span
                   className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
                     hasSigned
-                      ? "bg-primary-600"
-                      : "border-2 border-primary-500 bg-primary-50 dark:border-primary-400 dark:bg-primary-900/30"
+                      ? "bg-primary-600 text-white"
+                      : "border-2 border-primary-500 bg-white dark:border-primary-400 dark:bg-gray-900"
                   }`}
                 >
                   {hasSigned ? (
                     <svg
-                      className="h-3 w-3 text-white"
+                      className="h-3 w-3"
                       fill="currentColor"
                       viewBox="0 0 20 20"
+                      aria-hidden
                     >
                       <path
                         fillRule="evenodd"
@@ -392,59 +454,35 @@ export default function ContractPage() {
                         clipRule="evenodd"
                       />
                     </svg>
-                  ) : (
-                    <span className="text-xs font-semibold text-primary-600 dark:text-primary-400">
-                      1
-                    </span>
-                  )}
+                  ) : null}
                 </span>
                 <span
                   className={
-                    hasSigned
-                      ? "text-gray-600 dark:text-gray-300"
-                      : "font-semibold text-primary-700 dark:text-primary-300"
+                    "text-gray-600 dark:text-gray-300"
                   }
                 >
-                  View and Sign
+                  View and sign
                 </span>
               </li>
-              <li className="flex items-center gap-3 text-sm">
-                <span
-                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
-                    hasSigned
-                      ? "border-2 border-primary-500 bg-primary-50 dark:border-primary-400 dark:bg-primary-900/30"
-                      : "border border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-800"
-                  }`}
-                >
-                  {hasSigned ? (
-                    <span className="text-xs font-semibold text-primary-600 dark:text-primary-400">
-                      2
-                    </span>
-                  ) : (
-                    <span className="text-xs text-gray-400 dark:text-gray-500">
-                      2
-                    </span>
-                  )}
-                </span>
-                <span
-                  className={
-                    hasSigned
-                      ? "font-semibold text-primary-700 dark:text-primary-300"
-                      : "text-gray-500 dark:text-gray-400"
-                  }
-                >
-                  Complete
-                </span>
-              </li>
+              {hasSigned && (
+                <li className="flex items-center gap-3 text-sm">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-primary-500 bg-white dark:border-primary-400 dark:bg-gray-900">
+                    <span aria-hidden className="h-2 w-2 rounded-full bg-primary-500" />
+                  </span>
+                  <span className="font-semibold text-primary-700 dark:text-primary-300">
+                    Complete
+                  </span>
+                </li>
+              )}
             </ul>
           </div>
         </aside>
 
         {/* Right: Contract content */}
         <main className="min-w-0 flex-1">
-          <div className="overflow-hidden rounded-[24px] border border-neutral-100 bg-white card-shadow dark:border-gray-800 dark:bg-gray-900">
+          <div className="">
             {/* Header */}
-            <header className="border-b border-gray-100 px-6 py-6 dark:border-gray-800 sm:px-8 sm:py-7">
+            <header className="border-b border-[#C7CACF] dark:border-gray-800 pb-5">
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
                 Partnership Contract
               </h1>
@@ -483,27 +521,99 @@ export default function ContractPage() {
               ) : null}
             </header>
 
-            <div className="space-y-8 px-6 py-6 sm:px-8 sm:py-7 divide-y divide-gray-100 dark:divide-gray-800">
+            <div className="space-y-8  mt-5  divide-y divide-gray-100 dark:divide-gray-800">
               {/* Contract signature viewer */}
-              <section className="pt-1 first:pt-0">
-                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-800 sm:px-5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-800 dark:text-gray-100">
-                      Contract Document
+              <section className="rounded-[16px] border border-[#C7CACF] bg-[#FFFFFF] dark:border-gray-800 dark:bg-gray-900">
+                <div className="flex items-center justify-between gap-3 border-b border-[#C7CACF] px-4 py-3 dark:border-gray-800 sm:px-5">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-md bg-gray-100 text-[#20242A] dark:bg-gray-800 dark:text-gray-200">
+                      <FaRegFileAlt aria-hidden className="h-5 w-5" />
+                    </span>
+                    <span className="truncate text-[18px] font-semibold text-[#20242A] dark:text-gray-100">
+                      Contract Signature
                     </span>
                   </div>
-                  {contractPdfUrl && (
-                    <a
-                      href={contractPdfUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      download
-                    >
-                      <Button variant="primary" size="sm">
-                        Download PDF
-                      </Button>
-                    </a>
-                  )}
+
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    {contractPdfUrl && isContractPdf && (
+                      <div className="hidden items-center gap-2 text-xs text-gray-500 dark:text-gray-400 sm:flex">
+                        <button
+                          type="button"
+                          disabled={pdfZoom <= 50}
+                          onClick={() => setPdfZoom((z) => Math.max(50, z - 25))}
+                          className={`inline-flex h-7 w-7 items-center justify-center bg-white text-[#20242A] dark:border-gray-700 dark:bg-gray-900 ${
+                            pdfZoom <= 50
+                              ? "cursor-not-allowed opacity-50"
+                              : "hover:opacity-80"
+                          }`}
+                          aria-label="Zoom out"
+                        >
+                          <FiZoomOut aria-hidden className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={pdfZoom >= 200}
+                          onClick={() => setPdfZoom((z) => Math.min(200, z + 25))}
+                          className={`inline-flex h-7 w-7 items-center justify-center bg-white text-[#20242A] dark:border-gray-700 dark:bg-gray-900 ${
+                            pdfZoom >= 200
+                              ? "cursor-not-allowed opacity-50"
+                              : "hover:opacity-80"
+                          }`}
+                          aria-label="Zoom in"
+                        >
+                          <FiZoomIn aria-hidden className="h-4 w-4" />
+                        </button>
+                        <span className="mx-1 h-4 w-px bg-gray-200 dark:bg-gray-700" aria-hidden />
+                        <button
+                          type="button"
+                          disabled={!canGoPrev}
+                          onClick={() => setPdfPage((p) => Math.max(1, p - 1))}
+                          className={`inline-flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 bg-white text-[#20242A] dark:border-gray-700 dark:bg-gray-900 ${
+                            !canGoPrev
+                              ? "cursor-not-allowed opacity-50"
+                              : "hover:opacity-80"
+                          }`}
+                          aria-label="Previous page"
+                        >
+                          <FiChevronLeft aria-hidden className="h-4 w-4" />
+                        </button>
+                        <span className="text-[#20242A] dark:text-gray-200">
+                          {contractKnownTotalPages
+                            ? `Page ${pdfPage} of ${contractKnownTotalPages}`
+                            : `Page ${pdfPage}`}
+                        </span>
+                        <button
+                          type="button"
+                          disabled={!canGoNext}
+                          onClick={() => setPdfPage((p) => p + 1)}
+                          className={`inline-flex h-7 w-7 items-center justify-center bg-white text-[#20242A] dark:border-gray-700 dark:bg-gray-900 ${
+                            !canGoNext
+                              ? "cursor-not-allowed opacity-50"
+                              : "hover:opacity-80"
+                          }`}
+                          aria-label="Next page"
+                        >
+                          <FiChevronRight aria-hidden className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
+
+                    {contractPdfUrl && (
+                      <a
+                        href={contractPdfUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        download
+                      >
+                        <Button variant="primary" size="md">
+                          <span className="inline-flex items-center gap-2">
+                            <FiDownload aria-hidden className="h-4 w-4" />
+                            {isContractPdf ? "Download PDF" : "Download file"}
+                          </span>
+                        </Button>
+                      </a>
+                    )}
+                  </div>
                 </div>
                 <div className="bg-gray-50 px-4 py-4 dark:bg-gray-950 sm:px-5 sm:py-5">
                   {isContractLoading ? (
@@ -516,12 +626,29 @@ export default function ContractPage() {
                       </div>
                     </div>
                   ) : contractPdfUrl ? (
-                    <div className="mx-auto h-[500px] max-w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
-                      <iframe
-                        src={`${contractPdfUrl}#toolbar=0&navpanes=0`}
-                        className="h-full w-full"
-                        title="Contract Document"
-                      />
+                    <div className="mx-auto h-[500px] max-w-full overflow-hidden rounded-xl border border-[#C7CACF] bg-white  dark:border-gray-700 dark:bg-gray-900">
+                      {isContractPdf ? (
+                        <iframe
+                          key={`${contractPdfUrl}-${pdfPage}-${pdfZoom}`}
+                          src={`${contractPdfUrl}#toolbar=0&navpanes=0&page=${pdfPage}&zoom=${pdfZoom}`}
+                          className="h-full w-full"
+                          title="Contract Document"
+                        />
+                      ) : isContractImage ? (
+                        <img
+                          src={contractPdfUrl}
+                          alt="Contract Document"
+                          className="h-full w-full object-contain"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      ) : (
+                        <iframe
+                          src={contractPdfUrl}
+                          className="h-full w-full"
+                          title="Contract Document"
+                        />
+                      )}
                     </div>
                   ) : (
                     <div className="mx-auto h-[500px] max-w-full rounded-xl border border-dashed border-gray-300 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
@@ -539,9 +666,10 @@ export default function ContractPage() {
               </section>
 
               {/* Onboarding manager / meeting card */}
-              <section className="pt-6">
-                <div className="border-b border-gray-100 px-4 py-3 dark:border-gray-800 sm:px-5">
-                  <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+              <section className=" rounded-[16px] border border-[#C7CACF] bg-[#FFFFFF] dark:border-gray-800 dark:bg-gray-900">
+                <div className="border-b border-[#C7CACF] px-4 py-5 dark:border-gray-800 sm:px-5">
+                  <h2 className="flex items-center gap-2 text-[18px] font-semibold text-[#20242A] dark:text-gray-100">
+                    <FaRegUser aria-hidden className="h-5 w-5 text-[#20242A]" />
                     {upcomingMeeting
                       ? "Scheduled Meeting"
                       : "Your Onboarding Manager"}
@@ -638,7 +766,9 @@ export default function ContractPage() {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+               <div>
+
+<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-3">
                         <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-gray-200 text-sm font-semibold text-gray-500 dark:bg-gray-700 dark:text-gray-200">
                           {advisorPhotoUrl ? (
@@ -674,32 +804,47 @@ export default function ContractPage() {
                           )}
                         </div>
                       </div>
-                      <div className="flex justify-start sm:justify-end">
+                   
+                    </div>
+                    <div className="mt-4">
                         <Button
                           variant="primary"
                           size="sm"
                           onClick={handleOpenMeetingModal}
                           disabled={!advisor}
+                          className="w-full"
                         >
                           Arrange meeting
                         </Button>
                       </div>
-                    </div>
+
+                </div>
                   )}
                 </div>
               </section>
 
               {/* Digital signature card */}
-              <section className="pt-6">
-                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-800 sm:px-5">
-                  <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+              <section className="rounded-[16px] border border-[#C7CACF] bg-[#FFFFFF] dark:border-gray-800 dark:bg-gray-900">
+                <div className="flex items-center justify-between border-b border-[#C7CACF] px-4 py-5 dark:border-gray-800 sm:px-5">
+                  <h2 className="flex items-center gap-2 text-[18px] font-semibold text-[#20242A] dark:text-gray-100">
+                    <span className="inline-flex h-6 w-6 items-center justify-center text-[#20242A] dark:text-gray-200">
+                      <LuNotebookPen aria-hidden className="h-5 w-5 text-[#20242A]" />
+                    </span>
                     Digital Signature
                   </h2>
-                  {hasSigned && (
-                    <span className="rounded-full bg-success-50 px-2 py-0.5 text-xs font-medium text-success-700 dark:bg-success-900/20 dark:text-success-400">
-                      {isContractSignRejected ? "Needs re-sign" : "Signed"}
-                    </span>
-                  )}
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-medium ${
+                      hasSigned
+                        ? " bg-[#E6F8EF] text-[#00B561] dark:bg-success-900/20 dark:text-success-400"
+                        : "bg-[#FFF4E6] text-[#E88400] dark:bg-amber-950/25 dark:text-amber-300"
+                    }`}
+                  >
+                    {hasSigned
+                      ? isContractSignRejected
+                        ? "Needs re-sign"
+                        : "Signed"
+                      : "Not signed"}
+                  </span>
                 </div>
                 <div className="px-4 py-4 sm:px-5 sm:py-5">
                   {showSignaturePad ? (
@@ -710,75 +855,100 @@ export default function ContractPage() {
                     />
                   ) : !hasSigned ? (
                     <>
-                      <div className="flex h-32 items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50 text-center dark:border-gray-700 dark:bg-gray-900/40">
-                        <div>
-                          <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
-                            Ready to sign
-                          </p>
-                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                            Add your digital signature to complete this
-                            contract. Click the button and draw in the box.
-                          </p>
+                      <div className="rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-10 text-center dark:border-gray-700 dark:bg-gray-900/20">
+                        <div className="mx-auto mb-4 flex h-9 w-9 items-center justify-center text-gray-600 dark:text-gray-200">
+                          <LuPenTool aria-hidden className="h-7 w-7" />
                         </div>
-                      </div>
-                      <div className="mt-4 flex justify-start">
+                        <p className="text-base font-semibold text-gray-900 dark:text-white">
+                          Ready to Sign
+                        </p>
+                        <p className="mx-auto mt-2 max-w-md text-sm text-gray-500 dark:text-gray-400">
+                          Please add your digital signature to complete this
+                          contract.
+                        </p>
+                        <div className="mt-6 flex justify-center">
                         <Button
                           variant="primary"
-                          size="sm"
+                          size="md"
                           onClick={() => setShowSignaturePad(true)}
                         >
-                          Add your signature
+                          <span className="inline-flex items-center gap-2">
+                            <LuPenTool aria-hidden className="h-4 w-4" />
+                            Add your signature
+                          </span>
                         </Button>
+                      </div>
                       </div>
                     </>
                   ) : (
                     <>
-                      <div className="space-y-3">
-                        <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900/40">
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Signature
-                          </p>
-                          <div className="mt-2 flex items-center justify-center rounded-lg bg-white py-4 dark:bg-gray-950">
-                            {signatureImageDataUrl && (
-                              <img
-                                src={signatureImageDataUrl}
-                                alt="Your signature"
-                                className="max-h-16 w-auto object-contain"
-                              />
+                      <div className="space-y-6">
+                        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                              Signature:
+                            </p>
+                            <div className="mt-3 rounded-2xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900">
+                              <div className="flex items-center justify-center rounded-xl bg-gray-50 py-6 dark:bg-gray-950/30">
+                                {signatureImageDataUrl && (
+                                  <img
+                                    src={signatureImageDataUrl}
+                                    alt="Your signature"
+                                    className="max-h-20 w-auto object-contain"
+                                  />
+                                )}
+                              </div>
+                            </div>
+                            {signedAt && (
+                              <div className="mt-3 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                                <FiCalendar aria-hidden className="h-4 w-4" />
+                                <span>Signed on {signedAt}</span>
+                              </div>
                             )}
                           </div>
-                          {signedAt && (
-                            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                              Signed on {signedAt}
-                            </p>
-                          )}
+
+                          <div className="sm:pl-6">
+                            <Button
+                              variant="secondary"
+                              size="md"
+                              type="button"
+                              onClick={handleUpdateSignature}
+                              className="w-full border border-primary-600 text-primary-700 dark:border-primary-400 dark:text-primary-200 sm:w-56"
+                            >
+                              Update Signature
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex flex-wrap items-center gap-3">
-                          <Button variant="secondary" size="sm" type="button">
-                            View signed contract
-                          </Button>
+
+                        <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center sm:gap-4">
                           <Button
                             variant="secondary"
-                            size="sm"
+                            size="md"
                             type="button"
-                            onClick={handleUpdateSignature}
+                            className="w-full sm:w-60"
                           >
-                            Update signature
+                            <span className="inline-flex items-center justify-center gap-2">
+                              <FiEye aria-hidden className="h-4 w-4" />
+                              View Signed Contract
+                            </span>
                           </Button>
+
                           <Button
                             type="button"
                             variant="primary"
-                            size="sm"
+                            size="md"
                             onClick={handleSubmitSignedContract}
-                            disabled={
-                              isSigningContract || !signatureImageDataUrl
-                            }
+                            disabled={isSigningContract || !signatureImageDataUrl}
+                            className="w-full sm:w-72"
                           >
-                            {isSigningContract
-                              ? "Submitting..."
-                              : isContractSignRejected
-                                ? "Resubmit signed contract"
-                                : "Submit signed contract"}
+                            <span className="inline-flex items-center justify-center gap-2">
+                              <FiCheck aria-hidden className="h-4 w-4" />
+                              {isSigningContract
+                                ? "Submitting..."
+                                : isContractSignRejected
+                                  ? "Resubmit Signed Contract"
+                                  : "Submit Signed Contract"}
+                            </span>
                           </Button>
                         </div>
                       </div>

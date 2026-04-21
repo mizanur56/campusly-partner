@@ -1,22 +1,25 @@
+import { CiClock2 } from "react-icons/ci";
 import { STEP_LIST_FOR_STEPPER } from "./onboardingSteps";
-
 type StepperVariant = "form" | "submitted" | "verified" | "rejected";
 
 interface OnboardingStepperProps {
   currentStepIndex?: number;
   variant?: StepperVariant;
-  /** Optional: allow parent to switch active step when user clicks in sidebar (0-4) */
-  onStepSelect?: (index: number) => void;
-  /** Optional: workflow status to determine if approved */
   workflowStatus?: string;
 }
 
-const STEP_COUNT = 5;
+/** Mint / emerald — completed segments & active ring */
+const GREEN = "#22C55E";
+const LINE_GRAY = "#E5E7EB";
+const PENDING_RING = "#CBD5E1";
+/** Under review — outlined ring + icon (matches SubmittedStep accent) */
+const REVIEW_ORANGE = "#FFA500";
+const LABEL_CLASS =
+  "text-sm leading-snug text-slate-600 dark:text-slate-400";
 
 export default function OnboardingStepper({
   currentStepIndex,
   variant: variantProp,
-  onStepSelect,
   workflowStatus,
 }: OnboardingStepperProps) {
   const isControlled = currentStepIndex !== undefined;
@@ -33,238 +36,212 @@ export default function OnboardingStepper({
       ? currentStepIndex
       : -1;
 
-  // Check if application is approved (contract uploaded)
   const isApproved =
     workflowStatus === "AWAITING_PARTNER_SIGNATURE" ||
     workflowStatus === "AWAITING_ADMIN_APPROVAL";
-  const isActive = workflowStatus === "ACTIVE";
-  const isContractStage = isApproved || isActive;
+  const isContractStage = isApproved || workflowStatus === "ACTIVE";
+
+  const steps = STEP_LIST_FOR_STEPPER;
+  const lastIndex = steps.length - 1;
 
   return (
     <aside
-      className="w-full shrink-0 lg:w-60 xl:w-72 lg:self-start"
+      className="w-full shrink-0 lg:w-50 xl:w-64 lg:self-start"
       aria-label="Application progress"
     >
-      <div className="sticky top-24 overflow-hidden rounded-[24px] border border-neutral-100 bg-white card-shadow dark:border-gray-700/90 dark:bg-gray-900">
-        <div className="border-b border-gray-100 px-5 py-4 dark:border-gray-800">
-          <p className="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
-            Progress
-          </p>
-          <p className="mt-1 text-base font-semibold text-gray-900 dark:text-white">
-            {variant === "verified"
-              ? "Complete"
-              : variant === "submitted"
-                ? isContractStage
-                  ? "Contract"
-                  : "Under review"
-                : variant === "rejected"
-                  ? "Rejected"
-                  : currentIndex >= 0
-                    ? `Step ${currentIndex + 1} of ${STEP_COUNT}`
-                    : "Step 1 of 5"}
-          </p>
-          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
-            <div
-              className={`h-full rounded-full transition-all duration-300 ${
-                variant === "rejected" ? "bg-red-500" : "bg-primary-500"
-              }`}
-              style={{
-                width: `${
-                  variant === "verified"
-                    ? 100
-                    : variant === "submitted"
-                      ? 100
-                      : variant === "rejected"
-                        ? 100
-                        : currentIndex >= 0
-                          ? ((currentIndex + 1) / STEP_COUNT) * 100
-                          : 20
-                }%`,
-              }}
-              aria-hidden
-            />
-          </div>
-        </div>
-        <nav className="relative flex flex-col px-5 py-4" aria-label="Steps">
-          {STEP_LIST_FOR_STEPPER.map((step, index) => {
-            const isStepPath = step.path !== null;
-            const isCompleted =
-              variant === "verified" ||
-              (variant === "submitted" && index < 5) ||
-              (variant === "rejected" && index < 5) ||
-              (variant === "form" && currentIndex > index);
-            const isActive =
-              variant === "form" && currentIndex === index && isStepPath;
-            const isUnderReview = variant === "submitted" && index === 5;
-            const isReviewApproved = isUnderReview && isApproved;
-            const isRejected = variant === "rejected" && index === 5;
-            const stepNumber = index + 1;
-            const stepLabel = isReviewApproved
-              ? "Contract"
-              : isUnderReview
-                ? isContractStage
-                  ? "Contract"
-                  : "Under review"
-                : isRejected
-                  ? "Rejected"
-                  : step.label;
+      <div className="sticky top-24 overflow-hidden rounded-[16px] border border-[#C7CACF] bg-white dark:border-gray-700/90 dark:bg-gray-900 py-3">
+        <h2 className="px-5 pt-3 text-[18px] font-semibold text-[#20242A] dark:text-white">
+          Onboarding Steps
+        </h2>
+        <nav className="relative px-5 py-5" aria-label="Steps">
+          <ol className="flex list-none flex-col p-0">
+            {steps.map((step, index) => {
+              const isStepPath = step.path !== null;
+              const isCompleted =
+                variant === "verified" ||
+                (variant === "submitted" && index < 5) ||
+                (variant === "rejected" && index < 5) ||
+                (variant === "form" && currentIndex > index);
+              const isCurrentFormStep =
+                variant === "form" &&
+                currentIndex === index &&
+                isStepPath &&
+                index <= 4;
 
-            const isClickable =
-              variant === "form" &&
-              isStepPath &&
-              index >= 0 &&
-              index <= 4 &&
-              !!onStepSelect;
+              const isUnderReview = variant === "submitted" && index === 5;
+              const isReviewApproved = isUnderReview && isApproved;
+              const isRejected = variant === "rejected" && index === 5;
 
-            const handleClick = () => {
-              if (isClickable) {
-                onStepSelect(index);
-              }
-            };
+              const stepLabel = isReviewApproved
+                ? "Review Complete"
+                : isUnderReview
+                  ? isContractStage
+                    ? "Review Completes"
+                    : "Under Review"
+                  : isRejected
+                    ? "Rejected"
+                    : step.label;
 
-            const content = (
-              <div
-                key={step.label + String(index)}
-                className={`relative z-10 flex items-start gap-3 py-2.5 ${
-                  isClickable ? "cursor-pointer" : "cursor-default"
-                }`}
-                onClick={handleClick}
-              >
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center">
-                  {isRejected ? (
-                    <span
-                      className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500 text-white shadow-sm"
-                      aria-hidden
-                    >
-                      <svg
-                        className="h-3.5 w-3.5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
+              const isUnderReviewPending =
+                isUnderReview && !isReviewApproved && !isContractStage;
+
+              /** Segment below this row is green once this step is completed (check). */
+              const connectorGreen = isCompleted && !isRejected;
+
+              const showConnector = index < lastIndex;
+
+              return (
+                <li key={`${step.label}-${index}`} className="flex flex-col">
+                  {/* Row 1: icon + label share one baseline / vertical center */}
+                  <div
+                    className={`flex items-center gap-1.5 ${
+                      index > 0 ? "-mt-2 sm:-mt-2.5" : ""
+                    }`}
+                  >
+                    <div className="relative z-[2] flex h-4 w-4 shrink-0 items-center justify-center">
+                      <div className="flex items-center justify-center rounded-full bg-white dark:bg-gray-900">
+                        <StepIcon
+                          isRejected={isRejected}
+                          isUnderReview={isUnderReview}
+                          isReviewApproved={isReviewApproved}
+                          isCompleted={
+                            isCompleted && !isRejected && !isUnderReview
+                          }
+                          isCurrentFormStep={isCurrentFormStep}
                         />
-                      </svg>
+                      </div>
+                    </div>
+                    <span className={`min-w-0 text-[16px] text-[#4B5563] flex-1 leading-5 ${LABEL_CLASS}`}>
+                      {stepLabel}
                     </span>
-                  ) : isUnderReview ? (
-                    <span
-                      className={`flex h-8 w-8 items-center justify-center rounded-full text-white shadow-sm ${
-                        isReviewApproved ? "bg-green-500" : "bg-amber-500"
-                      }`}
-                      aria-hidden
-                    >
-                      {isReviewApproved ? (
-                        <svg
-                          className="h-3.5 w-3.5"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      ) : (
-                        <svg
-                          className="h-3.5 w-3.5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                      )}
-                    </span>
-                  ) : isCompleted ? (
-                    <span
-                      className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-600 text-white shadow-sm"
-                      aria-hidden
-                    >
-                      <svg
-                        className="h-3.5 w-3.5"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </span>
-                  ) : isActive ? (
-                    <span
-                      className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-primary-500 bg-primary-50 text-xs font-semibold text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
-                      aria-current="step"
-                    >
-                      {stepNumber}
-                    </span>
-                  ) : (
-                    <span
-                      className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-gray-50 text-xs font-medium text-gray-400 dark:border-gray-600 dark:bg-gray-800/50 dark:text-gray-500"
-                      aria-hidden
-                    >
-                      {stepNumber}
-                    </span>
+                  </div>
+                  {/* Row 2: connector only under icon column */}
+                  {showConnector && (
+                    <div className="flex w-4 shrink-0 justify-center">
+                      <div
+                        className="relative z-0 h-24 w-[2px] shrink-0 rounded-none -mt-2 -mb-2 sm:h-20"
+                        style={{
+                          backgroundColor: connectorGreen ? GREEN : LINE_GRAY,
+                        }}
+                        aria-hidden
+                      />
+                    </div>
                   )}
-                </div>
-                <span
-                  className={`pt-1.5 text-sm leading-snug ${
-                    isActive
-                      ? "font-semibold text-gray-900 dark:text-white"
-                      : isRejected
-                        ? "font-medium text-red-700 dark:text-red-400"
-                        : isReviewApproved
-                          ? "font-medium text-green-700 dark:text-green-400"
-                          : isUnderReview
-                            ? "font-medium text-amber-700 dark:text-amber-400"
-                            : isCompleted
-                              ? "font-medium text-gray-600 dark:text-gray-300"
-                              : "text-gray-500 dark:text-gray-400"
-                  }`}
-                >
-                  {stepLabel}
-                </span>
-              </div>
-            );
-
-            return content;
-          })}
-          {variant === "verified" && (
-            <div className="relative z-10 flex items-start gap-3 py-2.5">
-              <span
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-600 text-white shadow-sm"
-                aria-hidden
-              >
-                <svg
-                  className="h-4 w-4"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </span>
-              <span className="pt-1.5 text-sm font-semibold text-gray-700 dark:text-gray-200">
-                Complete
-              </span>
-            </div>
-          )}
+                </li>
+              );
+            })}
+          </ol>
         </nav>
       </div>
     </aside>
+  );
+}
+
+function StepIcon({
+  isRejected,
+  isUnderReview,
+  isReviewApproved,
+  isCompleted,
+  isCurrentFormStep,
+}: {
+  isRejected: boolean;
+  isUnderReview: boolean;
+  isReviewApproved: boolean;
+  isCompleted: boolean;
+  isCurrentFormStep: boolean;
+}) {
+  const size = "h-4 w-4 min-h-4 min-w-4";
+
+  if (isRejected) {
+    return (
+      <span
+        className={`flex ${size} shrink-0 items-center justify-center rounded-full bg-red-500 text-white shadow-sm`}
+        aria-hidden
+      >
+        <svg
+          className="h-2.5 w-2.5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </span>
+    );
+  }
+
+  if (isUnderReview) {
+    if (isReviewApproved) {
+      return (
+        <span
+          className={`flex ${size} shrink-0 items-center justify-center rounded-full text-white shadow-sm`}
+          style={{ backgroundColor: GREEN }}
+          aria-hidden
+        >
+          <svg className="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fillRule="evenodd"
+              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </span>
+      );
+    }
+
+    return (
+      <span
+        className={`flex ${size} shrink-0 items-center justify-center rounded-full bg-white dark:bg-gray-900`}
+        
+        aria-hidden
+      >
+        <CiClock2
+          className="h-5 w-5 shrink-0"
+          style={{ color: REVIEW_ORANGE }}
+          aria-hidden
+        />
+      </span>
+    );
+  }
+
+  if (isCompleted) {
+    return (
+      <span
+        className={`flex ${size} shrink-0 items-center justify-center rounded-full text-white shadow-sm`}
+        style={{ backgroundColor: GREEN }}
+        aria-hidden
+      >
+        <svg className="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 20 20">
+          <path
+            fillRule="evenodd"
+            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+            clipRule="evenodd"
+          />
+        </svg>
+      </span>
+    );
+  }
+
+  if (isCurrentFormStep) {
+    return (
+      <span
+        className={`box-border flex ${size} shrink-0 items-center justify-center rounded-full border-2 bg-white dark:bg-gray-900`}
+        style={{ borderColor: GREEN }}
+        aria-current="step"
+      />
+    );
+  }
+
+  return (
+    <span
+      className={`box-border flex ${size} shrink-0 items-center justify-center rounded-full border-2 bg-white dark:bg-gray-900`}
+      style={{ borderColor: PENDING_RING }}
+      aria-hidden
+    />
   );
 }

@@ -1,7 +1,14 @@
 import { Form } from "antd";
 import { Button } from "../../components/ui/button";
 import OnboardingFormLayout from "./OnboardingFormLayout";
-import { FormInput, PhoneInput, phoneInputStyle, phoneButtonStyle } from "./sharedFormProps";
+import {
+  FormInput,
+  PhoneInput,
+  phoneButtonStyle,
+  phoneInputGetValueFromEvent,
+  phoneInputStyle,
+  PHONE_BD_INITIAL_VALUE,
+} from "./sharedFormProps";
 
 const formItemLayout = {
   className:
@@ -16,8 +23,13 @@ export default function MainContactDetailsPage() {
       title="Main Contact Details"
       subtitle="Enter essential director information to get started."
     >
-      <Form form={form} layout="vertical" {...formItemLayout}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <Form
+        form={form}
+        layout="vertical"
+        initialValues={{ telephoneNumber: PHONE_BD_INITIAL_VALUE }}
+        {...formItemLayout}
+      >
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 [&_.ant-form-item]:min-w-0">
           <FormInput
             name="fullName"
             label="Full Name"
@@ -31,23 +43,29 @@ export default function MainContactDetailsPage() {
             rules={[{ required: true, message: "Required" }]}
           />
         </div>
-        <FormInput
-          name="email"
-          label="Email"
-          placeholder="Enter email"
-          rules={[{ required: true, message: "Required", type: "email" }]}
-        />
-        <Form.Item
-          name="telephoneNumber"
-          label="Telephone Number"
-          rules={[{ required: true, message: "Required" }]}
-        >
-          <PhoneInput
-            country="de"
-            inputStyle={phoneInputStyle}
-            buttonStyle={phoneButtonStyle}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 [&_.ant-form-item]:min-w-0">
+          <FormInput
+            name="email"
+            label="Email"
+            placeholder="Enter email"
+            rules={[{ required: true, message: "Required", type: "email" }]}
           />
-        </Form.Item>
+          <Form.Item
+            name="telephoneNumber"
+            label="Telephone Number"
+            rules={[{ required: true, message: "Required" }]}
+            getValueFromEvent={phoneInputGetValueFromEvent}
+          >
+            <PhoneInput
+              country="bd"
+              disableCountryGuess
+              inputStyle={phoneInputStyle}
+              buttonStyle={phoneButtonStyle}
+              containerStyle={{ width: "100%", minWidth: 0 }}
+            />
+          </Form.Item>
+        </div>
+
         <FormInput
           name="whatsapp"
           label="Whatsapp (If Applicable)"

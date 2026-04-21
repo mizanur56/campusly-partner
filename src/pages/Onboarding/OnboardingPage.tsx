@@ -93,11 +93,17 @@ export default function OnboardingPage() {
   };
 
   const title =
-    step === 7 ? "Application Rejected" : (STEP_TITLES[step] ?? "Onboarding");
+    step === 7
+      ? "Application Rejected"
+      : step === 5
+        ? ""
+        : (STEP_TITLES[step] ?? "Onboarding");
   const subtitle =
     step === 7
       ? "Your application has been rejected"
-      : STEP_SUBTITLES[step] || status?.statusLabel || STEP_SUBTITLES[step];
+      : step === 5
+        ? ""
+        : STEP_SUBTITLES[step] || status?.statusLabel || "";
   const stepperVariant =
     step === 5
       ? "submitted"
@@ -132,10 +138,6 @@ export default function OnboardingPage() {
       currentStepIndex={step}
       stepperVariant={stepperVariant}
       workflowStatus={status?.status}
-      onStepChange={(index) => {
-        const safeIndex = Math.min(Math.max(index, 0), 4);
-        setStep(safeIndex as OnboardingStepIndex);
-      }}
     >
       {step === 0 && <OwnerDetailsStep apiStep={1} onNext={goNext} />}
       {step === 1 && (
@@ -151,11 +153,7 @@ export default function OnboardingPage() {
         <DeclarationStep apiStep={5} onPrev={goPrev} onSubmit={goSubmitted} />
       )}
       {step === 5 && (
-        <SubmittedStep
-          onBackHome={backHome}
-          statusLabel={status?.statusLabel}
-          workflowStatus={status?.status}
-        />
+        <SubmittedStep onBackHome={backHome} workflowStatus={status?.status} />
       )}
       {step === 6 && <VerifiedStep onProceedToContract={proceedToContract} />}
       {step === 7 && (

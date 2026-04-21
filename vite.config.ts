@@ -25,6 +25,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: true,
       },
+      // Static uploads proxy for local dev (avoids CORS for pdf.js/react-pdf)
+      "/uploads": {
+        target: "http://localhost:5030",
+        changeOrigin: true,
+        secure: false,
+      },
     },
     allowedHosts: ["partner.gubdi.com"],
   },
