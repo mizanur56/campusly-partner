@@ -99,6 +99,10 @@ export function redirectFromPortalRoleCookieIfNeeded(): boolean {
   const home = homePortalForRole(raw.trim());
   const current = inferCurrentPortal();
   if (!home || home === current) return false;
+  if (config.node_env !== "production") {
+    window.location.replace(DEV_PORTAL_LOGIN_PATH);
+    return true;
+  }
   const target = getPortalOrigin(home, config.app_domain);
   if (!target) return false;
   window.location.replace(`${target}/`);
@@ -213,6 +217,11 @@ export function redirectToCorrectPortalIfNeeded(
   if (!home) return false;
 
   if (home === current) return false;
+
+  if (config.node_env !== "production") {
+    window.location.replace(DEV_PORTAL_LOGIN_PATH);
+    return true;
+  }
 
   const target = getPortalOrigin(home, config.app_domain);
   if (!target) return false;
