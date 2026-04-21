@@ -1,23 +1,27 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { config } from "../config";
-import { persistAuthLocalStorage } from "../lib/authLocalStorage";
+import {
+  clearAuthLocalStorage,
+  persistAuthLocalStorage,
+} from "../lib/authLocalStorage";
 import {
   buildUserData,
   extractAccessTokenFromRefreshJson,
   extractUserFromMeJson,
 } from "../lib/authSessionRefresh";
 import {
+  logout,
   selectCurrentUser,
   setUser,
   useCurrentToken,
 } from "../redux/features/auth/authSlice";
 import {
+  getPortalLoginUrl,
+  isPartnerPortalSession,
   redirectFromPortalRoleCookieIfNeeded,
   redirectToCorrectPortalIfNeeded,
 } from "../lib/portalRouting";
-
-const MAIN_LOGIN = `https://${config.app_domain}/auth/login`;
 const apiBase = (config.api ?? "").replace(/\/$/, "");
 
 const PUBLIC_AUTH_PATHS = [
@@ -55,23 +59,6 @@ async function callRefresh(): Promise<Response> {
   });
 }
 
-function localSessionMatchesRedux(
-  user: unknown,
-  token: string | null | undefined,
-): boolean {
-  if (!user || !token) return false;
-  const lsToken = localStorage.getItem("token");
-  const lsUserRaw = localStorage.getItem("user");
-  if (!lsToken || lsToken !== token || !lsUserRaw) return false;
-  try {
-    const parsed = JSON.parse(lsUserRaw) as { id?: string };
-    const u = user as { id?: string };
-    return Boolean(parsed?.id && u?.id && parsed.id === u.id);
-  } catch {
-    return false;
-  }
-}
-
 export default function SessionRestoreProvider({
   children,
 }: {
@@ -88,21 +75,10 @@ export default function SessionRestoreProvider({
 
   useLayoutEffect(() => {
     if (typeof window === "undefined") return;
-    if (isPublicAuthPath()) return;
     if (redirectFromPortalRoleCookieIfNeeded()) return;
-    if (user && token && localSessionMatchesRedux(user, token)) {
-      if (redirectToCorrectPortalIfNeeded(user as any)) return;
-      setStatus("done");
-    }
-  }, [user, token]);
+  }, []);
 
   useEffect(() => {
-    if (user && token && localSessionMatchesRedux(user, token)) {
-      if (redirectToCorrectPortalIfNeeded(user as any)) return;
-      setStatus("done");
-      return;
-    }
-
     if (attempted.current) return;
 
     const publicAnonymous =
@@ -116,15 +92,19 @@ export default function SessionRestoreProvider({
     attempted.current = true;
 
     const goLoginOrStayOnPublicAuth = () => {
+      clearAuthLocalStorage();
+      dispatch(logout());
       if (isPublicAuthPath()) {
         setStatus("done");
         return;
       }
-      window.location.href = MAIN_LOGIN;
+      if (redirectFromPortalRoleCookieIfNeeded()) return;
+      window.location.href = getPortalLoginUrl();
     };
 
     const restore = async () => {
       try {
+        let sessionRestoredVia401Refresh = false;
         let bearer = (token ?? localStorage.getItem("token") ?? "").trim();
 
         // ── 1) /auth/me (cookie-only session uses empty Authorization) ──
@@ -154,6 +134,7 @@ export default function SessionRestoreProvider({
             goLoginOrStayOnPublicAuth();
             return;
           }
+          sessionRestoredVia401Refresh = true;
         } else if (!meRes.ok) {
           goLoginOrStayOnPublicAuth();
           return;
@@ -165,6 +146,21 @@ export default function SessionRestoreProvider({
         if (!rawUser) {
           goLoginOrStayOnPublicAuth();
           return;
+        }
+
+        // Access token can still validate /auth/me while the HttpOnly refresh cookie is gone.
+        // If we did not just obtain the session via 401→refresh, require refresh to succeed once.
+        if (!sessionRestoredVia401Refresh) {
+          const refreshProof = await callRefresh();
+          if (!refreshProof.ok) {
+            goLoginOrStayOnPublicAuth();
+            return;
+          }
+          const proofJson = await refreshProof.json().catch(() => null);
+          const rotated = extractAccessTokenFromRefreshJson(proofJson);
+          if (rotated?.trim()) {
+            bearer = rotated.trim();
+          }
         }
 
         const userData = buildUserData(rawUser as Record<string, unknown>);
@@ -182,16 +178,28 @@ export default function SessionRestoreProvider({
             goLoginOrStayOnPublicAuth();
             return;
           }
+          if (redirectToCorrectPortalIfNeeded(userData as any)) return;
+          if (!isPartnerPortalSession(userData as any)) {
+            clearAuthLocalStorage();
+            dispatch(logout());
+            window.location.href = getPortalLoginUrl();
+            return;
+          }
           dispatch(setUser({ user: userData as any, token: fromRefresh }));
           persistAuthLocalStorage(userData, fromRefresh);
-          if (redirectToCorrectPortalIfNeeded(userData as any)) return;
           setStatus("done");
           return;
         }
 
+        if (redirectToCorrectPortalIfNeeded(userData as any)) return;
+        if (!isPartnerPortalSession(userData as any)) {
+          clearAuthLocalStorage();
+          dispatch(logout());
+          window.location.href = getPortalLoginUrl();
+          return;
+        }
         dispatch(setUser({ user: userData as any, token: sessionToken }));
         persistAuthLocalStorage(userData, sessionToken);
-        if (redirectToCorrectPortalIfNeeded(userData as any)) return;
         setStatus("done");
       } catch {
         goLoginOrStayOnPublicAuth();
