@@ -38,7 +38,7 @@ End-to-end reference for the partner SPA's auth: which files participate, what e
 
 | File                                       | Responsibility                                                                                                                                                                                                                                                                      |
 | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/providers/SessionRestoreProvider.tsx` | Wraps the app. On mount: (a) cookie-based cross-portal redirect, (b) match Redux ↔ localStorage, (c) call `/auth/me` with bearer, (d) on 401 call `/auth/refresh-token`, (e) re-hydrate Redux + localStorage, (f) fall back to partner login URL. Shows a spinner while `checking`. |
+| `src/providers/SessionRestoreProvider.tsx` | Wraps the app. On mount: cross-portal cookie redirect; **always** runs restore (`/auth/me`, 401→refresh); if `/auth/me` succeeds without having just refreshed, **one** `POST /auth/refresh-token` proves the HttpOnly refresh cookie still exists; on failure clears Redux + `localStorage` and redirects. Details: `docs/AUTH_SESSION_RESTORE.md`. Spinner while `checking`. |
 | `src/routes/ProtectedRoute.tsx`            | For authenticated routes. Listens for `ct_logout` on focus, then enforces: token present → user is a partner session → role/permission check → render children, or redirect to the correct portal / login.                                                                          |
 | `src/routes/GuestOnlyAuthRoute.tsx`        | For `/login`, `/register`, `/forgot-password`, `/reset-password`, `/set-password`. If already authenticated, redirects to home or to the correct portal.                                                                                                                            |
 | `src/routes/routes.tsx`                    | Route tree. Guest routes wrap with `GuestOnlyAuthRoute`; everything else under `/` uses `ProtectedRoute`.                                                                                                                                                                           |
@@ -117,26 +117,26 @@ Mismatch toast text is centralized in `getPortalRoleMismatchMessage` so every SP
 
 Runs once per app boot. Status starts as `"checking"` (except on public auth paths) and shows a centered spinner until resolved.
 
+**Deep dive (problem statement + fix rationale):** see `docs/AUTH_SESSION_RESTORE.md`.
+
 ### 5.1 Synchronous phase — `useLayoutEffect`
 
-Fires before paint so we can redirect without flashing protected UI.
+Fires before paint so we can redirect without flashing the wrong portal.
 
-1. `redirectFromPortalRoleCookieIfNeeded()` — if the `role_msbhh` cookie points to a portal **other than the current subdomain**, `window.location.replace` to that portal. Returns immediately. _(This check runs even for public auth paths so a student landing on `partner.<app_domain>/login` still gets routed to `student.<app_domain>`.)_
-2. If on a public auth path, stop.
-3. If Redux+localStorage session already matches, optionally call `redirectToCorrectPortalIfNeeded(user)` then mark `done`.
+1. `redirectFromPortalRoleCookieIfNeeded()` — if the readable `role_msbhh` cookie points to a portal **other than the current subdomain**, `window.location.replace` to that portal. Returns immediately.
 
 ### 5.2 Async phase — `useEffect`
 
-1. If session already valid locally → `done`.
-2. If this is a public auth path and there is no token at all → `done` (let the page render).
-3. Otherwise `restore()`:
+1. If this is a public auth path and there is no token in Redux, persist, or `localStorage` → `done` (let the page render).
+2. Otherwise `restore()` (no “local match” short-circuit — the server is always consulted on protected bootstrap):
    1. `GET /auth/me` with the current bearer.
    2. If `401` → `POST /auth/refresh-token` (cookie-based) → retry `/auth/me` with the new bearer.
-   3. Any failure along the way → `goLoginOrStayOnPublicAuth()` which:
-      - stays on `/login` if we already are there, otherwise
-      - tries `redirectFromPortalRoleCookieIfNeeded()` (student cookie? go to student subdomain), otherwise
+   3. If the first `/auth/me` succeeded **without** that 401→refresh chain, call `POST /auth/refresh-token` once more to ensure the HttpOnly refresh cookie is still accepted. If it fails → treat as logged out.
+   4. Any failure along the way → `goLoginOrStayOnPublicAuth()` which clears Redux + `localStorage`, then:
+      - stays on `/login` (etc.) if we already are there, otherwise
+      - tries `redirectFromPortalRoleCookieIfNeeded()`, otherwise
       - `window.location.href = getPortalLoginUrl()`.
-   4. On success:
+   5. On success:
       - `redirectToCorrectPortalIfNeeded(user)` — if the freshly-loaded user belongs on a sibling subdomain, go there now.
       - Else if `!isPartnerPortalSession(user)` — clear local session and send to partner login.
       - Else dispatch `setUser`, persist to localStorage, and mark `done`.
