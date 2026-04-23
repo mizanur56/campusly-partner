@@ -944,7 +944,7 @@ const Dashboard = () => {
 
             {/* Onboarding Form card */}
             <section className="rounded-2xl border border-[#C7CACF] bg-[#FFFFFF] dark:border-gray-700/90 dark:bg-gray-900">
-              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+              <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
                 <div className="flex items-center gap-3 min-w-0 flex-1">
            
                   <div className="min-w-0">
@@ -1063,9 +1063,11 @@ const Dashboard = () => {
                             : step.label;
 
                       return (
-                        <li key={step.id} className="flex items-center gap-3">
+                        <li key={step.id} className="flex items-center gap-3 ">
                           <StepDot kind={dotKind} />
+
                           {/* <span
+                          <span
                             className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
                               isReviewRejected
                                 ? "bg-red-600 text-white"
@@ -1113,7 +1115,7 @@ const Dashboard = () => {
                                   : isCompleted
                                     ? "text-sm font-medium text-[#00B561]"
                                     : isActive
-                                      ? "text-sm font-medium text-[#FF9100]"
+                                      ? "text-sm font-medium text-[#00B561]"
                                       : "text-sm text-gray-500 dark:text-gray-400"
                             }
                           >

@@ -1,9 +1,9 @@
 # Session restore: stale client state vs HttpOnly cookies
 
-**সংক্ষেপ (BN):** ব্রাউজারে `localStorage` / Redux এ অ্যাক্সেস টোকেন থাকলে অনেক সময় `/auth/me` আরও কিছুক্ষণ সফল হয়, অথচ **রিফ্রেশ টোকেনের HttpOnly কুকি** মুছে গেলে সার্ভার সেশন আসলে নেই। আগে UI তখনও লগড ইন দেখাত এবং ফেইল পথে `localStorage` পরিষ্কার হত না। এই ডকুমেন্টে বলা হয়েছে সমস্যা কী ছিল এবং **Partner / Admin / Student** তিন SPA তেই একই ধরনের ফিক্স কীভাবে করা হয়েছে।
+**Summary:** The access token in `localStorage` / Redux can still make `GET /auth/me` succeed for a while even when the **HttpOnly refresh cookie** is gone, so the server session is effectively invalid. The UI used to stay “logged in” and some failure paths did not clear `localStorage`. This document describes that problem and the same style of fix across the **Partner**, **Admin**, and **Student** SPAs.
 
-**Applies to:** `partner.campustransfer`, `admin.campustransfer`, `student.campustransfer`  
-**Primary file:** `src/providers/SessionRestoreProvider.tsx` (each repo)
+**Scope:** `partner.campustransfer`, `admin.campustransfer`, `student.campustransfer`  
+**Implementation:** `src/providers/SessionRestoreProvider.tsx` (each repo)
 
 ---
 
