@@ -49,7 +49,7 @@ export default function SignedDashboardView() {
           <button
             type="button"
             onClick={() => setCreateStudentOpen(true)}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700"
+            className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700"
           >
             <span>+</span>
             <span>Add Student</span>

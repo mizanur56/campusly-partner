@@ -50,10 +50,7 @@ const SignedSidebarItems: NavItem[] = [
   {
     icon: <i className="fa-solid fa-credit-card"></i>,
     name: "Payments",
-    subItems: [
-      { name: "Purchase", path: "/payments/purchase" },
-      { name: "Commission", path: "/payments/commission" },
-    ],
+    path: "/payments/purchase",
   },
   {
     icon: <i className="fa-solid fa-graduation-cap"></i>,
@@ -270,6 +267,10 @@ const Sidebar: React.FC = () => {
           location.pathname === "/contract" ||
           location.pathname.startsWith("/contract/")
         );
+      }
+      if (path.startsWith("/payments")) {
+        // Single "Payments" menu should stay active for Purchase/Commission tabs
+        return location.pathname.startsWith("/payments");
       }
       return location.pathname === path;
     },
