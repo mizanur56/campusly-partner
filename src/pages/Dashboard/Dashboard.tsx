@@ -250,46 +250,94 @@ const Dashboard = () => {
       ) : previewMode === "signed" || hasUnlockedPortal ? (
         <SignedDashboardView />
       ) : (
-        <div className="min-h-[calc(100vh-4rem)] -mx-4 bg-[#F9FAFB] px-0 py-0 md:-mx-6 md:px-0 lg:-mx-8 dark:bg-gray-950">
-          <div className="mx-auto max-w-[680px] px-4 py-10 sm:px-6">
-            <header className="mb-8 text-center">
-              <h1 className="text-2xl font-semibold tracking-tight text-[#111827] dark:text-white sm:text-[26px]">
+        <div className="min-h-[calc(100vh-4rem)] -mx-4 px-0 py-0 md:-mx-6 md:px-0 lg:-mx-8">
+          <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
+            {/* Welcome — professional header */}
+            <header className="mb-10">
+            <div className="flex flex-col gap-2 justify-center items-center">
+            <h1 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white sm:text-3xl">
                 Welcome to Campus Transfer
               </h1>
-              <p className="mt-2 text-base leading-relaxed text-[#6B7280] dark:text-gray-400">
-                Complete these simple 2 steps to get access to partner portal
+              <p className="text-center max-w-lg text-base leading-relaxed text-gray-500 dark:text-gray-400">
+                Complete onboarding and sign your contract to get full access to
+                the partner portal.
               </p>
+            </div>
+              {/* Progress summary */}
+              {/* <div className="mt-6 flex flex-wrap gap-4">
+                <div className="min-w-0 flex-1 rounded-xl border border-gray-200/80 bg-white p-4 card-shadow dark:border-gray-700/80 dark:bg-gray-900/50">
+                  <p className="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                    Onboarding
+                  </p>
+                  <div className="mt-2 flex items-baseline gap-2">
+                    <span className="text-2xl font-semibold text-gray-900 dark:text-white">
+                      {onboardingCompleted}
+                      <span className="text-lg font-normal text-gray-400 dark:text-gray-500">
+                        /{onboardingTotal}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                    <div
+                      className="h-full rounded-full bg-primary-500 transition-all duration-300"
+                      style={{
+                        width: `${(onboardingCompleted / onboardingTotal) * 100}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="min-w-0 flex-1 rounded-xl border border-gray-200/80 bg-white p-4 card-shadow dark:border-gray-700/80 dark:bg-gray-900/50">
+                  <p className="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                    Contract
+                  </p>
+                  <div className="mt-2 flex items-baseline gap-2">
+                    <span className="text-2xl font-semibold text-gray-900 dark:text-white">
+                      {contractCompleted}
+                      <span className="text-lg font-normal text-gray-400 dark:text-gray-500">
+                        /{contractTotal}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                    <div
+                      className="h-full rounded-full bg-gray-400 dark:bg-gray-600 transition-all duration-300"
+                      style={{
+                        width: `${(contractCompleted / contractTotal) * 100}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              </div> */}
             </header>
 
             {/* Onboarding Form card */}
-            <section className="rounded-[16px] border border-[#C7CACF] bg-[#FFFFFF] dark:border-gray-800 dark:bg-gray-900">
-              <div className="flex flex-wrap items-start justify-between gap-4 px-5 py-5">
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-base font-semibold text-[#111827] dark:text-white">
-                    Onboarding Form
-                  </h2>
-                  <p className="mt-1.5 text-sm text-[#6B7280] dark:text-gray-400">
-                    <span>
-                      {formStepsCompleted}/{FORM_STEPS_TOTAL} completed
-                    </span>
-                    <span className="text-[#9CA3AF]"> • </span>
-                    {isRejected ? (
-                      <span className="font-medium text-red-500">Rejected</span>
-                    ) : showOnboardingPartial ? (
-                      <span className="font-medium text-[#F59E0B]">
-                        Partially filled
-                      </span>
-                    ) : isFormUnderReview ? (
-                      <span
-                        className="font-medium"
-                        style={{ color: REVIEW_ORANGE }}
-                      >
-                        Under Review
-                      </span>
-                    ) : (
-                      <span className="font-medium text-[#22C55E]">Complete</span>
-                    )}
-                  </p>
+            <section className="rounded-2xl border border-[#C7CACF] bg-[#FFFFFF] dark:border-gray-700/90 dark:bg-gray-900">
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-50 dark:bg-primary-900/30">
+                    <svg
+                      className="h-5 w-5 text-primary-600 dark:text-primary-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+                      Onboarding Form
+                    </h2>
+                    <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+                      {onboardingCompleted} of {ONBOARDING_STEPS.length} steps
+                      completed
+                    </p>
+                  </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-1 sm:gap-2">
                   <Button
@@ -375,11 +423,55 @@ const Dashboard = () => {
                         <li key={step.id} className="flex items-center gap-3">
                           <StepDot kind={dotKind} />
                           <span
-                            className={labelClass}
-                            style={
-                              isReviewRow && isFormUnderReview
-                                ? { color: REVIEW_ORANGE }
-                                : undefined
+                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
+                              isReviewRejected
+                                ? "bg-red-600 text-white"
+                                : isReviewApproved
+                                  ? "bg-[#00B561] text-white"
+                                  : isCompleted
+                                    ? "bg-[#00B561] text-white"
+                                    : isActive
+                                      ? "border border-primary-500 bg-primary-50 text-primary-600 dark:border-primary-400 dark:bg-primary-900/30"
+                                      : "border border-gray-400 bg-white text-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-500"
+                            }`}
+                          >
+                            {isReviewRejected ? (
+                              <svg
+                                className="h-3.5 w-3.5"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            ) : isReviewApproved || isCompleted ? (
+                              <svg
+                                className="h-3.5 w-3.5"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            ) : null}
+                          </span>
+                          <span
+                            className={
+                              isReviewRejected
+                                ? "text-sm font-medium text-red-600 dark:text-red-400"
+                                : isReviewApproved
+                                  ? "text-sm font-medium text-[#00B561]"
+                                  : isCompleted
+                                    ? "text-sm font-medium text-[#00B561]"
+                                    : isActive
+                                      ? "text-sm font-medium text-primary-700 dark:text-primary-300"
+                                      : "text-sm text-gray-500 dark:text-gray-400"
                             }
                           >
                             {rowLabel}
@@ -394,8 +486,10 @@ const Dashboard = () => {
 
             {/* Contract card */}
             <section
-              className={`mt-6 rounded-2xl border border-[#E5E7EB] bg-white dark:border-gray-800 dark:bg-gray-900 ${
-                !canAccessContract ? "opacity-[0.85]" : ""
+              className={`mt-6 rounded-2xl border border-[#C7CACF] bg-[#FFFFFF] dark:bg-gray-900 ${
+                canAccessContract
+                  ? "border-[#C7CACF] dark:border-gray-700/90"
+                  : "border-[#C7CACF] opacity-60 dark:border-gray-700/50"
               }`}
             >
               <div className="flex flex-wrap items-start justify-between gap-4 px-5 py-5">
@@ -497,9 +591,62 @@ const Dashboard = () => {
                             : "text-sm text-[#9CA3AF]";
 
                       return (
-                        <li key={step.id} className="flex items-center gap-3">
-                          <StepDot kind={dotKind} />
-                          <span className={labelClass}>
+                        <li
+                          key={step.id}
+                          className={`flex items-center gap-3 py-3 ${
+                            index > 0
+                              ? "border-t border-gray-100 dark:border-gray-700/80"
+                              : ""
+                          }`}
+                        >
+                          <span
+                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
+                              isContractRejectedStep
+                                ? "bg-red-600 text-white"
+                                : isCompleted
+                                  ? "bg-[#00B561] text-white"
+                                  : isActive
+                                    ? "border-2 border-primary-500 bg-primary-50 text-primary-600 dark:border-primary-400 dark:bg-primary-900/30"
+                                    : "border border-gray-200 bg-white text-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-500"
+                            }`}
+                          >
+                            {isContractRejectedStep ? (
+                              <svg
+                                className="h-3.5 w-3.5"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            ) : isCompleted ? (
+                              <svg
+                                className="h-3.5 w-3.5"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            ) : null}
+                          </span>
+                          <span
+                            className={
+                              isContractRejectedStep
+                                ? "text-sm font-medium text-red-600 dark:text-red-400"
+                                : isCompleted
+                                  ? "text-sm font-medium text-[#00B561]"
+                                  : isActive
+                                    ? "text-sm font-semibold text-primary-700 dark:text-primary-300"
+                                    : "text-sm text-gray-500 dark:text-gray-400"
+                            }
+                          >
                             {isContractRejectedStep ? "Rejected" : step.label}
                           </span>
                         </li>

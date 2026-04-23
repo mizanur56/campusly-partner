@@ -1,8 +1,3 @@
-/**
- * Cross-portal routing: server sets optional cookie (default name `role_msbhh`).
- * Add new roles to ROLE_HOME_PORTAL in all three apps (admin / student / partner).
- */
-
 import { config } from "../config";
 
 export type PortalKind = "admin" | "student" | "partner";
@@ -20,12 +15,18 @@ const SUB = {
 
 const PORTAL_THIS_APP: PortalKind = "partner";
 
-/** Login route for this SPA — guests must not be sent to apex or another subdomain. */
-export const PORTAL_LOGIN_PATH = "/login";
+/** Portal login on app domain with explicit partner tab fallback. */
+export const PORTAL_LOGIN_PATH = "/auth/login/?tab=partner";
+/** Development: SPA-local login route (no /auth prefix, no tab query). */
+export const DEV_PORTAL_LOGIN_PATH = "/login";
 
 export function getPortalLoginUrl(): string {
   if (typeof window === "undefined") return PORTAL_LOGIN_PATH;
-  return `${window.location.origin}${PORTAL_LOGIN_PATH}`;
+  if (config.node_env === "production") {
+    const host = normalizeAppDomain(config.app_domain);
+    return host ? `https://${host}${PORTAL_LOGIN_PATH}` : PORTAL_LOGIN_PATH;
+  }
+  return `${window.location.origin}${DEV_PORTAL_LOGIN_PATH}`;
 }
 
 export const ROLE_HOME_PORTAL: Record<string, PortalKind> = {
@@ -52,7 +53,10 @@ function subdomainForPortal(portal: PortalKind): string {
   return SUB[portal];
 }
 
-export function getPortalOrigin(portal: PortalKind, appDomain?: string): string {
+export function getPortalOrigin(
+  portal: PortalKind,
+  appDomain?: string,
+): string {
   const domain = normalizeAppDomain(appDomain ?? config.app_domain);
   if (!domain) return "";
   return `${PROTOCOL}://${subdomainForPortal(portal)}.${domain}`;
@@ -62,7 +66,9 @@ export function normalizeRoleKey(role: string): string {
   return role.trim().toUpperCase().replace(/\s+/g, "_");
 }
 
-export function homePortalForRole(role: string | undefined | null): PortalKind | null {
+export function homePortalForRole(
+  role: string | undefined | null,
+): PortalKind | null {
   if (!role) return null;
   const key = normalizeRoleKey(role);
   if (ROLE_HOME_PORTAL[key]) return ROLE_HOME_PORTAL[key];
@@ -88,20 +94,15 @@ export function readPortalRoleCookie(): string | null {
 
 export function redirectFromPortalRoleCookieIfNeeded(): boolean {
   if (typeof window === "undefined") return false;
-  try {
-    if (!localStorage.getItem("token")) return false;
-  } catch {
-    return false;
-  }
-  // Partner subdomain: never jump to admin/student via cookie — validate session here; else /login
-  if (inferCurrentPortal() === "partner") {
-    return false;
-  }
   const raw = readPortalRoleCookie();
   if (!raw?.trim()) return false;
   const home = homePortalForRole(raw.trim());
   const current = inferCurrentPortal();
   if (!home || home === current) return false;
+  if (config.node_env !== "production") {
+    window.location.replace(DEV_PORTAL_LOGIN_PATH);
+    return true;
+  }
   const target = getPortalOrigin(home, config.app_domain);
   if (!target) return false;
   window.location.replace(`${target}/`);
@@ -159,10 +160,15 @@ export function isRoleAllowedOnThisPortal(
 }
 
 /** Partner dashboard: partner roles + org employees (type employee). Not student / HQ admin-only accounts. */
-export function isPartnerPortalSession(user: {
-  role?: string;
-  type?: string;
-} | null | undefined): boolean {
+export function isPartnerPortalSession(
+  user:
+    | {
+        role?: string;
+        type?: string;
+      }
+    | null
+    | undefined,
+): boolean {
   if (!user) return false;
   if (user.type === "employee") return true;
   return isRoleAllowedOnThisPortal(user.role ?? null);
@@ -197,7 +203,7 @@ export function getPortalRoleMismatchMessage(
 }
 
 export function redirectToCorrectPortalIfNeeded(
-  user: { role?: string; type?: string } | null | undefined
+  user: { role?: string; type?: string } | null | undefined,
 ): boolean {
   if (!user) return false;
   const current = inferCurrentPortal();
@@ -212,9 +218,9 @@ export function redirectToCorrectPortalIfNeeded(
 
   if (home === current) return false;
 
-  // Partner subdomain: never auto-open admin/student apps — non-partner sessions use /login here
-  if (current === "partner") {
-    return false;
+  if (config.node_env !== "production") {
+    window.location.replace(DEV_PORTAL_LOGIN_PATH);
+    return true;
   }
 
   const target = getPortalOrigin(home, config.app_domain);

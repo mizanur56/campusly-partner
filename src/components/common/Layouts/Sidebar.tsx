@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { config } from "../../../config";
 import { clearAuthLocalStorage } from "../../../lib/authLocalStorage";
+import { getPortalLoginUrl } from "../../../lib/portalRouting";
 import { usePreviewMode } from "../../../context/PreviewModeContext";
 import { useSidebar } from "../../../context/SidebarContext";
 import { useFilteredSidebarItems } from "../../../hooks/useFilteredSidebarItems";
@@ -101,10 +102,15 @@ const SIGNED_ROUTE_PATHS = [
   "/payments/commission",
   "/academy",
   "/hot-offers",
-   "/settings/profile",
+  "/settings/profile",
 ];
 
-const TEAM_MEMBER_ROUTE_PATHS = ["/", "/students", "/applications", "/my-tasks"];
+const TEAM_MEMBER_ROUTE_PATHS = [
+  "/",
+  "/students",
+  "/applications",
+  "/my-tasks",
+];
 
 const othersSidebarItems: NavItem[] = [
   {
@@ -147,11 +153,8 @@ const Sidebar: React.FC = () => {
   const { isExpanded, isMobileOpen } = useSidebar();
   const { previewMode } = usePreviewMode();
   const location = useLocation();
-  const navigate = useNavigate();
   const { student } = useStudentProfile();
   const user = useSelector(selectCurrentUser);
-
-
 
   // Fetch partner profile to get advisor details
   const {
@@ -163,7 +166,8 @@ const Sidebar: React.FC = () => {
   // Onboarding status: when ACTIVE + portalAccessUnlocked, show signed sidebar even on "/"
   const { data: onboardingStatus } = useGetOnboardingStatusQuery();
   const hasUnlockedPortal =
-    onboardingStatus?.status === "ACTIVE" && !!onboardingStatus?.portalAccessUnlocked;
+    onboardingStatus?.status === "ACTIVE" &&
+    !!onboardingStatus?.portalAccessUnlocked;
 
   const isTeamMember = user?.role === "PARTNER_TEAM_MEMBER";
 
@@ -193,10 +197,9 @@ const Sidebar: React.FC = () => {
   const signedProfileEmail = user?.email ?? profileEmail;
 
   const handleLogout = () => {
-    console.log("Logging out...");
     clearAuthLocalStorage();
     localStorage.removeItem("partner-preview-mode");
-    navigate("/login");
+    window.location.href = getPortalLoginUrl();
   };
 
   /* Sidebar mode by context:
@@ -224,14 +227,19 @@ const Sidebar: React.FC = () => {
     (location.pathname === "/" && previewMode === "onboarding") ||
     location.pathname.startsWith("/onboarding") ||
     location.pathname.startsWith("/contract");
-  const signedPaths = isTeamMember ? TEAM_MEMBER_ROUTE_PATHS : SIGNED_ROUTE_PATHS;
+  const signedPaths = isTeamMember
+    ? TEAM_MEMBER_ROUTE_PATHS
+    : SIGNED_ROUTE_PATHS;
   const isSignedContext =
     !isStudentContext &&
     !isApplicationDetailContext &&
-    ((location.pathname === "/" && (previewMode === "signed" || hasUnlockedPortal || isTeamMember)) ||
+    ((location.pathname === "/" &&
+      (previewMode === "signed" || hasUnlockedPortal || isTeamMember)) ||
       signedPaths.includes(location.pathname) ||
       (!isTeamMember && location.pathname.startsWith("/payments")) ||
-      (isTeamMember && (location.pathname.startsWith("/students/") || location.pathname.startsWith("/applications/"))));
+      (isTeamMember &&
+        (location.pathname.startsWith("/students/") ||
+          location.pathname.startsWith("/applications/"))));
 
   // Application details loading: show loading state (click korar sathe start)
   const isApplicationDetailLoading = isApplicationDetailContext && !student;

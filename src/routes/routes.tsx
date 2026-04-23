@@ -1,4 +1,10 @@
-import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-dom";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useParams,
+} from "react-router-dom";
 import { useSelector } from "react-redux";
 import MainLayout from "../layout/MainLayout";
 import { selectCurrentUser } from "../redux/features/auth/authSlice";
@@ -132,7 +138,10 @@ function AppRoutes() {
           <Route path="students/:id" element={<StudentProfileRedirect />} />
           <Route path="students/:id/profile" element={<StudentProfile />} />
           <Route path="students/:id/activity" element={<StudentProfile />} />
-          <Route path="students/:id/applications" element={<StudentProfile />} />
+          <Route
+            path="students/:id/applications"
+            element={<StudentProfile />}
+          />
           <Route path="students/:id/tasks" element={<StudentProfile />} />
           <Route path="applications" element={<Applications />} />
           <Route path="visa-reject" element={<VisaRejectPage />} />
@@ -149,7 +158,10 @@ function AppRoutes() {
           </Route>
           <Route path="team-members" element={<TeamMembers />} />
           <Route path="my-tasks" element={<MyTasks />} />
-          <Route path="payments" element={<Navigate to="/payments/purchase" replace />} />
+          <Route
+            path="payments"
+            element={<Navigate to="/payments/purchase" replace />}
+          />
           <Route path="payments/purchase" element={<Payments />} />
           <Route path="payments/commission" element={<Payments />} />
           <Route path="academy" element={<Academy />} />
