@@ -72,9 +72,10 @@ export default function SetPasswordByInvite() {
       />
       <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <div className="mb-6">
-          {/* <h1 className="text-lg font-semibold text-gray-900 mb-1">
+          <h1 className="text-lg font-semibold text-gray-900 mb-1">
             Set your password
-          </h1> */}
+            {/* This text is not visible to the user */}
+          </h1>
           <p className="text-sm text-gray-600">
             You were invited to the partner team. Choose a password to activate your
             account.
