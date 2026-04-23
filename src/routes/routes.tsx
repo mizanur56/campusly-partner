@@ -43,6 +43,7 @@ import MyTasks from "../pages/MyTasks/MyTasks";
 import TeamMembers from "../pages/TeamMembers/TeamMembers";
 import Payments from "../pages/Payments/Payments";
 import ProfileSettings from "../pages/Settings/ProfileSettings";
+import Notifications from "../pages/Notifications/Notifications";
 
 function StudentProfileRedirect() {
   const { id } = useParams();
@@ -153,6 +154,7 @@ function AppRoutes() {
           />
           <Route path="payments/purchase" element={<Payments />} />
           <Route path="payments/commission" element={<Payments />} />
+          <Route path="notifications" element={<Notifications />} />
           <Route path="academy" element={<Academy />} />
           <Route path="hot-offers" element={<HotOffers />} />
           <Route path="settings/profile" element={<ProfileSettings />} />

@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { usePreviewMode } from "../../../context/PreviewModeContext";
 import { useSidebar } from "../../../context/SidebarContext";
 import UserDropdown from "../Dropdowns/UserDropdown";
+import NotificationDropdown from "../Dropdowns/NotificationDropdown";
 import { useGetPartnerProfileQuery } from "../../../redux/features/profile/partnerProfileApi";
 import { getApiImageUrl } from "../../../utils/getApiImageUrl";
 
@@ -385,33 +386,13 @@ const Header: React.FC = () => {
               >
                 <i className="fa-solid fa-bullhorn text-[18px]" />
               </button>
-              <button
-                type="button"
-                className="relative flex items-center justify-center rounded-full p-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-                aria-label="Notifications"
-              >
-                <i className="fa-solid fa-bell text-[18px]" aria-hidden />
-                <span className="absolute right-1 top-1 flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-400 opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-primary-500 ring-2 ring-white dark:ring-gray-900" />
-                </span>
-              </button>
+              <NotificationDropdown />
             </>
           )}
 
           {/* Notification — only when not signed */}
           {!isSignedMode && (
-            <button
-              type="button"
-              className="relative flex items-center justify-center rounded-full p-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-              aria-label="Notifications"
-            >
-              <i className="fa-solid fa-bell text-[18px]" aria-hidden />
-              <span className="absolute right-1 top-1 flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-primary-500 ring-2 ring-white dark:ring-gray-900" />
-              </span>
-            </button>
+            <NotificationDropdown />
           )}
 
           {/* User icon — always at the very right */}
