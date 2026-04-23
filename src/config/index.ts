@@ -1,5 +1,20 @@
 const apiBase = import.meta.env.VITE_API_URL ?? "/api";
 
+/** WebSocket origin for Socket.IO (notifications + chat). Override with VITE_SOCKET_URL. */
+function getSocketUrl(): string {
+  const explicit = import.meta.env.VITE_SOCKET_URL?.trim();
+  if (explicit) return explicit.replace(/\/$/, "");
+  if (apiBase.startsWith("http")) {
+    try {
+      return new URL(apiBase).origin;
+    } catch {
+      return apiBase;
+    }
+  }
+  if (typeof window !== "undefined") return window.location.origin;
+  return "";
+}
+
 function getImageAccessUrl(): string {
   const envUrl = import.meta.env.VITE_IMAGE_ACCESS_URL;
   if (envUrl) return envUrl;
@@ -20,6 +35,8 @@ export const config = {
   /** Mirrors `.env` `VITE_NODE_ENV` — drives auth/login vs SPA `/login` routing. */
   node_env: import.meta.env.VITE_NODE_ENV ?? import.meta.env.MODE,
   api: apiBase,
+  /** Same origin as HTTP API unless VITE_SOCKET_URL is set */
+  socketUrl: getSocketUrl(),
   image_access_url: getImageAccessUrl(),
   tiny_api_key: import.meta.env.VITE_PUBLIC_TINY_API_KEY,
 } as const;
