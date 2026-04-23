@@ -37,8 +37,317 @@
   left: 0;
   right: 0;
   bottom: -1px;
-  height: 2px;
+  height: 3px;
   background: var(--primary, #237d3b);
   border-radius: 1px;
+}
+
+/* —— My Account page (ProfileSettings) —— */
+.account-page {
+  min-height: calc(100vh - 4rem);
+  padding: 0 1rem 2.5rem;
+  max-width: 1200px;
+}
+
+@media (min-width: 768px) {
+  .account-page {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .account-page {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+.account-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding-bottom: 1.25rem;
+}
+
+.account-title {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.02em;
+}
+
+.account-subtitle {
+  margin: 0.5rem 0 0;
+  max-width: 42rem;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: #6b7280;
+}
+
+.account-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.account-pageheader-extra--stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.account-partner-id--solo {
+  margin: 0;
+  text-align: right;
+}
+
+.account-partner-id {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.account-partner-id span {
+  color: #374151;
+  font-weight: 600;
+}
+
+.account-invite-btn.ant-btn-primary {
+  border-radius: 8px;
+  height: auto;
+  padding: 0.45rem 1.1rem;
+  font-weight: 600;
+  background-color: var(--primary, #237d3b);
+  border-color: var(--primary, #237d3b);
+}
+
+.account-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.75rem;
+  width: 100%;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.account-content {
+  margin-top: 1.75rem;
+}
+
+/* General tab */
+.account-general {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.account-photo-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.account-photo-block .ant-avatar {
+  border: 2px solid #e5e7eb;
+}
+
+.account-photo-btn .ant-btn-primary {
+  border-radius: 6px;
+  font-weight: 600;
+  padding: 0.45rem 1.25rem;
+  height: auto;
+  background-color: var(--primary, #237d3b);
+  border-color: var(--primary, #237d3b);
+}
+
+.account-password-card {
+  max-width: 32rem;
+}
+
+.account-card-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.account-card-subtitle {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: #6b7280;
+}
+
+.account-criteria {
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+  line-height: 1.65;
+  color: #4b5563;
+}
+
+.account-criteria li {
+  padding-left: 0;
+}
+
+.account-criteria li::before {
+  content: "- ";
+}
+
+.account-form {
+  margin-top: 1.25rem;
+}
+
+.account-form .ant-form-item-label > label {
+  color: #374151 !important;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.account-form .ant-input-affix-wrapper,
+.account-form .ant-input-password {
+  border-radius: 8px;
+  border-color: #c7cacf;
+}
+
+.account-form .ant-input-affix-wrapper:hover,
+.account-form .ant-input-password:hover {
+  border-color: #c7cacf;
+}
+
+.account-form .ant-input-affix-wrapper-focused,
+.account-form .ant-input-affix-wrapper:focus-within {
+  border-color: #c7cacf !important;
+  box-shadow: 0 0 0 2px rgba(35, 125, 59, 0.12);
+}
+
+.account-save-btn.ant-btn-primary {
+  margin-top: 0.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 0.5rem 1.25rem;
+  height: auto;
+  background-color: var(--primary, #237d3b);
+  border-color: var(--primary, #237d3b);
+}
+
+/* Business tab */
+.account-business {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.account-business-avatar {
+  border: 2px solid #3b82f6;
+  background: #fff !important;
+}
+
+.account-business-card {
+  max-width: 32rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.account-field-label {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.account-field-value {
+  margin: 0.35rem 0 0;
+  font-size: 0.9375rem;
+  color: #6b7280;
+}
+
+/* Team member tab */
+.account-team-card {
+  border-radius: 24px;
+  border: 1px solid #c7cacf;
+  background: #fff;
+  padding: 1.5rem;
+}
+
+.account-team-table .border.rounded-lg {
+  border: none !important;
+  border-radius: 0 !important;
+}
+
+.account-team-table .ant-pagination .ant-pagination-item-active {
+  border-color: var(--primary, #237d3b);
+  background-color: var(--primary, #237d3b);
+}
+
+.account-team-table .ant-pagination .ant-pagination-item-active a {
+  color: #fff;
+}
+
+/* Invite team modal */
+.invite-team-modal .ant-modal-content {
+  border-radius: 12px;
+}
+
+.invite-team-modal .ant-modal-header {
+  margin-bottom: 0;
+  padding-bottom: 12px;
+}
+
+.invite-team-modal .ant-modal-title {
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: #111827;
+}
+
+.invite-team-form .ant-form-item-label > label {
+  color: #374151 !important;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.invite-team-form .ant-input-affix-wrapper,
+.invite-team-form .ant-input {
+  border-radius: 8px;
+}
+
+.invite-team-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 0.25rem;
+}
+
+.invite-team-btn-cancel {
+  border-radius: 8px !important;
+  height: auto !important;
+  padding: 0.45rem 1.25rem !important;
+  font-weight: 600 !important;
+  color: var(--primary, #237d3b) !important;
+  border: 1px solid var(--primary, #237d3b) !important;
+  background: #fff !important;
+}
+
+.invite-team-btn-cancel:hover {
+  color: var(--primary-600, #207236) !important;
+  border-color: var(--primary-600, #207236) !important;
+  background: var(--primary-50, #e9f2eb) !important;
+}
+
+.invite-team-btn-submit.ant-btn-primary {
+  border-radius: 8px !important;
+  height: auto !important;
+  padding: 0.45rem 1.25rem !important;
+  font-weight: 600 !important;
+  background-color: var(--primary, #237d3b) !important;
+  border-color: var(--primary, #237d3b) !important;
 }
 

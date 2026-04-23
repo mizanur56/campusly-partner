@@ -13,13 +13,19 @@ import dayjs from "dayjs";
 import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
 import { useApplicationDocumentUploadMutation } from "../../../redux/features/application/applicationApi";
 
-const EmbassySubmission: React.FC = () => {
+export type EmbassySubmissionStepProps = {
+  applicationApiData: any;
+  embedded?: boolean;
+  autoOpen?: boolean;
+};
+
+export const EmbassySubmissionStep: React.FC<EmbassySubmissionStepProps> = ({
+  applicationApiData,
+  embedded = false,
+  autoOpen = false,
+}) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-
-  const { applicationApiData } = useOutletContext<{
-    applicationApiData: any;
-  }>();
 
   const submissionDate = applicationApiData?.visaSubmissionDate;
 
@@ -100,7 +106,7 @@ const EmbassySubmission: React.FC = () => {
         id: "visa_sub_date",
         title: "Visa Submission Date",
         category: "visaSubmissionDate", // ✅ DateTime
-        description: "Select the date when the visa was submitted.",
+        description: "Select the date the visa application was submitted.",
         url: applicationApiData?.visaSubmissionDate,
         isCompleted: !!applicationApiData?.visaSubmissionDate,
         type: "date",
@@ -112,6 +118,14 @@ const EmbassySubmission: React.FC = () => {
   const isAllRequiredCompleted = sections.every(
     (section) => !!section.isCompleted,
   );
+
+  const didInitExpand = React.useRef(false);
+  React.useEffect(() => {
+    if (!embedded) return;
+    if (didInitExpand.current) return;
+    setIsExpanded(Boolean(autoOpen) && !isAllRequiredCompleted);
+    didInitExpand.current = true;
+  }, [autoOpen, embedded, isAllRequiredCompleted]);
 
   /* ================= File Upload ================= */
   const handleFileUpload = async (categoryKey: string, file: File) => {
@@ -182,10 +196,10 @@ const EmbassySubmission: React.FC = () => {
         <div className="bg-[#E9F2EB] p-6 flex items-center justify-between">
           <div>
             <h3 className="text-[20px] font-semibold text-[#20242A]">
-              Embassy Submission
+              Stage: 5 Embassy Submission
             </h3>
             <p className="text-[14px] text-[#4B5563]">
-              Upload visa submission proof and select submission date.
+              Provide visa submission proof and the submission date.
             </p>
           </div>
           <div
@@ -299,22 +313,29 @@ const EmbassySubmission: React.FC = () => {
       </div>
 
       {/* Navigation */}
-      <div className="flex justify-end gap-3 pt-4">
-        <button
-          onClick={() => navigate(`/applications/${id}/final-letter`)}
-          className="px-6 py-2 cursor-pointer border rounded-lg text-[#237D3B]"
-        >
-          Previous
-        </button>
+      {!embedded && (
+        <div className="flex justify-end gap-3 pt-4">
+          <button
+            onClick={() => navigate(`/applications/${id}/final-letter`)}
+            className="px-6 py-2 cursor-pointer border rounded-lg text-[#237D3B]"
+          >
+            Previous
+          </button>
 
-        <PrimaryButton
-          text="Next"
-          disabled={!isAllRequiredCompleted}
-          onClick={() => navigate(`/applications/${id}/visa`)}
-        />
-      </div>
+          <PrimaryButton
+            text="Next"
+            disabled={!isAllRequiredCompleted}
+            onClick={() => navigate(`/applications/${id}/visa`)}
+          />
+        </div>
+      )}
     </>
   );
+};
+
+const EmbassySubmission: React.FC = () => {
+  const { applicationApiData } = useOutletContext<{ applicationApiData: any }>();
+  return <EmbassySubmissionStep applicationApiData={applicationApiData} />;
 };
 
 export default EmbassySubmission;
