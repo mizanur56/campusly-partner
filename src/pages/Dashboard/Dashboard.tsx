@@ -213,15 +213,17 @@ const Dashboard = () => {
           <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
             {/* Welcome — professional header */}
             <header className="mb-10">
-              <h1 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white sm:text-3xl">
+            <div className="flex flex-col gap-2 justify-center items-center">
+            <h1 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white sm:text-3xl">
                 Welcome to Campus Transfer
               </h1>
-              <p className="mt-2 max-w-lg text-base leading-relaxed text-gray-500 dark:text-gray-400">
+              <p className="text-center max-w-lg text-base leading-relaxed text-gray-500 dark:text-gray-400">
                 Complete onboarding and sign your contract to get full access to
                 the partner portal.
               </p>
+            </div>
               {/* Progress summary */}
-              <div className="mt-6 flex flex-wrap gap-4">
+              {/* <div className="mt-6 flex flex-wrap gap-4">
                 <div className="min-w-0 flex-1 rounded-xl border border-gray-200/80 bg-white p-4 card-shadow dark:border-gray-700/80 dark:bg-gray-900/50">
                   <p className="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
                     Onboarding
@@ -264,11 +266,11 @@ const Dashboard = () => {
                     />
                   </div>
                 </div>
-              </div>
+              </div> */}
             </header>
 
             {/* Onboarding Form card */}
-            <section className="rounded-2xl border border-gray-200/90 bg-white card-shadow dark:border-gray-700/90 dark:bg-gray-900">
+            <section className="rounded-2xl border border-[#C7CACF] bg-[#FFFFFF] dark:border-gray-700/90 dark:bg-gray-900">
               <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-50 dark:bg-primary-900/30">
@@ -355,12 +357,12 @@ const Dashboard = () => {
                               isReviewRejected
                                 ? "bg-red-600 text-white"
                                 : isReviewApproved
-                                  ? "bg-green-600 text-white"
+                                  ? "bg-[#00B561] text-white"
                                   : isCompleted
-                                    ? "bg-primary-600 text-white"
+                                    ? "bg-[#00B561] text-white"
                                     : isActive
                                       ? "border border-primary-500 bg-primary-50 text-primary-600 dark:border-primary-400 dark:bg-primary-900/30"
-                                      : "border border-gray-200 bg-white text-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-500"
+                                      : "border border-gray-400 bg-white text-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-500"
                             }`}
                           >
                             {isReviewRejected ? (
@@ -387,18 +389,16 @@ const Dashboard = () => {
                                   clipRule="evenodd"
                                 />
                               </svg>
-                            ) : (
-                              index + 1
-                            )}
+                            ) : null}
                           </span>
                           <span
                             className={
                               isReviewRejected
                                 ? "text-sm font-medium text-red-600 dark:text-red-400"
                                 : isReviewApproved
-                                  ? "text-sm font-medium text-green-600 dark:text-green-400"
+                                  ? "text-sm font-medium text-[#00B561]"
                                   : isCompleted
-                                    ? "text-sm font-medium text-gray-900 dark:text-white"
+                                    ? "text-sm font-medium text-[#00B561]"
                                     : isActive
                                       ? "text-sm font-medium text-primary-700 dark:text-primary-300"
                                       : "text-sm text-gray-500 dark:text-gray-400"
@@ -420,10 +420,10 @@ const Dashboard = () => {
 
             {/* Contract card */}
             <section
-              className={`mt-6 rounded-2xl border bg-white card-shadow dark:bg-gray-900 ${
+              className={`mt-6 rounded-2xl border border-[#C7CACF] bg-[#FFFFFF] dark:bg-gray-900 ${
                 canAccessContract
-                  ? "border-gray-200/90 dark:border-gray-700/90"
-                  : "border-gray-200/50 opacity-60 dark:border-gray-700/50"
+                  ? "border-[#C7CACF] dark:border-gray-700/90"
+                  : "border-[#C7CACF] opacity-60 dark:border-gray-700/50"
               }`}
             >
               <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
@@ -528,7 +528,7 @@ const Dashboard = () => {
                               isContractRejectedStep
                                 ? "bg-red-600 text-white"
                                 : isCompleted
-                                  ? "bg-primary-600 text-white"
+                                  ? "bg-[#00B561] text-white"
                                   : isActive
                                     ? "border-2 border-primary-500 bg-primary-50 text-primary-600 dark:border-primary-400 dark:bg-primary-900/30"
                                     : "border border-gray-200 bg-white text-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-500"
@@ -558,16 +558,14 @@ const Dashboard = () => {
                                   clipRule="evenodd"
                                 />
                               </svg>
-                            ) : (
-                              index + 1
-                            )}
+                            ) : null}
                           </span>
                           <span
                             className={
                               isContractRejectedStep
                                 ? "text-sm font-medium text-red-600 dark:text-red-400"
                                 : isCompleted
-                                  ? "text-sm font-medium text-gray-900 dark:text-white"
+                                  ? "text-sm font-medium text-[#00B561]"
                                   : isActive
                                     ? "text-sm font-semibold text-primary-700 dark:text-primary-300"
                                     : "text-sm text-gray-500 dark:text-gray-400"
