@@ -13,6 +13,7 @@ import DeleteModal from "../../components/shared/DeleteModal";
 import { useGetMyAllApplicationsQuery } from "../../redux/features/application/applicationApi";
 import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 import { config } from "../../config";
+import PageHeader from "../../components/common/Navigation/PageHeader";
 
 const { Option } = Select;
 
@@ -187,27 +188,20 @@ export default function Applications() {
         title="Applications - Campus Transfer Partner"
         description="View and manage student applications, status, and submissions in the Campus Transfer Partner panel."
       />
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
-            Applications
-          </h1>
-          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-            {isTeamMember
-              ? "Applications for students assigned to you"
-              : "Manage your applications"}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => navigate("/programs-schools")}
-          className="inline-flex items-center justify-center rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-        >
-          Find More Programs
-        </button>
-      </div>
 
-      <div className="mb-6 flex flex-wrap items-center gap-3">
+      <PageHeader title="Applications" subtitle={isTeamMember
+              ? "Applications for students assigned to you"
+              : "Manage your applications"}  extra={<button
+              type="button"
+              onClick={() => navigate("/programs-schools")}
+              className="inline-flex items-center justify-center rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            >
+              Find More Programs
+            </button>} breadcrumbs={[{ title: "Dashboard", path: "/" }, { title: "Applications" }]}/>
+   
+
+    <div className="bg-[#FFFFFF] p-6 rounded-lg border border-[#C7CACF]">
+    <div className="mb-6 flex items-center justify-between">
         <Input
           placeholder="Search by ID, course, university or status"
           prefix={<Search size={16} className="text-[#4B5563]" />}
@@ -218,7 +212,8 @@ export default function Applications() {
           }}
           allowClear
           size="large"
-          style={{ width: 200 }}
+          // style={{ width: 400 }}
+          className="max-w-sm"
         />
         <Dropdown
           open={isFilterDropdownOpen}
@@ -274,7 +269,7 @@ export default function Applications() {
           total={total}
           loading={isLoading || isFetching}
           isPaginate
-          showHeader={false}
+          showHeader
           showSizeChanger
           noInnerBorder
           pagination={{
@@ -282,6 +277,7 @@ export default function Applications() {
           }}
         />
       </div>
+    </div>
 
       <DeleteModal
         open={deleteModalOpen}

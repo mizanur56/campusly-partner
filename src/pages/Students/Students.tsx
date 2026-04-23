@@ -1,15 +1,18 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Table, Input } from "antd";
+import { Input } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useSelector } from "react-redux";
 import PageMeta from "../../components/common/Meta/PageMeta";
 import CreateStudentModal from "../../components/common/Modals/CreateStudentModal";
 import "../../components/common/Tables/AntTable.css";
+import { DataTable } from "../../components/common/Tables";
 import { useGetStudentsQuery } from "../../redux/features/users/usersApi";
 import { useGetStudentsWithActiveTasksQuery } from "../../redux/features/tasks/partnerTasksApi";
 import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 import "./Students.css";
+import PageHeader from "../../components/common/Navigation/PageHeader";
+import { Search } from "lucide-react";
 
 interface StudentRecord {
   key: string;
@@ -161,35 +164,26 @@ export default function Students() {
         title="Students - Campus Transfer Partner"
         description="View and manage your students, applications, and enrollment status in the Campus Transfer Partner panel."
       />
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
-            Students
-          </h1>
-          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-            {isTeamMember
+      <PageHeader title="Students" subtitle={isTeamMember
               ? "Students with tasks assigned to you."
-              : "Easily manage every student you onboard and support."}
-          </p>
-        </div>
-        {!isTeamMember && (
-          <>
-            <button
+              : "Easily manage every student you onboard and support."}  extra={<button
               type="button"
               onClick={() => setCreateStudentOpen(true)}
-              className="inline-flex items-center justify-center rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              className="inline cursor-pointer flex items-center justify-center rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
             >
               + Add student
-            </button>
-            <CreateStudentModal
-              open={createStudentOpen}
-              onClose={() => setCreateStudentOpen(false)}
-            />
-          </>
-        )}
-      </div>
+            </button>} breadcrumbs={[{ title: "Dashboard", path: "/" }, { title: "Students" }]}/>
 
-      <div className="mb-6 max-w-sm">
+            {!isTeamMember && (
+              <CreateStudentModal
+                open={createStudentOpen}
+                onClose={() => setCreateStudentOpen(false)}
+              />
+            )}
+    
+   <div className="bg-[#FFFFFF] p-6 rounded-lg border border-[#C7CACF]">
+    
+   <div className="mb-6 max-w-sm">
         <Input
           placeholder={
             isTeamMember
@@ -198,6 +192,7 @@ export default function Students() {
           }
           allowClear
           value={searchText}
+          prefix={<Search size={16} className="text-[#4B5563]" />}
           onChange={(e) => setSearchText(e.target.value)}
           size="large"
         />
@@ -205,40 +200,42 @@ export default function Students() {
 
       <div className="overflow-hidden rounded-[24px] border border-neutral-100 bg-white card-shadow dark:border-gray-800 dark:bg-gray-900">
         {isTeamMember ? (
-          <Table<AssignedStudentRecord>
-            className="students-table"
-            dataSource={assignedTableData}
+          <DataTable
+            data={assignedTableData}
             columns={assignedColumns}
             rowKey="key"
             loading={loading}
-            onRow={(record) => ({
+            showHeader
+            isPaginate
+            noInnerBorder
+            onRow={(record: AssignedStudentRecord) => ({
               onClick: () =>
                 navigate(`/students/${record.studentId}/profile`, {
                   state: { student: { id: record.studentId, name: record.studentName } },
                 }),
               style: { cursor: "pointer" },
             })}
-            pagination={
-              assignedTableData.length > 10
-                ? {
-                    pageSize: 10,
-                    showTotal: (total) => `Total ${total} students`,
-                  }
-                : false
-            }
-            scroll={{ x: 500 }}
-            locale={{
-              emptyText: "No students with tasks assigned to you.",
+            pagination={{
+              pageSize: 10,
+              showTotal: (total: number) => `Total ${total} students`,
             }}
           />
         ) : (
-          <Table
-            className="students-table"
-            dataSource={tableData}
+          <DataTable
+            data={tableData}
             columns={columns}
             rowKey="key"
             loading={loading}
-            onRow={(record) => ({
+            showHeader
+            isPaginate
+            noInnerBorder
+            currentPage={page}
+            setCurrentPage={setPage}
+            limit={pageSize}
+            setLimit={setPageSize}
+            total={data?.meta?.total ?? 0}
+            showSizeChanger
+            onRow={(record: StudentRecord) => ({
               onClick: () =>
                 navigate(`/students/${record.id}/profile`, {
                   state: { student: record },
@@ -246,21 +243,13 @@ export default function Students() {
               style: { cursor: "pointer" },
             })}
             pagination={{
-              current: page,
-              pageSize,
-              total: data?.meta?.total ?? 0,
-              showSizeChanger: true,
-              showTotal: (total) => `Total ${total} students`,
               pageSizeOptions: ["10", "20", "50"],
-              onChange: (newPage, newPageSize) => {
-                setPage(newPage);
-                setPageSize(newPageSize ?? 10);
-              },
+              // showTotal: (total: number) => `Total ${total} students`,
             }}
-            scroll={{ x: 900 }}
           />
         )}
       </div>
+   </div>
     </div>
   );
 }

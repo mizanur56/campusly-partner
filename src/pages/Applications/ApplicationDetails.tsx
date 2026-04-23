@@ -187,7 +187,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useEffect } from "react";
-import { useParams, Outlet, NavLink, useNavigate } from "react-router-dom";
+import { useParams, Outlet, useNavigate } from "react-router-dom";
 import { Image, Spin } from "antd";
 import { FaCircleCheck } from "react-icons/fa6";
 import { useGetApplicationByIdQuery } from "../../redux/features/application/applicationApi";
@@ -196,10 +196,16 @@ import { useGetApplicationByIdQuery } from "../../redux/features/application/app
 import { config } from "../../config";
 import { useStudentProfile } from "../../context/StudentProfileContext";
 import { useGetStudentProfileQuery } from "../../redux/features/profile/studentProfileApi";
+import ApplicationRequirementsTab from "./components/ApplicationRequirementsTab";
+import StudentRecordsTab from "./components/StudentRecordsTab";
+import NotesTab from "./components/NotesTab";
 
 const ApplicationDetails = () => {
   const { id } = useParams<{ id: string }>();
   const [isRedirecting, setIsRedirecting] = React.useState(true);
+  const [activeTab, setActiveTab] = React.useState<
+    "requirements" | "records" | "notes"
+  >("requirements");
   const navigate = useNavigate();
   const { setStudent } = useStudentProfile();
   const { data, isLoading, error } = useGetApplicationByIdQuery(id, {
@@ -476,21 +482,75 @@ const ApplicationDetails = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Application Steps */}
-        <div className="lg:col-span-1">
-          <div className="bg-white border border-[#C7CACF] rounded-xl p-6 h-fit sticky top-6">
-            <h3 className="text-[20px] font-semibold text-[#20242A] mb-6">
-              Application Steps
+      {/* Tabs */}
+      <div className="mb-6 border-b border-gray-200 dark:border-gray-800">
+        <div className="flex items-center gap-8">
+          <button
+            type="button"
+            onClick={() => setActiveTab("requirements")}
+            className={`-mb-px pb-3 text-sm font-medium transition-colors cursor-pointer ${
+              activeTab === "requirements"
+                ? "border-b-2 border-[#22C55E] text-[#15803D]"
+                : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            }`}
+          >
+            Application Requirements
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("records")}
+            className={`-mb-px pb-3 text-sm font-medium transition-colors cursor-pointer ${
+              activeTab === "records"
+                ? "border-b-2 border-[#22C55E] text-[#15803D]"
+                : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            }`}
+          >
+            Student Records
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("notes")}
+            className={`-mb-px pb-3 text-sm font-medium transition-colors cursor-pointer ${
+              activeTab === "notes"
+                ? "border-b-2 border-[#22C55E] text-[#15803D]"
+                : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            }`}
+          >
+            Notes
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Left content changes with tabs */}
+        <div className="lg:col-span-2">
+          {activeTab === "requirements" ? (
+              <ApplicationRequirementsTab
+                applicationApiData={applicationApiData}
+                steps={steps}
+              />
+          ) : activeTab === "records" ? (
+              <StudentRecordsTab
+                profileData={profileData}
+                applicationApiData={applicationApiData}
+              />
+          ) : (
+              <NotesTab />
+          )}
+        </div>
+
+        {/* Right sidebar stays the same */}
+        <aside className="lg:col-span-1">
+          <div className="sticky top-6 rounded-2xl border border-[#C7CACF] bg-white p-6 card-shadow dark:border-gray-800 dark:bg-gray-900">
+            <h3 className="text-[18px] font-semibold text-[#20242A] dark:text-white">
+              Application journey
             </h3>
 
-            <div className="relative">
-              {/* Vertical line */}
+            <div className="relative mt-6">
               <div className="absolute z-10 left-3 top-2 bottom-2 w-0.5 bg-[#D1D5DB]" />
 
-              <div className="space-y-14">
+              <div className="space-y-10">
                 {steps.map((step, index) => {
-                  // Current active step check korar jonno
                   const isActive =
                     location.pathname.endsWith(step.id) ||
                     (location.pathname.endsWith(id!) &&
@@ -499,18 +559,17 @@ const ApplicationDetails = () => {
                   return (
                     <div
                       key={step.id}
-                      className="flex items-center gap-4 relative z-10 cursor-default" // cursor pointers bad
+                      className="flex items-center gap-4 relative z-10 cursor-default"
                     >
-                      {/* Circle Icon */}
                       <div className="relative z-50">
                         {step.isCompleted ? (
                           <FaCircleCheck
                             className="text-[#00B561] bg-white rounded-full relative z-50"
-                            size={24}
+                            size={22}
                           />
                         ) : (
                           <div
-                            className={`w-6 h-6 rounded-full flex items-center justify-center font-semibold text-[14px] relative z-50 ${
+                            className={`w-6 h-6 rounded-full flex items-center justify-center font-semibold text-[13px] relative z-50 ${
                               isActive
                                 ? "bg-[#237D3B] text-white"
                                 : "bg-[#E6F4EA] text-[#237D3B]"
@@ -520,14 +579,8 @@ const ApplicationDetails = () => {
                           </div>
                         )}
                       </div>
-
-                      {/* Text - No Link, Just Text */}
                       <span
-                        className={`text-[16px] transition-colors ${
-                          isActive
-                            ? "text-[#237D3B] font-semibold"
-                            : "text-[#4B5563]"
-                        }`}
+                        className="text-[14px] text-[#4B5563] dark:text-gray-300"
                       >
                         {step.name}
                       </span>
@@ -537,19 +590,7 @@ const ApplicationDetails = () => {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Right Column - Step Details rendered via Outlet */}
-        <div className="lg:col-span-2">
-          <Outlet
-            context={{
-              applicationApiData,
-              steps,
-              profileData,
-              refetchProfile,
-            }}
-          />
-        </div>
+        </aside>
       </div>
     </div>
   );

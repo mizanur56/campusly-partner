@@ -49,75 +49,87 @@ export default function ContractSignedPage() {
               Contract
             </h2>
 
-            <div className="relative mt-6">
-              {/* Single continuous vertical rail */}
-              <div
-                aria-hidden
-                className="absolute left-[11px] top-[14px] h-[92px] w-[2px] rounded-full bg-gray-300 dark:bg-gray-700"
-              />
-              <div
-                aria-hidden
-                className="absolute left-[11px] top-[14px] h-[46px] w-[2px] rounded-full bg-[#16A34A]"
-              />
-
-              <ul className="space-y-8">
+            <nav className="relative mt-6" aria-label="Contract steps">
+              <ol className="flex list-none flex-col p-0">
                 {/* Step 1 */}
-                <li className="flex gap-4">
-                  <div className="relative z-[2] flex w-6 justify-center">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#16A34A] text-white">
-                      <svg
-                        className="h-4 w-4"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                        aria-hidden
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </span>
-                  </div>
-                  <div className="pt-0.5">
-                    <span className="text-[18px] font-medium text-gray-600 dark:text-gray-300">
+                <li className="flex flex-col">
+                  <div className="flex items-center gap-1.5">
+                    <div className="relative z-[2] flex h-4 w-4 shrink-0 items-center justify-center">
+                      <div className="flex items-center justify-center rounded-full bg-white dark:bg-gray-900">
+                        <span
+                          className="flex h-5 w-5 min-h-4 min-w-4 shrink-0 items-center justify-center rounded-full text-white shadow-sm"
+                          style={{ backgroundColor: "#22C55E" }}
+                          aria-hidden
+                        >
+                          <svg
+                            className="h-2.5 w-2.5"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </span>
+                      </div>
+                    </div>
+                    <span className="min-w-0 flex-1 text-[16px] leading-5 text-slate-600 dark:text-slate-400">
                       View and sign
                     </span>
+                  </div>
+
+                  {/* Connector (same structure as onboarding stepper) */}
+                  <div className="flex w-4 shrink-0 justify-center">
+                    <div
+                      className="relative z-0 h-24 w-[2px] shrink-0 rounded-none -mt-2 -mb-2 sm:h-20"
+                      style={{ backgroundColor: "#22C55E" }}
+                      aria-hidden
+                    />
                   </div>
                 </li>
 
                 {/* Step 2 */}
-                <li className="flex gap-4">
-                  <div className="relative z-[2] flex w-6 justify-center">
-                    {isActive ? (
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#16A34A] text-white">
-                        <svg
-                          className="h-4 w-4"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                          aria-hidden
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </span>
-                    ) : (
-                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white dark:bg-gray-900">
-                        <LuClock4
-                          aria-hidden
-                          className="h-6 w-6 text-[#FFA500]"
-                        />
-                      </span>
-                    )}
-                  </div>
-                  <div className="pt-0.5">
+                <li className="flex flex-col">
+                  <div className="flex items-center gap-1.5 -mt-2 sm:-mt-2.5">
+                    <div className="relative z-[2] flex h-4 w-4 shrink-0 items-center justify-center">
+                      <div className="flex items-center justify-center rounded-full bg-white dark:bg-gray-900">
+                        {isActive ? (
+                          <span
+                            className="flex h-5 w-5 min-h-4 min-w-4 shrink-0 items-center justify-center rounded-full text-white shadow-sm"
+                            style={{ backgroundColor: "#22C55E" }}
+                            aria-hidden
+                          >
+                            <svg
+                              className="h-2.5 w-2.5"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </span>
+                        ) : (
+                          <span
+                            className="flex h-4 w-4 min-h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-white dark:bg-gray-900"
+                            aria-hidden
+                          >
+                            <LuClock4
+                              aria-hidden
+                              className="h-5 w-5 shrink-0 text-[#FFA500]"
+                            />
+                          </span>
+                        )}
+                      </div>
+                    </div>
                     <span
-                      className={`text-[18px] font-medium ${
+                      className={`min-w-0 flex-1 text-[16px] leading-5 ${
                         isActive
-                          ? "text-gray-600 dark:text-gray-300"
+                          ? "text-slate-600 dark:text-slate-400"
                           : "text-[#FFA500] dark:text-amber-300"
                       }`}
                     >
@@ -125,8 +137,8 @@ export default function ContractSignedPage() {
                     </span>
                   </div>
                 </li>
-              </ul>
-            </div>
+              </ol>
+            </nav>
           </div>
         </aside>
 
