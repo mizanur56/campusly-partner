@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { FaSquarePlus } from "react-icons/fa6";
 import { Button } from "../../components/ui/button";
 import OnboardingFormLayout from "./OnboardingFormLayout";
 
@@ -15,9 +15,11 @@ export default function RegularCompliancePage() {
       subtitle="Please upload your ID proof, which will be verified by our legal team"
     >
       <div className="space-y-4">
-        <Button type="button" variant="primary" size="sm">
-          + Add Qualifications
-        </Button>
+        <div className="flex w-full flex-row justify-end">
+          <Button type="button" variant="primary" size="sm">
+            + Add Qualifications
+          </Button>
+        </div>
         <div className="space-y-3">
           {UPLOAD_ITEMS.map((item) => (
             <div
@@ -27,21 +29,10 @@ export default function RegularCompliancePage() {
               <span className="text-neutral-800 font-medium text-base">
                 {item.label}
               </span>
-              <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center group-hover:bg-primary-200 transition-colors">
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-              </div>
+              <FaSquarePlus
+                className="h-8 w-8 shrink-0 rounded-full text-primary-600 p-1.5 transition-colors group-hover:text-primary-700"
+                aria-hidden
+              />
             </div>
           ))}
         </div>

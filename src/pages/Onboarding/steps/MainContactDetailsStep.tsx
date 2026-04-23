@@ -1,7 +1,14 @@
 import { Form } from "antd";
 import { useEffect } from "react";
 import { Button } from "../../../components/ui/button";
-import { FormInput, PhoneInput, phoneButtonStyle, phoneInputStyle } from "../sharedFormProps";
+import {
+  FormInput,
+  PhoneInput,
+  phoneButtonStyle,
+  phoneInputGetValueFromEvent,
+  phoneInputStyle,
+  PHONE_BD_INITIAL_VALUE,
+} from "../sharedFormProps";
 import { toast } from "react-toastify";
 import { useGetStepDataQuery, usePatchStep3Mutation } from "../../../redux/features/onboardingForm/onboardingFormApi";
 import type { Step3Payload } from "../../../redux/features/onboardingForm/onboardingFormApi";
@@ -32,7 +39,10 @@ export default function MainContactDetailsStep({ apiStep, onPrev, onNext }: Prop
         fullName: d.fullName,
         position: d.position,
         email: d.email,
-        telephoneNumber: d.telephoneNumber,
+        telephoneNumber:
+          d.telephoneNumber != null && String(d.telephoneNumber).trim() !== ""
+            ? String(d.telephoneNumber)
+            : PHONE_BD_INITIAL_VALUE,
         whatsapp: d.whatsappNumber ?? d.whatsapp,
       });
     }
@@ -82,15 +92,33 @@ export default function MainContactDetailsStep({ apiStep, onPrev, onNext }: Prop
   }
 
   return (
-    <Form form={form} layout="vertical" {...formItemLayout}>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <Form
+      form={form}
+      layout="vertical"
+      initialValues={{ telephoneNumber: PHONE_BD_INITIAL_VALUE }}
+      {...formItemLayout}
+    >
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 [&_.ant-form-item]:min-w-0">
         <FormInput name="fullName" label="Full Name" placeholder="Enter full name" rules={[{ required: true, message: "Required" }]} />
         <FormInput name="position" label="Position" placeholder="Enter position" rules={[{ required: true, message: "Required" }]} />
       </div>
-      <FormInput name="email" label="Email" placeholder="Enter email" rules={[{ required: true, message: "Required", type: "email" }]} />
-      <Form.Item name="telephoneNumber" label="Telephone Number" rules={[{ required: true, message: "Required" }]}>
-        <PhoneInput country="de" inputStyle={phoneInputStyle} buttonStyle={phoneButtonStyle} />
-      </Form.Item>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 [&_.ant-form-item]:min-w-0">
+        <FormInput name="email" label="Email" placeholder="Enter email" rules={[{ required: true, message: "Required", type: "email" }]} />
+        <Form.Item
+          name="telephoneNumber"
+          label="Telephone Number"
+          rules={[{ required: true, message: "Required" }]}
+          getValueFromEvent={phoneInputGetValueFromEvent}
+        >
+          <PhoneInput
+            country="bd"
+            disableCountryGuess
+            inputStyle={phoneInputStyle}
+            buttonStyle={phoneButtonStyle}
+            containerStyle={{ width: "100%", minWidth: 0 }}
+          />
+        </Form.Item>
+      </div>
       <FormInput name="whatsapp" label="Whatsapp (If Applicable)" placeholder="Enter whatsapp number" />
       <div className="mt-8 flex justify-end gap-3">
         <Button type="button" variant="secondary" size="sm" onClick={onPrev}>

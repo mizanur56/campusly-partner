@@ -122,8 +122,8 @@ const Header: React.FC = () => {
         isExpanded ? "lg:left-[280px] lg:w-[calc(100vw-280px)]" : "lg:left-[80px] lg:w-[calc(100vw-80px)]"
       } ${
         hasScrolled
-          ? "border-gray-200/60 bg-white/95 backdrop-blur-md dark:border-gray-800 dark:bg-gray-900/95"
-          : "border-gray-200/60 bg-white dark:border-gray-800 dark:bg-gray-900"
+          ? "border-[#C7CACF] bg-[#FFFFFF]/95 backdrop-blur-md dark:border-[#353646] dark:bg-[#20242A]/95"
+          : "border-[#C7CACF] bg-[#FFFFFF] dark:border-[#353646] dark:bg-[#20242A]"
       }`}
     >
       <div className="flex w-full min-w-0 max-w-full items-center justify-between gap-2 px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
@@ -148,12 +148,10 @@ const Header: React.FC = () => {
               )}
             </div>
             <div>
-              <span className="block text-base font-semibold tracking-tight text-gray-900 dark:text-white">
+              <span className="block text-[20px] font-semibold tracking-tight text-[#20242A] dark:text-white">
                 {brandName}
               </span>
-              <span className="block text-sm text-gray-500 dark:text-gray-400">
-                Partner portal
-              </span>
+            
             </div>
           </div>
         ) : (
@@ -200,7 +198,7 @@ const Header: React.FC = () => {
             <nav className="hidden md:flex items-center gap-1">
               <div className="relative group">
                 <button
-                  className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+                  className="flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-2 text-[16px] font-medium text-[#20242A] transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
                   type="button"
                 >
                   About
@@ -208,15 +206,18 @@ const Header: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
-                <div className="absolute left-0 top-full mt-2 w-44 rounded-2xl border border-gray-200 bg-white py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] opacity-0 transition-opacity group-hover:opacity-100 dark:border-gray-800 dark:bg-gray-800 z-[100]">
-                  <Link to="/galleries" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700/50 transition-colors duration-200">Our story</Link>
-                  <Link to="/employees" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700/50 transition-colors duration-200">Our team</Link>
-                  <Link to="/offices" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700/50 transition-colors duration-200">Contact</Link>
+                {/* pt-2 bridges the gap so hover is not lost moving from button to menu */}
+                <div className="pointer-events-none absolute left-0 top-full z-[100] w-44 pt-2 opacity-0 transition-all duration-200 group-hover:pointer-events-auto group-hover:visible group-hover:opacity-100 invisible">
+                  <div className="rounded-2xl border border-gray-200 bg-white py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] dark:border-gray-800 dark:bg-gray-800">
+                    <Link to="/galleries" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700/50 transition-colors duration-200">Our story</Link>
+                    <Link to="/employees" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700/50 transition-colors duration-200">Our team</Link>
+                    <Link to="/offices" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700/50 transition-colors duration-200">Contact</Link>
+                  </div>
                 </div>
               </div>
               <div className="relative group">
                 <button
-                  className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+                  className="flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-2 text-[16px] font-medium text-[#20242A] transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
                   type="button"
                 >
                   Partners
@@ -224,8 +225,10 @@ const Header: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
-                <div className="absolute left-0 top-full mt-2 w-44 rounded-2xl border border-gray-200 bg-white py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] opacity-0 transition-opacity group-hover:opacity-100 dark:border-gray-800 dark:bg-gray-800 z-[100]">
-                  <Link to="#" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700/50 transition-colors duration-200">Partner resources</Link>
+                <div className="pointer-events-none absolute left-0 top-full z-[100] w-44 pt-2 opacity-0 transition-all duration-200 group-hover:pointer-events-auto group-hover:visible group-hover:opacity-100 invisible">
+                  <div className="rounded-2xl border border-gray-200 bg-white py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] dark:border-gray-800 dark:bg-gray-800">
+                    <Link to="#" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700/50 transition-colors duration-200">Partner resources</Link>
+                  </div>
                 </div>
               </div>
             </nav>

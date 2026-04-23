@@ -19,14 +19,10 @@ export default function DeclarationPage() {
   return (
     <OnboardingFormLayout
       title="Declaration"
-      subtitle=""
+      subtitle="I confirm that all the information provided in this application is true and accurate. I understand that submission of this form does not guarantee approval as an agent for Campus Transfer Ltd."
     >
       <div className="space-y-4 mb-6">
-        <p className="text-neutral-600 text-base leading-relaxed">
-          I confirm that all the information provided in this application is true
-          and accurate. I understand that submission of this form does not
-          guarantee approval as an agent for Campus Transfer Ltd.
-        </p>
+       
         <p className="text-neutral-900 font-semibold text-base leading-relaxed">
           Minor mistakes can cause a major delay in our partnership. Please take
           a moment to verify the information in each section before submitting.
