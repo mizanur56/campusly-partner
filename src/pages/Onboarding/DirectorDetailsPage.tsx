@@ -1,7 +1,14 @@
 import { Form } from "antd";
 import { Button } from "../../components/ui/button";
 import OnboardingFormLayout from "./OnboardingFormLayout";
-import { FormInput, PhoneInput, phoneInputStyle, phoneButtonStyle } from "./sharedFormProps";
+import {
+  FormInput,
+  PhoneInput,
+  phoneButtonStyle,
+  phoneInputGetValueFromEvent,
+  phoneInputStyle,
+  PHONE_BD_INITIAL_VALUE,
+} from "./sharedFormProps";
 
 const formItemLayout = {
   className:
@@ -16,7 +23,12 @@ export default function DirectorDetailsPage() {
       title="Directors Details"
       subtitle="Enter essential director information to get started."
     >
-      <Form form={form} layout="vertical" {...formItemLayout}>
+      <Form
+        form={form}
+        layout="vertical"
+        initialValues={{ mobileNumber: PHONE_BD_INITIAL_VALUE }}
+        {...formItemLayout}
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormInput
             name="fullName"
@@ -41,9 +53,11 @@ export default function DirectorDetailsPage() {
             name="mobileNumber"
             label="Mobile number"
             rules={[{ required: true, message: "Required" }]}
+            getValueFromEvent={phoneInputGetValueFromEvent}
           >
             <PhoneInput
-              country="de"
+              country="bd"
+              disableCountryGuess
               inputStyle={phoneInputStyle}
               buttonStyle={phoneButtonStyle}
             />

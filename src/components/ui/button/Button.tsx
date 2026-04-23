@@ -55,7 +55,14 @@ export function Button({
 }: ButtonProps) {
   const variantClass = variantStyles[variant];
   const sizeClass = sizeStyles[size];
-  const combined = [variantClass, sizeClass, className].filter(Boolean).join(" ");
+  const combined = [
+    variantClass,
+    sizeClass,
+    "cursor-pointer disabled:cursor-not-allowed aria-disabled:cursor-not-allowed",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   if (props.as === "link" && "to" in props) {
     return (

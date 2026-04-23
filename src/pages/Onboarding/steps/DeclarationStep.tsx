@@ -78,12 +78,9 @@ export default function DeclarationStep({ apiStep, onPrev, onSubmit }: Props) {
   return (
     <>
       <div className="mb-5 space-y-3">
-        <p className="text-sm leading-relaxed text-neutral-500 dark:text-neutral-400">
-          I confirm that all the information provided is true and accurate. Submission does not guarantee approval as an agent for Campus Transfer Ltd.
-        </p>
-        <p className="text-sm font-medium text-neutral-900 dark:text-white">
-          Please verify each section before submitting to avoid delays.
-        </p>
+     
+        <p className="text-[16px] font-medium text-[#20242A] dark:text-white">
+        Minor mistakes can cause a major delay in our partnership. Please take a moment to verify the information in each section before submitting.        </p>
         <p className="text-xs text-neutral-500 dark:text-neutral-400">
           By proceeding, you agree to the{" "}
           <Link to="#" className="text-primary-600 hover:underline">Terms &amp; Conditions</Link> and{" "}

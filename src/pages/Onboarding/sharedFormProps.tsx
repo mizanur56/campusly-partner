@@ -22,4 +22,11 @@ export const phoneButtonStyle = {
   backgroundColor: "transparent",
 };
 
+/** Digits-only value so flag +880 show with `country="bd"` (react-phone-input-2 + Ant Form). */
+export const PHONE_BD_INITIAL_VALUE = "880";
+
+/** Use on Form.Item wrapping PhoneInput — onChange passes value as 1st arg, not event.target.value. */
+export const phoneInputGetValueFromEvent = (value: unknown) =>
+  value === undefined || value === null ? "" : String(value);
+
 export { Form, PhoneInput };
