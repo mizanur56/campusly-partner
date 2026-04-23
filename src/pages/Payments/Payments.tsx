@@ -1,11 +1,13 @@
 import React, { useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
-import { Table, Input, Tag, Badge, Modal, Upload } from "antd";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Input, Tag, Badge, Modal, Upload } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { InboxOutlined } from "@ant-design/icons";
+import { Search } from "lucide-react";
 import PageMeta from "../../components/common/Meta/PageMeta";
 import "../../components/common/Tables/AntTable.css";
 import "./Payments.css";
+import { DataTable } from "../../components/common/Tables";
 import {
   useGetActiveBankAccountQuery,
   useGetPurchaseStatsQuery,
@@ -68,6 +70,7 @@ interface CommissionTransactionRecord {
 
 export default function Payments() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const topTab: TopTabKey = pathname.includes("/commission")
     ? "commission"
     : "purchase";
@@ -79,6 +82,9 @@ export default function Payments() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isBankModalOpen, setIsBankModalOpen] = useState(false);
   const [uploadCommissionId, setUploadCommissionId] = useState<string | null>(
+    null,
+  );
+  const [uploadApplicationId, setUploadApplicationId] = useState<string | null>(
     null,
   );
   const [uploadInvoiceFile, setUploadInvoiceFile] = useState<File | null>(null);
@@ -168,6 +174,37 @@ export default function Payments() {
 
   const purchaseTransactions: PurchaseTransactionRecord[] = useMemo(() => {
     const items = purchaseTransactionsData?.data || [];
+    if (!isPurchaseTxLoading && items.length === 0) {
+      return [
+        {
+          key: "static-ptx-1",
+          transactionId: "TXN-PUR-12001",
+          date: "2026-04-18",
+          applicationId: "APP-10234",
+          amount: 420,
+          status: "Completed",
+          raw: null,
+        },
+        {
+          key: "static-ptx-2",
+          transactionId: "TXN-PUR-12009",
+          date: "2026-04-20",
+          applicationId: "APP-10210",
+          amount: 300,
+          status: "Pending",
+          raw: null,
+        },
+        {
+          key: "static-ptx-3",
+          transactionId: "TXN-PUR-12015",
+          date: "2026-04-21",
+          applicationId: "APP-10198",
+          amount: 250,
+          status: "Completed",
+          raw: null,
+        },
+      ];
+    }
     return items.map((txn: any, index: number) => {
       const firstApp = txn.appFees?.[0]?.application;
       return {
@@ -184,10 +221,41 @@ export default function Payments() {
         raw: txn,
       };
     });
-  }, [purchaseTransactionsData]);
+  }, [purchaseTransactionsData, isPurchaseTxLoading]);
 
   const commissionEarned: CommissionEarnedRecord[] = useMemo(() => {
     const items = commissionEarnedData?.data || [];
+    if (!isCommissionEarnedLoading && items.length === 0) {
+      return [
+        {
+          key: "static-earned-1",
+          commissionId: "COM-0001",
+          applicationId: "APP-10234",
+          studentName: "John Doe",
+          earned: 120,
+          status: "Pending",
+          raw: null,
+        },
+        {
+          key: "static-earned-2",
+          commissionId: "COM-0002",
+          applicationId: "APP-10210",
+          studentName: "Ayesha Rahman",
+          earned: 85,
+          status: "Paid",
+          raw: null,
+        },
+        {
+          key: "static-earned-3",
+          commissionId: "COM-0003",
+          applicationId: "APP-10198",
+          studentName: "Sabbir Hossain",
+          earned: 60,
+          status: "Unpaid",
+          raw: null,
+        },
+      ];
+    }
     return items.map((c: any, index: number) => {
       const app = c.application;
       const studentName =
@@ -211,10 +279,41 @@ export default function Payments() {
         raw: c,
       };
     });
-  }, [commissionEarnedData]);
+  }, [commissionEarnedData, isCommissionEarnedLoading]);
 
   const commissionTransactions: CommissionTransactionRecord[] = useMemo(() => {
     const items = commissionTransactionsData?.data || [];
+    if (!isCommissionTxLoading && items.length === 0) {
+      return [
+        {
+          key: "static-ctx-1",
+          transactionId: "TXN-COM-9812",
+          date: "2026-04-18",
+          applicationId: "APP-10210",
+          amount: 85,
+          status: "Completed",
+          raw: null,
+        },
+        {
+          key: "static-ctx-2",
+          transactionId: "TXN-COM-9827",
+          date: "2026-04-20",
+          applicationId: "APP-10234",
+          amount: 120,
+          status: "Pending",
+          raw: null,
+        },
+        {
+          key: "static-ctx-3",
+          transactionId: "TXN-COM-9833",
+          date: "2026-04-21",
+          applicationId: "APP-10198",
+          amount: 60,
+          status: "Completed",
+          raw: null,
+        },
+      ];
+    }
     return items.map((p: any, index: number) => ({
       key: p.id || `${index}`,
       transactionId: p.txnRef || "",
@@ -227,7 +326,7 @@ export default function Payments() {
       status: p.status === "COMPLETED" ? "Completed" : "Pending",
       raw: p,
     }));
-  }, [commissionTransactionsData]);
+  }, [commissionTransactionsData, isCommissionTxLoading]);
 
   const selectedTotalPayable = useMemo(
     () =>
@@ -275,6 +374,7 @@ export default function Payments() {
       }).unwrap();
       setIsUploadModalOpen(false);
       setUploadCommissionId(null);
+      setUploadApplicationId(null);
       setUploadInvoiceFile(null);
     } catch {
       // errors handled globally
@@ -282,7 +382,8 @@ export default function Payments() {
   };
 
   const purchaseApplicationsColumns: ColumnsType<PurchaseApplicationRecord> = [
-    { title: "#", dataIndex: "key", key: "key", width: 60 },
+
+  
     {
       title: "Application ID",
       dataIndex: "applicationId",
@@ -293,7 +394,7 @@ export default function Payments() {
       title: "Student Name",
       dataIndex: "studentName",
       key: "studentName",
-      width: 180,
+      width: 140,
     },
     {
       title: "Fee",
@@ -313,14 +414,14 @@ export default function Payments() {
       title: "Payable",
       dataIndex: "payable",
       key: "payable",
-      width: 120,
+      width: 100,
       render: (value: number) => `€${value}`,
     },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      width: 130,
+      width: 100,
       render: (status: PurchaseApplicationRecord["status"]) => (
         <Tag
           className="payments-status-tag"
@@ -339,32 +440,29 @@ export default function Payments() {
   ];
 
   const purchaseTransactionsColumns: ColumnsType<PurchaseTransactionRecord> = [
-    { title: "#", dataIndex: "key", key: "key", width: 60 },
     {
       title: "Transaction ID",
       dataIndex: "transactionId",
       key: "transactionId",
-      width: 140,
+      ellipsis: true,
     },
-    { title: "Date", dataIndex: "date", key: "date", width: 140 },
+    { title: "Date", dataIndex: "date", key: "date" },
     {
       title: "Application ID",
       dataIndex: "applicationId",
       key: "applicationId",
-      width: 140,
+      ellipsis: true,
     },
     {
       title: "Amount",
       dataIndex: "amount",
       key: "amount",
-      width: 120,
       render: (value: number) => `€${value}`,
     },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      width: 130,
       render: (status: PurchaseTransactionRecord["status"]) => (
         <Tag
           className="payments-status-tag"
@@ -377,7 +475,6 @@ export default function Payments() {
     {
       title: "Receipt",
       key: "receipt",
-      width: 120,
       render: () => (
         <button type="button" className="payments-link-button">
           Download
@@ -387,7 +484,7 @@ export default function Payments() {
   ];
 
   const commissionEarnedColumns: ColumnsType<CommissionEarnedRecord> = [
-    { title: "#", dataIndex: "key", key: "key", width: 60 },
+   
     {
       title: "Application ID",
       dataIndex: "applicationId",
@@ -437,6 +534,7 @@ export default function Payments() {
           className="payments-primary-button"
           onClick={() => {
             setUploadCommissionId(record.commissionId);
+            setUploadApplicationId(record.applicationId);
             setIsUploadModalOpen(true);
             setUploadInvoiceFile(null);
           }}
@@ -449,7 +547,7 @@ export default function Payments() {
 
   const commissionTransactionsColumns: ColumnsType<CommissionTransactionRecord> =
     [
-      { title: "#", dataIndex: "key", key: "key", width: 60 },
+     
       {
         title: "Transaction ID",
         dataIndex: "transactionId",
@@ -484,12 +582,22 @@ export default function Payments() {
           </Tag>
         ),
       },
+      {
+        title: "Receipt",
+        key: "receipt",
+        render: () => (
+          <button type="button" className="payments-link-button">
+            Download
+          </button>
+        ),
+      },
     ];
 
   const renderPurchaseApplicationsToolbar = () => (
     <div className="payments-toolbar">
       <Input
         placeholder="Search application ID, name"
+        prefix={<Search size={16} className="text-[#4B5563]" />}
         allowClear
         value={searchText}
         onChange={(e) => {
@@ -501,8 +609,26 @@ export default function Payments() {
       />
       <div className="payments-toolbar-actions">
         <button type="button" className="payments-filter-button">
-          <span>Filter</span>
-          <Badge count={0} size="small" className="payments-filter-badge" />
+          <span className="payments-filter-icon" aria-hidden="true">
+            <svg
+              width="26"
+              height="26"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M4 6h16M7 12h10M10 18h4"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              />
+            </svg>
+          </span>
+          <span className="payments-filter-label">Filter</span>
+          <span className="payments-filter-badge-wrap">
+            <Badge count={0} size="small" className="payments-filter-badge" />
+          </span>
         </button>
         <button
           type="button"
@@ -516,7 +642,7 @@ export default function Payments() {
             ? `Pay Selected (€${selectedTotalPayable.toFixed(2)})`
             : "Pay Selected"}
         </button>
-        <button type="button" className="payments-outline-button" disabled>
+        <button type="button" className="payments-primary-button" disabled>
           Download Invoice
         </button>
       </div>
@@ -527,6 +653,7 @@ export default function Payments() {
     <div className="payments-toolbar">
       <Input
         placeholder={placeholder}
+        prefix={<Search size={16} className="text-[#4B5563]" />}
         allowClear
         value={searchText}
         onChange={(e) => setSearchText(e.target.value)}
@@ -534,9 +661,27 @@ export default function Payments() {
         size="large"
       />
       <div className="payments-toolbar-actions">
-        <button type="button" className="payments-filter-button" disabled>
-          <span>Filter</span>
-          <Badge count={0} size="small" className="payments-filter-badge" />
+        <button type="button" className="payments-filter-button">
+          <span className="payments-filter-icon" aria-hidden="true">
+            <svg
+              width="26"
+              height="26"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M4 6h16M7 12h10M10 18h4"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              />
+            </svg>
+          </span>
+          <span className="payments-filter-label">Filter</span>
+          <span className="payments-filter-badge-wrap">
+            <Badge count={0} size="small" className="payments-filter-badge" />
+          </span>
         </button>
       </div>
     </div>
@@ -549,30 +694,70 @@ export default function Payments() {
         return (
           <div className="payments-kpi-grid">
             <div className="payments-kpi-card">
-              <p className="payments-kpi-label">Total Applications</p>
-              <p className="payments-kpi-value">
-                {stats.totalApplications ?? 0}
-              </p>
+              <div className="payments-kpi-row">
+                <span className="payments-kpi-icon">
+                  <img
+                    src="/document.png"
+                    alt="Total Applications"
+                    className="h-7 w-7 object-contain"
+                  />
+                </span>
+                <div>
+                  <p className="payments-kpi-label">Total Applications</p>
+                  <p className="payments-kpi-value">
+                    {stats.totalApplications ?? 0}
+                  </p>
+                </div>
+              </div>
             </div>
             <div className="payments-kpi-card">
-              <p className="payments-kpi-label">Total Before Discount</p>
-              <p className="payments-kpi-value">
-                €{(stats.totalBeforeDiscount ?? 0).toFixed?.(2) ?? "0.00"}
-              </p>
+              <div className="payments-kpi-row">
+                <span className="payments-kpi-icon" aria-hidden>
+                <img
+                    src="/money-bag.png"
+                    alt="Total Before Discount"
+                    className="h-7 w-7 object-contain"
+                  />
+                </span>
+                <div>
+                  <p className="payments-kpi-label whitespace-nowrap">Total Before Discount</p>
+                  <p className="payments-kpi-value">
+                    €{(stats.totalBeforeDiscount ?? 0).toFixed?.(2) ?? "0.00"}
+                  </p>
+                </div>
+              </div>
             </div>
             <div className="payments-kpi-card">
-              <p className="payments-kpi-label">Waiver (30%)</p>
-              <p className="payments-kpi-value">
-                {stats.avgWaiver != null
-                  ? `${stats.avgWaiver.toFixed?.(1) ?? stats.avgWaiver}%`
-                  : "0%"}
-              </p>
+              <div className="payments-kpi-row">
+              <img
+                    src="/partypopper.png"
+                    alt="Total Applications"
+                    className="h-7 w-7 object-contain"
+                  />
+                <div>
+                  <p className="payments-kpi-label">Waiver (30%)</p>
+                  <p className="payments-kpi-value">
+                    {stats.avgWaiver != null
+                      ? `${stats.avgWaiver.toFixed?.(1) ?? stats.avgWaiver}%`
+                      : "0%"}
+                  </p>
+                </div>
+              </div>
             </div>
             <div className="payments-kpi-card">
-              <p className="payments-kpi-label">Total Due</p>
-              <p className="payments-kpi-value">
-                €{(stats.totalDue ?? 0).toFixed?.(2) ?? "0.00"}
-              </p>
+              <div className="payments-kpi-row">
+              <img
+                    src="/dollar.png"
+                    alt="Total Applications"
+                    className="h-7 w-7 object-contain"
+                  />
+                <div>
+                  <p className="payments-kpi-label">Total Due</p>
+                  <p className="payments-kpi-value">
+                    €{(stats.totalDue ?? 0).toFixed?.(2) ?? "0.00"}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         );
@@ -584,24 +769,53 @@ export default function Payments() {
     if (commissionTab === "earned") {
       const stats = commissionStats || {};
       return (
-        <div className="payments-kpi-grid">
+        <div className="payments-kpi-grid payments-kpi-grid--3">
           <div className="payments-kpi-card">
-            <p className="payments-kpi-label">Total Commission Earned</p>
-            <p className="payments-kpi-value">
-              €{(stats.totalEarned ?? 0).toFixed?.(2) ?? "0.00"}
-            </p>
+            <div className="payments-kpi-row">
+            <img
+                    src="/money-bag.png"
+                    alt="Total Commission Earned"
+                    className="h-7 w-7 object-contain"
+                  />
+              <div>
+                <p className="payments-kpi-label">Total Commission Earned</p>
+                <p className="payments-kpi-value">
+                  €{(stats.totalEarned ?? 0).toFixed?.(2) ?? "0.00"}
+                </p>
+              </div>
+            </div>
           </div>
           <div className="payments-kpi-card">
-            <p className="payments-kpi-label">Pending Payments</p>
-            <p className="payments-kpi-value">
-              €{(stats.pending ?? 0).toFixed?.(2) ?? "0.00"}
-            </p>
+            <div className="payments-kpi-row">
+            <img
+                    src="/hourglass.png"
+                    alt="Pending Commission"
+                    className="h-7 w-7 object-contain"
+                  />
+                
+              <div>
+                <p className="payments-kpi-label">Pending Payments</p>
+                <p className="payments-kpi-value">
+                  €{(stats.pending ?? 0).toFixed?.(2) ?? "0.00"}
+                </p>
+              </div>
+            </div>
           </div>
           <div className="payments-kpi-card">
-            <p className="payments-kpi-label">Paid</p>
-            <p className="payments-kpi-value">
-              €{(stats.paid ?? 0).toFixed?.(2) ?? "0.00"}
-            </p>
+            <div className="payments-kpi-row">
+            <img
+                    src="/dollar.png"
+                    alt="Paid Commission"
+                    className="h-7 w-7 object-contain"
+                  />
+              
+              <div>
+                <p className="payments-kpi-label">Paid</p>
+                <p className="payments-kpi-value">
+                  €{(stats.paid ?? 0).toFixed?.(2) ?? "0.00"}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       );
@@ -684,31 +898,31 @@ export default function Payments() {
       if (purchaseTab === "applications") {
         return (
           <>
-            {renderPurchaseApplicationsToolbar()}
-            <div className="payments-table-card">
-              <Table
-                className="payments-table"
-                dataSource={purchaseApplications}
+            <div className="bg-[#FFFFFF] p-6 rounded-lg border border-[#C7CACF] space-y-4">
+              {renderPurchaseApplicationsToolbar()}
+              <DataTable
+                data={purchaseApplications}
                 columns={purchaseApplicationsColumns}
                 rowKey="key"
                 loading={isPurchaseAppsLoading}
-                rowSelection={{
-                  selectedRowKeys: selectedPurchaseKeys,
-                  onChange: handlePurchaseRowSelectionChange,
+                selectRow
+                onSelectRowsChange={(rows: PurchaseApplicationRecord[]) => {
+                  setSelectedPurchaseRecords(rows);
+                  setSelectedPurchaseKeys(rows.map((r) => r.key));
                 }}
+                currentPage={purchasePage}
+                setCurrentPage={setPurchasePage}
+                limit={purchasePageSize}
+                setLimit={setPurchasePageSize}
+                total={purchaseApplicationsData?.meta?.total ?? 0}
+                isPaginate
+                showHeader
+                showSizeChanger
+                noInnerBorder
                 pagination={{
-                  current: purchasePage,
-                  pageSize: purchasePageSize,
-                  total: purchaseApplicationsData?.meta?.total ?? 0,
-                  showSizeChanger: true,
-                  showTotal: (total) => `Total ${total} applications`,
                   pageSizeOptions: ["10", "20", "50"],
-                  onChange: (page, pageSize) => {
-                    setPurchasePage(page);
-                    setPurchasePageSize(pageSize || 10);
-                  },
+                  showTotal: (total: number) => `Total ${total} applications`,
                 }}
-                scroll={{ x: 900 }}
               />
             </div>
           </>
@@ -718,27 +932,25 @@ export default function Payments() {
       // purchase / history
       return (
         <>
-          {renderSimpleToolbar("Search application ID, transaction ID")}
-          <div className="payments-table-card">
-            <Table
-              className="payments-table"
-              dataSource={purchaseTransactions}
+          <div className="bg-[#FFFFFF] p-6 rounded-lg border border-[#C7CACF] space-y-4">
+            {renderSimpleToolbar("Search application ID, transaction ID")}
+            <DataTable
+              data={purchaseTransactions}
               columns={purchaseTransactionsColumns}
               rowKey="key"
               loading={isPurchaseTxLoading}
+              currentPage={purchaseHistoryPage}
+              setCurrentPage={setPurchaseHistoryPage}
+              limit={purchaseHistoryPageSize}
+              setLimit={setPurchaseHistoryPageSize}
+              total={purchaseTransactionsData?.meta?.total ?? 0}
+              isPaginate
+              showHeader
+              showSizeChanger
+              noInnerBorder
               pagination={{
-                current: purchaseHistoryPage,
-                pageSize: purchaseHistoryPageSize,
-                total: purchaseTransactionsData?.meta?.total ?? 0,
-                showSizeChanger: true,
-                showTotal: (total) => `Total ${total} transactions`,
-                pageSizeOptions: ["10", "20", "50"],
-                onChange: (page, pageSize) => {
-                  setPurchaseHistoryPage(page);
-                  setPurchaseHistoryPageSize(pageSize || 10);
-                },
+                showTotal: (total: number) => `Total ${total} transactions`,
               }}
-              scroll={{ x: 900 }}
             />
           </div>
         </>
@@ -749,27 +961,25 @@ export default function Payments() {
     if (commissionTab === "earned") {
       return (
         <>
-          {renderSimpleToolbar("Search application ID, name")}
-          <div className="payments-table-card">
-            <Table
-              className="payments-table"
-              dataSource={commissionEarned}
+          <div className="bg-[#FFFFFF] p-6 rounded-lg border border-[#C7CACF] space-y-4">
+            {renderSimpleToolbar("Search application ID, name")}
+            <DataTable
+              data={commissionEarned}
               columns={commissionEarnedColumns}
               rowKey="key"
               loading={isCommissionEarnedLoading}
+              currentPage={commissionPage}
+              setCurrentPage={setCommissionPage}
+              limit={commissionPageSize}
+              setLimit={setCommissionPageSize}
+              total={commissionEarnedData?.meta?.total ?? 0}
+              isPaginate
+              showHeader
+              showSizeChanger
+              noInnerBorder
               pagination={{
-                current: commissionPage,
-                pageSize: commissionPageSize,
-                total: commissionEarnedData?.meta?.total ?? 0,
-                showSizeChanger: true,
-                showTotal: (total) => `Total ${total} records`,
-                pageSizeOptions: ["10", "20", "50"],
-                onChange: (page, pageSize) => {
-                  setCommissionPage(page);
-                  setCommissionPageSize(pageSize || 10);
-                },
+                showTotal: (total: number) => `Total ${total} records`,
               }}
-              scroll={{ x: 900 }}
             />
           </div>
         </>
@@ -779,27 +989,25 @@ export default function Payments() {
     // commission / history
     return (
       <>
-        {renderSimpleToolbar("Search application ID, transaction ID")}
-        <div className="payments-table-card">
-          <Table
-            className="payments-table"
-            dataSource={commissionTransactions}
+        <div className="bg-[#FFFFFF] p-6 rounded-lg border border-[#C7CACF] space-y-4">
+          {renderSimpleToolbar("Search application ID, transaction ID")}
+          <DataTable
+            data={commissionTransactions}
             columns={commissionTransactionsColumns}
             rowKey="key"
             loading={isCommissionTxLoading}
+            currentPage={commissionHistoryPage}
+            setCurrentPage={setCommissionHistoryPage}
+            limit={commissionHistoryPageSize}
+            setLimit={setCommissionHistoryPageSize}
+            total={commissionTransactionsData?.meta?.total ?? 0}
+            isPaginate
+            showHeader
+            showSizeChanger
+            noInnerBorder
             pagination={{
-              current: commissionHistoryPage,
-              pageSize: commissionHistoryPageSize,
-              total: commissionTransactionsData?.meta?.total ?? 0,
-              showSizeChanger: true,
-              showTotal: (total) => `Total ${total} transactions`,
-              pageSizeOptions: ["10", "20", "50"],
-              onChange: (page, pageSize) => {
-                setCommissionHistoryPage(page);
-                setCommissionHistoryPageSize(pageSize || 10);
-              },
+              showTotal: (total: number) => `Total ${total} transactions`,
             }}
-            scroll={{ x: 900 }}
           />
         </div>
       </>
@@ -816,19 +1024,42 @@ export default function Payments() {
             : "View earned commissions and commission transaction history."
         }
       />
+      
 
       <header className="payments-header">
         <div>
           <h1 className="payments-title">
-            {topTab === "purchase" ? "Purchase" : "Commission"}
+          Payments
           </h1>
-          <p className="payments-subtitle">
-            {topTab === "purchase"
-              ? "Manage application payments and transaction history."
-              : "View earned commissions and commission transaction history."}
-          </p>
+          <p className="payments-subtitle">Manage application payments and transaction history.</p>
         </div>
       </header>
+
+      {/* Top tabs: Purchase / Commission */}
+      <div className="payments-top-tabs">
+        <button
+          type="button"
+          className={
+            topTab === "purchase"
+              ? "payments-top-tab payments-top-tab--active"
+              : "payments-top-tab"
+          }
+          onClick={() => navigate("/payments/purchase")}
+        >
+          Purchase
+        </button>
+        <button
+          type="button"
+          className={
+            topTab === "commission"
+              ? "payments-top-tab payments-top-tab--active"
+              : "payments-top-tab"
+          }
+          onClick={() => navigate("/payments/commission")}
+        >
+          Commission
+        </button>
+      </div>
 
       {/* Inner tabs: Applications / Transaction History or Earned Commissions / Transaction History */}
       <div className="payments-inner-tabs-wrapper">{renderInnerTabs()}</div>
@@ -843,7 +1074,12 @@ export default function Payments() {
       <Modal
         open={isUploadModalOpen}
         title="Upload Invoice"
-        onCancel={() => setIsUploadModalOpen(false)}
+        onCancel={() => {
+          setIsUploadModalOpen(false);
+          setUploadInvoiceFile(null);
+          setUploadCommissionId(null);
+          setUploadApplicationId(null);
+        }}
         onOk={handleConfirmInvoiceUpload}
         okText={isClaiming ? "Submitting..." : "Confirm"}
         cancelText="Cancel"
@@ -852,9 +1088,9 @@ export default function Payments() {
         okButtonProps={{ disabled: !uploadInvoiceFile || isClaiming }}
       >
         <div className="payments-upload-modal">
-          {uploadCommissionId && (
+          {uploadApplicationId && (
             <p className="payments-upload-application">
-              Commission ID : <span>{uploadCommissionId}</span>
+              Application ID : <span>{uploadApplicationId}</span>
             </p>
           )}
           <Dragger

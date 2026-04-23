@@ -50,10 +50,7 @@ const SignedSidebarItems: NavItem[] = [
   {
     icon: <i className="fa-solid fa-credit-card"></i>,
     name: "Payments",
-    subItems: [
-      { name: "Purchase", path: "/payments/purchase" },
-      { name: "Commission", path: "/payments/commission" },
-    ],
+    path: "/payments/purchase",
   },
   {
     icon: <i className="fa-solid fa-graduation-cap"></i>,
@@ -170,6 +167,35 @@ const Sidebar: React.FC = () => {
     !!onboardingStatus?.portalAccessUnlocked;
 
   const isTeamMember = user?.role === "PARTNER_TEAM_MEMBER";
+  const resolveAssetBase = () => {
+    if (config.image_access_url) return String(config.image_access_url).replace(/\/$/, "");
+    const apiBase = String(config.api ?? "");
+    if (apiBase.startsWith("http")) {
+      try {
+        return new URL(apiBase).origin;
+      } catch {
+        return "";
+      }
+    }
+    if (typeof window !== "undefined") return window.location.origin;
+    return "";
+  };
+  const resolveMediaUrl = (media?: { id?: string; url?: string | null } | null) => {
+    if (!media) return null;
+    const assetBase = resolveAssetBase();
+    if (media.url) {
+      const raw = String(media.url).startsWith("http")
+        ? media.url
+        : `${assetBase}/${String(media.url).replace(/^\/+/, "")}`;
+      return encodeURI(raw);
+    }
+    if (media.id) {
+      return encodeURI(
+        `${assetBase}/media/${media.id}`
+      );
+    }
+    return null;
+  };
 
   // Advisor details from partner profile (for "Managed by" / signed card). For team member, use logged-in user only.
   const advisor = partnerProfile?.advisor;
@@ -184,17 +210,17 @@ const Sidebar: React.FC = () => {
     : (advisor?.phone ?? fallbackManagedBy.phone);
   const profilePhotoUrl = isTeamMember
     ? null
-    : advisor?.profile?.url
-      ? advisor.profile.url.startsWith("http")
-        ? advisor.profile.url
-        : `${config.image_access_url}${advisor.profile.url}`
-      : null;
+    : resolveMediaUrl(advisor?.profile) || null;
   const isManagedByLoading =
     !isTeamMember && (isPartnerProfileLoading || isPartnerProfileFetching);
 
-  // Signed sidebar: always show logged-in user's own profile info
-  const signedProfileName = user?.name ?? profileName;
-  const signedProfileEmail = user?.email ?? profileEmail;
+  // Signed sidebar: partner sees advisor details, team member keeps own account details.
+  const signedProfileName = isTeamMember ? (user?.name ?? profileName) : profileName;
+  const signedProfileEmail = isTeamMember
+    ? (user?.email ?? profileEmail)
+    : profileEmail;
+  const signedProfilePhone = isTeamMember ? "" : profilePhone;
+  const signedProfilePhotoUrl = isTeamMember ? null : profilePhotoUrl;
 
   const handleLogout = () => {
     clearAuthLocalStorage();
@@ -271,6 +297,10 @@ const Sidebar: React.FC = () => {
           location.pathname === "/contract" ||
           location.pathname.startsWith("/contract/")
         );
+      }
+      if (path.startsWith("/payments")) {
+        // Single "Payments" menu should stay active for Purchase/Commission tabs
+        return location.pathname.startsWith("/payments");
       }
       return location.pathname === path;
     },
@@ -609,12 +639,22 @@ const Sidebar: React.FC = () => {
       {(isExpanded || isMobileOpen) && isSignedContext && (
         <div className="mx-3 mt-0 rounded-xl bg-gray-50/80 p-3 dark:bg-gray-800/40">
           <div className="mt-0 flex items-center gap-2.5">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-100">
-              {signedProfileName
-                .split(" ")
-                .map((n) => n[0])
-                .join("")}
-            </div>
+            {signedProfilePhotoUrl ? (
+              <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                <img
+                  src={signedProfilePhotoUrl}
+                  alt={signedProfileName}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-100">
+                {signedProfileName
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")}
+              </div>
+            )}
             <p className="min-w-0 flex-1 truncate text-sm font-medium text-gray-800 dark:text-gray-100">
               {signedProfileName}
             </p>
@@ -639,6 +679,27 @@ const Sidebar: React.FC = () => {
                   />
                 </svg>
                 <span className="min-w-0 truncate">{signedProfileEmail}</span>
+              </a>
+            )}
+            {signedProfilePhone && (
+              <a
+                href={`tel:${signedProfilePhone.replace(/\s/g, "")}`}
+                className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
+              >
+                <svg
+                  className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                  />
+                </svg>
+                <span className="min-w-0 truncate">{signedProfilePhone}</span>
               </a>
             )}
           </div>

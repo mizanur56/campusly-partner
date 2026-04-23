@@ -74,49 +74,42 @@
   margin-top: 0.5rem;
 }
 
-/* ===== Inner tabs – normal underline style ===== */
+/* ===== Inner tabs – segmented pill style (matches screenshots) ===== */
 .payments-inner-tabs {
   display: inline-flex;
-  gap: 1.5rem;
-  border-bottom: 1px solid var(--neutral-200, #dee2e6);
+  gap: 0;
+  padding: 0.35rem;
+  border-radius: 0.75rem;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
 }
 
 .payments-inner-tab {
-  position: relative;
   border: none;
-  background: none;
-  padding: 0.5rem 0 0.625rem;
+  background: transparent;
+  padding: 0.55rem 1.25rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--neutral-500, #4b5563);
+  color: var(--neutral-700, #353646);
   cursor: pointer;
-  transition: color 0.2s ease;
+  border-radius: 0.6rem;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
 }
 
 .payments-inner-tab:hover {
-  color: var(--neutral-800, #292f36);
+  background: rgba(255, 255, 255, 0.55);
 }
 
 .payments-inner-tab:focus-visible {
   outline: 2px solid var(--primary-400, #4f9762);
   outline-offset: 2px;
-  border-radius: 2px;
 }
 
 .payments-inner-tab--active {
-  color: var(--primary, #237d3b);
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  color: var(--neutral-900, #20242a);
   font-weight: 600;
-}
-
-.payments-inner-tab--active::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -1px;
-  height: 2px;
-  background: var(--primary, #237d3b);
-  border-radius: 1px;
 }
 
 /* ===== KPI cards – neutral card style, value stands out ===== */
@@ -131,25 +124,39 @@
   .payments-kpi-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+  .payments-kpi-grid.payments-kpi-grid--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .payments-kpi-card {
-  border-radius: 1rem;
-  border: 1px solid var(--neutral-100, #eef0f2);
-  background-color: #fff;
+  border-radius: 8px;
+  border: 1px solid #C7CACF;
+  background-color: #FFFFFF;
   padding: 1rem 1.25rem;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.payments-kpi-card:hover {
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
-  border-color: var(--neutral-200, #dee2e6);
+.payments-kpi-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.payments-kpi-icon {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 18px;
 }
 
 .payments-kpi-label {
-  font-size: 0.8125rem;
-  color: var(--neutral-500, #4b5563);
+  font-size: 14px;
+  color: #4B5563;
   line-height: 1.3;
 }
 
@@ -183,49 +190,38 @@
   align-items: center;
 }
 
+/* Search: match Students page (default Ant Input + max-w-sm width, Lucide icon in TSX) */
 .payments-search {
-  max-width: 280px;
+  width: 100%;
+  max-width: 24rem;
 }
 
-.payments-search.ant-input,
-.payments-search.ant-input-affix-wrapper {
-  border-radius: 0.625rem;
-  border-color: var(--neutral-100, #eef0f2);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.payments-search.ant-input:hover,
-.payments-search.ant-input-affix-wrapper:hover {
-  border-color: var(--neutral-200, #dee2e6);
-}
-
-.payments-search.ant-input:focus,
-.payments-search.ant-input-affix-wrapper:focus,
-.payments-search.ant-input-focused,
-.payments-search.ant-input-affix-wrapper-focused {
-  border-color: var(--primary, #237d3b);
-  box-shadow: 0 0 0 2px rgba(35, 125, 59, 0.12);
+.payments-search.ant-input-affix-wrapper .ant-input-prefix {
+  display: inline-flex;
+  align-items: center;
+  margin-inline-end: 0.25rem;
 }
 
 .payments-filter-button {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.5rem 1rem;
-  border-radius: 0.625rem;
-  border: 1px solid var(--neutral-100, #eef0f2);
+  gap: 0.5rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: 8px;
+  border: 1px solid #C7CACF;
   background-color: #fff;
   font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--neutral-600, #444d5d);
+  color: #20242A;
   cursor: pointer;
   transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
 }
 
 .payments-filter-button:hover {
-  border-color: var(--neutral-200, #dee2e6);
-  background-color: var(--neutral-50, #f8f9fa);
-  color: var(--neutral-700, #353646);
+  border-color: #C7CACF;
+  background-color: #fff;
+  color: #111827;
 }
 
 .payments-filter-button:focus-visible {
@@ -233,9 +229,43 @@
   outline-offset: 2px;
 }
 
+.payments-filter-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.payments-filter-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+}
+
+.payments-filter-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.payments-filter-label {
+  line-height: 1;
+}
+
+.payments-filter-badge-wrap {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+}
+
 .payments-filter-badge .ant-badge-count {
   box-shadow: none;
   background-color: var(--primary, #237d3b);
+  min-width: 22px;
+  height: 22px;
+  padding: 0;
+  line-height: 22px;
+  font-weight: 700;
+  font-size: 12px;
+  border-radius: 9999px;
 }
 
 .payments-primary-button {
@@ -243,7 +273,7 @@
   align-items: center;
   justify-content: center;
   padding: 0.5rem 1.1rem;
-  border-radius: 0.625rem;
+  border-radius: 8px;
   border: none;
   background-color: var(--primary, #237d3b);
   color: #fff;
@@ -273,7 +303,7 @@
   align-items: center;
   justify-content: center;
   padding: 0.5rem 1.1rem;
-  border-radius: 0.625rem;
+  border-radius: 8px;
   border: 1px solid var(--primary, #237d3b);
   background-color: #fff;
   color: var(--primary, #237d3b);
@@ -492,7 +522,7 @@
 .payments-page .ant-modal-footer .ant-btn-primary {
   background: var(--primary, #237d3b);
   border-color: var(--primary, #237d3b);
-  border-radius: 0.625rem;
+  border-radius: 8px;
 }
 
 .payments-page .ant-modal-footer .ant-btn-primary:hover {
@@ -501,7 +531,7 @@
 }
 
 .payments-page .ant-modal-footer .ant-btn-default {
-  border-radius: 0.625rem;
+  border-radius: 8px;
   border-color: var(--neutral-200, #dee2e6);
   color: var(--neutral-600, #444d5d);
 }

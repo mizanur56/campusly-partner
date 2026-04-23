@@ -11,15 +11,21 @@ import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
 import { config } from "../../../config";
 import { toast } from "react-toastify";
 
-const Enroll: React.FC = () => {
+export type EnrollStepProps = {
+  applicationApiData: any;
+  embedded?: boolean;
+  autoOpen?: boolean;
+};
+
+export const EnrollStep: React.FC<EnrollStepProps> = ({
+  applicationApiData,
+  embedded = false,
+  autoOpen = false,
+}) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = React.useState(true);
   const [uploadingId, setUploadingId] = React.useState<string | null>(null);
-
-  const { applicationApiData } = useOutletContext<{
-    applicationApiData: any;
-  }>();
 
   console.log(applicationApiData);
 
@@ -135,6 +141,14 @@ const Enroll: React.FC = () => {
     (section) => !!section.isCompleted,
   );
 
+  const didInitExpand = React.useRef(false);
+  React.useEffect(() => {
+    if (!embedded) return;
+    if (didInitExpand.current) return;
+    setIsExpanded(Boolean(autoOpen) && !isAllRequiredCompleted);
+    didInitExpand.current = true;
+  }, [autoOpen, embedded, isAllRequiredCompleted]);
+
   /** ================= Upload Handler ================= */
   const handleFileUpload = async (categoryKey: string, file: File) => {
     setUploadingId(categoryKey);
@@ -179,10 +193,11 @@ const Enroll: React.FC = () => {
         {/* Header */}
         <div className="bg-[#E9F2EB] p-6 flex items-center justify-between">
           <div>
-            <h3 className="text-[20px] font-semibold text-[#20242A]">Enroll</h3>
+            <h3 className="text-[20px] font-semibold text-[#20242A]">
+              Stage: 7 Enroll
+            </h3>
             <p className="text-[14px] text-[#4B5563]">
-              Your documents has been submitted. Your documents are under
-              review, we will send it to the college.
+              Upload final enrollment documents (tuition receipt, air ticket, etc.).
             </p>
           </div>
           <div
@@ -288,27 +303,24 @@ const Enroll: React.FC = () => {
         )}
       </div>
 
-      <div className="flex justify-end gap-3 pt-4">
-        <button
-          onClick={() => navigate(`/applications/${id}/visa`)}
-          className="px-6 py-2 border border-[#D1D5DB] rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50 transition"
-        >
-          Previous
-        </button>
-        {/* <PrimaryButton
-          text="Continue"
-          onClick={() => navigate(`/visa-success`)}
-        /> */}
-
-        <div className={!isAllRequiredCompleted ? "cursor-not-allowed" : ""}>
-          <PrimaryButton
-            text="Continue"
-            disabled={!isAllRequiredCompleted}
-            className={`${!isAllRequiredCompleted ? "opacity-50 pointer-events-none" : ""}`}
-            onClick={() => navigate(`/visa-success`)}
-          />
+      {!embedded && (
+        <div className="flex justify-end gap-3 pt-4">
+          <button
+            onClick={() => navigate(`/applications/${id}/visa`)}
+            className="px-6 py-2 border border-[#D1D5DB] rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50 transition"
+          >
+            Previous
+          </button>
+          <div className={!isAllRequiredCompleted ? "cursor-not-allowed" : ""}>
+            <PrimaryButton
+              text="Continue"
+              disabled={!isAllRequiredCompleted}
+              className={`${!isAllRequiredCompleted ? "opacity-50 pointer-events-none" : ""}`}
+              onClick={() => navigate(`/visa-success`)}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Payment Receipt Modal */}
       {/* {tuitionFeeInvoice && (
@@ -320,6 +332,11 @@ const Enroll: React.FC = () => {
       )} */}
     </>
   );
+};
+
+const Enroll: React.FC = () => {
+  const { applicationApiData } = useOutletContext<{ applicationApiData: any }>();
+  return <EnrollStep applicationApiData={applicationApiData} />;
 };
 
 export default Enroll;
