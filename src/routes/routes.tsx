@@ -167,6 +167,11 @@ function AppRoutes() {
           <Route path="academy" element={<Academy />} />
           <Route path="hot-offers" element={<HotOffers />} />
           <Route path="settings/profile" element={<ProfileSettings />} />
+          <Route path="chat" element={<Navigate to="/" replace />} />
+          <Route
+            path="chat/:conversationId"
+            element={<Navigate to="/" replace />}
+          />
           <Route path="*" element={<UnderDevelopment />} />
         </Route>
       </Routes>

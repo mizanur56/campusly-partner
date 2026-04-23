@@ -1,19 +1,19 @@
+import { Tooltip } from "antd";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link, useLocation } from "react-router-dom";
 import { config } from "../../../config";
-import { clearAuthLocalStorage } from "../../../lib/authLocalStorage";
-import { getPortalLoginUrl } from "../../../lib/portalRouting";
 import { usePreviewMode } from "../../../context/PreviewModeContext";
 import { useSidebar } from "../../../context/SidebarContext";
-import { useFilteredSidebarItems } from "../../../hooks/useFilteredSidebarItems";
 import { useStudentProfile } from "../../../context/StudentProfileContext";
+import { useFilteredSidebarItems } from "../../../hooks/useFilteredSidebarItems";
 import { ChevronDownIcon } from "../../../icons";
+import { clearAuthLocalStorage } from "../../../lib/authLocalStorage";
+import { getPortalLoginUrl } from "../../../lib/portalRouting";
 import { selectCurrentUser } from "../../../redux/features/auth/authSlice";
-import { useGetPartnerProfileQuery } from "../../../redux/features/profile/partnerProfileApi";
 import { useGetOnboardingStatusQuery } from "../../../redux/features/onboardingForm";
+import { useGetPartnerProfileQuery } from "../../../redux/features/profile/partnerProfileApi";
 import { NavItem, SubMenuItem } from "../../../types/interfaces";
-import { Tooltip } from "antd";
 
 const SidebarItems: NavItem[] = [
   { icon: <i className="fa-solid fa-house"></i>, name: "Home", path: "/" },
@@ -248,6 +248,7 @@ const Sidebar: React.FC = () => {
       ? TeamMemberSidebarItems
       : SignedSidebarItems
     : SidebarItems;
+
   const filteredSidebarItems = useFilteredSidebarItems(baseItems);
   const isSignedSidebar = isSignedContext;
 
@@ -460,9 +461,14 @@ const Sidebar: React.FC = () => {
                 </span>
                 {(isExpanded || isMobileOpen) && (
                   <span
-                    className={`text-left ${isSignedSidebar ? "text-sm font-medium" : "text-base font-semibold"}`}
+                    className={`flex min-w-0 flex-1 items-center gap-2 text-left ${isSignedSidebar ? "text-sm font-medium" : "text-base font-semibold"}`}
                   >
-                    {nav.name}
+                    <span className="truncate">{nav.name}</span>
+                    {nav.badgeCount && nav.badgeCount > 0 ? (
+                      <span className="ml-auto inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary-600 px-1 text-[10px] font-semibold text-white">
+                        {nav.badgeCount > 99 ? "99+" : nav.badgeCount}
+                      </span>
+                    ) : null}
                   </span>
                 )}
               </Link>

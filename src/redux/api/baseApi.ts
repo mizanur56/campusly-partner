@@ -258,6 +258,9 @@ export const baseApi = createApi({
     "partnerTasks",
     "hotOffers",
     "studentProfile",
+    "chatConversations",
+    "chatMessages",
+    "chatUnread",
   ],
   endpoints: () => ({}),
 });
