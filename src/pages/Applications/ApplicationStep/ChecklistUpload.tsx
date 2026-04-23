@@ -14,7 +14,17 @@ import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
 
 
 
-const ChecklistUpload: React.FC = () => {
+export type ChecklistUploadStepProps = {
+  applicationApiData: any;
+  embedded?: boolean;
+  autoOpen?: boolean;
+};
+
+export const ChecklistUploadStep: React.FC<ChecklistUploadStepProps> = ({
+  applicationApiData,
+  embedded = false,
+  autoOpen = false,
+}) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = React.useState(true);
@@ -24,10 +34,6 @@ const ChecklistUpload: React.FC = () => {
   const [expandedDocuments, setExpandedDocuments] = React.useState<
     Record<string, boolean>
   >({});
-
-  const { applicationApiData } = useOutletContext<{
-    applicationApiData: any;
-  }>();
 
   const [createMedia] = useCreateMediaMutation();
   const [uploadDocument] = useApplicationDocumentUploadMutation();
@@ -115,7 +121,7 @@ const ChecklistUpload: React.FC = () => {
         title: "VFS Appointment",
         category: "vfsAppointmentLetter",
         description:
-          "Here is a guideline how to book an appointment. Check out the video. Also you can read the manual guideline.",
+          "Upload your VFS appointment confirmation letter (PDF/image).",
         // যদি লেটার থাকে তবেই URL জেনারেট হবে, নাহলে null
         url: applicationApiData?.vfsAppointmentLetter
           ? `${config.image_access_url}${applicationApiData.vfsAppointmentLetter}`
@@ -142,7 +148,8 @@ const ChecklistUpload: React.FC = () => {
         id: "affidavit",
         title: "Affidavit",
         category: "affidavit",
-        description: "Signed Declaration letter from sponsor.",
+        description:
+          "Upload the signed sponsor affidavit / declaration letter (if applicable).",
         url:
           applicationApiData?.affidavit &&
           `${config.image_access_url}${applicationApiData.affidavit}`,
@@ -168,7 +175,7 @@ const ChecklistUpload: React.FC = () => {
         title: "International Bank Card",
         category: "internationalBankCard",
         description:
-          "International Bank card corresponding with bank statement provided (Front & Back).",
+          "Upload the international bank card linked to the submitted bank statement (front and back).",
         url:
           applicationApiData?.internationalBankCard &&
           `${config.image_access_url}${applicationApiData.internationalBankCard}`,
@@ -223,17 +230,24 @@ const ChecklistUpload: React.FC = () => {
   // const isAllRequiredCompleted = sections.every((cat) => cat.isCompleted);
   const isAllRequiredCompleted = sections.every((section) => !!section.url);
 
+  const didInitExpand = React.useRef(false);
+  React.useEffect(() => {
+    if (!embedded) return;
+    if (didInitExpand.current) return;
+    setIsExpanded(Boolean(autoOpen) && !isAllRequiredCompleted);
+    didInitExpand.current = true;
+  }, [autoOpen, embedded, isAllRequiredCompleted]);
+
   return (
     <>
       <div className="border border-[#C7CACF] rounded-lg overflow-hidden">
         <div className="bg-[#E9F2EB] p-6 flex items-center justify-between">
           <div>
             <h3 className="text-[20px] font-semibold text-[#20242A]">
-              Checklist Upload
+              Stage: 3 Checklist Upload
             </h3>
             <p className="text-[14px] text-[#4B5563]">
-              Your documents are under review. Once complete, we will send them
-              to the college.
+              Upload all checklist documents to move to the next stage.
             </p>
           </div>
           <div
@@ -343,25 +357,32 @@ const ChecklistUpload: React.FC = () => {
         )}
       </div>
 
-      <div className="flex justify-end gap-3 pt-4">
-        <button
-          onClick={() => navigate(`/applications/${id}/apply`)}
-          className="px-6 py-2 cursor-pointer border border-[#D1D5DB] rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50 transition"
-        >
-          Previous
-        </button>
+      {!embedded && (
+        <div className="flex justify-end gap-3 pt-4">
+          <button
+            onClick={() => navigate(`/applications/${id}/apply`)}
+            className="px-6 py-2 cursor-pointer border border-[#D1D5DB] rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50 transition"
+          >
+            Previous
+          </button>
 
-        <div className={!isAllRequiredCompleted ? "cursor-not-allowed" : ""}>
-          <PrimaryButton
-            text="Next"
-            disabled={!isAllRequiredCompleted}
-            className={`${!isAllRequiredCompleted ? "opacity-50 pointer-events-none" : ""}`}
-            onClick={() => navigate(`/applications/${id}/final-letter`)}
-          />
+          <div className={!isAllRequiredCompleted ? "cursor-not-allowed" : ""}>
+            <PrimaryButton
+              text="Next"
+              disabled={!isAllRequiredCompleted}
+              className={`${!isAllRequiredCompleted ? "opacity-50 pointer-events-none" : ""}`}
+              onClick={() => navigate(`/applications/${id}/final-letter`)}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
+};
+
+const ChecklistUpload: React.FC = () => {
+  const { applicationApiData } = useOutletContext<{ applicationApiData: any }>();
+  return <ChecklistUploadStep applicationApiData={applicationApiData} />;
 };
 
 export default ChecklistUpload;

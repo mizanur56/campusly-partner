@@ -517,19 +517,22 @@ interface QualificationDocumentGroup {
   items: QualificationDocumentItem[];
 }
 
+export type AdmissionStepProps = {
+  applicationApiData: any;
+  steps: any[];
+  embedded?: boolean;
+  autoOpen?: boolean;
+};
+
 /* ================= Component ================= */
-const Admission: React.FC = () => {
+export const AdmissionStep: React.FC<AdmissionStepProps> = ({
+  applicationApiData,
+  steps,
+  embedded = false,
+  autoOpen = false,
+}) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-
-  const { applicationApiData, steps, handleStepNavigation } = useOutletContext<{
-    applicationApiData: any;
-    steps: any[];
-    handleStepNavigation?: (
-      nextStepId: string,
-      currentStepId?: string,
-    ) => boolean;
-  }>();
 
   const studentId = applicationApiData?.studentId;
 
@@ -537,6 +540,9 @@ const Admission: React.FC = () => {
     useGetStudentProfileQuery(studentId!);
   const studentProfile = profileApiData as any;
   const educationData = studentProfile?.educations;
+  const hasQualificationDocs = Array.isArray(educationData)
+    ? educationData.some((edu: any) => Boolean(edu?.marksheet || edu?.certificate))
+    : false;
 
   const { data: countries } = useGetCountriesQuery({ page: 1, limit: 1000 });
 
@@ -780,7 +786,7 @@ const Admission: React.FC = () => {
         id: "passportFile",
         title: "Passport",
         description:
-          "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.",
+          "Upload a clear copy of the student’s passport biodata page (and any relevant pages).",
         isRequired: true,
 
         isCompleted: !!applicationApiData?.passportFile,
@@ -799,15 +805,15 @@ const Admission: React.FC = () => {
         id: "qualifications",
         title: "Qualifications",
         description:
-          "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.",
+          "Upload qualification documents for each education level (marksheet and certificate).",
         isRequired: true,
-        isCompleted: qualificationDocuments.length > 0,
+        isCompleted: hasQualificationDocs,
         documents: qualificationDocuments,
       },
       {
         id: "cv",
         title: "CV",
-        description: "Curriculum Vitae of the student",
+        description: "Upload the student’s most recent CV / resume.",
         isRequired: true,
         isCompleted: !!applicationApiData?.student?.cv,
         documents: applicationApiData?.student?.cv
@@ -824,7 +830,8 @@ const Admission: React.FC = () => {
       {
         id: "motivation-letter",
         title: "Motivational Letter",
-        description: "Student motivation letter",
+        description:
+          "Upload the student’s motivation letter explaining study goals and reasons for choosing this program.",
         isRequired: true,
         isCompleted: !!applicationApiData?.student?.motivationLetter,
         documents: applicationApiData?.student?.motivationLetter
@@ -839,7 +846,7 @@ const Admission: React.FC = () => {
           : [],
       },
     ],
-    [qualificationDocuments, applicationApiData, fileSizes],
+    [qualificationDocuments, applicationApiData, fileSizes, hasQualificationDocs],
   );
 
   /** ================= Upload Handler ================= */
@@ -898,6 +905,16 @@ const Admission: React.FC = () => {
     (cat) => cat.isCompleted,
   );
 
+  const [userToggledExpand, setUserToggledExpand] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!embedded) return;
+    if (userToggledExpand) return;
+    // Embedded view: keep in sync until user toggles manually.
+    // Default collapsed; only the first incomplete stage auto-opens.
+    setIsExpanded(Boolean(autoOpen) && !isAllRequiredCompleted);
+  }, [autoOpen, embedded, isAllRequiredCompleted, userToggledExpand]);
+
   return (
     <>
       {/* ================= Admission Card ================= */}
@@ -906,15 +923,18 @@ const Admission: React.FC = () => {
         <div className="bg-[#E9F2EB] p-6 flex items-center justify-between ">
           <div>
             <h3 className="text-[20px] font-semibold text-[#20242A]">
-              Admission
+             Stage: 1 Admission
             </h3>
             <p className="text-[14px] text-[#4B5563]">
-              Kindly upload the documents as per the checklist requirements.
+              Kindly upload the documents as per the admission requirements.
             </p>
           </div>
 
           <div
-            onClick={() => setIsExpanded((prev) => !prev)}
+            onClick={() => {
+              setUserToggledExpand(true);
+              setIsExpanded((prev) => !prev);
+            }}
             className="cursor-pointer"
           >
             {isExpanded ? (
@@ -1067,22 +1087,24 @@ const Admission: React.FC = () => {
       </div>
 
       {/* ================= Footer ================= */}
-      <div className="flex justify-end gap-3 pt-4">
-        <button
-          onClick={() => navigate(`/applications`)}
-          className="px-6 py-2 cursor-pointer border border-[#D1D5DB] rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50"
-        >
-          Back
-        </button>
+      {!embedded && (
+        <div className="flex justify-end gap-3 pt-4">
+          <button
+            onClick={() => navigate(`/applications`)}
+            className="px-6 py-2 cursor-pointer border border-[#D1D5DB] rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50"
+          >
+            Back
+          </button>
 
-        <PrimaryButton
-          text="Next"
-          onClick={() => {
-            // Check if application is reviewed first
-            navigate(`/applications/${id}/apply`);
-          }}
-        />
-      </div>
+          <PrimaryButton
+            text="Next"
+            onClick={() => {
+              // Check if application is reviewed first
+              navigate(`/applications/${id}/apply`);
+            }}
+          />
+        </div>
+      )}
 
       {/* ================= Qualifications — same as Profile UploadDocuments + ModalContent ================= */}
       <Modal
@@ -1243,6 +1265,14 @@ const Admission: React.FC = () => {
       </Modal>
     </>
   );
+};
+
+const Admission: React.FC = () => {
+  const { applicationApiData, steps } = useOutletContext<{
+    applicationApiData: any;
+    steps: any[];
+  }>();
+  return <AdmissionStep applicationApiData={applicationApiData} steps={steps} />;
 };
 
 export default Admission;
