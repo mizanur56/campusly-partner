@@ -248,6 +248,7 @@ export const baseApi = createApi({
     "countryDocuments",
     "search",
     "applications",
+    "applicationNotes",
     "invoices",
     "partnerOnboarding",
     "partnerProfile",

@@ -186,10 +186,10 @@
 
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useEffect } from "react";
-import { useParams, Outlet, useNavigate } from "react-router-dom";
 import { Image, Spin } from "antd";
+import React, { useEffect } from "react";
 import { FaCircleCheck } from "react-icons/fa6";
+import { useNavigate, useParams } from "react-router-dom";
 import { useGetApplicationByIdQuery } from "../../redux/features/application/applicationApi";
 
 
@@ -197,8 +197,8 @@ import { config } from "../../config";
 import { useStudentProfile } from "../../context/StudentProfileContext";
 import { useGetStudentProfileQuery } from "../../redux/features/profile/studentProfileApi";
 import ApplicationRequirementsTab from "./components/ApplicationRequirementsTab";
-import StudentRecordsTab from "./components/StudentRecordsTab";
 import NotesTab from "./components/NotesTab";
+import StudentRecordsTab from "./components/StudentRecordsTab";
 
 const ApplicationDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -483,7 +483,7 @@ const ApplicationDetails = () => {
       </div>
 
       {/* Tabs */}
-      <div className="mb-6 border-b border-gray-200 dark:border-gray-800">
+      <div className="mb-6 border-b border-[#CFCACF] dark:border-gray-800">
         <div className="flex items-center gap-8">
           <button
             type="button"
@@ -535,19 +535,19 @@ const ApplicationDetails = () => {
                 applicationApiData={applicationApiData}
               />
           ) : (
-              <NotesTab />
+              <NotesTab applicationId={id!} />
           )}
         </div>
 
         {/* Right sidebar stays the same */}
         <aside className="lg:col-span-1">
-          <div className="sticky top-6 rounded-2xl border border-[#C7CACF] bg-white p-6 card-shadow dark:border-gray-800 dark:bg-gray-900">
+          <div className="sticky top-6 rounded-3xl border border-[#CFCACF] bg-white p-6 card-shadow dark:border-gray-800 dark:bg-gray-900">
             <h3 className="text-[18px] font-semibold text-[#20242A] dark:text-white">
               Application journey
             </h3>
 
             <div className="relative mt-6">
-              <div className="absolute z-10 left-3 top-2 bottom-2 w-0.5 bg-[#D1D5DB]" />
+              <div className="absolute z-10 left-[11px] top-2 bottom-2 w-0.5 bg-[#D1D5DB]" />
 
               <div className="space-y-10">
                 {steps.map((step, index) => {
