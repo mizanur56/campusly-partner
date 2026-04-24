@@ -10,6 +10,7 @@ import { PersistGate } from "redux-persist/integration/react";
 import { persistor, store } from "./redux/features/store";
 import AppRoutes from "./routes/routes";
 import SessionRestoreProvider from "./providers/SessionRestoreProvider";
+import SocketManager from "./components/common/SocketManager";
 import "./styles/index.css";
 
 const config = {
@@ -27,6 +28,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <Provider store={store}>
           <PersistGate loading={null} persistor={persistor}>
             <SessionRestoreProvider>
+              <SocketManager />
               <ToastContainer
                 position="bottom-right"
                 autoClose={5000}
