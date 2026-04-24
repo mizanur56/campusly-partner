@@ -1,7 +1,9 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Backdrop, Header, Sidebar } from "../components/common/Layouts";
+import { PartnerStaffChatWidget } from "../components/chat/PartnerStaffChatWidget";
 import { usePreviewMode, PreviewModeProvider } from "../context/PreviewModeContext";
+import { PartnerStaffChatProvider } from "../context/PartnerStaffChatContext";
 import { SidebarProvider, useSidebar } from "../context/SidebarContext";
 import { StudentProfileProvider } from "../context/StudentProfileContext";
 import { useGetPartnerProfileQuery } from "../redux/features/profile/partnerProfileApi";
@@ -80,7 +82,10 @@ const MainLayout: React.FC = () => {
     <PreviewModeProvider>
       <SidebarProvider>
         <StudentProfileProvider>
-          <LayoutContent />
+          <PartnerStaffChatProvider>
+            <LayoutContent />
+            <PartnerStaffChatWidget />
+          </PartnerStaffChatProvider>
         </StudentProfileProvider>
       </SidebarProvider>
     </PreviewModeProvider>
