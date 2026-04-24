@@ -672,7 +672,8 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
       if (!hideHeader) setIsEditing(false);
     } else {
       setIsEditing(true);
-      setIsExpanded(true);
+      // List view: stay collapsed until user expands (with or without saved data).
+      if (!hideHeader) setIsExpanded(false);
     }
   }, [educationData, form, hideHeader]);
 

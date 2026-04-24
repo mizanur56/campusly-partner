@@ -196,7 +196,56 @@ export default function StudentProfile() {
     { key: "apply-now", label: "Apply Now" },
   ];
 
+  const tabOrder = useMemo<ProfileTabKey[]>(
+    () => ["general", "education", "background", "documents", "apply-now"],
+    [],
+  );
+
+  const isTabCompleted = useMemo<Record<ProfileTabKey, boolean>>(() => {
+    const p = profile as any;
+    // General tab counts complete only after "Last education" (qualification + passing year) is saved — same fields as GeneralInformationTab.
+    const generalCompleted = Boolean(
+      (p?.firstName || p?.user?.name) &&
+        (p?.email || p?.user?.email) &&
+        p?.phone &&
+        p?.lastEducationId &&
+        p?.lastEducationPassingYear,
+    );
+
+    const educationCompleted =
+      Array.isArray(p?.educations) && p.educations.length > 0;
+
+    const backgroundCompleted = Boolean(p?.cv && p?.statementOfPurpose);
+
+    const documentsCompleted =
+      Array.isArray(p?.documents) && p.documents.length > 0;
+
+    return {
+      general: generalCompleted,
+      education: educationCompleted,
+      background: backgroundCompleted,
+      documents: documentsCompleted,
+      "apply-now": true,
+    };
+  }, [profile]);
+
+  const isTabUnlocked = useMemo(() => {
+    return (tabKey: ProfileTabKey) => {
+      if (tabKey === "general") return true;
+      if (tabKey === "education") return isTabCompleted.general;
+      // Background and Upload Documents unlock together (right after Education).
+      if (tabKey === "background" || tabKey === "documents") {
+        return isTabCompleted.education;
+      }
+      if (tabKey === "apply-now") {
+        return isTabCompleted.background && isTabCompleted.documents;
+      }
+      return false;
+    };
+  }, [isTabCompleted]);
+
   const handleTabChange = (tabKey: ProfileTabKey) => {
+    if (!isTabUnlocked(tabKey)) return;
     setActiveTab(tabKey);
     const params = new URLSearchParams(searchParams.toString());
     if (tabKey === "general") params.delete("tab");
@@ -231,6 +280,28 @@ export default function StudentProfile() {
     });
     return map;
   }, [documents]);
+
+  // Prevent jumping to locked tabs via URL (?tab=...)
+  useEffect(() => {
+    const urlTab = (searchParams.get("tab") || "general") as ProfileTabKey;
+    if (!tabOrder.includes(urlTab)) return;
+    if (isTabUnlocked(urlTab)) return;
+
+    // Find the last unlocked tab in order
+    let fallback: ProfileTabKey = "general";
+    for (const key of tabOrder) {
+      if (!isTabUnlocked(key)) break;
+      fallback = key;
+    }
+
+    if (fallback !== activeTab) {
+      const params = new URLSearchParams(searchParams.toString());
+      if (fallback === "general") params.delete("tab");
+      else params.set("tab", fallback);
+      setSearchParams(params, { replace: true });
+      setActiveTab(fallback);
+    }
+  }, [activeTab, isTabUnlocked, searchParams, setSearchParams, tabOrder]);
 
   if (!studentId) {
     return (
@@ -286,21 +357,28 @@ export default function StudentProfile() {
               <div className="border-b border-gray-300 overflow-hidden">
                 <div className="flex gap-3 sm:gap-6 min-w-max sm:min-w-0">
                   {profileTabs.map((tab) => (
+                    (() => {
+                      const locked = !isTabUnlocked(tab.key);
+                      return (
                     <button
                       key={tab.key}
                       type="button"
+                      disabled={locked}
+                      title={locked ? "Complete the previous tab first" : undefined}
                       onClick={() => handleTabChange(tab.key)}
-                      className={`px-2 sm:px-0 py-2 sm:py-3 cursor-pointer text-[15px] font-normal transition-colors duration-200 relative whitespace-nowrap ${
+                      className={`px-2 sm:px-0 py-2 sm:py-3 text-[15px] font-normal transition-colors duration-200 relative whitespace-nowrap ${
                         activeTab === tab.key
                           ? "text-[#237D3B] font-medium"
                           : "text-[#4B5563] hover:text-gray-700"
-                      }`}
+                      } ${locked ? "cursor-not-allowed opacity-50 hover:text-[#4B5563]" : "cursor-pointer"}`}
                     >
                       {tab.label}
                       {activeTab === tab.key && (
                         <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#237D3B]"></span>
                       )}
                     </button>
+                      );
+                    })()
                   ))}
                 </div>
               </div>

@@ -1,4 +1,15 @@
 import { config } from "../config";
+import { clearAuthLocalStorage } from "./authLocalStorage";
+
+/** Full page redirects must clear persisted auth or GuestOnlyAuthRoute ↔ ProtectedRoute will loop (SPA reload still rehydrates redux-persist). */
+export function clearClientAuthStorageForHardRedirect(): void {
+  clearAuthLocalStorage();
+  try {
+    localStorage.removeItem("persist:auth");
+  } catch {
+    /* ignore */
+  }
+}
 
 export type PortalKind = "admin" | "student" | "partner";
 
@@ -100,11 +111,13 @@ export function redirectFromPortalRoleCookieIfNeeded(): boolean {
   const current = inferCurrentPortal();
   if (!home || home === current) return false;
   if (config.node_env !== "production") {
+    clearClientAuthStorageForHardRedirect();
     window.location.replace(DEV_PORTAL_LOGIN_PATH);
     return true;
   }
   const target = getPortalOrigin(home, config.app_domain);
   if (!target) return false;
+  clearClientAuthStorageForHardRedirect();
   window.location.replace(`${target}/`);
   return true;
 }
@@ -219,12 +232,14 @@ export function redirectToCorrectPortalIfNeeded(
   if (home === current) return false;
 
   if (config.node_env !== "production") {
+    clearClientAuthStorageForHardRedirect();
     window.location.replace(DEV_PORTAL_LOGIN_PATH);
     return true;
   }
 
   const target = getPortalOrigin(home, config.app_domain);
   if (!target) return false;
+  clearClientAuthStorageForHardRedirect();
   window.location.replace(`${target}/`);
   return true;
 }
