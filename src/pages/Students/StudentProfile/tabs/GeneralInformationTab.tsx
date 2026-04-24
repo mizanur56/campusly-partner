@@ -54,6 +54,44 @@ const fieldMapping: Record<string, string> = {
   image: "imageId",
 };
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+type PersonalFormShape = {
+  firstName: string;
+  lastName: string;
+  gender: string;
+  dateOfBirth: string;
+  country: string;
+  passportNo: string;
+  passportExpiryDate: string;
+  contactNumber: string;
+  email: string;
+};
+
+function validateGeneralPersonalFields(data: PersonalFormShape): Record<string, string> {
+  const err: Record<string, string> = {};
+  if (!data.firstName?.trim()) err.firstName = "First name is required";
+  if (!data.lastName?.trim()) err.lastName = "Last name is required";
+  if (!data.gender?.trim()) err.gender = "Gender is required";
+  if (!data.dateOfBirth?.trim()) err.dateOfBirth = "Date of birth is required";
+  if (!data.country?.trim()) err.country = "Country is required";
+  if (!data.passportNo?.trim()) err.passportNo = "Passport number is required";
+  if (!data.passportExpiryDate?.trim()) {
+    err.passportExpiryDate = "Passport expiry date is required";
+  }
+  if (!data.email?.trim()) err.email = "Email is required";
+  else if (!EMAIL_RE.test(data.email.trim())) {
+    err.email = "Enter a valid email address";
+  }
+  if (!data.contactNumber?.trim()) {
+    err.contactNumber = "Contact number is required";
+  } else {
+    const digits = data.contactNumber.replace(/\D/g, "");
+    if (digits.length < 8) err.contactNumber = "Enter a valid contact number";
+  }
+  return err;
+}
+
 export default function GeneralInformationTab({
   studentId,
   profile,
@@ -77,6 +115,7 @@ export default function GeneralInformationTab({
     image: "",
   });
   const [editProfileData, setEditProfileData] = useState(profileData);
+  const [personalFieldErrors, setPersonalFieldErrors] = useState<Record<string, string>>({});
 
   const [updateProfile] = useUpdateStudentProfileMutation();
   const [createMedia, { isLoading: isUploadingImage }] = useCreateMediaMutation();
@@ -131,7 +170,7 @@ export default function GeneralInformationTab({
       contactNumber: profile.phone ? (profile.phone.startsWith("+") ? profile.phone : `+${profile.phone}`) : "",
       email: profile.email ?? (profile.user?.email ?? ""),
       qualification: profile.lastEducationId ?? "",
-      passingYear: profile.lastEducationPassingYear ? dayjs(profile.lastEducationPassingYear).format("DD/MM/YYYY") : "",
+      passingYear: profile.lastEducationPassingYear ? dayjs(profile.lastEducationPassingYear).format("YYYY") : "",
       image: profile.image?.url ?? "",
     };
     setProfileData(formatted);
@@ -141,6 +180,9 @@ export default function GeneralInformationTab({
   const formatDateForApi = (dateValue: string, format: string): string | null => {
     if (!dateValue) return null;
     try {
+      if (format === "YYYY") {
+        return dayjs(dateValue, "YYYY").startOf("year").format("YYYY-MM-DD");
+      }
       return dayjs(dateValue, format).format("YYYY-MM-DD");
     } catch {
       return null;
@@ -149,9 +191,21 @@ export default function GeneralInformationTab({
 
   const handleFieldChange = (field: string, value: string) => {
     setEditProfileData((prev) => ({ ...prev, [field]: value }));
+    setPersonalFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
   };
 
   const handleSaveAll = async () => {
+    const errors = validateGeneralPersonalFields(editProfileData);
+    setPersonalFieldErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
     setUpdatingField("saving");
     try {
       const payload: Record<string, unknown> = {};
@@ -172,7 +226,7 @@ export default function GeneralInformationTab({
       if (editProfileData.email !== profileData.email) payload.email = editProfileData.email || null;
       if (editProfileData.qualification !== profileData.qualification) payload.lastEducationId = editProfileData.qualification || null;
       if (editProfileData.passingYear !== profileData.passingYear) {
-        const v = formatDateForApi(editProfileData.passingYear, "DD/MM/YYYY");
+        const v = formatDateForApi(editProfileData.passingYear, "YYYY");
         payload.lastEducationPassingYear = v ?? null;
       }
       if (Object.keys(payload).length === 0) {
@@ -199,7 +253,7 @@ export default function GeneralInformationTab({
     try {
       const payload: Record<string, unknown> = {
         lastEducationId: qualification || null,
-        lastEducationPassingYear: formatDateForApi(passingYear, "DD/MM/YYYY") ?? null,
+        lastEducationPassingYear: formatDateForApi(passingYear, "YYYY") ?? null,
       };
       await updateProfile({ studentId, body: payload }).unwrap();
       setProfileData((prev) => ({ ...prev, qualification, passingYear }));
@@ -296,6 +350,7 @@ export default function GeneralInformationTab({
                 onClick={() => {
                   if (isPersonalEditing) {
                     setEditProfileData(profileData);
+                    setPersonalFieldErrors({});
                   }
                   setIsPersonalEditing(!isPersonalEditing);
                 }}
@@ -318,6 +373,8 @@ export default function GeneralInformationTab({
             label="First Name"
             value={editProfileData.firstName}
             isEditable={canEdit && isPersonalEditing}
+            required
+            error={personalFieldErrors.firstName}
             onChange={(v) => handleFieldChange("firstName", v)}
             isLoading={updatingField === "firstName"}
           />
@@ -325,6 +382,8 @@ export default function GeneralInformationTab({
             label="Last Name"
             value={editProfileData.lastName}
             isEditable={canEdit && isPersonalEditing}
+            required
+            error={personalFieldErrors.lastName}
             onChange={(v) => handleFieldChange("lastName", v)}
             isLoading={updatingField === "lastName"}
           />
@@ -334,6 +393,8 @@ export default function GeneralInformationTab({
             type="select"
             options={genderOptions}
             isEditable={canEdit && isPersonalEditing}
+            required
+            error={personalFieldErrors.gender}
             onChange={(v) => handleFieldChange("gender", v)}
             isLoading={updatingField === "gender"}
           />
@@ -342,6 +403,8 @@ export default function GeneralInformationTab({
             value={editProfileData.dateOfBirth}
             type="date"
             isEditable={canEdit && isPersonalEditing}
+            required
+            error={personalFieldErrors.dateOfBirth}
             onChange={(v) => handleFieldChange("dateOfBirth", v)}
             isLoading={updatingField === "dateOfBirth"}
           />
@@ -351,6 +414,8 @@ export default function GeneralInformationTab({
             type="select"
             options={countriesOptions}
             isEditable={canEdit && isPersonalEditing}
+            required
+            error={personalFieldErrors.country}
             onChange={(v) => handleFieldChange("country", v)}
             isLoading={updatingField === "country"}
           />
@@ -358,6 +423,8 @@ export default function GeneralInformationTab({
             label="Passport No"
             value={editProfileData.passportNo}
             isEditable={canEdit && isPersonalEditing}
+            required
+            error={personalFieldErrors.passportNo}
             onChange={(v) => handleFieldChange("passportNo", v)}
             isLoading={updatingField === "passportNo"}
           />
@@ -366,6 +433,8 @@ export default function GeneralInformationTab({
             value={editProfileData.passportExpiryDate}
             type="date"
             isEditable={canEdit && isPersonalEditing}
+            required
+            error={personalFieldErrors.passportExpiryDate}
             onChange={(v) => handleFieldChange("passportExpiryDate", v)}
             isLoading={updatingField === "passportExpiryDate"}
           />
@@ -374,6 +443,8 @@ export default function GeneralInformationTab({
             value={editProfileData.email}
             type="email"
             isEditable={canEdit && isPersonalEditing}
+            required
+            error={personalFieldErrors.email}
             onChange={(v) => handleFieldChange("email", v)}
             isLoading={updatingField === "email"}
           />
@@ -382,6 +453,8 @@ export default function GeneralInformationTab({
           label="Contact Number"
           value={editProfileData.contactNumber}
           isEditable={canEdit && isPersonalEditing}
+          required
+          error={personalFieldErrors.contactNumber}
           onChange={(v) => handleFieldChange("contactNumber", v)}
           isLoading={updatingField === "contactNumber"}
         />

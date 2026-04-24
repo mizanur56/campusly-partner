@@ -44,7 +44,7 @@ import VisaSuccessPage from "../pages/Applications/ApplicationStep/VisaSuccessPa
 import MyTasks from "../pages/MyTasks/MyTasks";
 import TeamMembers from "../pages/TeamMembers/TeamMembers";
 import Payments from "../pages/Payments/Payments";
-import ProfileSettings from "../pages/Settings/ProfileSettings";
+import ProfileSettingsRoute from "./ProfileSettingsRoute";
 
 function StudentProfileRedirect() {
   const { id } = useParams();
@@ -166,7 +166,7 @@ function AppRoutes() {
           <Route path="payments/commission" element={<Payments />} />
           <Route path="academy" element={<Academy />} />
           <Route path="hot-offers" element={<HotOffers />} />
-          <Route path="settings/profile" element={<ProfileSettings />} />
+          <Route path="settings/profile" element={<ProfileSettingsRoute />} />
           <Route path="chat" element={<Navigate to="/" replace />} />
           <Route
             path="chat/:conversationId"

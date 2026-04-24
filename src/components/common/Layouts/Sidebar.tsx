@@ -62,11 +62,11 @@ const SignedSidebarItems: NavItem[] = [
     name: "Hot Offers",
     path: "/hot-offers",
   },
-  {
-    icon: <i className="fa-solid fa-gear"></i>,
-    name: "Settings",
-    subItems: [{ name: "Profile", path: "/settings/profile" }],
-  },
+  // {
+  //   icon: <i className="fa-solid fa-gear"></i>,
+  //   name: "Settings",
+  //   subItems: [{ name: "Profile", path: "/settings/profile" }],
+  // },
 ];
 
 /** Restricted sidebar for PARTNER_TEAM_MEMBER: My Tasks first, then Students, Applications. No Home. */

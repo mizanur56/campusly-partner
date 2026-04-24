@@ -5,11 +5,16 @@ import PageHeader from "../../components/common/Navigation/PageHeader";
 import { useGetHotOffersQuery } from "../../redux/features/hotOffers/hotOffersApi";
 import HotOffersSkeleton from "./HotOffersSkeleton";
 import { getApiImageUrl } from "../../utils/getApiImageUrl";
+import "./HotOffers.css";
 
 function getImageUrl(url: string | null | undefined): string {
   if (!url) return "";
   return getApiImageUrl(url);
 }
+
+/** Shown when the banner has no `imageUrl` (portrait, suit — matches hero mock). */
+const HOT_OFFERS_HERO_FALLBACK_IMAGE =
+  "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&crop=faces&w=1400&q=85";
 
 export default function HotOffers() {
   const [selectedCountryId, setSelectedCountryId] = useState<string | undefined>(undefined);
@@ -114,10 +119,10 @@ export default function HotOffers() {
                       <h3 className="font-semibold text-neutral-900 text-base sm:text-[17px] md:text-lg line-clamp-2 group-hover:text-primary-700 transition-colors">
                         {inst.name}
                       </h3>
-                      <p className="text-sm text-neutral-600 mt-1">
+                      <p className="text-sm text-[#237D3B] bg-[#E9F2EB] my-3 rounded-lg px-2 py-1 w-fit">
                         {inst.totalCourses} {inst.totalCourses === 1 ? "Course" : "Courses"}
                       </p>
-                      <p className="text-sm text-neutral-500 mt-0.5">{inst.countryName}</p>
+                      <p className="text-sm text-neutral-500">{inst.countryName}</p>
                     </div>
                   </Link>
                 ))}
@@ -279,7 +284,7 @@ export default function HotOffers() {
                 {servicesSection.items.map((item) => (
                   <div
                     key={item.id}
-                    className="group flex flex-col rounded-[24px] border border-neutral-100 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)] overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
+                    className="group flex flex-col rounded-[24px] border border-[#C7CACF] bg-[#FFFFFF] shadow-[0_1px_2px_rgba(0,0,0,0.02)] overflow-hidden transition-all duration-200  hover:border-primary-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
                   >
                     <div className="relative aspect-[3/2] w-full overflow-hidden bg-neutral-100">
                       {item.imageUrl ? (
@@ -317,48 +322,67 @@ export default function HotOffers() {
 
           {/* Banner */}
           {banner && banner.status === "ACTIVE" && (
-            <section className="w-full rounded-[24px] overflow-hidden border border-neutral-100 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.12)]">
-              <div className="relative flex flex-col md:flex-row-reverse min-h-[180px] md:min-h-[200px]">
-                {/* Decorative background glow */}
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary-50/70 via-transparent to-primary-100/80" />
-
-                {/* Image side */}
-                <div className="relative z-10 w-full md:w-[340px] shrink-0 h-44 md:h-auto md:min-h-[200px] bg-neutral-100 overflow-hidden">
-                  {banner.imageUrl ? (
-                    <img
-                      src={getImageUrl(banner.imageUrl)}
-                      alt={banner.title}
-                      className="h-full w-full object-cover"
+            <section className="hot-offers-hero w-full overflow-hidden rounded-[32px] border border-[#0f3d24]/30 shadow-[0_16px_48px_rgba(10,46,26,0.28)]">
+              {/* Clip path: ~55% banner width at top/bottom, ~60% at vertical center (convex into photo) */}
+              <svg
+                width={0}
+                height={0}
+                className="absolute overflow-hidden"
+                aria-hidden
+              >
+                <defs>
+                  <clipPath
+                    id="hot-offers-hero-clip"
+                    clipPathUnits="objectBoundingBox"
+                  >
+                    <path
+                      d="M 0,0 L 0.86,0 Q 0.935,0.5 0.86,1 L 0,1 Z"
+                      fill="white"
                     />
-                  ) : (
-                    <div className="h-full w-full bg-gradient-to-br from-neutral-100 to-neutral-200" />
-                  )}
+                  </clipPath>
+                </defs>
+              </svg>
+
+              <div className="relative flex min-h-[260px] flex-col md:min-h-[320px]">
+                {/* Photo: full-bleed behind on desktop; stacked under text on mobile */}
+                <div className="relative z-0 order-2 min-h-[220px] w-full bg-[#1a1a1a] md:absolute md:inset-0 md:order-none md:min-h-full">
+                  <img
+                    src={
+                      banner.imageUrl
+                        ? getImageUrl(banner.imageUrl)
+                        : HOT_OFFERS_HERO_FALLBACK_IMAGE
+                    }
+                    alt={banner.title}
+                    className="h-full min-h-[220px] w-full object-cover object-[center_22%] md:absolute md:inset-0 md:min-h-full md:object-[center_25%]"
+                  />
                 </div>
 
-                {/* Content side */}
-                <div className="relative z-10 flex-1 flex flex-col justify-center gap-3 px-6 py-6 md:px-8 md:py-8 bg-gradient-to-br from-primary-700 via-primary-700 to-primary-600">
-                  <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-primary-50 backdrop-blur-sm border border-white/20 w-fit">
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                    Limited-time Partner Offer
-                  </div>
-                  <h2 className="text-xl md:text-2xl font-bold text-white leading-tight">
-                    {banner.title}
-                  </h2>
-                  <p className="text-primary-100 text-sm md:text-base max-w-xl leading-relaxed">
-                    {banner.description}
-                  </p>
-                  <div className="mt-2 flex flex-wrap items-center gap-3">
-                    <a
-                      href={banner.buttonUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition-all hover:bg-primary-50 hover:shadow-md"
-                    >
-                      {banner.buttonText}
-                    </a>
-                    <span className="text-xs md:text-sm text-primary-100/80">
-                      Help your students secure these offers before seats run out.
-                    </span>
+                {/* Green panel — clipped curve on md; image shows through outside the path */}
+                <div
+                  className="hot-offers-hero__green relative z-10 order-1 flex w-full flex-col justify-center px-8 py-10 text-white md:absolute md:inset-y-0 md:left-0 md:w-[64%] md:max-w-none md:px-10 md:py-12 lg:px-12 lg:py-14"
+                  style={{ backgroundColor: "#0a3116" }}
+                >
+                  <div
+                    className="pointer-events-none absolute left-0 top-0 h-64 w-64 -translate-x-1/3 -translate-y-1/3 rounded-full bg-[#1b4d2e]/70 blur-[56px] md:h-80 md:w-80 md:bg-[#1a5c32]/60"
+                    aria-hidden
+                  />
+                  <div className="relative z-10 flex max-w-xl flex-col gap-3 md:gap-4">
+                    <h2 className="text-[1.65rem] font-bold leading-[1.2] tracking-tight text-white md:text-3xl lg:text-[2rem] lg:leading-tight">
+                      {banner.title}
+                    </h2>
+                    <p className="text-[0.9375rem] font-normal leading-relaxed text-white/95 md:text-base">
+                      {banner.description}
+                    </p>
+                    <div className="pt-2 md:pt-3">
+                      <a
+                        href={banner.buttonUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center rounded-lg bg-[#237d3b] px-7 py-2.5 text-sm font-semibold text-white shadow-md transition-colors hover:bg-[#1f6d33] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/30"
+                      >
+                        {banner.buttonText}
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
