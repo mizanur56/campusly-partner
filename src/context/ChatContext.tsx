@@ -7,17 +7,17 @@ import {
   type ReactNode,
 } from "react";
 
-type PartnerStaffChatContextValue = {
+type ChatContextValue = {
   isOpen: boolean;
   open: () => void;
   close: () => void;
   toggle: () => void;
 };
 
-const PartnerStaffChatContext =
-  createContext<PartnerStaffChatContextValue | null>(null);
+const ChatContext =
+  createContext<ChatContextValue | null>(null);
 
-export function PartnerStaffChatProvider({ children }: { children: ReactNode }) {
+export function ChatProvider({ children }: { children: ReactNode }) {
   const [isOpen, setOpen] = useState(false);
   const open = useCallback(() => setOpen(true), []);
   const close = useCallback(() => setOpen(false), []);
@@ -29,14 +29,14 @@ export function PartnerStaffChatProvider({ children }: { children: ReactNode }) 
   );
 
   return (
-    <PartnerStaffChatContext.Provider value={value}>
+    <ChatContext.Provider value={value}>
       {children}
-    </PartnerStaffChatContext.Provider>
+    </ChatContext.Provider>
   );
 }
 
-export function usePartnerStaffChat(): PartnerStaffChatContextValue {
-  const ctx = useContext(PartnerStaffChatContext);
+export function useChat(): ChatContextValue {
+  const ctx = useContext(ChatContext);
   if (!ctx) {
     throw new Error(
       "usePartnerStaffChat must be used within PartnerStaffChatProvider",
