@@ -895,7 +895,8 @@ const Dashboard = () => {
                 the partner portal.
               </p>
             </div>
-              {/* Progress summary */}
+            
+
               {/* <div className="mt-6 flex flex-wrap gap-4">
                 <div className="min-w-0 flex-1 rounded-xl border border-gray-200/80 bg-white p-4 card-shadow dark:border-gray-700/80 dark:bg-gray-900/50">
                   <p className="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
