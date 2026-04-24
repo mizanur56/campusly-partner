@@ -522,6 +522,8 @@ export type AdmissionStepProps = {
   steps: any[];
   embedded?: boolean;
   autoOpen?: boolean;
+  /** When false in embedded mode, the panel cannot be expanded until the previous stage is completed. */
+  stageUnlocked?: boolean;
 };
 
 /* ================= Component ================= */
@@ -530,6 +532,7 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
   steps,
   embedded = false,
   autoOpen = false,
+  stageUnlocked = true,
 }) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -915,12 +918,32 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
     setIsExpanded(Boolean(autoOpen) && !isAllRequiredCompleted);
   }, [autoOpen, embedded, isAllRequiredCompleted, userToggledExpand]);
 
+  React.useEffect(() => {
+    if (!embedded || stageUnlocked) return;
+    setIsExpanded(false);
+  }, [embedded, stageUnlocked]);
+
+  const expandToggleClass =
+    embedded && !stageUnlocked
+      ? "cursor-not-allowed opacity-50"
+      : "cursor-pointer";
+
+  const stageLockedVisual = embedded && !stageUnlocked;
+  const stageCardClass = stageLockedVisual
+    ? "border border-[#D1D5DB] rounded-lg overflow-hidden bg-[#F4F6F5]"
+    : "border border-[#C7CACF] rounded-lg overflow-hidden";
+  const stageHeaderClass = stageLockedVisual
+    ? "bg-[#EEF2EF]"
+    : "bg-[#E9F2EB]";
+
   return (
     <>
       {/* ================= Admission Card ================= */}
-      <div className="border border-[#C7CACF] rounded-lg overflow-hidden">
+      <div className={stageCardClass}>
         {/* ===== Header ===== */}
-        <div className="bg-[#E9F2EB] p-6 flex items-center justify-between ">
+        <div
+          className={`${stageHeaderClass} p-6 flex items-center justify-between`}
+        >
           <div>
             <h3 className="text-[20px] font-semibold text-[#20242A]">
              Stage: 1 Admission
@@ -931,11 +954,17 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
           </div>
 
           <div
+            title={
+              embedded && !stageUnlocked
+                ? "Complete the previous stage first"
+                : undefined
+            }
             onClick={() => {
+              if (embedded && !stageUnlocked && !isExpanded) return;
               setUserToggledExpand(true);
               setIsExpanded((prev) => !prev);
             }}
-            className="cursor-pointer"
+            className={expandToggleClass}
           >
             {isExpanded ? (
               <UpOutlined className="text-[#4B5563]" />

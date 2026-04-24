@@ -7,7 +7,10 @@ import {
   selectCurrentUser,
   useCurrentToken,
 } from "../redux/features/auth/authSlice";
-import { clearAuthLocalStorage } from "../lib/authLocalStorage";
+import {
+  clearAuthLocalStorage,
+  clientHasBearerToken,
+} from "../lib/authLocalStorage";
 import {
   getPortalLoginUrl,
   inferCurrentPortal,
@@ -28,7 +31,7 @@ export default function GuestOnlyAuthRoute({
   const token = useSelector(useCurrentToken);
   const dispatch = useDispatch();
 
-  const hasToken = Boolean(token && localStorage.getItem("token"));
+  const hasToken = clientHasBearerToken(token);
   const authed = Boolean(user && hasToken);
 
   if (!authed) {

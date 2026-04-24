@@ -1,5 +1,5 @@
 
-import { Outlet, useLocation, useNavigate, Navigate } from "react-router-dom";
+import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { ChatWidget } from "../components/chat/ChatWidget";

@@ -18,12 +18,14 @@ export type ChecklistUploadStepProps = {
   applicationApiData: any;
   embedded?: boolean;
   autoOpen?: boolean;
+  stageUnlocked?: boolean;
 };
 
 export const ChecklistUploadStep: React.FC<ChecklistUploadStepProps> = ({
   applicationApiData,
   embedded = false,
   autoOpen = false,
+  stageUnlocked = true,
 }) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -238,10 +240,30 @@ export const ChecklistUploadStep: React.FC<ChecklistUploadStepProps> = ({
     didInitExpand.current = true;
   }, [autoOpen, embedded, isAllRequiredCompleted]);
 
+  React.useEffect(() => {
+    if (!embedded || stageUnlocked) return;
+    setIsExpanded(false);
+  }, [embedded, stageUnlocked]);
+
+  const expandToggleClass =
+    embedded && !stageUnlocked
+      ? "cursor-not-allowed opacity-50"
+      : "cursor-pointer";
+
+  const stageLockedVisual = embedded && !stageUnlocked;
+  const stageCardClass = stageLockedVisual
+    ? "border border-[#D1D5DB] rounded-lg overflow-hidden bg-[#F4F6F5]"
+    : "border border-[#C7CACF] rounded-lg overflow-hidden";
+  const stageHeaderClass = stageLockedVisual
+    ? "bg-[#EEF2EF]"
+    : "bg-[#E9F2EB]";
+
   return (
     <>
-      <div className="border border-[#C7CACF] rounded-lg overflow-hidden">
-        <div className="bg-[#E9F2EB] p-6 flex items-center justify-between">
+      <div className={stageCardClass}>
+        <div
+          className={`${stageHeaderClass} p-6 flex items-center justify-between`}
+        >
           <div>
             <h3 className="text-[20px] font-semibold text-[#20242A]">
               Stage: 3 Checklist Upload
@@ -251,8 +273,16 @@ export const ChecklistUploadStep: React.FC<ChecklistUploadStepProps> = ({
             </p>
           </div>
           <div
-            onClick={() => setIsExpanded((prev) => !prev)}
-            className="cursor-pointer"
+            title={
+              embedded && !stageUnlocked
+                ? "Complete the previous stage first"
+                : undefined
+            }
+            onClick={() => {
+              if (embedded && !stageUnlocked && !isExpanded) return;
+              setIsExpanded((prev) => !prev);
+            }}
+            className={expandToggleClass}
           >
             {isExpanded ? <UpOutlined /> : <DownOutlined />}
           </div>
