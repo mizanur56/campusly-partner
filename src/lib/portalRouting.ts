@@ -87,6 +87,8 @@ export function homePortalForRole(
   return null;
 }
 
+// h
+
 export function readPortalRoleCookie(): string | null {
   if (typeof document === "undefined") return null;
   const prefix = `${PORTAL_ROLE_COOKIE}=`;
