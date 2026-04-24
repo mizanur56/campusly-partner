@@ -1,10 +1,15 @@
+
 import { Outlet, useLocation, useNavigate, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+
+import { useEffect, useState } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { ChatWidget } from "../components/chat/ChatWidget";
+
 import { Backdrop, Header, Sidebar } from "../components/common/Layouts";
-import { PartnerStaffChatWidget } from "../components/chat/PartnerStaffChatWidget";
-import { usePreviewMode, PreviewModeProvider } from "../context/PreviewModeContext";
-import { PartnerStaffChatProvider } from "../context/PartnerStaffChatContext";
+import { ChatProvider } from "../context/ChatContext";
+import { PreviewModeProvider, usePreviewMode } from "../context/PreviewModeContext";
 import { SidebarProvider, useSidebar } from "../context/SidebarContext";
 import { StudentProfileProvider } from "../context/StudentProfileContext";
 import {
@@ -112,10 +117,10 @@ const MainLayout: React.FC = () => {
     <PreviewModeProvider>
       <SidebarProvider>
         <StudentProfileProvider>
-          <PartnerStaffChatProvider>
+          <ChatProvider>
             <LayoutContent />
-            <PartnerStaffChatWidget />
-          </PartnerStaffChatProvider>
+            <ChatWidget />
+          </ChatProvider>
         </StudentProfileProvider>
       </SidebarProvider>
     </PreviewModeProvider>
