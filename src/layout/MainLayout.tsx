@@ -3,7 +3,6 @@ import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { ChatWidget } from "../components/chat/ChatWidget";
-
 import { Backdrop, Header, Sidebar } from "../components/common/Layouts";
 import { ChatProvider } from "../context/ChatContext";
 import { PreviewModeProvider, usePreviewMode } from "../context/PreviewModeContext";

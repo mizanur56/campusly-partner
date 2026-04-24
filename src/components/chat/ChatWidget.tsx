@@ -17,7 +17,6 @@ import {
   selectCurrentUser,
   useCurrentToken,
 } from "../../redux/features/auth/authSlice";
-import type { AppDispatch } from "../../redux/features/store";
 import {
   chatApi,
   normalizeChatMessage,
@@ -52,16 +51,6 @@ function preferRicherMessage(a: ChatMessage, b: ChatMessage): ChatMessage {
   if (lb > la) return nb;
   if (la > lb) return na;
   return nb;
-}
-
-function initialsFromName(name: string): string {
-  const t = name.trim();
-  if (!t) return "?";
-  const parts = t.split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[1][0]).toUpperCase().slice(0, 2);
-  }
-  return t.slice(0, 2).toUpperCase();
 }
 
 /** Peer is the administrator (not the partner). */
@@ -227,31 +216,31 @@ function NoAdvisorChatEmpty() {
   );
 }
 
-/** Incoming-style typing row: staff avatar + "Typing..." bubble. */
-function TypingIndicatorBubble({
-  peerName,
-  peerInitials,
-}: {
-  peerName: string;
-  peerInitials: string;
-}) {
+/** Incoming-style typing row (no avatar; matches thread bubbles). */
+function TypingIndicatorBubble({ peerName }: { peerName: string }) {
   return (
     <div
-      className="mt-2 flex items-end justify-start gap-2"
+      className="mt-2 flex items-end justify-start"
       role="status"
       aria-live="polite"
       aria-relevant="additions"
     >
       <span className="sr-only">{`${peerName} is typing`}</span>
-      <div
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-700 text-[10px] font-bold text-white shadow-sm ring-1 ring-black/5"
-        aria-hidden
-      >
-        {peerInitials}
-      </div>
-      <div className="flex min-h-[40px] max-w-[82%] items-center rounded-2xl rounded-bl-sm border border-gray-200/90 bg-white px-4 py-2.5 shadow-sm">
-        <span className="text-sm font-medium text-gray-400" aria-hidden>
-          Typing...
+      <div className="flex min-h-[40px] max-w-[82%] items-center rounded-2xl rounded-bl-sm border border-gray-200/90 bg-white px-3 py-1.5 shadow-sm">
+        <span className="flex items-center gap-1.5" aria-hidden>
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className={cn(
+                "inline-block size-2 rounded-full bg-primary-500/65",
+                "motion-reduce:opacity-70 motion-safe:animate-bounce",
+              )}
+              style={{
+                animationDelay: `${i * 120}ms`,
+                animationDuration: "0.55s",
+              }}
+            />
+          ))}
         </span>
       </div>
     </div>
@@ -262,7 +251,7 @@ export function ChatWidget() {
   const { isOpen, close, toggle } = useChat();
   const user = useSelector(selectCurrentUser);
   const token = useSelector(useCurrentToken);
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useDispatch();
 
   const allowed = !!user && user.role === PARTNER_ROLE;
 
@@ -299,10 +288,14 @@ export function ChatWidget() {
     },
   );
 
-  const { data: unreadFromApi } = useGetChatUnreadQuery(undefined, {
-    skip: !allowed,
-    pollingInterval: 30_000,
-  });
+  const { data: unreadFromApi = 0, refetch: refetchUnread } =
+    useGetChatUnreadQuery(undefined, {
+      skip: !allowed,
+      pollingInterval: 0,
+    });
+
+  // Intentionally do not refetch unread on focus/visibility.
+  // Unread should update via socket events only.
 
   const [createConversation, { isLoading: creating }] =
     useCreateOrGetChatConversationMutation();
@@ -311,7 +304,7 @@ export function ChatWidget() {
 
   const conversations = inboxFirstPage?.conversations ?? [];
 
-  /** Fallback before GET /chat/unread resolves, or if that endpoint omits count. */
+  /** Fallback when /chat/unread shape differs — sum thread unread flags from inbox. */
   const unreadFromConversations = useMemo(
     () =>
       conversations.reduce(
@@ -325,14 +318,7 @@ export function ChatWidget() {
     [conversations],
   );
 
-  /**
-   * Prefer the dedicated unread endpoint — inbox rows can lag after PATCH read.
-   * Using Math.max() with both sources kept the badge stuck when one was stale.
-   */
-  const unreadTotal = useMemo(() => {
-    if (typeof unreadFromApi === "number") return unreadFromApi;
-    return unreadFromConversations;
-  }, [unreadFromApi, unreadFromConversations]);
+  const unreadTotal = Math.max(unreadFromApi, unreadFromConversations);
 
   const conversationWithAdvisor = useMemo(() => {
     if (!user?.id || !advisorUserId) return undefined;
@@ -393,9 +379,7 @@ export function ChatWidget() {
     error: msgErr,
   } = useGetChatMessagesQuery(messagesQueryArgs, {
     refetchOnMountOrArgChange: true,
-    /** Student portal: advisor replies must show without reload if socket misses an emit. */
-    pollingInterval:
-      isOpen && allowed && activeConversationId ? 2500 : 0,
+    pollingInterval: 0,
   });
 
   const [extraMessages, setExtraMessages] = useState<ChatMessage[]>([]);
@@ -417,15 +401,6 @@ export function ChatWidget() {
         { type: "chatUnread", id: "TOTAL" },
         { type: "chatConversations", id: "LIST" },
       ]),
-    );
-    // Force a refetch immediately so the floating badge updates without reload.
-    dispatch(chatApi.util.prefetch("getChatUnread", undefined, { force: true }));
-    dispatch(
-      chatApi.util.prefetch(
-        "getChatConversations",
-        { page: 1, limit: INBOX_PAGE_SIZE },
-        { force: true },
-      ),
     );
   }, [dispatch]);
 
@@ -548,8 +523,9 @@ export function ChatWidget() {
         });
       }
       invalidateChatLists();
+      if (document.visibilityState === "visible") void refetchUnread();
     },
-    [invalidateChatLists, clearPeerTypingForConversation],
+    [invalidateChatLists, clearPeerTypingForConversation, refetchUnread],
   );
 
   const onSocketRead = useCallback(() => {
@@ -619,17 +595,10 @@ export function ChatWidget() {
     return (p?.name || p?.email || "Your advisor").trim() || "Your advisor";
   }, [assignedAdvisor, activeConversation, user?.id]);
 
-  const peerInitials = useMemo(() => initialsFromName(peerName), [peerName]);
-
   const mergedMessages = useMemo(
     () => mergeMessagesUnique(initialMessages, extraMessages),
     [initialMessages, extraMessages],
   );
-
-  const lastMessageIdForRead = useMemo(() => {
-    if (mergedMessages.length === 0) return null;
-    return mergedMessages[mergedMessages.length - 1]?.id ?? null;
-  }, [mergedMessages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -637,36 +606,11 @@ export function ChatWidget() {
 
   useEffect(() => {
     if (!isOpen || !activeConversationId || !allowed) return;
-    const run = () => {
-      if (document.visibilityState === "visible") {
-        markRead({ conversationId: activeConversationId });
-      }
-    };
-    run();
-    document.addEventListener("visibilitychange", run);
-    window.addEventListener("focus", run);
-    return () => {
-      document.removeEventListener("visibilitychange", run);
-      window.removeEventListener("focus", run);
-    };
-  }, [isOpen, activeConversationId, allowed, markRead]);
-
-  /** New socket/REST messages while the panel is open do not re-run the effect above — mark read again so the badge clears. */
-  useEffect(() => {
-    if (!isOpen || !activeConversationId || !allowed || !lastMessageIdForRead)
-      return;
+    const unread = activeConversation?.unreadCount ?? 0;
+    if (unread <= 0) return;
     if (document.visibilityState !== "visible") return;
-    const t = window.setTimeout(() => {
-      markRead({ conversationId: activeConversationId });
-    }, 400);
-    return () => clearTimeout(t);
-  }, [
-    lastMessageIdForRead,
-    isOpen,
-    activeConversationId,
-    allowed,
-    markRead,
-  ]);
+    void markRead({ conversationId: activeConversationId });
+  }, [isOpen, activeConversationId, allowed, activeConversation?.unreadCount, markRead]);
 
   const handleSend = async () => {
     const text = composerText.trim();
@@ -749,7 +693,7 @@ export function ChatWidget() {
     >
       {isOpen ? (
         <div
-          className="pointer-events-auto flex max-h-[min(720px,85vh)] w-[min(100vw-2rem,400px)] flex-col overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-2xl"
+          className="pointer-events-auto flex max-h-[min(600px,74vh)] w-[min(100vw-2rem,400px)] flex-col overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-2xl"
           role="dialog"
           aria-label="Chat with your assigned advisor"
         >
@@ -895,10 +839,7 @@ export function ChatWidget() {
                       </ul>
                     )}
                     {typingPeer ? (
-                      <TypingIndicatorBubble
-                        peerName={peerName}
-                        peerInitials={peerInitials}
-                      />
+                      <TypingIndicatorBubble peerName={peerName} />
                     ) : null}
                     <div ref={messagesEndRef} />
                 </>
