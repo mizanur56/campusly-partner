@@ -1,6 +1,6 @@
 import { Avatar, Button, Form, Input } from "antd";
 import type { FormInstance } from "antd";
-import MediaPicker from "../../../components/shared/MediaPicker";
+import ChangePhotoFileButton from "./ChangePhotoFileButton";
 import { getApiImageUrl } from "../../../utils/getApiImageUrl";
 import type { MediaImage } from "../../../types/media";
 
@@ -28,20 +28,18 @@ export default function GeneralTab({
       <div className="account-photo-block">
         <Avatar
           size={96}
-          src={user?.profile_photo ? getApiImageUrl(user.profile_photo) : undefined}
+          src={
+            user?.profile_photo
+              ? getApiImageUrl(user.profile_photo)
+              : "/user.png"
+          }
         >
           {user?.name?.[0] ?? "P"}
         </Avatar>
         <div className="account-photo-btn">
-          <MediaPicker
-            label=""
-            description=""
-            buttonLabel="Change Photo"
-            helperText=""
-            multiple={false}
-            compact
-            onChange={onChangeProfilePhoto}
-            initialFolder="Partners/Profile Photos"
+          <ChangePhotoFileButton
+            uploadFolder="Partners/Profile Photos"
+            onUploaded={(img) => onChangeProfilePhoto(img)}
           />
         </div>
       </div>

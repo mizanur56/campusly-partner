@@ -26,24 +26,38 @@ export const QualificationSection: React.FC<QualificationSectionProps> = ({
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editQualification, setEditQualification] = useState(qualification);
-  const [editPassingYear, setEditPassingYear] = useState(
-    passingYear ? passingYear.replace(/\//g, "-") : ""
-  );
+  const [editPassingYear, setEditPassingYear] = useState(passingYear ?? "");
+  const [fieldErrors, setFieldErrors] = useState<{
+    qualification?: string;
+    passingYear?: string;
+  }>({});
 
   useEffect(() => {
     setEditQualification(qualification);
-    setEditPassingYear(passingYear ? passingYear.replace(/\//g, "-") : "");
+    setEditPassingYear(passingYear ?? "");
   }, [qualification, passingYear]);
 
   const handleCancel = () => {
     setEditQualification(qualification);
-    setEditPassingYear(passingYear ? passingYear.replace(/\//g, "-") : "");
+    setEditPassingYear(passingYear ?? "");
+    setFieldErrors({});
     setIsEditing(false);
   };
 
   const handleSave = () => {
-    const formattedYear = editPassingYear.replace(/-/g, "/");
-    onSave(editQualification, formattedYear);
+    const next: { qualification?: string; passingYear?: string } = {};
+    if (!editQualification?.trim()) {
+      next.qualification = "Qualification is required";
+    }
+    if (!editPassingYear?.trim()) {
+      next.passingYear = "Passing year is required";
+    }
+    if (Object.keys(next).length > 0) {
+      setFieldErrors(next);
+      return;
+    }
+    setFieldErrors({});
+    onSave(editQualification, editPassingYear);
     setIsEditing(false);
   };
 
@@ -85,15 +99,35 @@ export const QualificationSection: React.FC<QualificationSectionProps> = ({
           value={editQualification}
           type="select"
           options={qualificationOptions}
-          isEditable={isEditing}
-          onChange={(val) => setEditQualification(val)}
+          isEditable={editable && isEditing}
+          required
+          error={fieldErrors.qualification}
+          onChange={(val) => {
+            setEditQualification(val);
+            setFieldErrors((prev) => {
+              if (!prev.qualification) return prev;
+              const rest = { ...prev };
+              delete rest.qualification;
+              return rest;
+            });
+          }}
         />
         <InfoField
           label="Passing Year"
           value={editPassingYear}
-          type="date"
+          type="year"
           isEditable={editable && isEditing}
-          onChange={(val) => setEditPassingYear(val)}
+          required
+          error={fieldErrors.passingYear}
+          onChange={(val) => {
+            setEditPassingYear(val);
+            setFieldErrors((prev) => {
+              if (!prev.passingYear) return prev;
+              const rest = { ...prev };
+              delete rest.passingYear;
+              return rest;
+            });
+          }}
         />
       </div>
       {isEditing && (
@@ -108,12 +142,14 @@ export const QualificationSection: React.FC<QualificationSectionProps> = ({
 interface InfoFieldProps {
   label: string;
   value: string;
-  type?: "text" | "select" | "date" | "email";
+  type?: "text" | "select" | "date" | "year" | "email";
   options?: { label: string; value: string }[];
   onSave?: (newValue: string) => void;
   onChange?: (newValue: string) => void;
   isLoading?: boolean;
   isEditable?: boolean;
+  required?: boolean;
+  error?: string;
 }
 
 export const InfoField: React.FC<InfoFieldProps> = ({
@@ -125,25 +161,50 @@ export const InfoField: React.FC<InfoFieldProps> = ({
   onChange,
   isLoading = false,
   isEditable = false,
+  required = false,
+  error,
 }) => {
   const [editValue, setEditValue] = useState(value);
   const [dateValue, setDateValue] = useState(
-    type === "date" && value ? dayjs(value, "DD-MM-YYYY") : null
+    type === "date"
+      ? value
+        ? dayjs(value, "DD-MM-YYYY")
+        : null
+      : type === "year"
+        ? value
+          ? dayjs(value, "YYYY")
+          : null
+        : null
   );
 
   useEffect(() => {
     setEditValue(value);
     if (type === "date" && value) setDateValue(dayjs(value, "DD-MM-YYYY"));
+    else if (type === "year" && value) setDateValue(dayjs(value, "YYYY"));
+    else if (type === "date" || type === "year") setDateValue(null);
   }, [value, type]);
 
   const handleSave = async () => {
-    const finalValue = type === "date" && dateValue ? dateValue.format("DD-MM-YYYY") : editValue;
+    const finalValue =
+      type === "date" && dateValue
+        ? dateValue.format("DD-MM-YYYY")
+        : type === "year" && dateValue
+          ? dateValue.format("YYYY")
+          : editValue;
     await onSave?.(finalValue);
   };
 
   return (
     <div>
-      <p className="text-[14px] font-medium text-[#20242A] mb-1">{label}</p>
+      <p className="text-[14px] font-medium text-[#20242A] mb-1">
+        {label}
+        {required ? (
+          <span className="text-red-500" aria-hidden>
+            {" "}
+            *
+          </span>
+        ) : null}
+      </p>
       {type === "select" ? (
         <Select
           value={editValue}
@@ -153,6 +214,7 @@ export const InfoField: React.FC<InfoFieldProps> = ({
             if (isEditable) onChange?.(val);
           }}
           className="w-full"
+          status={error ? "error" : undefined}
           onBlur={isEditable && onSave ? handleSave : undefined}
           size="large"
         >
@@ -162,21 +224,25 @@ export const InfoField: React.FC<InfoFieldProps> = ({
             </Option>
           ))}
         </Select>
-      ) : type === "date" ? (
+      ) : type === "date" || type === "year" ? (
         <DatePicker
           value={dateValue}
           disabled={!isEditable || isLoading}
           onChange={(d) => {
             setDateValue(d);
-            if (isEditable && d) onChange?.(d.format("DD-MM-YYYY"));
+            if (isEditable && d)
+              onChange?.(d.format(type === "year" ? "YYYY" : "DD-MM-YYYY"));
             if (isEditable && onSave) handleSave();
           }}
-          format="DD-MM-YYYY"
+          picker={type === "year" ? "year" : undefined}
+          format={type === "year" ? "YYYY" : "DD-MM-YYYY"}
           className="w-full"
+          status={error ? "error" : undefined}
           size="large"
         />
       ) : (
         <Input
+          type={type === "email" ? "email" : "text"}
           value={editValue}
           disabled={!isEditable || isLoading}
           onChange={(e) => {
@@ -184,9 +250,15 @@ export const InfoField: React.FC<InfoFieldProps> = ({
             if (isEditable) onChange?.(e.target.value);
           }}
           onBlur={isEditable && onSave ? handleSave : undefined}
+          status={error ? "error" : undefined}
           size="large"
         />
       )}
+      {error ? (
+        <p className="mt-1 text-sm text-red-500" role="alert">
+          {error}
+        </p>
+      ) : null}
       {isLoading && (
         <Spin className="mt-1" indicator={<LoadingOutlined style={{ fontSize: 14 }} spin />} />
       )}
@@ -201,6 +273,8 @@ interface PhoneFieldProps {
   onChange?: (newValue: string) => void;
   isLoading?: boolean;
   isEditable?: boolean;
+  required?: boolean;
+  error?: string;
 }
 
 export const PhoneField: React.FC<PhoneFieldProps> = ({
@@ -210,6 +284,8 @@ export const PhoneField: React.FC<PhoneFieldProps> = ({
   onChange,
   isLoading = false,
   isEditable = false,
+  required = false,
+  error,
 }) => {
   const [editValue, setEditValue] = useState(value.replace(/^\+/, ""));
 
@@ -219,7 +295,15 @@ export const PhoneField: React.FC<PhoneFieldProps> = ({
 
   return (
     <div>
-      <p className="text-[14px] font-medium text-[#20242A] mb-1">{label}</p>
+      <p className="text-[14px] font-medium text-[#20242A] mb-1">
+        {label}
+        {required ? (
+          <span className="text-red-500" aria-hidden>
+            {" "}
+            *
+          </span>
+        ) : null}
+      </p>
       <PhoneInput
         country="bd"
         value={editValue}
@@ -232,9 +316,18 @@ export const PhoneField: React.FC<PhoneFieldProps> = ({
             if (onSave) onSave(formattedValue);
           }
         }}
-        inputStyle={{ width: "100%", height: 40 }}
+        inputStyle={{
+          width: "100%",
+          height: 40,
+          ...(error ? { borderColor: "#ff4d4f" } : {}),
+        }}
         size="large"
       />
+      {error ? (
+        <p className="mt-1 text-sm text-red-500" role="alert">
+          {error}
+        </p>
+      ) : null}
       {isLoading && (
         <Spin className="mt-1" indicator={<LoadingOutlined style={{ fontSize: 14 }} spin />} />
       )}

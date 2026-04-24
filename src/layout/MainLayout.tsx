@@ -1,11 +1,18 @@
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import { Backdrop, Header, Sidebar } from "../components/common/Layouts";
 import { PartnerStaffChatWidget } from "../components/chat/PartnerStaffChatWidget";
 import { usePreviewMode, PreviewModeProvider } from "../context/PreviewModeContext";
 import { PartnerStaffChatProvider } from "../context/PartnerStaffChatContext";
 import { SidebarProvider, useSidebar } from "../context/SidebarContext";
 import { StudentProfileProvider } from "../context/StudentProfileContext";
+import {
+  isPartnerPortalUnlocked,
+  isPathAllowedBeforePartnerPortalUnlock,
+} from "../lib/partnerPortalAccess";
+import { selectCurrentUser } from "../redux/features/auth/authSlice";
+import { useGetOnboardingStatusQuery } from "../redux/features/onboardingForm";
 import { useGetPartnerProfileQuery } from "../redux/features/profile/partnerProfileApi";
 // import { useRoutePermission } from "../hooks/useRoutePermission";
 
@@ -18,12 +25,22 @@ const LayoutContent: React.FC = () => {
   const location = useLocation();
   const { pathname } = location;
   const navigate = useNavigate();
+  const user = useSelector(selectCurrentUser);
+  const isTeamMember = user?.role === "PARTNER_TEAM_MEMBER";
+  const { data: onboardingStatus, isLoading: isOnboardingStatusLoading } =
+    useGetOnboardingStatusQuery();
+  const hasUnlockedPortal = isPartnerPortalUnlocked(onboardingStatus);
   const { previewMode, togglePreviewMode } = usePreviewMode();
   const [wipePhase, setWipePhase] = useState<"enter" | "exit" | null>(null);
 
   // Ensure partner profile loads immediately after login (or app load) so
   // sidebar/header have data without requiring a manual refresh.
   useGetPartnerProfileQuery(undefined);
+
+  const portalRouteAllowed =
+    isTeamMember ||
+    hasUnlockedPortal ||
+    isPathAllowedBeforePartnerPortalUnlock(pathname);
 
   const handlePreviewSwitch = () => {
     if (wipePhase) return;
@@ -44,6 +61,19 @@ const LayoutContent: React.FC = () => {
 
   // Automatically check permissions on every route change
   // useRoutePermission(); // Disabled for design migration
+
+  if (!isTeamMember && !hasUnlockedPortal) {
+    if (isOnboardingStatusLoading && !isPathAllowedBeforePartnerPortalUnlock(pathname)) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-[#fefefe] dark:bg-neutral-900">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-primary-600 dark:border-gray-700 dark:border-t-primary-400" />
+        </div>
+      );
+    }
+    if (!isOnboardingStatusLoading && !portalRouteAllowed) {
+      return <Navigate to="/onboarding" replace />;
+    }
+  }
 
   return (
     <div className="min-h-screen lg:flex bg-[#fefefe] dark:bg-neutral-900 overflow-x-hidden">

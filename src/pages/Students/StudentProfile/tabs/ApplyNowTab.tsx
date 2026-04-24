@@ -10,7 +10,7 @@ const ApplyNowTab = () => {
       {/* Header Image */}
       <div className="w-82.5 h-82.5 rounded-lg overflow-hidden">
         <Image
-          src="/images/home/apply.png"
+          src="/apply.png"
           alt="Apply Now"
           className="w-full h-auto"
           preview={false}

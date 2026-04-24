@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   FaCircleCheck,
   FaEye,
@@ -18,6 +18,12 @@ import type {
 import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
 import { config } from "../../../config";
 import OnboardingFormSkeleton from "../OnboardingFormSkeleton";
+import { OnboardingStepEditBar } from "../OnboardingStepEditBar";
+import {
+  getOnboardingStepPayload,
+  step4HasPersistedData,
+} from "../onboardingStepDataUtils";
+import { useOnboardingFormEditMode } from "../useOnboardingFormEditMode";
 
 /** Fixed document fields for step 4 */
 const FIXED_UPLOAD_ITEMS: {
@@ -52,6 +58,26 @@ export default function RegularComplianceStep({
   const { data: stepData, isFetching } = useGetStepDataQuery(apiStep);
   const [patchStep4, { isLoading: isSaving }] = usePatchStep4Mutation();
   const [uploadFile, { isLoading: isUploading }] = useCreateMediaMutation();
+  const payload = useMemo(
+    () => getOnboardingStepPayload(stepData),
+    [stepData],
+  );
+  const hasPersistedData = useMemo(() => step4HasPersistedData(payload), [payload]);
+  const {
+    formDisabled: readOnly,
+    showEditControl,
+    showSaveButton,
+    isEditing,
+    startEditing,
+    cancelEditing,
+  } = useOnboardingFormEditMode(hasPersistedData);
+
+  useEffect(() => {
+    if (readOnly) {
+      setShowAddQualification(false);
+      setNewQualificationLabel("");
+    }
+  }, [readOnly]);
 
   // State for fixed document fields
   const [documents, setDocuments] = useState<Record<string, string>>({
@@ -90,6 +116,24 @@ export default function RegularComplianceStep({
       }
     }
   }, [stepData]);
+
+  const handleCancelEdit = () => {
+    cancelEditing();
+    setShowAddQualification(false);
+    setNewQualificationLabel("");
+    const raw = stepData?.data && (stepData.data as any).data;
+    if (raw && typeof raw === "object") {
+      setDocuments({
+        yourId: raw.yourId || "",
+        businessRegistrationCertificate:
+          raw.businessRegistrationCertificate || "",
+        taxCertificate: raw.taxCertificate || "",
+      });
+      setCustomDocuments(
+        Array.isArray(raw.customDocuments) ? raw.customDocuments : [],
+      );
+    }
+  };
 
   /** Get full URL for display/preview */
   const getFullUrl = (path: string) => {
@@ -174,49 +218,53 @@ export default function RegularComplianceStep({
     return parts[parts.length - 1] || path;
   };
 
-  const handleNext = async () => {
-    // Validate required fields
+  const buildStep4Payload = (): Step4Payload => ({
+    yourId: documents.yourId || undefined,
+    businessRegistrationCertificate:
+      documents.businessRegistrationCertificate || undefined,
+    taxCertificate: documents.taxCertificate || undefined,
+    customDocuments:
+      customDocuments.length > 0 ? customDocuments : undefined,
+  });
+
+  const validateRequiredUploads = () => {
     const missingRequired = FIXED_UPLOAD_ITEMS.filter(
       (item) => item.required && !documents[item.key],
     );
-
     if (missingRequired.length > 0) {
       toast.error(
         `Please upload: ${missingRequired.map((m) => m.label).join(", ")}`,
       );
+      return false;
+    }
+    return true;
+  };
+
+  const patchErrorToast = (err: unknown) => {
+    const e = err as { data?: { message?: string }; error?: string };
+    const raw =
+      e?.data?.message || (typeof e?.error === "string" ? e.error : "") || "";
+    const message = String(raw);
+    if (message.toLowerCase().includes("onboarding form already submitted")) {
+      toast.info("Your onboarding form is already submitted.");
       return;
     }
+    if (message) toast.error(message);
+    else toast.error("Failed to save compliance documents. Please try again.");
+  };
 
+  const handleSave = async () => {
+    if (!validateRequiredUploads()) return;
     try {
-      const payload: Step4Payload = {
-        yourId: documents.yourId || undefined,
-        businessRegistrationCertificate:
-          documents.businessRegistrationCertificate || undefined,
-        taxCertificate: documents.taxCertificate || undefined,
-        customDocuments:
-          customDocuments.length > 0 ? customDocuments : undefined,
-      };
-
-      await patchStep4(payload).unwrap();
-      onNext();
-    } catch (err: any) {
-      const raw =
-        err?.data?.message ||
-        (typeof err?.error === "string" ? err.error : "") ||
-        "";
-      const message = String(raw);
-
-      if (message.toLowerCase().includes("onboarding form already submitted")) {
-        toast.info("Your onboarding form is already submitted.");
-        return;
-      }
-
-      if (message) {
-        toast.error(message);
-      } else {
-        toast.error("Failed to save compliance documents. Please try again.");
-      }
+      await patchStep4(buildStep4Payload()).unwrap();
+      toast.success("Saved");
+    } catch (err) {
+      patchErrorToast(err);
     }
+  };
+
+  const handleNext = () => {
+    onNext();
   };
 
   if (isFetching && !stepData) {
@@ -227,13 +275,20 @@ export default function RegularComplianceStep({
 
   return (
     <div className="space-y-5">
-      <div className="flex w-full flex-row justify-end">
+      <div className="flex w-full flex-row flex-wrap items-center justify-end gap-2">
+        <OnboardingStepEditBar
+          show={showEditControl}
+          isEditing={isEditing}
+          onEdit={startEditing}
+          onCancel={handleCancelEdit}
+          className="mb-0"
+        />
         <Button
           type="button"
           variant="primary"
           size="sm"
           onClick={() => setShowAddQualification(true)}
-          disabled={isProcessing}
+          disabled={readOnly || isProcessing}
         >
           + Add Qualifications
         </Button>
@@ -252,7 +307,8 @@ export default function RegularComplianceStep({
                 setShowAddQualification(false);
                 setNewQualificationLabel("");
               }}
-              className="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
+              disabled={readOnly}
+              className="text-neutral-500 hover:text-neutral-700 disabled:opacity-50 dark:text-neutral-400 dark:hover:text-neutral-200"
             >
               ✕
             </button>
@@ -262,7 +318,8 @@ export default function RegularComplianceStep({
             placeholder="Enter qualification label (e.g., ISO Certificate)"
             value={newQualificationLabel}
             onChange={(e) => setNewQualificationLabel(e.target.value)}
-            className="mb-3 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none dark:border-neutral-600 dark:bg-neutral-800 dark:text-white"
+            disabled={readOnly}
+            className="mb-3 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-neutral-100 dark:border-neutral-600 dark:bg-neutral-800 dark:text-white dark:disabled:bg-neutral-900"
           />
           <div className="flex gap-2">
             <Button
@@ -273,6 +330,7 @@ export default function RegularComplianceStep({
                 setShowAddQualification(false);
                 setNewQualificationLabel("");
               }}
+              disabled={readOnly}
             >
               Cancel
             </Button>
@@ -282,7 +340,9 @@ export default function RegularComplianceStep({
               size="sm"
               onClick={() => customFileInputRef.current?.click()}
               disabled={
-                !newQualificationLabel.trim() || uploadingField === "custom-new"
+                readOnly ||
+                !newQualificationLabel.trim() ||
+                uploadingField === "custom-new"
               }
             >
               {uploadingField === "custom-new" ? "Uploading…" : "Select File"}
@@ -292,6 +352,7 @@ export default function RegularComplianceStep({
               type="file"
               accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
               className="hidden"
+              disabled={readOnly}
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) handleCustomUpload(file);
@@ -341,7 +402,8 @@ export default function RegularComplianceStep({
               <button
                 type="button"
                 onClick={() => removeCustomDocument(index)}
-                className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                disabled={readOnly}
+                className="text-red-500 hover:text-red-700 disabled:opacity-40 dark:text-red-400 dark:hover:text-red-300"
                 title="Remove"
               >
                 <svg
@@ -399,7 +461,8 @@ export default function RegularComplianceStep({
                     <button
                       type="button"
                       onClick={() => removeFixedDocument(item.key)}
-                      className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/30 dark:hover:text-red-300"
+                      disabled={readOnly}
+                      className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-40 dark:text-red-400 dark:hover:bg-red-950/30 dark:hover:text-red-300"
                       title="Delete file"
                     >
                       <FaTrashCan className="h-4 w-4" aria-hidden />
@@ -426,8 +489,8 @@ export default function RegularComplianceStep({
                   <button
                     type="button"
                     onClick={() => fileInputRefs.current[item.key]?.click()}
-                    disabled={isUploadingThis}
-                    className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md bg-gray-100 text-gray-500 transition-colors group-hover:bg-primary-100 group-hover:text-primary-600 dark:bg-neutral-700 dark:group-hover:bg-primary-900/30"
+                    disabled={readOnly || isUploadingThis}
+                    className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md bg-gray-100 text-gray-500 transition-colors group-hover:bg-primary-100 group-hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-neutral-700 dark:group-hover:bg-primary-900/30"
                     title="Upload file"
                   >
                     {isUploadingThis ? (
@@ -467,6 +530,7 @@ export default function RegularComplianceStep({
                   type="file"
                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                   className="hidden"
+                  disabled={readOnly}
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) handleFixedFieldUpload(item.key, file);
@@ -480,7 +544,7 @@ export default function RegularComplianceStep({
       </div>
 
       {/* Navigation Buttons */}
-      <div className="mt-6 flex justify-end gap-3 border-t border-gray-100 pt-5 dark:border-neutral-800">
+      <div className="mt-6 flex flex-wrap justify-end gap-3 border-t border-gray-100 pt-5 dark:border-neutral-800">
         <Button
           type="button"
           variant="secondary"
@@ -490,14 +554,25 @@ export default function RegularComplianceStep({
         >
           ← Previous
         </Button>
+        {showSaveButton && (
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            onClick={handleSave}
+            disabled={isProcessing}
+          >
+            {isSaving ? "Saving…" : "Save"}
+          </Button>
+        )}
         <Button
           type="button"
-          variant="primary"
+          variant="secondary"
           size="sm"
           onClick={handleNext}
-          disabled={isProcessing}
+          disabled={isProcessing || showSaveButton}
         >
-          {isSaving ? "Saving…" : "Next →"}
+          Next →
         </Button>
       </div>
     </div>

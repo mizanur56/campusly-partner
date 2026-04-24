@@ -789,26 +789,84 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
           className="space-y-4"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-            <FormInput name="instituteName" label="Institute Name" required />
+            <FormInput
+              name="instituteName"
+              label="Institute Name"
+              placeholder="Enter institute name"
+              rules={[{ required: true, message: "Institute name is required" }]}
+            />
             <FormSelect
               name="country"
               label="Country"
+              placeholder="Select country"
               options={countriesOptions}
+              rules={[{ required: true, message: "Country is required" }]}
             />
-            <FormDatePicker name="startYear" label="Start Year" picker="year" />
-            <FormDatePicker name="endYear" label="End Year" picker="year" />
-            <FormInput name="subject" label="Subject / Group" />
+            <FormDatePicker
+              name="startYear"
+              label="Start Date"
+              // picker="year"
+              placeholder="Select start Date"
+              rules={[{ required: true, message: "Start Date is required" }]}
+            />
+            <FormDatePicker
+              name="endYear"
+              label="End Date"
+              // picker="year"
+              placeholder="Select end Date"
+              rules={[{ required: true, message: "End Date is required" }]}
+            />
+            <FormInput
+              name="subject"
+              label="Subject / Group"
+              placeholder="Enter subject or group"
+              rules={[{ required: true, message: "Subject / group is required" }]}
+            />
             <FormSelect
               name="outOfGrade"
               label="Out of Grade"
+              placeholder="Select grading scale"
               options={gradeOptions}
+              rules={[{ required: true, message: "Grading scale is required" }]}
             />
             <FormInput
               name="result"
               label="Result"
+              placeholder="Enter result"
               type="number"
               step="any"
               disabled={!selectedGrade || !isEditing}
+              rules={[
+                {
+                  validator: (_: any, value: any) => {
+                    if (!selectedGrade) {
+                      return Promise.reject(
+                        new Error("Please select grading scale first"),
+                      );
+                    }
+                    if (value === undefined || value === null || value === "") {
+                      return Promise.reject(new Error("Result is required"));
+                    }
+
+                    const numericValue = parseFloat(value);
+                    const maxGrade = parseFloat(String(selectedGrade));
+
+                    if (Number.isNaN(numericValue)) {
+                      return Promise.reject(
+                        new Error("Please enter a valid number"),
+                      );
+                    }
+                    if (numericValue < 1 || numericValue > maxGrade) {
+                      return Promise.reject(
+                        new Error(
+                          `Result must be between 1 and ${selectedGrade}`,
+                        ),
+                      );
+                    }
+                    return Promise.resolve();
+                  },
+                },
+              ]}
             />
           </div>
 

@@ -1,5 +1,5 @@
 import { Avatar } from "antd";
-import MediaPicker from "../../../components/shared/MediaPicker";
+import ChangePhotoFileButton from "./ChangePhotoFileButton";
 import type { MediaImage } from "../../../types/media";
 
 export default function BusinessDetailsTab({
@@ -16,21 +16,15 @@ export default function BusinessDetailsTab({
       <div className="account-photo-block">
         <Avatar
           size={96}
-          src={businessLogoUrl}
+          src={businessLogoUrl || "/business.png"}
           className="account-business-avatar"
         >
           {businessName?.[0] ?? "B"}
         </Avatar>
         <div className="account-photo-btn">
-          <MediaPicker
-            label=""
-            description=""
-            buttonLabel="Change Photo"
-            helperText=""
-            multiple={false}
-            compact
-            onChange={onChangeBusinessPhoto}
-            initialFolder="Partners/Business Logos"
+          <ChangePhotoFileButton
+            uploadFolder="Partners/Business Logos"
+            onUploaded={(img) => onChangeBusinessPhoto(img)}
           />
         </div>
       </div>

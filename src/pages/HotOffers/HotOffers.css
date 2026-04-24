@@ -1,0 +1,10 @@
+/* Hero: smooth convex curve between green panel and photo (desktop only) */
+.hot-offers-hero__green {
+  clip-path: none;
+}
+
+@media (min-width: 768px) {
+  .hot-offers-hero__green {
+    clip-path: url(#hot-offers-hero-clip);
+  }
+}
