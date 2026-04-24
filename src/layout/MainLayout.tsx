@@ -1,10 +1,7 @@
 
-import { Outlet, useLocation, useNavigate, Navigate } from "react-router-dom";
+import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-
-import { useEffect, useState } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { ChatWidget } from "../components/chat/ChatWidget";
 
 import { Backdrop, Header, Sidebar } from "../components/common/Layouts";
