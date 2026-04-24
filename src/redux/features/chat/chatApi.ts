@@ -376,16 +376,6 @@ const chatApi = baseApi.injectEndpoints({
         url: `/chat/conversations/${conversationId}/read`,
         method: "PATCH",
       }),
-      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
-        const patch = dispatch(
-          chatApi.util.updateQueryData("getChatUnread", undefined, () => 0),
-        );
-        try {
-          await queryFulfilled;
-        } catch {
-          patch.undo();
-        }
-      },
       invalidatesTags: [
         { type: "chatConversations", id: "LIST" },
         { type: "chatUnread", id: "TOTAL" },

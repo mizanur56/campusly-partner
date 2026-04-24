@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { Socket } from "socket.io-client";
-import { getSocket } from "../services/socket";
 import type { ChatMessage } from "../redux/features/chat/chatApi";
+import { getSocket } from "../services/socket";
 
 export type ChatMessageEvent = {
   conversationId: string;
