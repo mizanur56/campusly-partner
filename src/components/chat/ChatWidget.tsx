@@ -2,16 +2,16 @@ import { Alert, Empty, Spin } from "antd";
 import { MessageCircle, MoreVertical, Send, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { usePartnerStaffChat } from "../../context/PartnerStaffChatContext";
-import { usePartnerChatSocket } from "../../hooks/usePartnerChatSocket";
+import { useChat } from "../../context/ChatContext";
+import { useChatSocket } from "../../hooks/useChatSocket";
 import { resolveStaffUserIdForChat } from "../../lib/resolveStaffUserIdForChat";
 import {
   selectCurrentUser,
   useCurrentToken,
 } from "../../redux/features/auth/authSlice";
 import {
+  chatApi,
   normalizeChatMessage,
-  partnerChatApi,
   useCreateOrGetChatConversationMutation,
   useGetChatConversationsQuery,
   useGetChatMessagesQuery,
@@ -20,8 +20,8 @@ import {
   useSendChatMessageMutation,
   type ChatConversation,
   type ChatMessage,
-  type ChatParticipant,
-} from "../../redux/features/chat/partnerChatApi";
+  type ChatParticipant
+} from "../../redux/features/chat/chatApi";
 import {
   useGetPartnerDashboardQuery,
   useGetPartnerProfileQuery,
@@ -95,8 +95,8 @@ function initialsFromName(name: string): string {
   return t.slice(0, 2).toUpperCase();
 }
 
-export function PartnerStaffChatWidget() {
-  const { isOpen, close, toggle } = usePartnerStaffChat();
+export function ChatWidget() {
+  const { isOpen, close, toggle } = useChat();
   const user = useSelector(selectCurrentUser);
   const token = useSelector(useCurrentToken);
   const dispatch = useDispatch();
@@ -178,7 +178,7 @@ export function PartnerStaffChatWidget() {
 
   const invalidateChatLists = useCallback(() => {
     dispatch(
-      partnerChatApi.util.invalidateTags([
+      chatApi.util.invalidateTags([
         { type: "chatUnread", id: "TOTAL" },
         { type: "chatConversations", id: "LIST" },
       ]),
@@ -224,7 +224,7 @@ export function PartnerStaffChatWidget() {
     [activeConversationId, user?.id],
   );
 
-  const { emitTyping, emitLeaveConversation } = usePartnerChatSocket({
+  const { emitTyping, emitLeaveConversation } = useChatSocket({
     enabled: !!allowed && !!token,
     token,
     userId: user?.id,

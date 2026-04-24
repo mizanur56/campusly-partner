@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import { config } from "../config";
-import type { ChatMessage } from "../redux/features/chat/partnerChatApi";
+import type { ChatMessage } from "../redux/features/chat/chatApi";
 
 export type ChatMessageEvent = {
   conversationId: string;
@@ -19,7 +19,7 @@ export type ChatTypingEvent = {
   isTyping: boolean;
 };
 
-type UsePartnerChatSocketOptions = {
+type UseChatSocketOptions = {
   enabled: boolean;
   token: string | null | undefined;
   userId: string | null | undefined;
@@ -43,7 +43,7 @@ function emitJoinRooms(
   }
 }
 
-export function usePartnerChatSocket({
+export function useChatSocket({
   enabled,
   token,
   userId,
@@ -53,7 +53,7 @@ export function usePartnerChatSocket({
   onChatRead,
   onChatTyping,
   onConnected,
-}: UsePartnerChatSocketOptions) {
+}: UseChatSocketOptions) {
   const socketRef = useRef<Socket | null>(null);
   const activeRef = useRef(activeConversationId);
   activeRef.current = activeConversationId;

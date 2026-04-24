@@ -128,7 +128,7 @@ function normalizeUnread(body: unknown): number {
   return 0;
 }
 
-const partnerChatApi = baseApi.injectEndpoints({
+const chatApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getChatConversations: builder.query<
       ChatConversation[],
@@ -238,6 +238,6 @@ export const {
   useCreateOrGetChatConversationMutation,
   useSendChatMessageMutation,
   useMarkChatConversationReadMutation,
-} = partnerChatApi;
+} = chatApi;
 
-export { partnerChatApi };
+export { chatApi };
