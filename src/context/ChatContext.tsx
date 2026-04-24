@@ -38,9 +38,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 export function useChat(): ChatContextValue {
   const ctx = useContext(ChatContext);
   if (!ctx) {
-    throw new Error(
-      "usePartnerStaffChat must be used within PartnerStaffChatProvider",
-    );
+    throw new Error("useChat must be used within ChatProvider");
   }
   return ctx;
 }
