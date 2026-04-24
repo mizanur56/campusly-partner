@@ -693,7 +693,7 @@ export function ChatWidget() {
     >
       {isOpen ? (
         <div
-          className="pointer-events-auto flex max-h-[min(720px,85vh)] w-[min(100vw-2rem,400px)] flex-col overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-2xl"
+          className="pointer-events-auto flex max-h-[min(600px,74vh)] w-[min(100vw-2rem,400px)] flex-col overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-2xl"
           role="dialog"
           aria-label="Chat with your assigned advisor"
         >
