@@ -20,6 +20,8 @@ import {
   useReplyToApplicationNoteMutation,
   useUpdateApplicationNoteMutation,
 } from "../../../redux/features/application/applicationApi";
+import { selectCurrentUser } from "../../../redux/features/auth/authSlice";
+import { useAppSelector } from "../../../redux/features/hooks";
 
 type NotesTabProps = {
   applicationId: string;
@@ -48,6 +50,9 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
   const [editorValue, setEditorValue] = useState("");
   const [replyForNoteId, setReplyForNoteId] = useState<string | null>(null);
   const [replyBody, setReplyBody] = useState("");
+  const [expandedThreads, setExpandedThreads] = useState<Record<string, boolean>>(
+    {}
+  );
   const [editNoteId, setEditNoteId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editBody, setEditBody] = useState("");
@@ -55,11 +60,10 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
 
   const {
     data: notesResponse,
-    isLoading,
-    isFetching,
+    isLoading
   } = useGetApplicationNotesQuery(applicationId, {
     skip: !applicationId,
-    // refetchOnMountOrArgChange: true,
+    refetchOnMountOrArgChange: true,
   });
 
   const [createNote, { isLoading: isCreating }] =
@@ -72,6 +76,11 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
     useDeleteApplicationNoteMutation();
 
   const notes: TApplicationNote[] = notesResponse?.data ?? [];
+  const currentUser = useAppSelector(selectCurrentUser);
+  const loggedUserId = currentUser?.id;
+
+  const canMutate = (n: TApplicationNote) =>
+    !!loggedUserId && n?.author?.id === loggedUserId;
 
   // Rich Text Editor Toolbar Modules
   const modules = {
@@ -95,6 +104,7 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
     if (r === "ADMIN") return "Admin";
     if (r === "AGENT") return "Agent";
     if (r === "STUDENT") return "Student";
+    if (r === "PARTNER") return "Partner";
     return r;
   };
 
@@ -103,6 +113,7 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
     if (r === "ADMIN") return "bg-emerald-50 text-emerald-700 border-emerald-200";
     if (r === "AGENT") return "bg-indigo-50 text-indigo-700 border-indigo-200";
     if (r === "STUDENT") return "bg-amber-50 text-amber-800 border-amber-200";
+    if (r === "PARTNER") return "bg-purple-50 text-purple-700 border-purple-200";
     return "bg-gray-50 text-gray-700 border-[#CFCACF]";
   };
 
@@ -154,6 +165,7 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
       }).unwrap();
       setReplyForNoteId(null);
       setReplyBody("");
+      setExpandedThreads((s) => ({ ...s, [noteId]: true }));
       message.success("Reply sent.");
     } catch (e: any) {
       message.error(e?.data?.message || "Failed to send reply.");
@@ -259,7 +271,29 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
   );
 
   return (
-    <div className="max-w-5xl mx-auto p-4">
+    <div className="p-4">
+      <style>{`
+        .quill-wrapper {
+          border-radius: 14px;
+          overflow: hidden;
+        }
+        .quill-wrapper .ql-toolbar {
+          border-top-left-radius: 14px;
+          border-top-right-radius: 14px;
+          background-color: #f9fafb;
+          border-color: #d1d5db;
+        }
+        .quill-wrapper .ql-container {
+          border-bottom-left-radius: 14px;
+          border-bottom-right-radius: 14px;
+          font-size: 15px;
+          border-color: #d1d5db;
+        }
+        .quill-wrapper .ql-editor.ql-blank::before {
+          color: #9ca3af;
+          font-style: normal;
+        }
+      `}</style>
       {/* Header Section */}
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
@@ -288,7 +322,7 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
 
       {/* Note Creation Form */}
       {showForm && (
-        <div className="mb-8 p-5 rounded-2xl bg-[#FFFFFF] border border-[#E5E7EB] shadow-sm">
+        <div className="mb-8 p-5 rounded-3xl bg-[#FFFFFF] border border-[#CFCACF]">
           <div className="">
             <div className="mb-4">
               <label className="block text-gray-500 text-sm mb-1 font-medium">
@@ -336,45 +370,31 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
           </div>
 
           <style>{`
-            .quill-wrapper .ql-toolbar {
-              border-top-left-radius: 8px;
-              border-top-right-radius: 8px;
-              background-color: #f9fafb;
-              border-color: #d1d5db;
-            }
             .quill-wrapper .ql-container {
-              border-bottom-left-radius: 8px;
-              border-bottom-right-radius: 8px;
               height: 180px;
-              font-size: 15px;
-              border-color: #d1d5db;
-            }
-            .quill-wrapper .ql-editor.ql-blank::before {
-              color: #9ca3af;
-              font-style: normal;
             }
           `}</style>
         </div>
       )}
 
       {/* Notes Display List */}
-      {(isLoading || isFetching) && (
+      {(isLoading) && (
         <div className="py-2">
           <NotesSkeleton />
         </div>
       )}
 
-      {!isLoading && !isFetching && notes.length === 0 && (
+      {!isLoading && notes.length === 0 && (
         <div className="py-12 rounded-2xl border border-dashed border-[#CFCACF] bg-white">
           <Empty description="No notes yet" />
         </div>
       )}
 
-      {!isLoading && !isFetching && notes.length > 0 && (
+      {!isLoading && notes.length > 0 && (
         <List
           dataSource={notes}
           renderItem={(note) => (
-            <div className="mb-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+             <div className="mb-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
               <div className="rounded-3xl !border-[#CFCACF] !border transition-shadow bg-white overflow-hidden p-6">
                 <div>
                   <div className="flex items-start justify-between gap-4 mb-3">
@@ -405,46 +425,67 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
                       </div>
                     </div>
 
-                    <Dropdown
-                      trigger={["click"]}
-                      placement="bottomRight"
-                      menu={{
-                        items: [
-                          {
-                            key: "edit",
-                            label: "Edit",
-                            onClick: () => openEdit(note),
-                          },
-                          {
-                            key: "delete",
-                            label: "Delete",
-                            onClick: () => confirmDelete(note.id),
-                          },
-                        ],
-                      }}
-                    >
-                      <Button
-                        variant="outlined"
-                        icon={<MoreOutlined className="text-xl" />}
-                        className="border-[#CFCACF] text-gray-400 rounded-lg flex items-center justify-center w-10 h-10 hover:text-gray-700 hover:border-gray-300"
-                      />
-                    </Dropdown>
+                    {canMutate(note) && (
+                      <Dropdown
+                        trigger={["click"]}
+                        placement="bottomRight"
+                        menu={{
+                          items: [
+                            {
+                              key: "edit",
+                              label: "Edit",
+                              onClick: () => openEdit(note),
+                            },
+                            {
+                              key: "delete",
+                              label: "Delete",
+                              onClick: () => confirmDelete(note.id),
+                            },
+                          ],
+                        }}
+                      >
+                        <Button
+                          variant="outlined"
+                          icon={<MoreOutlined className="text-xl" />}
+                          className="border-[#CFCACF] text-gray-400 rounded-lg flex items-center justify-center w-10 h-10 hover:text-gray-700 hover:border-gray-300"
+                        />
+                      </Dropdown>
+                    )}
                   </div>
 
                   <div className="mt-4">{renderBodyHtml(note.body)}</div>
 
                   <div className="mt-5 flex items-center justify-between">
-                    <div className="text-[12px] text-gray-500">
-                      {note.replies?.length
-                        ? `${note.replies.length} replies`
-                        : "0 replies"}
+                    <div className="flex items-center gap-2">
+                      {note.replies?.length > 0 ? (
+                        <Button
+                          type="default"
+                          className="border-[#CFCACF] text-gray-700 rounded-lg h-9 px-3 bg-white hover:border-gray-300"
+                          onClick={() =>
+                            setExpandedThreads((s) => ({
+                              ...s,
+                              [note.id]: !s[note.id],
+                            }))
+                          }
+                        >
+                          {expandedThreads[note.id]
+                            ? `Hide replies (${note.replies.length})`
+                            : `View replies (${note.replies.length})`}
+                        </Button>
+                      ) : (
+                        <span className="text-[12px] text-gray-500">
+                          0 replies
+                        </span>
+                      )}
                     </div>
+
                     <Button
                       type="primary"
                       className="bg-[#2d7a42] hover:bg-[#235e33] border-none px-6 rounded-lg font-semibold h-9 shadow-sm"
                       onClick={() => {
                         setReplyForNoteId(note.id);
                         setReplyBody("");
+                        setExpandedThreads((s) => ({ ...s, [note.id]: true }));
                       }}
                     >
                       Reply
@@ -452,80 +493,121 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
                   </div>
                 </div>
 
-                {note.replies?.length > 0 && (
-                  <div className="px-5 pb-5">
-                    <div className="mt-4 space-y-3">
-                      {note.replies.map((r) => (
-                        <div
-                          key={r.id}
-                          className="p-4 rounded-xl border border-gray-100 bg-gray-50"
+                {note.replies?.length > 0 && expandedThreads[note.id] && (
+                  <div className="mt-5">
+                    <div className="rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] overflow-hidden">
+                      <div className="px-5 py-3 flex items-center justify-between">
+                        <div className="text-[12px] font-semibold text-gray-700">
+                          Replies
+                          <span className="ml-2 text-[11px] font-semibold px-2 py-0.5 rounded-full border border-[#E5E7EB] bg-white text-gray-600">
+                            {note.replies.length}
+                          </span>
+                        </div>
+                        <Button
+                          type="text"
+                          className="text-gray-500 hover:text-gray-800"
+                          onClick={() =>
+                            setExpandedThreads((s) => ({
+                              ...s,
+                              [note.id]: false,
+                            }))
+                          }
                         >
-                          <div className="flex items-center justify-between mb-1">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <Avatar
-                                size={32}
-                                className="bg-white border border-[#CFCACF] text-gray-700 font-semibold"
-                              >
-                                {getInitials(r.author?.name)}
-                              </Avatar>
-                              <div className="min-w-0 ">
-                                <div className="text-[13px] font-semibold text-gray-800 truncate">
-                                  {r.author?.name || "Unknown"}
-                                </div>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  <span className="text-[11px] text-gray-400 font-medium">
-                                    {formatTime(r.createdAt)}
-                                  </span>
+                          Hide
+                        </Button>
+                      </div>
+
+                      <div className="px-5 pb-5">
+                        <div className="relative mt-2">
+                          <div className="absolute left-[18px] top-0 bottom-0 w-px bg-[#E5E7EB]" />
+
+                          <div className="space-y-3">
+                            {note.replies.map((r) => (
+                              <div key={r.id} className="relative pl-11">
+                                <span className="absolute left-[14px] top-[18px] h-2.5 w-2.5 rounded-full bg-white border border-[#D1D5DB]" />
+
+                                <div className="p-4 rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_1px_0_rgba(0,0,0,0.03)]">
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <Avatar
+                                        size={32}
+                                        className="bg-[#F3F4F6] border border-[#E5E7EB] text-gray-700 font-semibold"
+                                      >
+                                        {getInitials(r.author?.name)}
+                                      </Avatar>
+                                      <div className="min-w-0">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                          <div className="text-[13px] font-semibold text-gray-900 truncate">
+                                            {r.author?.name || "Unknown"}
+                                          </div>
+                                          <span className="text-[11px] text-gray-400 font-medium">
+                                            {formatTime(r.createdAt)}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {canMutate(r) && (
+                                      <Dropdown
+                                        trigger={["click"]}
+                                        placement="bottomRight"
+                                        menu={{
+                                          items: [
+                                            {
+                                              key: "edit",
+                                              label: "Edit",
+                                              onClick: () => openEdit(r),
+                                            },
+                                            {
+                                              key: "delete",
+                                              label: "Delete",
+                                              onClick: () => confirmDelete(r.id),
+                                            },
+                                          ],
+                                        }}
+                                      >
+                                        <Button
+                                          variant="outlined"
+                                          icon={<MoreOutlined className="text-lg" />}
+                                          className="border-[#E5E7EB] text-gray-400 rounded-lg flex items-center justify-center w-9 h-9 hover:text-gray-700 hover:border-gray-300 bg-white"
+                                        />
+                                      </Dropdown>
+                                    )}
+                                  </div>
+
+                                  <div className="mt-3">
+                                    {renderBodyHtml(r.body)}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Dropdown
-                                trigger={["click"]}
-                                placement="bottomRight"
-                                menu={{
-                                  items: [
-                                    {
-                                      key: "edit",
-                                      label: "Edit",
-                                      onClick: () => openEdit(r),
-                                    },
-                                    {
-                                      key: "delete",
-                                      label: "Delete",
-                                      onClick: () => confirmDelete(r.id),
-                                    },
-                                  ],
-                                }}
-                              >
-                                <Button
-                                  variant="outlined"
-                                  icon={<MoreOutlined className="text-lg" />}
-                                  className="border-[#CFCACF] text-gray-400 rounded-lg flex items-center justify-center w-9 h-9 hover:text-gray-700 hover:border-gray-300 bg-white"
-                                />
-                              </Dropdown>
-                            </div>
+                            ))}
                           </div>
-                          <div className="mt-3">{renderBodyHtml(r.body)}</div>
                         </div>
-                      ))}
+                      </div>
                     </div>
                   </div>
                 )}
 
                 {replyForNoteId === note.id && (
-                  <div className="px-5 pb-5">
-                    <div className="p-4 rounded-2xl border border-[#CFCACF] bg-white">
-                      <div className="text-[12px] font-semibold text-gray-700 mb-2">
-                        Reply
+                  <div className="mt-5">
+                   
+                   <div className="mb-3">
+                    <h2 className="text-[15px] font-semibold text-[#111827] leading-snug">
+                    Replying to {note.author?.name || "this thread"}
+                   </h2>
+                   <p className="text-[12px] text-gray-500 mt-1"> Keep it short and specific.</p>
+                   </div>
+ 
+                      <div className="quill-wrapper">
+                        <ReactQuill
+                          theme="snow"
+                          value={replyBody}
+                          onChange={setReplyBody}
+                          modules={modules}
+                          placeholder="Write a reply..."
+                        />
                       </div>
-                      <Input.TextArea
-                        value={replyBody}
-                        onChange={(e) => setReplyBody(e.target.value)}
-                        placeholder="Write a reply..."
-                        autoSize={{ minRows: 3, maxRows: 6 }}
-                        className="rounded-lg"
-                      />
+
                       <div className="flex justify-end gap-2 mt-3">
                         <Button
                           className="border-gray-300 text-gray-600 rounded-lg h-9"
@@ -546,7 +628,6 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
                         </Button>
                       </div>
                     </div>
-                  </div>
                 )}
               </div>
             </div>
@@ -602,22 +683,8 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
           </div>
 
           <style>{`
-            .quill-wrapper .ql-toolbar {
-              border-top-left-radius: 8px;
-              border-top-right-radius: 8px;
-              background-color: #f9fafb;
-              border-color: #d1d5db;
-            }
             .quill-wrapper .ql-container {
-              border-bottom-left-radius: 8px;
-              border-bottom-right-radius: 8px;
               height: 180px;
-              font-size: 15px;
-              border-color: #d1d5db;
-            }
-            .quill-wrapper .ql-editor.ql-blank::before {
-              color: #9ca3af;
-              font-style: normal;
             }
           `}</style>
         </div>
