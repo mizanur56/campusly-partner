@@ -18,6 +18,7 @@ import {
   usePaySelectedApplicationsMutation,
   useClaimCommissionMutation,
 } from "../../redux/features/payments/partnerPaymentsApi";
+import { config } from "../../config";
 
 const { Dragger } = Upload;
 
@@ -68,6 +69,14 @@ interface CommissionTransactionRecord {
 }
 
 export default function Payments() {
+  const resolveMediaUrl = (raw?: string | null) => {
+    if (!raw) return "";
+    if (/^https?:\/\//i.test(raw)) return raw;
+    const base = config.image_access_url || "";
+    if (!base) return raw;
+    return `${base}${raw}`;
+  };
+
   const topTab: TopTabKey = "commission";
   const [purchaseTab, setPurchaseTab] =
     useState<PurchaseTabKey>("applications");
@@ -470,11 +479,20 @@ export default function Payments() {
     {
       title: "Receipt",
       key: "receipt",
-      render: () => (
-        <button type="button" className="payments-link-button">
-          Download
-        </button>
-      ),
+      render: (_: unknown, record) => {
+        const fileUrl = resolveMediaUrl(record.raw?.receiptUrl);
+        if (!fileUrl) return <span className="text-xs text-gray-400">-</span>;
+        return (
+          <a
+            href={fileUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="payments-link-button"
+          >
+            Download
+          </a>
+        );
+      },
     },
   ];
 
@@ -583,11 +601,20 @@ export default function Payments() {
       {
         title: "Receipt",
         key: "receipt",
-        render: () => (
-          <button type="button" className="payments-link-button">
-            Download
-          </button>
-        ),
+        render: (_: unknown, record) => {
+          const fileUrl = resolveMediaUrl(record.raw?.receiptUrl);
+          if (!fileUrl) return <span className="text-xs text-gray-400">-</span>;
+          return (
+            <a
+              href={fileUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="payments-link-button"
+            >
+              Download
+            </a>
+          );
+        },
       },
     ];
 
