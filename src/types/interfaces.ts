@@ -11,6 +11,8 @@ export type NavItem = {
   path?: string;
   subItems?: SubMenuItem[];
   action?: string;
+  /** Unread count badge (e.g. chat) */
+  badgeCount?: number;
 };
 
 export interface IPermission {

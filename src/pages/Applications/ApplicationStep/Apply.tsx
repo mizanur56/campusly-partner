@@ -351,15 +351,24 @@ const DocumentCard: React.FC<{
   );
 };
 
+export type ApplyStepProps = {
+  applicationApiData: any;
+  steps: any[];
+  embedded?: boolean;
+  autoOpen?: boolean;
+  stageUnlocked?: boolean;
+};
+
 /* ================= Main Component ================= */
-const Apply: React.FC = () => {
+export const ApplyStep: React.FC<ApplyStepProps> = ({
+  applicationApiData,
+  steps: _steps,
+  embedded = false,
+  autoOpen = false,
+  stageUnlocked = true,
+}) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-
-  const { applicationApiData } = useOutletContext<{
-    applicationApiData: any;
-    steps: any[];
-  }>();
 
   const { data, refetch } = useGetAllInvoicePaymentsQuery([]);
   const [createMedia] = useCreateMediaMutation();
@@ -595,6 +604,32 @@ const Apply: React.FC = () => {
 
   const isAllRequiredCompleted = sections.every((sec) => sec.isCompleted);
 
+  const didInitExpand = React.useRef(false);
+  React.useEffect(() => {
+    if (!embedded) return;
+    if (didInitExpand.current) return;
+    setIsExpanded(Boolean(autoOpen) && !isAllRequiredCompleted);
+    didInitExpand.current = true;
+  }, [autoOpen, embedded, isAllRequiredCompleted]);
+
+  React.useEffect(() => {
+    if (!embedded || stageUnlocked) return;
+    setIsExpanded(false);
+  }, [embedded, stageUnlocked]);
+
+  const expandToggleClass =
+    embedded && !stageUnlocked
+      ? "cursor-not-allowed opacity-50"
+      : "cursor-pointer";
+
+  const stageLockedVisual = embedded && !stageUnlocked;
+  const stageCardClass = stageLockedVisual
+    ? "border border-[#D1D5DB] rounded-lg overflow-hidden bg-[#F4F6F5]"
+    : "border border-[#C7CACF] rounded-lg overflow-hidden";
+  const stageHeaderClass = stageLockedVisual
+    ? "bg-[#EEF2EF]"
+    : "bg-[#E9F2EB]";
+
   const handleFileUpload = async (categoryId: string, file: File) => {
     setUploadingCategoryId(categoryId);
     try {
@@ -638,17 +673,29 @@ const Apply: React.FC = () => {
 
   return (
     <>
-      <div className="border border-[#C7CACF] rounded-lg overflow-hidden">
-        <div className="bg-[#E9F2EB] p-6 flex items-center justify-between">
+      <div className={stageCardClass}>
+        <div
+          className={`${stageHeaderClass} p-6 flex items-center justify-between`}
+        >
           <div>
-            <h3 className="text-[20px] font-semibold text-[#20242A]">Apply</h3>
+            <h3 className="text-[20px] font-semibold text-[#20242A]">
+              Stage: 2 Apply
+            </h3>
             <p className="text-[14px] text-[#4B5563]">
-              We will review your documents and forward them to the institute.
+              Review your application package and upload any required receipts.
             </p>
           </div>
           <div
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="cursor-pointer"
+            title={
+              embedded && !stageUnlocked
+                ? "Complete the previous stage first"
+                : undefined
+            }
+            onClick={() => {
+              if (embedded && !stageUnlocked && !isExpanded) return;
+              setIsExpanded(!isExpanded);
+            }}
+            className={expandToggleClass}
           >
             {isExpanded ? <UpOutlined /> : <DownOutlined />}
           </div>
@@ -743,24 +790,34 @@ const Apply: React.FC = () => {
         )}
       </div>
 
-      <div className="flex justify-end gap-3 pt-4">
-        <button
-          onClick={() => navigate(`/applications/${id}/admission`)}
-          className="px-6 cursor-pointer py-2 border border-[#D1D5DB] rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50"
-        >
-          Previous
-        </button>
-        <PrimaryButton
-          text="Next"
-          disabled={!isAllRequiredCompleted}
-          className={
-            !isAllRequiredCompleted ? "opacity-50 cursor-not-allowed" : ""
-          }
-          onClick={() => navigate(`/applications/${id}/checklist`)}
-        />
-      </div>
+      {!embedded && (
+        <div className="flex justify-end gap-3 pt-4">
+          <button
+            onClick={() => navigate(`/applications/${id}/admission`)}
+            className="px-6 cursor-pointer py-2 border border-[#D1D5DB] rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50"
+          >
+            Previous
+          </button>
+          <PrimaryButton
+            text="Next"
+            disabled={!isAllRequiredCompleted}
+            className={
+              !isAllRequiredCompleted ? "opacity-50 cursor-not-allowed" : ""
+            }
+            onClick={() => navigate(`/applications/${id}/checklist`)}
+          />
+        </div>
+      )}
     </>
   );
+};
+
+const Apply: React.FC = () => {
+  const { applicationApiData, steps } = useOutletContext<{
+    applicationApiData: any;
+    steps: any[];
+  }>();
+  return <ApplyStep applicationApiData={applicationApiData} steps={steps} />;
 };
 
 export default Apply;

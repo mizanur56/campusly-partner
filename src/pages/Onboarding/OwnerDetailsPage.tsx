@@ -1,7 +1,14 @@
 import { Form } from "antd";
 import { Button } from "../../components/ui/button";
 import OnboardingFormLayout from "./OnboardingFormLayout";
-import { FormInput, PhoneInput, phoneInputStyle, phoneButtonStyle } from "./sharedFormProps";
+import {
+  FormInput,
+  PhoneInput,
+  phoneButtonStyle,
+  phoneInputGetValueFromEvent,
+  phoneInputStyle,
+  PHONE_BD_INITIAL_VALUE,
+} from "./sharedFormProps";
 
 const formItemLayout = {
   className:
@@ -24,6 +31,7 @@ export default function OwnerDetailsPage() {
         form={form}
         layout="vertical"
         onFinish={onFinish}
+        initialValues={{ mobileNumber: PHONE_BD_INITIAL_VALUE }}
         {...formItemLayout}
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -51,9 +59,11 @@ export default function OwnerDetailsPage() {
             name="mobileNumber"
             label="Mobile Number"
             rules={[{ required: true, message: "Required" }]}
+            getValueFromEvent={phoneInputGetValueFromEvent}
           >
             <PhoneInput
-              country="de"
+              country="bd"
+              disableCountryGuess
               inputStyle={phoneInputStyle}
               buttonStyle={phoneButtonStyle}
             />
@@ -89,7 +99,7 @@ export default function OwnerDetailsPage() {
           />
         </div>
         <div className="flex justify-end gap-3 mt-8">
-          <Button as="link" to="/onboarding/director" variant="primary" size="sm">
+          <Button className="cursor-pointer" as="link" to="/onboarding/director" variant="primary" size="sm">
             Next →
           </Button>
         </div>

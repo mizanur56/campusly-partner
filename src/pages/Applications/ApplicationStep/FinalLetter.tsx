@@ -7,14 +7,22 @@ import PrimaryButton from "../../../components/common/Button/PrimaryButton";
 import { FaRegCircle } from "react-icons/fa";
 import { BsFileEarmarkBarGraph } from "react-icons/bs";
 
-const FinalLetter: React.FC = () => {
+export type FinalLetterStepProps = {
+  applicationApiData: any;
+  embedded?: boolean;
+  autoOpen?: boolean;
+  stageUnlocked?: boolean;
+};
+
+export const FinalLetterStep: React.FC<FinalLetterStepProps> = ({
+  applicationApiData,
+  embedded = false,
+  autoOpen = false,
+  stageUnlocked = true,
+}) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = React.useState(true);
-
-  const { applicationApiData } = useOutletContext<{
-    applicationApiData: any;
-  }>();
 
   // এপিআই থেকে ডাটা নেওয়া হচ্ছে
   const loaUrl = applicationApiData?.acceptanceLetter;
@@ -94,23 +102,58 @@ const FinalLetter: React.FC = () => {
 
   const isAllRequiredCompleted = sections.every((section) => !!section.url);
 
+  const didInitExpand = React.useRef(false);
+  React.useEffect(() => {
+    if (!embedded) return;
+    if (didInitExpand.current) return;
+    setIsExpanded(Boolean(autoOpen) && !isAllRequiredCompleted);
+    didInitExpand.current = true;
+  }, [autoOpen, embedded, isAllRequiredCompleted]);
+
+  React.useEffect(() => {
+    if (!embedded || stageUnlocked) return;
+    setIsExpanded(false);
+  }, [embedded, stageUnlocked]);
+
+  const expandToggleClass =
+    embedded && !stageUnlocked
+      ? "cursor-not-allowed opacity-50"
+      : "cursor-pointer";
+
+  const stageLockedVisual = embedded && !stageUnlocked;
+  const stageCardClass = stageLockedVisual
+    ? "border border-[#D1D5DB] rounded-lg overflow-hidden bg-[#F4F6F5]"
+    : "border border-[#C7CACF] rounded-lg overflow-hidden";
+  const stageHeaderClass = stageLockedVisual
+    ? "bg-[#EEF2EF]"
+    : "bg-[#E9F2EB]";
+
   return (
     <>
-      <div className="border border-[#C7CACF] rounded-lg overflow-hidden">
+      <div className={stageCardClass}>
         {/* Header Section */}
-        <div className="bg-[#E9F2EB] p-6 flex items-center justify-between">
+        <div
+          className={`${stageHeaderClass} p-6 flex items-center justify-between`}
+        >
           <div>
             <h3 className="text-[20px] font-semibold text-[#20242A]">
-              Final Letter
+              Stage: 4 Final Letter
             </h3>
             <p className="text-[14px] text-[#4B5563]">
-              Your documents has been submitted, your documents are under
-              review, we will send it to the college.
+              Upload the acceptance letter and money receipt (if available).
             </p>
           </div>
           <div
-            onClick={() => setIsExpanded((prev) => !prev)}
-            className="cursor-pointer"
+            title={
+              embedded && !stageUnlocked
+                ? "Complete the previous stage first"
+                : undefined
+            }
+            onClick={() => {
+              if (embedded && !stageUnlocked && !isExpanded) return;
+              setIsExpanded((prev) => !prev);
+            }}
+            className={expandToggleClass}
           >
             {isExpanded ? (
               <UpOutlined className="text-[#4B5563]" />
@@ -185,29 +228,31 @@ const FinalLetter: React.FC = () => {
       </div>
 
       {/* Footer Buttons */}
-      <div className="flex justify-end gap-3 pt-4">
-        <button
-          onClick={() => navigate(`/applications/${id}/checklist`)}
-          className="px-6 cursor-pointer py-2 border border-[#D1D5DB] rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50 transition"
-        >
-          Previous
-        </button>
-        {/* <PrimaryButton
-          text="Next"
-          onClick={() => navigate(`/applications/${id}/embassy`)}
-        /> */}
-
-        <div className={!isAllRequiredCompleted ? "cursor-not-allowed" : ""}>
-          <PrimaryButton
-            text="Next"
-            disabled={!isAllRequiredCompleted}
-            className={`${!isAllRequiredCompleted ? "opacity-50 pointer-events-none" : ""}`}
-            onClick={() => navigate(`/applications/${id}/embassy`)}
-          />
+      {!embedded && (
+        <div className="flex justify-end gap-3 pt-4">
+          <button
+            onClick={() => navigate(`/applications/${id}/checklist`)}
+            className="px-6 cursor-pointer py-2 border border-[#D1D5DB] rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50 transition"
+          >
+            Previous
+          </button>
+          <div className={!isAllRequiredCompleted ? "cursor-not-allowed" : ""}>
+            <PrimaryButton
+              text="Next"
+              disabled={!isAllRequiredCompleted}
+              className={`${!isAllRequiredCompleted ? "opacity-50 pointer-events-none" : ""}`}
+              onClick={() => navigate(`/applications/${id}/embassy`)}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
+};
+
+const FinalLetter: React.FC = () => {
+  const { applicationApiData } = useOutletContext<{ applicationApiData: any }>();
+  return <FinalLetterStep applicationApiData={applicationApiData} />;
 };
 
 export default FinalLetter;

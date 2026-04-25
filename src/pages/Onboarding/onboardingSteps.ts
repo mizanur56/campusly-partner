@@ -7,7 +7,7 @@ export const STEP_LIST_FOR_STEPPER = [
   { path: "/onboarding/contact", label: "Main Contact Details" },
   { path: "/onboarding/compliance", label: "Regular Compliance" },
   { path: "/onboarding/declaration", label: "Declaration" },
-  { path: null, label: "Contract" },
+  { path: null, label: "Submitted" },
 ];
 
 export const STEP_TITLES: Record<number, string> = {
@@ -16,7 +16,7 @@ export const STEP_TITLES: Record<number, string> = {
   2: "Main Contact Details",
   3: "Regular Compliance",
   4: "Declaration",
-  5: "Contract",
+  5: "",
   6: "Complete",
 };
 
@@ -25,7 +25,7 @@ export const STEP_SUBTITLES: Record<number, string> = {
   1: "Enter essential director information to get started.",
   2: "Enter essential director information to get started.",
   3: "Please upload your ID proof, which will be verified by our legal team",
-  4: "",
+  4: "I confirm that all the information provided in this application is true and accurate. I understand that submission of this form does not guarantee approval as an agent for Campus Transfer Ltd.",
   5: "",
   6: "Your partnership has been approved and activated.",
 };

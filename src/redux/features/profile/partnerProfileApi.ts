@@ -2,6 +2,8 @@ import { baseApi } from "../../api/baseApi";
 
 export interface Advisor {
   id: string;
+  /** Staff User id (cuid) for chat `otherUserId`; prefer this when the API sends it */
+  userId?: string;
   name: string;
   email: string;
   phone: string | null;

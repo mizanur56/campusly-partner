@@ -7,11 +7,11 @@ import {
 } from "@reduxjs/toolkit/query/react";
 import { toast } from "react-toastify";
 import { config } from "../../config";
-import { refreshAuthSession } from "../../lib/authSessionRefresh";
 import { clearAuthLocalStorage } from "../../lib/authLocalStorage";
+import { refreshAuthSession } from "../../lib/authSessionRefresh";
+import { getPortalLoginUrl } from "../../lib/portalRouting";
 import { logout } from "../features/auth/authSlice";
 import { RootState } from "../features/store";
-import { getPortalLoginUrl } from "../../lib/portalRouting";
 
 // ======================
 // IP Fetch
@@ -119,8 +119,7 @@ function handle401Logout(
         typeof (result.error.data as any).error === "object" &&
         "message" in (result.error.data as any).error
       ) {
-        errorMessage =
-          (result.error.data as any).error.message || errorMessage;
+        errorMessage = (result.error.data as any).error.message || errorMessage;
       }
     }
   }
@@ -190,7 +189,7 @@ const baseQueryWithRefreshToken: BaseQueryFn<
               typeof result.error.data === "object" &&
               "message" in result.error.data
               ? (result.error.data as { message?: string }).message ||
-                "Not found."
+                  "Not found."
               : "Not found.",
           );
         }
@@ -248,6 +247,7 @@ export const baseApi = createApi({
     "countryDocuments",
     "search",
     "applications",
+    "applicationNotes",
     "invoices",
     "partnerOnboarding",
     "partnerProfile",
@@ -258,6 +258,11 @@ export const baseApi = createApi({
     "partnerTasks",
     "hotOffers",
     "studentProfile",
+    "chatConversations",
+    "chatMessages",
+    "chatUnread",
+    "announcements",
+    "chatPartnerAdvisor",
     "Notification",
   ],
   endpoints: () => ({}),

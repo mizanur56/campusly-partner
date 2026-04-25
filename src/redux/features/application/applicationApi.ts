@@ -4,8 +4,7 @@ const applicationApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     createApplication: builder.mutation({
       query: (info) => ({
-        // Partner portal: submit application via partner-specific endpoint
-        url: "/partners/applications",
+        url: "/applications/partner",
         method: "POST",
         body: info,
       }),
@@ -20,7 +19,7 @@ const applicationApi = baseApi.injectEndpoints({
           search = "",
         } = params || {};
         return {
-          url: "/partners/applications",
+          url: "/applications/partner",
           method: "GET",
           params: { page, limit, status, search },
         };
@@ -29,16 +28,14 @@ const applicationApi = baseApi.injectEndpoints({
     }),
     getApplicationById: builder.query({
       query: (id) => ({
-        // Partner portal: get single application via partner-scoped endpoint
-        url: `/partners/applications/${id}`,
+        url: `/applications/${id}`,
         method: "GET",
       }),
       providesTags: ["applications"],
     }),
     applicationDocumentUpload: builder.mutation({
       query: ({ id, ...info }) => ({
-        // Partner portal: update application via partner-scoped endpoint
-        url: `/partners/applications/${id}`,
+        url: `/applications/partner/${id}`,
         method: "PATCH",
         body: info,
       }),
@@ -72,6 +69,82 @@ const applicationApi = baseApi.injectEndpoints({
       },
       providesTags: ["applications", "invoices"],
     }),
+
+    // ============================
+    // Application Notes (comments)
+    // ============================
+    getApplicationNotes: builder.query({
+      query: (applicationId: string) => ({
+        url: `/applications/${applicationId}/notes`,
+        method: "GET",
+      }),
+      providesTags: (_r, _e, applicationId) => [
+        { type: "applicationNotes", id: applicationId },
+      ],
+    }),
+
+    createApplicationNote: builder.mutation({
+      query: ({
+        applicationId,
+        body,
+      }: {
+        applicationId: string;
+        body: { title?: string; body: string };
+      }) => ({
+        url: `/applications/${applicationId}/notes`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["applicationNotes"],
+    }),
+
+    replyToApplicationNote: builder.mutation({
+      query: ({
+        applicationId,
+        noteId,
+        body,
+      }: {
+        applicationId: string;
+        noteId: string;
+        body: { body: string };
+      }) => ({
+        url: `/applications/${applicationId}/notes/${noteId}/replies`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["applicationNotes"],
+    }),
+
+    updateApplicationNote: builder.mutation({
+      query: ({
+        applicationId,
+        noteId,
+        body,
+      }: {
+        applicationId: string;
+        noteId: string;
+        body: { title?: string | null; body?: string };
+      }) => ({
+        url: `/applications/${applicationId}/notes/${noteId}`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["applicationNotes"],
+    }),
+
+    deleteApplicationNote: builder.mutation({
+      query: ({
+        applicationId,
+        noteId,
+      }: {
+        applicationId: string;
+        noteId: string;
+      }) => ({
+        url: `/applications/${applicationId}/notes/${noteId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["applicationNotes"],
+    }),
   }),
 });
 
@@ -82,4 +155,11 @@ export const {
   useApplicationDocumentUploadMutation,
   useSubmitPaymentReceiptMutation,
   useGetAllInvoicePaymentsQuery,
+  useGetApplicationNotesQuery,
+  useCreateApplicationNoteMutation,
+  useReplyToApplicationNoteMutation,
+  useUpdateApplicationNoteMutation,
+  useDeleteApplicationNoteMutation,
 } = applicationApi;
+
+export { applicationApi };

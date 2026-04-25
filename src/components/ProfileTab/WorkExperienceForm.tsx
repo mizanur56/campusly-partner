@@ -44,7 +44,8 @@ const WorkExperienceForm = ({
   const [certificate, setCertificate] = useState<{ url: string; name: string; file?: File } | null>(null);
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [hasExperience, setHasExperience] = useState(true);
+  // Default OFF when no saved work-experience document exists.
+  const [hasExperience, setHasExperience] = useState(false);
 
   const workExperienceDoc = (profile as { documents?: { documentRelation?: { name?: string }; document?: string; studentDocumentFields?: { fieldId: string; result: string; documentField?: { name?: string } }[] }[] })?.documents?.find((d: any) =>
     d.documentRelation?.name?.toLowerCase().includes("work experience"),
@@ -69,10 +70,22 @@ const WorkExperienceForm = ({
       });
       form.setFieldsValue(initialValues);
     } else {
-      setHasExperience(true);
-      if (canEdit) setIsEditing(true);
+      setHasExperience(false);
+      setIsEditing(false);
+      setCertificate(null);
+      form.resetFields();
     }
   }, [workExperienceDoc, form, canEdit]);
+
+  // If user enables the section manually (no saved doc), start in edit mode.
+  useEffect(() => {
+    if (workExperienceDoc) return;
+    if (!hasExperience) {
+      setIsEditing(false);
+      return;
+    }
+    if (canEdit) setIsEditing(true);
+  }, [canEdit, hasExperience, workExperienceDoc]);
 
   const getFileType = (file: { url?: string; name?: string }) => {
     const url = file?.url || file?.name || "";
@@ -166,20 +179,71 @@ const WorkExperienceForm = ({
                   type="file"
                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                   className="hidden"
+                  style={{ display: "none" }}
+                  tabIndex={-1}
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) setCertificate({ url: URL.createObjectURL(file), name: file.name, file });
                     e.target.value = "";
                   }}
                 />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={!canEdit || !isEditing}
-                  className="px-4 py-2 border border-[#C7CACF] rounded-lg text-[#237D3B] hover:border-[#237D3B] cursor-pointer"
+                <div
+                  className={`w-full rounded-2xl border border-dashed p-10 text-center transition-colors ${
+                    !canEdit || !isEditing
+                      ? "border-gray-200 bg-gray-50/30 opacity-70"
+                      : "border-gray-200 bg-white hover:border-[#237D3B]/40 hover:bg-[#F4FBF6]"
+                  }`}
                 >
-                  Upload Work Experience Certificate
-                </button>
+                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#EAF7EE]">
+                    <svg
+                      width="22"
+                      height="22"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M12 3v10m0-10 4 4m-4-4-4 4"
+                        stroke="#237D3B"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M4 14v4a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-4"
+                        stroke="#237D3B"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
+
+                  <p className="text-[16px] font-semibold text-[#237D3B]">
+                    Upload Work Experience Certificate
+                  </p>
+                  <p className="mt-1 text-sm text-gray-500">
+                    or click to browse
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={!canEdit || !isEditing}
+                    className={`mt-5 inline-flex items-center justify-center rounded-lg px-6 py-2 text-sm font-semibold transition-colors ${
+                      !canEdit || !isEditing
+                        ? "cursor-not-allowed bg-gray-200 text-gray-500"
+                        : "cursor-pointer bg-[#237D3B] text-white hover:bg-[#19592A]"
+                    }`}
+                  >
+                    Choose file
+                  </button>
+
+                  <p className="mt-4 text-xs text-gray-500">
+                    Supported formats: PDF, JPG, PNG (max. 10MB)
+                  </p>
+                </div>
               </div>
             ) : (
               <div className="border rounded-lg p-4 bg-gray-50 flex items-center gap-4">

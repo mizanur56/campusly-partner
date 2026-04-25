@@ -458,6 +458,21 @@ layer(base);
   @apply btn-base border border-neutral-200 bg-white text-neutral-800 shadow-sm hover:bg-neutral-50 hover:border-neutral-300 hover:shadow active:bg-neutral-100 active:scale-[0.98] dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700/80;
 }
 
+/* Force pointer cursor for all buttons (even disabled) */
+button,
+[type="button"],
+[type="submit"],
+[type="reset"] {
+  cursor: pointer !important;
+}
+button:disabled,
+[type="button"]:disabled,
+[type="submit"]:disabled,
+[type="reset"]:disabled,
+.btn-base:disabled {
+  cursor: pointer !important;
+}
+
 /* Ant Design button — align with root */
 .ant-btn {
   font-weight: 300 !important;

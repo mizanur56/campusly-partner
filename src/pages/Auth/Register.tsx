@@ -1,4 +1,4 @@
-import { LockOutlined, MailOutlined, UserOutlined } from "@ant-design/icons";
+import { MailOutlined, UserOutlined } from "@ant-design/icons";
 import { Button, Checkbox, Form, Input, Select, Typography } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -9,11 +9,11 @@ import { persistAuthLocalStorage } from "../../lib/authLocalStorage";
 import { useRegisterMutation } from "../../redux/features/auth/authApi";
 import { setUser } from "../../redux/features/auth/authSlice";
 import { useAppDispatch } from "../../redux/features/hooks";
-import { Button as UIButton } from "../../components/ui/button";
 import {
   getPortalRoleMismatchMessage,
   isPartnerPortalSession,
 } from "../../lib/portalRouting";
+import { setPostRegistrationWelcomeSession } from "../../lib/registrationWelcomeSession";
 
 const { Link: AntLink } = Typography;
 
@@ -29,7 +29,29 @@ interface Step1Values {
 interface Step2Values {
   password: string;
   confirmPassword: string;
+  agreePasswordTerms: boolean;
 }
+
+const passwordStrengthRules = [
+  { required: true, message: "Please enter your password!" },
+  { min: 8, message: "Password must be at least 8 characters." },
+  {
+    pattern: /[a-z]/,
+    message: "Include at least one lowercase letter.",
+  },
+  {
+    pattern: /[A-Z]/,
+    message: "Include at least one uppercase letter.",
+  },
+  {
+    pattern: /\d/,
+    message: "Include at least one number.",
+  },
+  {
+    pattern: /[^A-Za-z0-9]/,
+    message: "Include at least one symbol.",
+  },
+];
 
 const countryOptions = [
   { value: "bangladesh", label: "Bangladesh" },
@@ -83,9 +105,11 @@ const Register = () => {
           return;
         }
         persistAuthLocalStorage(userData, res.data.token);
+        setPostRegistrationWelcomeSession(step1.contactPersonName);
         dispatch(setUser({ user: userData, token: res.data.token }));
         toast.success("Registration successful! Welcome.");
-        navigate("/", { replace: true });
+        window.location.replace(`${window.location.origin}/register/welcome`);
+        return;
       } else {
         toast.success("Registration successful! Please log in.");
         navigate("/login", { replace: true });
@@ -105,31 +129,86 @@ const Register = () => {
     if (step === 1 && step1Values) {
       form.setFieldsValue(step1Values);
     }
+    if (step === 2) {
+      form.setFieldsValue({
+        password: "",
+        confirmPassword: "",
+        agreePasswordTerms: false,
+      });
+    }
   }, [step, step1Values, form]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-slate-50 px-4 sm:px-6">
+    <div
+      className={`min-h-screen flex items-center justify-center px-4 sm:px-6 ${
+        step === 1
+          ? "bg-gradient-to-br from-primary-50 via-white to-slate-50"
+          : ""
+      }`}
+    >
       <PageMeta
         title="Partner Registration | Campus Transfer"
         description="Recruitment Partner Registration - Campus Transfer Partner Dashboard"
       />
 
-      <div className="flex w-full max-w-[980px] flex-col overflow-hidden rounded-3xl lg:flex-row">
-        <AuthIllustration />
+      <div
+        className={`flex w-full ${
+          step === 1
+            ? "max-w-[980px] flex-col overflow-hidden rounded-3xl lg:flex-row"
+            : "max-w-lg flex-col"
+        }`}
+      >
+        {step === 1 && <AuthIllustration />}
 
-        <div className="flex w-full lg:w-1/2 items-center justify-center py-8 sm:py-10 lg:py-12 lg:min-h-[520px]">
-          <div className="w-full max-w-[563px] px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col rounded-3xl bg-white p-6 shadow-sm">
-              <div className="mb-5">
-                <h1 className="mb-1 text-xl font-semibold text-neutral-900">
-                  Partner Registration
-                </h1>
-                <p className="text-sm text-neutral-500">
-                  {step === 1
-                    ? "Enter your business details to get started"
-                    : "Set your password to complete registration"}
-                </p>
-              </div>
+        <div
+          className={`flex w-full items-center justify-center py-8 sm:py-10 lg:py-12 lg:min-h-[520px] ${
+            step === 1 ? "lg:w-1/2" : ""
+          }`}
+        >
+          <div
+            className={`w-full px-4 sm:px-6 lg:px-8 ${
+              step === 1 ? "max-w-[563px]" : "max-w-lg"
+            }`}
+          >
+            <div
+              className={`flex flex-col p-6 ${
+                step === 1 ? "rounded-3xl bg-[#FFFFFF] border border-[#C7CACF]" : ""
+              }`}
+            >
+              {step === 1 ? (
+                <div className="mb-5">
+                  <h1 className="mb-1 text-xl font-semibold text-neutral-900">
+                    Partner Registration
+                  </h1>
+                  <p className="text-sm text-neutral-500">
+                    Enter your business details to get started
+                  </p>
+                </div>
+              ) : (
+                <div className="mb-6 text-left">
+                  <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-[26px]">
+                    Hi {step1Values?.contactPersonName?.trim() || "there"}, please
+                    set your password
+                  </h1>
+                  <p className="mt-4 text-sm leading-relaxed text-neutral-600">
+                    Create a secure password for your Campus Transfer account. Your
+                    secure password should meet the following criteria:
+                  </p>
+                  <ul className="mt-4 list-disc space-y-1.5 pl-5 text-[14px] font-medium leading-normal text-[#20242A]">
+                    <li>Minimum of 8 characters</li>
+                    <li>Mix of upper and lowercase letters</li>
+                    <li>At least one number</li>
+                    <li>At least one symbol</li>
+                  </ul>
+                  <button
+                    type="button"
+                    onClick={goBack}
+                    className="mt-4 text-sm font-medium text-primary-600 hover:text-primary-700"
+                  >
+                    ← Back to details
+                  </button>
+                </div>
+              )}
 
               {step === 1 ? (
                 <Form
@@ -201,6 +280,20 @@ const Register = () => {
                       className="rounded-lg"
                     />
                   </Form.Item>
+
+                  {/* <Form.Item
+            name="primaryContactNumber"
+            label="Primary Contact Number"
+            rules={[{ required: true, message: "Required" }]}
+            getValueFromEvent={phoneInputGetValueFromEvent}
+          >
+            <PhoneInput
+              country="bd"
+              disableCountryGuess
+              inputStyle={phoneInputStyle}
+              buttonStyle={phoneButtonStyle}
+            />
+          </Form.Item> */}
 
                   <Form.Item
                     label={
@@ -278,9 +371,9 @@ const Register = () => {
                   <Button
                     type="primary"
                     htmlType="submit"
-                    className="w-full h-10 rounded-lg font-semibold text-sm bg-primary-600 hover:bg-primary-700 border-0"
+                    className="w-full h-10 text-[#E7E7E7] rounded-lg font-semibold text-[16px] bg-primary-600 hover:bg-primary-700 border-0"
                   >
-                    Next – Set Password
+                    Create Account
                   </Button>
                 </Form>
               ) : (
@@ -291,30 +384,41 @@ const Register = () => {
                   onFinish={onStep2Finish}
                   layout="vertical"
                   size="large"
+                  initialValues={{ agreePasswordTerms: false }}
                 >
                   <Form.Item
                     label={
-                      <span className="text-sm font-medium text-neutral-700">
-                        Password
+                      <span className="text-sm font-semibold text-neutral-800">
+                        Email
                       </span>
                     }
-                    name="password"
-                    rules={[
-                      { required: true, message: "Please enter your password!" },
-                      { min: 6, message: "Password must be at least 6 characters!" },
-                    ]}
                   >
-                    <Input.Password
-                      prefix={<LockOutlined className="text-neutral-400" />}
-                      placeholder="Enter password"
-                      className="rounded-lg"
+                    <Input
+                      readOnly
+                      value={step1Values?.businessEmail ?? ""}
+                      className="rounded-lg border-neutral-200 text-neutral-800"
                     />
                   </Form.Item>
 
                   <Form.Item
                     label={
-                      <span className="text-sm font-medium text-neutral-700">
-                        Confirm Password
+                      <span className="text-sm font-semibold text-neutral-800">
+                        Enter New Password
+                      </span>
+                    }
+                    name="password"
+                    rules={passwordStrengthRules}
+                  >
+                    <Input.Password
+                      placeholder="Enter new password"
+                      className="rounded-lg border-neutral-200 bg-white"
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    label={
+                      <span className="text-sm font-semibold text-neutral-800">
+                        Confirm New Password
                       </span>
                     }
                     name="confirmPassword"
@@ -332,30 +436,59 @@ const Register = () => {
                     ]}
                   >
                     <Input.Password
-                      prefix={<LockOutlined className="text-neutral-400" />}
-                      placeholder="Confirm password"
-                      className="rounded-lg"
+                      placeholder="Confirm new password"
+                      className="rounded-lg border-neutral-200"
                     />
                   </Form.Item>
 
-                  <div className="flex gap-3">
-                    <UIButton
-                      type="button"
-                      variant="outline"
-                      onClick={goBack}
-                      className="flex-1 h-10 text-sm font-semibold"
-                    >
-                      Back
-                    </UIButton>
-                    <Button
-                      type="primary"
-                      htmlType="submit"
-                      loading={isLoading}
-                      className="flex-1 h-10 rounded-lg font-semibold text-sm bg-primary-600 hover:bg-primary-700 border-0"
-                    >
-                      Create Account
-                    </Button>
-                  </div>
+                  <Form.Item
+                    name="agreePasswordTerms"
+                    valuePropName="checked"
+                    rules={[
+                      {
+                        validator: (_, value) =>
+                          value
+                            ? Promise.resolve()
+                            : Promise.reject(
+                                new Error(
+                                  "Please agree to the Terms & Conditions and Privacy Policy",
+                                ),
+                              ),
+                      },
+                    ]}
+                  >
+                    <Checkbox className="text-sm text-neutral-700">
+                      I agree to the{" "}
+                      <AntLink
+                        href="https://campustransfer.com/terms"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="!text-primary-600 font-semibold hover:!text-primary-700"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Terms & Conditions
+                      </AntLink>{" "}
+                      and{" "}
+                      <AntLink
+                        href="https://campustransfer.com/privacy"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="!text-primary-600 font-semibold hover:!text-primary-700"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Privacy Policy
+                      </AntLink>
+                    </Checkbox>
+                  </Form.Item>
+
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    loading={isLoading}
+                    className="mt-2 h-12 w-full rounded-lg border-0 bg-[#2d7d46] text-base font-semibold text-white hover:!bg-[#256d3c]"
+                  >
+                    Save and login
+                  </Button>
                 </Form>
               )}
 

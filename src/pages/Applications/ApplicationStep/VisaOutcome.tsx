@@ -11,15 +11,23 @@ import { useApplicationDocumentUploadMutation } from "../../../redux/features/ap
 import { config } from "../../../config";
 import { toast } from "react-toastify";
 
-const VisaOutcome: React.FC = () => {
+export type VisaOutcomeStepProps = {
+  applicationApiData: any;
+  embedded?: boolean;
+  autoOpen?: boolean;
+  stageUnlocked?: boolean;
+};
+
+export const VisaOutcomeStep: React.FC<VisaOutcomeStepProps> = ({
+  applicationApiData,
+  embedded = false,
+  autoOpen = false,
+  stageUnlocked = true,
+}) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = React.useState(true);
   const [uploadingId, setUploadingId] = React.useState<string | null>(null);
-
-  const { applicationApiData } = useOutletContext<{
-    applicationApiData: any;
-  }>();
 
   const [createMedia] = useCreateMediaMutation();
   const [uploadDocument] = useApplicationDocumentUploadMutation();
@@ -104,7 +112,7 @@ const VisaOutcome: React.FC = () => {
             id: "visa_issued",
             subTitle: "Visa Issued",
             category: "visaCopy",
-            description: "Your visa application has been approved",
+            description: "Visa approved by the embassy.",
             docTitle: "Visa Copy",
             docDesc: "Upload your approved visa copy issued by the embassy.",
 
@@ -118,7 +126,7 @@ const VisaOutcome: React.FC = () => {
             category: "visa_rejected",
             subTitle_actual: "Visa Rejected",
             category_actual: "visaRejectedSlip",
-            description: "Your visa application was declined",
+            description: "Visa refused by the embassy.",
             docTitle: "Visa Rejection Slip",
             docDesc:
               "Upload the rejection letter or slip provided by the embassy.",
@@ -135,6 +143,33 @@ const VisaOutcome: React.FC = () => {
   const selectedData =
     sections[0].subSections.find((s) => s.id === selectedSub) || null;
   const isAllRequiredCompleted = !!selectedData?.url;
+
+  const didInitExpand = React.useRef(false);
+  React.useEffect(() => {
+    if (!embedded) return;
+    if (didInitExpand.current) return;
+    setIsExpanded(Boolean(autoOpen) && !isAllRequiredCompleted);
+    didInitExpand.current = true;
+  }, [autoOpen, embedded, isAllRequiredCompleted]);
+
+  React.useEffect(() => {
+    if (!embedded || stageUnlocked) return;
+    setIsExpanded(false);
+  }, [embedded, stageUnlocked]);
+
+  const expandToggleClass =
+    embedded && !stageUnlocked
+      ? "cursor-not-allowed opacity-50"
+      : "cursor-pointer";
+
+  const stageLockedVisual = embedded && !stageUnlocked;
+  const stageCardClass = stageLockedVisual
+    ? "border border-[#D1D5DB] rounded-lg overflow-hidden bg-[#F4F6F5]"
+    : "border border-[#C7CACF] rounded-lg overflow-hidden";
+  const stageHeaderClass = stageLockedVisual
+    ? "bg-[#EEF2EF]"
+    : "bg-[#E9F2EB]";
+
   /** ================= Upload Handler ================= */
   const handleFileUpload = async (categoryKey: string, file: File) => {
     setUploadingId(categoryKey);
@@ -183,20 +218,30 @@ const VisaOutcome: React.FC = () => {
 
   return (
     <>
-      <div className="border border-[#C7CACF] rounded-lg overflow-hidden">
+      <div className={stageCardClass}>
         {/* Header */}
-        <div className="bg-[#E9F2EB] p-6 flex items-center justify-between">
+        <div
+          className={`${stageHeaderClass} p-6 flex items-center justify-between`}
+        >
           <div>
             <h3 className="text-[20px] font-semibold text-[#20242A]">
-              Visa Outcome
+              Stage: 6 Visa Outcome
             </h3>
             <p className="text-[14px] text-[#4B5563]">
-              Please upload your visa outcome documents once available.
+              Upload the approved visa copy or rejection slip once received.
             </p>
           </div>
           <div
-            onClick={() => setIsExpanded((prev) => !prev)}
-            className="cursor-pointer"
+            title={
+              embedded && !stageUnlocked
+                ? "Complete the previous stage first"
+                : undefined
+            }
+            onClick={() => {
+              if (embedded && !stageUnlocked && !isExpanded) return;
+              setIsExpanded((prev) => !prev);
+            }}
+            className={expandToggleClass}
           >
             {isExpanded ? <UpOutlined /> : <DownOutlined />}
           </div>
@@ -333,36 +378,39 @@ const VisaOutcome: React.FC = () => {
       </div>
 
       {/* Footer */}
-      <div className="flex justify-end gap-3 pt-4">
-        <button
-          onClick={() => navigate(`/applications/${id}/embassy`)}
-          className="px-6 py-2 cursor-pointer border border-[#D1D5DB] rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50 transition"
-        >
-          Previous
-        </button>
-        {/* <PrimaryButton
-          text="Next"
-          onClick={() => navigate(`/applications/${id}/enroll`)}
-        /> */}
-        <div className={!isAllRequiredCompleted ? "cursor-not-allowed" : ""}>
-          <PrimaryButton
-            text={isVisaRejected ? "Continue" : "Next"}
-            disabled={!isAllRequiredCompleted}
-            className={`${
-              !isAllRequiredCompleted ? "opacity-50 pointer-events-none" : ""
-            }`}
-            onClick={() => {
-              if (isVisaRejected) {
-                navigate(`/visa-reject`);
-              } else {
-                navigate(`/applications/${id}/enroll`);
-              }
-            }}
-          />
+      {!embedded && (
+        <div className="flex justify-end gap-3 pt-4">
+          <button
+            onClick={() => navigate(`/applications/${id}/embassy`)}
+            className="px-6 py-2 cursor-pointer border border-[#D1D5DB] rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50 transition"
+          >
+            Previous
+          </button>
+          <div className={!isAllRequiredCompleted ? "cursor-not-allowed" : ""}>
+            <PrimaryButton
+              text={isVisaRejected ? "Continue" : "Next"}
+              disabled={!isAllRequiredCompleted}
+              className={`${
+                !isAllRequiredCompleted ? "opacity-50 pointer-events-none" : ""
+              }`}
+              onClick={() => {
+                if (isVisaRejected) {
+                  navigate(`/visa-reject`);
+                } else {
+                  navigate(`/applications/${id}/enroll`);
+                }
+              }}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
+};
+
+const VisaOutcome: React.FC = () => {
+  const { applicationApiData } = useOutletContext<{ applicationApiData: any }>();
+  return <VisaOutcomeStep applicationApiData={applicationApiData} />;
 };
 
 export default VisaOutcome;

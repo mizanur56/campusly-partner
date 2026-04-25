@@ -1,19 +1,19 @@
+import { Tooltip } from "antd";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link, useLocation } from "react-router-dom";
 import { config } from "../../../config";
-import { clearAuthLocalStorage } from "../../../lib/authLocalStorage";
-import { getPortalLoginUrl } from "../../../lib/portalRouting";
 import { usePreviewMode } from "../../../context/PreviewModeContext";
 import { useSidebar } from "../../../context/SidebarContext";
-import { useFilteredSidebarItems } from "../../../hooks/useFilteredSidebarItems";
 import { useStudentProfile } from "../../../context/StudentProfileContext";
+import { useFilteredSidebarItems } from "../../../hooks/useFilteredSidebarItems";
 import { ChevronDownIcon } from "../../../icons";
+import { clearAuthLocalStorage } from "../../../lib/authLocalStorage";
+import { getPortalLoginUrl } from "../../../lib/portalRouting";
 import { selectCurrentUser } from "../../../redux/features/auth/authSlice";
-import { useGetPartnerProfileQuery } from "../../../redux/features/profile/partnerProfileApi";
 import { useGetOnboardingStatusQuery } from "../../../redux/features/onboardingForm";
+import { useGetPartnerProfileQuery } from "../../../redux/features/profile/partnerProfileApi";
 import { NavItem, SubMenuItem } from "../../../types/interfaces";
-import { Tooltip } from "antd";
 
 const SidebarItems: NavItem[] = [
   { icon: <i className="fa-solid fa-house"></i>, name: "Home", path: "/" },
@@ -50,10 +50,7 @@ const SignedSidebarItems: NavItem[] = [
   {
     icon: <i className="fa-solid fa-credit-card"></i>,
     name: "Payments",
-    subItems: [
-      { name: "Purchase", path: "/payments/purchase" },
-      { name: "Commission", path: "/payments/commission" },
-    ],
+    path: "/payments/purchase",
   },
   {
     icon: <i className="fa-solid fa-graduation-cap"></i>,
@@ -65,11 +62,11 @@ const SignedSidebarItems: NavItem[] = [
     name: "Hot Offers",
     path: "/hot-offers",
   },
-  {
-    icon: <i className="fa-solid fa-gear"></i>,
-    name: "Settings",
-    subItems: [{ name: "Profile", path: "/settings/profile" }],
-  },
+  // {
+  //   icon: <i className="fa-solid fa-gear"></i>,
+  //   name: "Settings",
+  //   subItems: [{ name: "Profile", path: "/settings/profile" }],
+  // },
 ];
 
 /** Restricted sidebar for PARTNER_TEAM_MEMBER: My Tasks first, then Students, Applications. No Home. */
@@ -277,6 +274,7 @@ const Sidebar: React.FC = () => {
       ? TeamMemberSidebarItems
       : SignedSidebarItems
     : SidebarItems;
+
   const filteredSidebarItems = useFilteredSidebarItems(baseItems);
   const isSignedSidebar = isSignedContext;
 
@@ -299,6 +297,10 @@ const Sidebar: React.FC = () => {
           location.pathname === "/contract" ||
           location.pathname.startsWith("/contract/")
         );
+      }
+      if (path.startsWith("/payments")) {
+        // Single "Payments" menu should stay active for Purchase/Commission tabs
+        return location.pathname.startsWith("/payments");
       }
       return location.pathname === path;
     },
@@ -489,9 +491,14 @@ const Sidebar: React.FC = () => {
                 </span>
                 {(isExpanded || isMobileOpen) && (
                   <span
-                    className={`text-left ${isSignedSidebar ? "text-sm font-medium" : "text-base font-semibold"}`}
+                    className={`flex min-w-0 flex-1 items-center gap-2 text-left ${isSignedSidebar ? "text-sm font-medium" : "text-base font-semibold"}`}
                   >
-                    {nav.name}
+                    <span className="truncate">{nav.name}</span>
+                    {nav.badgeCount && nav.badgeCount > 0 ? (
+                      <span className="ml-auto inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary-600 px-1 text-[10px] font-semibold text-white">
+                        {nav.badgeCount > 99 ? "99+" : nav.badgeCount}
+                      </span>
+                    ) : null}
                   </span>
                 )}
               </Link>
@@ -522,7 +529,7 @@ const Sidebar: React.FC = () => {
   return (
     <aside
       className={`fixed top-0 left-0 z-50 mt-16 flex h-screen flex-col transition-all duration-300 ease-in-out lg:mt-0
-        border-r border-gray-200/60 bg-white dark:border-gray-800 dark:bg-gray-900
+        border-r-[1px] border-[#C7CACF] bg-[#FFFFFF] dark:border-[#353646] dark:bg-[#20242A]
         ${isExpanded || isMobileOpen ? "w-[280px]" : "w-[80px]"}
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0`}

@@ -1,3 +1,4 @@
+import { useSelector } from "react-redux";
 import {
   BrowserRouter,
   Navigate,
@@ -5,45 +6,50 @@ import {
   Routes,
   useParams,
 } from "react-router-dom";
-import { useSelector } from "react-redux";
 import MainLayout from "../layout/MainLayout";
-import { selectCurrentUser } from "../redux/features/auth/authSlice";
+import Academy from "../pages/Academy/Academy";
+import ApplicationDetails from "../pages/Applications/ApplicationDetails";
+import Applications from "../pages/Applications/Applications";
+import Admission from "../pages/Applications/ApplicationStep/Admission";
+import Apply from "../pages/Applications/ApplicationStep/Apply";
+import ChecklistUpload from "../pages/Applications/ApplicationStep/ChecklistUpload";
+import EmbassySubmission from "../pages/Applications/ApplicationStep/EmbassySubmission";
+import Enroll from "../pages/Applications/ApplicationStep/Enroll";
+import FinalLetter from "../pages/Applications/ApplicationStep/FinalLetter";
+import VisaOutcome from "../pages/Applications/ApplicationStep/VisaOutcome";
+import VisaRejectPage from "../pages/Applications/ApplicationStep/VisaRejectPage";
+import VisaSuccessPage from "../pages/Applications/ApplicationStep/VisaSuccessPage";
 import ChangePassword from "../pages/Auth/ChangePassword";
 import ForgetPassword from "../pages/Auth/ForgetPassword";
 import Login from "../pages/Auth/Login";
 import Register from "../pages/Auth/Register";
+import RegistrationWelcomePage from "../pages/Auth/RegistrationWelcomePage";
 import ResetPassword from "../pages/Auth/ResetPassword";
 import SetPasswordByInvite from "../pages/Auth/SetPasswordByInvite";
-import Dashboard from "../pages/Dashboard/Dashboard.tsx";
-import AllMediaList from "../pages/Media/Media";
-import Academy from "../pages/Academy/Academy";
-import HotOffers from "../pages/HotOffers/HotOffers";
-import NotFound from "../pages/OtherPage/NotFound";
-import UnderDevelopment from "../pages/OtherPage/UnderDevelopment";
-import ProgramsSchools from "../pages/ProgramsSchools/ProgramsSchools";
-import ProtectedRoute from "./ProtectedRoute";
-import GuestOnlyAuthRoute from "./GuestOnlyAuthRoute";
-import { OnboardingPage } from "../pages/Onboarding";
 import ContractPage from "../pages/Contract/ContractPage";
 import ContractSignedPage from "../pages/Contract/ContractSignedPage";
-import Students from "../pages/Students/Students";
-import StudentProfile from "../pages/Students/StudentProfile/StudentProfile";
-import Applications from "../pages/Applications/Applications";
-import ApplicationDetails from "../pages/Applications/ApplicationDetails";
-import Admission from "../pages/Applications/ApplicationStep/Admission";
-import Apply from "../pages/Applications/ApplicationStep/Apply";
-import ChecklistUpload from "../pages/Applications/ApplicationStep/ChecklistUpload";
-import FinalLetter from "../pages/Applications/ApplicationStep/FinalLetter";
-import EmbassySubmission from "../pages/Applications/ApplicationStep/EmbassySubmission";
-import VisaOutcome from "../pages/Applications/ApplicationStep/VisaOutcome";
-import Enroll from "../pages/Applications/ApplicationStep/Enroll";
-import VisaRejectPage from "../pages/Applications/ApplicationStep/VisaRejectPage";
-import VisaSuccessPage from "../pages/Applications/ApplicationStep/VisaSuccessPage";
+import Dashboard from "../pages/Dashboard/Dashboard.tsx";
+import HotOffers from "../pages/HotOffers/HotOffers";
+import AllMediaList from "../pages/Media/Media";
 import MyTasks from "../pages/MyTasks/MyTasks";
-import TeamMembers from "../pages/TeamMembers/TeamMembers";
-import Payments from "../pages/Payments/Payments";
-import ProfileSettings from "../pages/Settings/ProfileSettings";
 import Notifications from "../pages/Notifications/Notifications";
+import { OnboardingPage } from "../pages/Onboarding";
+import RegularCompliancePage from "../pages/Onboarding/RegularCompliancePage";
+import NotFound from "../pages/OtherPage/NotFound";
+import UnderDevelopment from "../pages/OtherPage/UnderDevelopment";
+import Payments from "../pages/Payments/Payments";
+import ProgramsSchools from "../pages/ProgramsSchools/ProgramsSchools";
+import ProfileSettings from "../pages/Settings/ProfileSettings";
+<<<<<<< HEAD
+import Notifications from "../pages/Notifications/Notifications";
+=======
+import StudentProfile from "../pages/Students/StudentProfile/StudentProfile";
+import Students from "../pages/Students/Students";
+import TeamMembers from "../pages/TeamMembers/TeamMembers";
+import { selectCurrentUser } from "../redux/features/auth/authSlice";
+import GuestOnlyAuthRoute from "./GuestOnlyAuthRoute";
+import ProtectedRoute from "./ProtectedRoute";
+>>>>>>> 0b3ccda9c44dca4e2436db7928ed77ec846ac7e1
 
 function StudentProfileRedirect() {
   const { id } = useParams();
@@ -109,6 +115,14 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/register/welcome"
+          element={
+            <ProtectedRoute>
+              <RegistrationWelcomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/"
           element={
             <ProtectedRoute>
@@ -119,6 +133,7 @@ function AppRoutes() {
         >
           <Route index element={<DashboardOrRedirect />} />
           <Route path="media" element={<AllMediaList />} />
+          <Route path="onboarding/compliance" element={<RegularCompliancePage />} />
           <Route path="onboarding" element={<OnboardingPage />} />
           <Route path="contract" element={<ContractPage />} />
           <Route path="contract/signed" element={<ContractSignedPage />} />
@@ -148,6 +163,7 @@ function AppRoutes() {
           </Route>
           <Route path="team-members" element={<TeamMembers />} />
           <Route path="my-tasks" element={<MyTasks />} />
+          <Route path="notifications" element={<Notifications />} />
           <Route
             path="payments"
             element={<Navigate to="/payments/purchase" replace />}
@@ -158,6 +174,11 @@ function AppRoutes() {
           <Route path="academy" element={<Academy />} />
           <Route path="hot-offers" element={<HotOffers />} />
           <Route path="settings/profile" element={<ProfileSettings />} />
+          <Route path="chat" element={<Navigate to="/" replace />} />
+          <Route
+            path="chat/:conversationId"
+            element={<Navigate to="/" replace />}
+          />
           <Route path="*" element={<UnderDevelopment />} />
         </Route>
       </Routes>

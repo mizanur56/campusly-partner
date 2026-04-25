@@ -24,6 +24,8 @@ interface MediaPickerProps {
   className?: string;
   disabled?: boolean;
   initialFolder?: string;
+  /** When true, only the primary button is shown (opens media library modal). */
+  compact?: boolean;
 }
 
 const MediaPicker: React.FC<MediaPickerProps> = ({
@@ -37,6 +39,7 @@ const MediaPicker: React.FC<MediaPickerProps> = ({
   className = "",
   disabled = false,
   initialFolder = "Root",
+  compact = false,
 }) => {
   const [open, setOpen] = useState(false);
   const [folderOperationLoading, setFolderOperationLoading] = useState(false);
@@ -144,46 +147,57 @@ const MediaPicker: React.FC<MediaPickerProps> = ({
 
   return (
     <>
-      <div
-        className={`w-full border-2 border-dashed rounded-2xl bg-white p-6 text-center transition hover:border-primary-200 hover:bg-primary-50/30 cursor-pointer ${
-          disabled ? "opacity-60 cursor-not-allowed" : ""
-        } ${className}`}
-        onClick={handleToggleModal}
-      >
-        <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center mx-auto mb-4">
-          <UploadCloud className="w-6 h-6 text-primary-600" />
-        </div>
-        <p className="text-base font-semibold text-gray-900">{label}</p>
-        {description && (
-          <p className="text-sm text-gray-500 mt-1">{description}</p>
-        )}
-
+      {compact ? (
         <Button
           type="primary"
-          className="mt-4 px-6 font-semibold"
+          className={className}
           disabled={disabled}
+          onClick={handleToggleModal}
         >
           {buttonLabel}
         </Button>
-
-        {helperText && (
-          <p className="text-xs text-gray-400 mt-3">{helperText}</p>
-        )}
-
-        {normalizedValue.length > 0 && (
-          <div className="mt-4 flex flex-wrap justify-center gap-2">
-            {normalizedValue.map((item) => (
-              <Tag
-                key={item.id}
-                color="green"
-                className="flex items-center gap-2 px-3 py-1 text-sm"
-              >
-                <span className="truncate max-w-[140px]">{item.name}</span>
-              </Tag>
-            ))}
+      ) : (
+        <div
+          className={`w-full border-2 border-dashed rounded-2xl bg-white p-6 text-center transition hover:border-primary-200 hover:bg-primary-50/30 cursor-pointer ${
+            disabled ? "opacity-60 cursor-not-allowed" : ""
+          } ${className}`}
+          onClick={handleToggleModal}
+        >
+          <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center mx-auto mb-4">
+            <UploadCloud className="w-6 h-6 text-primary-600" />
           </div>
-        )}
-      </div>
+          <p className="text-base font-semibold text-gray-900">{label}</p>
+          {description && (
+            <p className="text-sm text-gray-500 mt-1">{description}</p>
+          )}
+
+          <Button
+            type="primary"
+            className="mt-4 px-6 font-semibold"
+            disabled={disabled}
+          >
+            {buttonLabel}
+          </Button>
+
+          {helperText && (
+            <p className="text-xs text-gray-400 mt-3">{helperText}</p>
+          )}
+
+          {normalizedValue.length > 0 && (
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {normalizedValue.map((item) => (
+                <Tag
+                  key={item.id}
+                  color="green"
+                  className="flex items-center gap-2 px-3 py-1 text-sm"
+                >
+                  <span className="truncate max-w-[140px]">{item.name}</span>
+                </Tag>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {open && (
         <MediaUploadModal

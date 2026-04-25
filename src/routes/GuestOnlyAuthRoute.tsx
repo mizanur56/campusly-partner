@@ -1,12 +1,16 @@
 import type { ReactNode } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
+import { POST_REGISTER_WELCOME_FLAG } from "../lib/registrationWelcomeSession";
 import { useDispatch, useSelector } from "react-redux";
 import {
   logout,
   selectCurrentUser,
   useCurrentToken,
 } from "../redux/features/auth/authSlice";
-import { clearAuthLocalStorage } from "../lib/authLocalStorage";
+import {
+  clearAuthLocalStorage,
+  clientHasBearerToken,
+} from "../lib/authLocalStorage";
 import {
   getPortalLoginUrl,
   inferCurrentPortal,
@@ -22,11 +26,12 @@ export default function GuestOnlyAuthRoute({
 }: {
   children: ReactNode;
 }) {
+  const location = useLocation();
   const user = useSelector(selectCurrentUser);
   const token = useSelector(useCurrentToken);
   const dispatch = useDispatch();
 
-  const hasToken = Boolean(token && localStorage.getItem("token"));
+  const hasToken = clientHasBearerToken(token);
   const authed = Boolean(user && hasToken);
 
   if (!authed) {
@@ -45,6 +50,20 @@ export default function GuestOnlyAuthRoute({
 
   if (redirectToCorrectPortalIfNeeded(user)) {
     return null;
+  }
+
+  const path =
+    location.pathname.length > 1
+      ? location.pathname.replace(/\/$/, "")
+      : location.pathname;
+
+  if (
+    path === "/register" &&
+    sessionStorage.getItem(POST_REGISTER_WELCOME_FLAG) === "1"
+  ) {
+    /* Do not remove flag here — React Strict Mode double-mount would clear it and
+       send users to "/" before the second pass. Clear on RegistrationWelcomePage mount. */
+    return <Navigate to="/register/welcome" replace />;
   }
 
   return <Navigate to="/" replace />;
