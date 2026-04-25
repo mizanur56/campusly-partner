@@ -129,7 +129,10 @@ function AppRoutes() {
         >
           <Route index element={<DashboardOrRedirect />} />
           <Route path="media" element={<AllMediaList />} />
-          <Route path="onboarding/compliance" element={<RegularCompliancePage />} />
+          <Route
+            path="onboarding/compliance"
+            element={<RegularCompliancePage />}
+          />
           <Route path="onboarding" element={<OnboardingPage />} />
           <Route path="contract" element={<ContractPage />} />
           <Route path="contract/signed" element={<ContractSignedPage />} />
@@ -166,6 +169,7 @@ function AppRoutes() {
           />
           <Route path="payments/purchase" element={<Payments />} />
           <Route path="payments/commission" element={<Payments />} />
+          <Route path="notifications" element={<Notifications />} />
           <Route path="academy" element={<Academy />} />
           <Route path="hot-offers" element={<HotOffers />} />
           <Route path="settings/profile" element={<ProfileSettings />} />

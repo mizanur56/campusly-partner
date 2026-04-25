@@ -14,6 +14,12 @@ const { Text } = Typography;
 
 type NotificationTabKey = "all" | "unread";
 
+const normalizeNotificationLink = (link?: string | null) => {
+  if (!link) return "";
+  if (link.startsWith("/partner/")) return link.replace("/partner", "");
+  return link;
+};
+
 const Notifications = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<NotificationTabKey>("all");
@@ -30,7 +36,9 @@ const Notifications = () => {
 
   const notifications = data?.data || [];
   const total = data?.meta?.total || 0;
-  const unreadCount = notifications.filter((n: INotification) => !n.isRead).length;
+  const unreadCount = notifications.filter(
+    (n: INotification) => !n.isRead,
+  ).length;
 
   const filteredNotifications = useMemo(() => {
     if (activeTab === "unread") return notifications.filter((n) => !n.isRead);
@@ -45,7 +53,8 @@ const Notifications = () => {
         // ignore
       }
     }
-    if (notification.link) navigate(notification.link);
+    const link = normalizeNotificationLink(notification.link);
+    if (link) navigate(link);
   };
 
   const handleMarkAllAsRead = async () => {
@@ -133,7 +142,9 @@ const Notifications = () => {
             <Empty
               image={Empty.PRESENTED_IMAGE_SIMPLE}
               description={
-                activeTab === "unread" ? "No unread notifications" : "No notifications"
+                activeTab === "unread"
+                  ? "No unread notifications"
+                  : "No notifications"
               }
             />
           </div>
@@ -142,7 +153,9 @@ const Notifications = () => {
             <div
               key={notification.id}
               className={`bg-white rounded-2xl border p-4 cursor-pointer transition-all hover:shadow-md hover:border-primary-300 ${
-                !notification.isRead ? "bg-blue-50 border-blue-200" : "border-gray-200"
+                !notification.isRead
+                  ? "bg-blue-50 border-blue-200"
+                  : "border-gray-200"
               }`}
               onClick={() => handleNotificationClick(notification)}
             >
@@ -155,7 +168,10 @@ const Notifications = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-4 mb-2">
                     <div className="flex-1">
-                      <Text strong={!notification.isRead} className="text-base text-gray-900">
+                      <Text
+                        strong={!notification.isRead}
+                        className="text-base text-gray-900"
+                      >
                         {notification.title}
                       </Text>
                       {!notification.isRead && (
@@ -184,9 +200,7 @@ const Notifications = () => {
             >
               Prev
             </Button>
-            <span className="text-sm text-gray-600">
-              Page {currentPage}
-            </span>
+            <span className="text-sm text-gray-600">Page {currentPage}</span>
             <Button
               disabled={currentPage * limit >= total}
               onClick={() => setCurrentPage((p) => p + 1)}
@@ -201,4 +215,3 @@ const Notifications = () => {
 };
 
 export default Notifications;
-

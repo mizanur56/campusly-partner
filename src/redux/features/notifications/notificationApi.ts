@@ -34,7 +34,10 @@ interface NotificationQueryParams {
 
 export const notificationApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    getNotifications: build.query<NotificationResponse, NotificationQueryParams>({
+    getNotifications: build.query<
+      NotificationResponse,
+      NotificationQueryParams
+    >({
       query: (arg) => ({
         url: "/notifications",
         method: "GET",
@@ -59,13 +62,15 @@ export const notificationApi = baseApi.injectEndpoints({
       invalidatesTags: ["Notification"],
     }),
 
-    markAllAsRead: build.mutation<{ success: boolean; message?: string }, void>({
-      query: () => ({
-        url: "/notifications/mark-all-read",
-        method: "PATCH",
-      }),
-      invalidatesTags: ["Notification"],
-    }),
+    markAllAsRead: build.mutation<{ success: boolean; message?: string }, void>(
+      {
+        query: () => ({
+          url: "/notifications/mark-all-read",
+          method: "PATCH",
+        }),
+        invalidatesTags: ["Notification"],
+      },
+    ),
   }),
 });
 
@@ -75,4 +80,3 @@ export const {
   useMarkAsReadMutation,
   useMarkAllAsReadMutation,
 } = notificationApi;
-

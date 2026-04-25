@@ -119,8 +119,7 @@ function handle401Logout(
         typeof (result.error.data as any).error === "object" &&
         "message" in (result.error.data as any).error
       ) {
-        errorMessage =
-          (result.error.data as any).error.message || errorMessage;
+        errorMessage = (result.error.data as any).error.message || errorMessage;
       }
     }
   }
@@ -190,7 +189,7 @@ const baseQueryWithRefreshToken: BaseQueryFn<
               typeof result.error.data === "object" &&
               "message" in result.error.data
               ? (result.error.data as { message?: string }).message ||
-                "Not found."
+                  "Not found."
               : "Not found.",
           );
         }
