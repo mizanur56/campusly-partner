@@ -53,7 +53,7 @@ const SignedSidebarItems: NavItem[] = [
   {
     icon: <i className="fa-solid fa-credit-card"></i>,
     name: "Payments",
-    path: "/payments/purchase",
+    path: "/payments/commission",
   },
   {
     icon: <i className="fa-solid fa-graduation-cap"></i>,
@@ -98,7 +98,6 @@ const SIGNED_ROUTE_PATHS = [
   "/applications",
   "/my-tasks",
   "/payments",
-  "/payments/purchase",
   "/payments/commission",
   "/academy",
   "/hot-offers",
