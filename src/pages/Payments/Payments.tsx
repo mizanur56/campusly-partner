@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
 import { Input, Tag, Badge, Modal, Upload } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { InboxOutlined } from "@ant-design/icons";
@@ -24,7 +23,7 @@ const { Dragger } = Upload;
 
 type TopTabKey = "purchase" | "commission";
 type PurchaseTabKey = "applications" | "history";
-type CommissionTabKey = "earned" | "history";
+type CommissionTabKey = "all" | "history";
 
 interface PurchaseApplicationRecord {
   key: string;
@@ -69,18 +68,14 @@ interface CommissionTransactionRecord {
 }
 
 export default function Payments() {
-  const { pathname } = useLocation();
-  const navigate = useNavigate();
-  const topTab: TopTabKey = pathname.includes("/commission")
-    ? "commission"
-    : "purchase";
+  const topTab: TopTabKey = "commission";
   const [purchaseTab, setPurchaseTab] =
     useState<PurchaseTabKey>("applications");
   const [commissionTab, setCommissionTab] =
-    useState<CommissionTabKey>("earned");
+    useState<CommissionTabKey>("all");
   const [searchText, setSearchText] = useState("");
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isBankModalOpen, setIsBankModalOpen] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [uploadCommissionId, setUploadCommissionId] = useState<string | null>(
     null,
   );
@@ -138,6 +133,22 @@ export default function Payments() {
     usePaySelectedApplicationsMutation();
   const [claimCommission, { isLoading: isClaiming }] =
     useClaimCommissionMutation();
+  const handleConfirmInvoiceUpload = async () => {
+    if (!uploadCommissionId || !uploadInvoiceFile) return;
+    try {
+      await claimCommission({
+        commissionId: uploadCommissionId,
+        invoice: uploadInvoiceFile,
+      }).unwrap();
+      setIsUploadModalOpen(false);
+      setUploadCommissionId(null);
+      setUploadApplicationId(null);
+      setUploadInvoiceFile(null);
+    } catch {
+      // errors handled globally
+    }
+  };
+
 
   const handleResetSearchOnTabChange = () => {
     setSearchText("");
@@ -365,22 +376,6 @@ export default function Payments() {
     }
   };
 
-  const handleConfirmInvoiceUpload = async () => {
-    if (!uploadCommissionId || !uploadInvoiceFile) return;
-    try {
-      await claimCommission({
-        commissionId: uploadCommissionId,
-        invoice: uploadInvoiceFile,
-      }).unwrap();
-      setIsUploadModalOpen(false);
-      setUploadCommissionId(null);
-      setUploadApplicationId(null);
-      setUploadInvoiceFile(null);
-    } catch {
-      // errors handled globally
-    }
-  };
-
   const purchaseApplicationsColumns: ColumnsType<PurchaseApplicationRecord> = [
 
   
@@ -528,20 +523,23 @@ export default function Payments() {
       title: "Action",
       key: "action",
       width: 160,
-      render: (_: unknown, record) => (
-        <button
-          type="button"
-          className="payments-primary-button"
-          onClick={() => {
-            setUploadCommissionId(record.commissionId);
-            setUploadApplicationId(record.applicationId);
-            setIsUploadModalOpen(true);
-            setUploadInvoiceFile(null);
-          }}
-        >
-          Upload Invoice
-        </button>
-      ),
+      render: (_: unknown, record) =>
+        record.status === "Unpaid" ? (
+          <button
+            type="button"
+            className="payments-primary-button"
+            onClick={() => {
+              setUploadCommissionId(record.commissionId);
+              setUploadApplicationId(record.applicationId);
+              setIsUploadModalOpen(true);
+              setUploadInvoiceFile(null);
+            }}
+          >
+            Upload Invoice
+          </button>
+        ) : (
+          <span className="text-xs text-gray-400">-</span>
+        ),
     },
   ];
 
@@ -766,7 +764,7 @@ export default function Payments() {
     }
 
     // commission tab
-    if (commissionTab === "earned") {
+    if (commissionTab === "all") {
       const stats = commissionStats || {};
       return (
         <div className="payments-kpi-grid payments-kpi-grid--3">
@@ -778,9 +776,9 @@ export default function Payments() {
                     className="h-7 w-7 object-contain"
                   />
               <div>
-                <p className="payments-kpi-label">Total Commission Earned</p>
+                <p className="payments-kpi-label">All</p>
                 <p className="payments-kpi-value">
-                  €{(stats.totalEarned ?? 0).toFixed?.(2) ?? "0.00"}
+                  €{(stats.total ?? 0).toFixed?.(2) ?? "0.00"}
                 </p>
               </div>
             </div>
@@ -794,9 +792,9 @@ export default function Payments() {
                   />
                 
               <div>
-                <p className="payments-kpi-label">Pending Payments</p>
+                <p className="payments-kpi-label">Unpaid</p>
                 <p className="payments-kpi-value">
-                  €{(stats.pending ?? 0).toFixed?.(2) ?? "0.00"}
+                  €{(stats.unpaid ?? 0).toFixed?.(2) ?? "0.00"}
                 </p>
               </div>
             </div>
@@ -864,16 +862,16 @@ export default function Payments() {
         <button
           type="button"
           className={
-            commissionTab === "earned"
+            commissionTab === "all"
               ? "payments-inner-tab payments-inner-tab--active"
               : "payments-inner-tab"
           }
           onClick={() => {
-            setCommissionTab("earned");
+            setCommissionTab("all");
             handleResetSearchOnTabChange();
           }}
         >
-          Earned Commissions
+          All Commissions
         </button>
         <button
           type="button"
@@ -958,7 +956,7 @@ export default function Payments() {
     }
 
     // Commission
-    if (commissionTab === "earned") {
+    if (commissionTab === "all") {
       return (
         <>
           <div className="bg-[#FFFFFF] p-6 rounded-lg border border-[#C7CACF] space-y-4">
@@ -1031,35 +1029,9 @@ export default function Payments() {
           <h1 className="payments-title">
           Payments
           </h1>
-          <p className="payments-subtitle">Manage application payments and transaction history.</p>
+          <p className="payments-subtitle">Manage commission status and transaction history.</p>
         </div>
       </header>
-
-      {/* Top tabs: Purchase / Commission */}
-      <div className="payments-top-tabs">
-        <button
-          type="button"
-          className={
-            topTab === "purchase"
-              ? "payments-top-tab payments-top-tab--active"
-              : "payments-top-tab"
-          }
-          onClick={() => navigate("/payments/purchase")}
-        >
-          Purchase
-        </button>
-        <button
-          type="button"
-          className={
-            topTab === "commission"
-              ? "payments-top-tab payments-top-tab--active"
-              : "payments-top-tab"
-          }
-          onClick={() => navigate("/payments/commission")}
-        >
-          Commission
-        </button>
-      </div>
 
       {/* Inner tabs: Applications / Transaction History or Earned Commissions / Transaction History */}
       <div className="payments-inner-tabs-wrapper">{renderInnerTabs()}</div>
@@ -1070,7 +1042,7 @@ export default function Payments() {
       {/* Table + toolbar */}
       <section className="payments-section">{renderTableSection()}</section>
 
-      {/* Upload Invoice modal */}
+      {/* Bank transfer / Pay selected modal */}
       <Modal
         open={isUploadModalOpen}
         title="Upload Invoice"
@@ -1121,7 +1093,6 @@ export default function Payments() {
         </div>
       </Modal>
 
-      {/* Bank transfer / Pay selected modal */}
       <Modal
         open={isBankModalOpen}
         title="Bank Transfer Payment"

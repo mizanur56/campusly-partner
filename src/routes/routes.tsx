@@ -165,9 +165,12 @@ function AppRoutes() {
           <Route path="notifications" element={<Notifications />} />
           <Route
             path="payments"
-            element={<Navigate to="/payments/purchase" replace />}
+            element={<Navigate to="/payments/commission" replace />}
           />
-          <Route path="payments/purchase" element={<Payments />} />
+          <Route
+            path="payments/purchase"
+            element={<Navigate to="/payments/commission" replace />}
+          />
           <Route path="payments/commission" element={<Payments />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="academy" element={<Academy />} />
