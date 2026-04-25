@@ -128,9 +128,14 @@ import { Modal, Form, Input, Button, DatePicker, Select, Upload } from "antd";
 import { toast } from "react-toastify";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
+import dayjs from "dayjs";
 import { useCreateStudentMutation } from "../../../redux/features/profile/studentProfileApi";
 import type { CreateStudentPayload } from "../../../redux/features/profile/studentProfileApi";
+import { useUpdateStudentProfileMutation } from "../../../redux/features/profile/studentProfileApi";
 import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
+import { useGetCountriesQuery } from "../../../redux/features/countries/countriesApi";
+import { useGetStudyLevelsByCountryQuery } from "../../../redux/features/studyLevels/studyLevelsApi";
+import { useNavigate } from "react-router-dom";
 
 interface CreateStudentModalProps {
   open: boolean;
@@ -143,6 +148,7 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const navigate = useNavigate();
   const [form] = Form.useForm<
     CreateStudentPayload & {
       confirmPassword?: string;
@@ -153,11 +159,12 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
       country?: string;
       passportNo?: string;
       passportExpiryDate?: unknown;
-      qualifications?: string[];
+      qualifications?: string;
       passingYear?: unknown;
     }
   >();
   const [createStudent, { isLoading }] = useCreateStudentMutation();
+  const [updateStudentProfile] = useUpdateStudentProfileMutation();
   const [createMedia, { isLoading: isPassportUploading }] =
     useCreateMediaMutation();
   const [passportFileName, setPassportFileName] = React.useState<string | null>(
@@ -165,35 +172,171 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
   );
   const [passportUrl, setPassportUrl] = React.useState<string | null>(null);
 
+  const { data: countriesData } = useGetCountriesQuery({ page: 1, limit: 1000 });
+  const selectedCountryName = Form.useWatch("country", form) as string | undefined;
+
+  const selectedCountryId = React.useMemo(() => {
+    if (!selectedCountryName || !countriesData?.data) return null;
+    const c = (countriesData.data as { id: string; name: string }[]).find(
+      (x) => x.name.toLowerCase() === selectedCountryName.toLowerCase(),
+    );
+    return c?.id ?? null;
+  }, [selectedCountryName, countriesData?.data]);
+
+  const { data: studyLevelsData } = useGetStudyLevelsByCountryQuery(
+    selectedCountryId ?? "",
+    { skip: !selectedCountryId },
+  );
+
+  const countriesOptions = React.useMemo(
+    () =>
+      (countriesData?.data ?? []).map((c: { id: string; name: string }) => ({
+        label: c.name,
+        value: c.name, // send country name from modal
+      })),
+    [countriesData?.data],
+  );
+
+  const qualificationOptions = React.useMemo(() => {
+    const data = Array.isArray(studyLevelsData)
+      ? studyLevelsData
+      : (studyLevelsData as { data?: unknown[] } | undefined)?.data ?? [];
+
+    return (data as {
+      studyLevel?: { id?: string; name?: string; description?: string };
+      name?: string;
+      countryStudyLevelName?: string;
+      studyLevelId?: string;
+    }[]).map((item) => ({
+      label: item.countryStudyLevelName ?? item.name ?? "",
+      value: item.studyLevel?.id ?? item.studyLevelId ?? "",
+    }));
+  }, [studyLevelsData]);
+
   const handleSubmit = async (
     values: CreateStudentPayload & {
       confirmPassword?: string;
       firstName?: string;
       lastName?: string;
+      gender?: string;
+      dateOfBirth?: any;
+      country?: string;
+      passportNo?: string;
+      passportExpiryDate?: any;
       phone?: string;
+      qualifications?: string;
+      passingYear?: any;
     },
   ) => {
     try {
-      const derivedFullName =
-        `${values.firstName ?? ""} ${values.lastName ?? ""}`.trim() ||
-        values.fullName?.trim() ||
-        "";
+      const email = String(values.email ?? "").trim();
+      const firstName = String(values.firstName ?? "").trim();
+      const lastName = String(values.lastName ?? "").trim();
+      const derivedFullName = `${firstName} ${lastName}`.trim();
 
-      const payload: CreateStudentPayload = {
-        email: values.email.trim(),
-        fullName: derivedFullName,
-        phone: values.phone?.trim() || undefined,
-        password: values.password?.trim() && values.password.length >= 6 ? values.password : undefined,
-      };
-      const result = await createStudent(payload).unwrap();
+      // 1) Create auth user
+        const profilePayload: Record<string, unknown> = {
+          firstName: firstName || null,
+          lastName: lastName || null,
+          gender: String(values.gender ?? "").trim() || null,
+          country: String(values.country ?? "").trim() || null,
+          passportNo: String(values.passportNo ?? "").trim() || null,
+          phone: String(values.phone ?? "").trim() || null,
+          email: email || null,
+          lastEducationId: String(values.qualifications ?? "").trim() || null,
+          // Dates: always standard YYYY-MM-DD (except passing year: YYYY only)
+          lastEducationPassingYear: null,
+          dateOfBirth: null,
+          passportExpDate: null,
+          imageId: passportUrl || null,
+        };
+
+        // Passing year: YYYY only
+        try {
+          profilePayload.lastEducationPassingYear = values.passingYear
+            ? dayjs(values.passingYear).format("YYYY")
+            : null;
+        } catch {
+          profilePayload.lastEducationPassingYear = null;
+        }
+
+        // Date of birth: YYYY-MM-DD
+        try {
+          profilePayload.dateOfBirth = values.dateOfBirth
+            ? dayjs(values.dateOfBirth).format("YYYY-MM-DD")
+            : null;
+        } catch {
+          profilePayload.dateOfBirth = null;
+        }
+
+        // Passport expiry date: YYYY-MM-DD
+        try {
+          profilePayload.passportExpDate = values.passportExpiryDate
+            ? dayjs(values.passportExpiryDate).format("YYYY-MM-DD")
+            : null;
+        } catch {
+          profilePayload.passportExpDate = null;
+        }
+
+      console.log(profilePayload)
+      const result = await createStudent(profilePayload as any).unwrap();
+      console.log(result)
+
+      // 2) Update profile: countryId + qualificationId + other form fields
+      const studentId = result?.studentId;
+      if (studentId) {
+        const profileBody: Record<string, unknown> = {
+          firstName: firstName || null,
+          lastName: lastName || null,
+          gender: String(values.gender ?? "").trim() || null,
+          countryId: String(values.country ?? "").trim() || null,
+          passportNo: String(values.passportNo ?? "").trim() || null,
+          phone: String(values.phone ?? "").trim() || null,
+          email: email || null,
+          lastEducationId: String(values.qualifications ?? "").trim() || null,
+        };
+
+        try {
+          profileBody.dateOfBirth = values.dateOfBirth
+            ? dayjs(values.dateOfBirth).format("YYYY-MM-DD")
+            : null;
+        } catch {
+          profileBody.dateOfBirth = null;
+        }
+
+        try {
+          profileBody.passportExpDate = values.passportExpiryDate
+            ? dayjs(values.passportExpiryDate).format("YYYY-MM-DD")
+            : null;
+        } catch {
+          profileBody.passportExpDate = null;
+        }
+
+        try {
+          profileBody.lastEducationPassingYear = values.passingYear
+            ? dayjs(values.passingYear).startOf("year").format("YYYY-MM-DD")
+            : null;
+        } catch {
+          profileBody.lastEducationPassingYear = null;
+        }
+
+        await updateStudentProfile({ studentId, body: profileBody }).unwrap();
+      }
+
       toast.success(
         result.temporaryPassword
           ? `Student created. Temporary password: ${result.temporaryPassword}`
-          : "Student created successfully."
+          : "Student created successfully.",
       );
       form.resetFields();
+      setPassportFileName(null);
+      setPassportUrl(null);
       onClose();
       onSuccess?.();
+      if (studentId) {
+        // Navigate to the newly created student's profile page immediately
+        navigate(`/students/${studentId}/profile`);
+      }
     } catch (err: any) {
       const msg =
         err?.data?.message || err?.data?.errors?.[0]?.message || "Failed to create student.";
@@ -322,7 +465,13 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
               label={<span className="text-[12px] text-[#20242A]">Country</span>}
               className="md:col-span-2"
             >
-              <Select placeholder="Select" options={[]} className="w-full" />
+              <Select
+                placeholder="Select"
+                options={countriesOptions}
+                className="w-full"
+                showSearch
+                optionFilterProp="label"
+              />
             </Form.Item>
 
             <Form.Item
@@ -373,7 +522,14 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
                 name="qualifications"
                 label={<span className="text-[12px] text-[#20242A]">Select Qualifications</span>}
               >
-                <Select placeholder="Select" options={[]} />
+                <Select
+                  placeholder="Select"
+                  options={qualificationOptions}
+                  className="w-full"
+                  showSearch
+                  optionFilterProp="label"
+                  disabled={!selectedCountryId}
+                />
               </Form.Item>
               <div />
               <Form.Item

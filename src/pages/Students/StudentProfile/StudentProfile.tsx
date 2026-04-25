@@ -166,7 +166,7 @@ export default function StudentProfile() {
     : passedStudent?.phone ?? "";
 
 
-  
+  console.log(profile)
   const studentForContext = {
     id: studentId ?? passedStudent?.id ?? "",
     name: displayName,
@@ -185,7 +185,7 @@ export default function StudentProfile() {
         ...studentForContext,
         avatar:
           studentForContext.avatar ||
-          `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}`,
+          `/user.avif`,
       });
     }
     return () => setStudent(null);
