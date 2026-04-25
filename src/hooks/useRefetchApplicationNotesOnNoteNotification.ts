@@ -1,6 +1,11 @@
 import { useEffect, useRef } from "react";
 import { applicationApi } from "../redux/features/application/applicationApi";
-import { useAppDispatch } from "../redux/features/hooks";
+import { useAppDispatch, useAppSelector } from "../redux/features/hooks";
+import {
+  selectCurrentUser,
+  useCurrentToken,
+} from "../redux/features/auth/authSlice";
+import { getSocket } from "../services/socket";
 
 function isNoteSocketPayload(detail: unknown): boolean {
   if (!detail || typeof detail !== "object") return false;
@@ -29,6 +34,8 @@ export function useRefetchApplicationNotesOnNoteNotification(
   activeApplicationId: string | undefined
 ): void {
   const dispatch = useAppDispatch();
+  const token = useAppSelector(useCurrentToken);
+  const user = useAppSelector(selectCurrentUser);
   const activeRef = useRef(activeApplicationId);
   activeRef.current = activeApplicationId;
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -57,10 +64,49 @@ export function useRefetchApplicationNotesOnNoteNotification(
       }, 120);
     };
 
+    const onNotesChanged = (ev: Event) => {
+      const detail = (ev as CustomEvent).detail as
+        | { applicationId?: unknown; action?: unknown }
+        | undefined;
+      const appId =
+        typeof detail?.applicationId === "string" ? detail.applicationId : null;
+      if (!appId) return;
+      const current = activeRef.current;
+      if (!current || current !== appId) return;
+
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        debounceRef.current = null;
+        refetchNotes(appId);
+      }, 120);
+    };
+
     window.addEventListener("notification-received", onNotification, true);
+    window.addEventListener("application-notes-changed", onNotesChanged, true);
     return () => {
       window.removeEventListener("notification-received", onNotification, true);
+      window.removeEventListener("application-notes-changed", onNotesChanged, true);
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [dispatch]);
+
+  // Join/leave application room while on details page
+  useEffect(() => {
+    if (!user?.id || !activeApplicationId) return;
+    const socket = getSocket(token);
+
+    const join = () => {
+      socket.emit("application:join", { applicationId: activeApplicationId });
+    };
+
+    if (socket.connected) join();
+    else socket.once("connect", join);
+
+    return () => {
+      socket.off("connect", join);
+      if (socket.connected) {
+        socket.emit("application:leave", { applicationId: activeApplicationId });
+      }
+    };
+  }, [user?.id, token, activeApplicationId]);
 }
