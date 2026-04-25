@@ -45,6 +45,7 @@ import MyTasks from "../pages/MyTasks/MyTasks";
 import TeamMembers from "../pages/TeamMembers/TeamMembers";
 import Payments from "../pages/Payments/Payments";
 import ProfileSettings from "../pages/Settings/ProfileSettings";
+import Notifications from "../pages/Notifications/Notifications";
 
 function StudentProfileRedirect() {
   const { id } = useParams();
@@ -158,6 +159,7 @@ function AppRoutes() {
           </Route>
           <Route path="team-members" element={<TeamMembers />} />
           <Route path="my-tasks" element={<MyTasks />} />
+          <Route path="notifications" element={<Notifications />} />
           <Route
             path="payments"
             element={<Navigate to="/payments/purchase" replace />}

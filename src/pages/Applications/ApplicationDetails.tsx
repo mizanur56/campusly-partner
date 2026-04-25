@@ -199,9 +199,11 @@ import { useGetStudentProfileQuery } from "../../redux/features/profile/studentP
 import ApplicationRequirementsTab from "./components/ApplicationRequirementsTab";
 import NotesTab from "./components/NotesTab";
 import StudentRecordsTab from "./components/StudentRecordsTab";
+import { useRefetchApplicationNotesOnNoteNotification } from "../../hooks/useRefetchApplicationNotesOnNoteNotification";
 
 const ApplicationDetails = () => {
   const { id } = useParams<{ id: string }>();
+  useRefetchApplicationNotesOnNoteNotification(id);
   const [isRedirecting, setIsRedirecting] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState<
     "requirements" | "records" | "notes"
