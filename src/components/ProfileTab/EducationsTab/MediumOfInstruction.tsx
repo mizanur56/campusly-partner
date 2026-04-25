@@ -142,12 +142,6 @@ const MediumOfInstruction = ({ studentId }: { studentId: string }) => {
         </div>
       </div>
 
-      {isUploadingMediumOfInstruction && (
-        <div className="mt-4 flex items-center justify-center py-4">
-          <Spin size="small" tip="Uploading file..." />
-        </div>
-      )}
-
       {mediumOfInstructionFile && !isUploadingMediumOfInstruction && (
         <div className="mt-4">
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 group">

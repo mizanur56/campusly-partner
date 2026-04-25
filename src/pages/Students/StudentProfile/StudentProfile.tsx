@@ -217,8 +217,12 @@ export default function StudentProfile() {
 
     const backgroundCompleted = Boolean(p?.cv && p?.statementOfPurpose);
 
-    const documentsCompleted =
-      Array.isArray(p?.documents) && p.documents.length > 0;
+    // Upload Documents tab completion should follow what UploadDocumentsTab saves:
+    // Photo → imageId, Passport → passportNo, Resume → cv, SOP → statementOfPurpose.
+    // (Many uploads do not create entries in `profile.documents`.)
+    const documentsCompleted = Boolean(
+      p?.imageId && p?.passportNo && p?.cv && p?.statementOfPurpose,
+    );
 
     return {
       general: generalCompleted,
