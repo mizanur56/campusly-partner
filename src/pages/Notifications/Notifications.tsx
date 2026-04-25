@@ -1,41 +1,24 @@
-<<<<<<< HEAD
-import { Bell } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import PageMeta from "../../components/common/Meta/PageMeta";
-import PageHeader from "../../components/common/Navigation/PageHeader";
-import { cn } from "../../lib/utils";
-=======
 import { Button, Empty, message, Spin, Typography } from "antd";
 import { useMemo, useState } from "react";
 import { RiCheckDoubleLine } from "react-icons/ri";
 import { useNavigate } from "react-router-dom";
->>>>>>> 0b3ccda9c44dca4e2436db7928ed77ec846ac7e1
 import {
   INotification,
   useGetNotificationsQuery,
   useMarkAllAsReadMutation,
   useMarkAsReadMutation,
 } from "../../redux/features/notifications/notificationApi";
-<<<<<<< HEAD
-
-const normalizeNotificationLink = (link?: string) => {
-  if (!link) return "";
-  if (link.startsWith("/partner/")) return link.replace("/partner", "");
-  return link;
-};
-
-const Notifications = () => {
-  const navigate = useNavigate();
-  const { data, isLoading } = useGetNotificationsQuery(
-    { page: 1, limit: 50 },
-    { refetchOnMountOrArgChange: true },
-  );
-=======
 import { formatTime } from "../../utils/formatTime";
 
 const { Text } = Typography;
 
 type NotificationTabKey = "all" | "unread";
+
+const normalizeNotificationLink = (link?: string | null) => {
+  if (!link) return "";
+  if (link.startsWith("/partner/")) return link.replace("/partner", "");
+  return link;
+};
 
 const Notifications = () => {
   const navigate = useNavigate();
@@ -48,24 +31,14 @@ const Notifications = () => {
     limit,
   });
 
->>>>>>> 0b3ccda9c44dca4e2436db7928ed77ec846ac7e1
   const [markAsRead] = useMarkAsReadMutation();
   const [markAllAsRead] = useMarkAllAsReadMutation();
 
   const notifications = data?.data || [];
-<<<<<<< HEAD
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
-
-  const handleOpen = async (notification: INotification) => {
-    if (!notification.isRead) {
-      await markAsRead(notification.id).unwrap().catch(() => null);
-    }
-    const link = normalizeNotificationLink(notification.link);
-    if (link) {
-      navigate(link);
-=======
   const total = data?.meta?.total || 0;
-  const unreadCount = notifications.filter((n: INotification) => !n.isRead).length;
+  const unreadCount = notifications.filter(
+    (n: INotification) => !n.isRead,
+  ).length;
 
   const filteredNotifications = useMemo(() => {
     if (activeTab === "unread") return notifications.filter((n) => !n.isRead);
@@ -80,7 +53,8 @@ const Notifications = () => {
         // ignore
       }
     }
-    if (notification.link) navigate(notification.link);
+    const link = normalizeNotificationLink(notification.link);
+    if (link) navigate(link);
   };
 
   const handleMarkAllAsRead = async () => {
@@ -103,59 +77,11 @@ const Notifications = () => {
         return "⚠️";
       default:
         return "ℹ️";
->>>>>>> 0b3ccda9c44dca4e2436db7928ed77ec846ac7e1
     }
   };
 
   return (
     <div className="space-y-6">
-<<<<<<< HEAD
-      <PageMeta title="Notifications | Partner Portal" description="Notifications" />
-      <PageHeader
-        title="Notifications"
-        subtitle="Track onboarding, applications, and payments updates"
-      />
-
-      <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800">
-          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-            Unread: {unreadCount}
-          </p>
-          {unreadCount > 0 ? (
-            <button
-              type="button"
-              onClick={() => markAllAsRead().unwrap().catch(() => null)}
-              className="text-sm font-medium text-primary-700 hover:text-primary-600"
-            >
-              Mark all as read
-            </button>
-          ) : null}
-        </div>
-
-        {isLoading ? (
-          <div className="p-8 text-sm text-gray-500">Loading notifications...</div>
-        ) : notifications.length === 0 ? (
-          <div className="p-8 text-center text-sm text-gray-500">
-            <Bell className="mx-auto mb-2 h-8 w-8 text-gray-300" />
-            No notifications yet
-          </div>
-        ) : (
-          notifications.map((notification) => (
-            <button
-              key={notification.id}
-              type="button"
-              onClick={() => handleOpen(notification)}
-              className={cn(
-                "w-full border-b border-gray-100 px-4 py-3 text-left hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/60",
-                !notification.isRead && "bg-blue-50/50 dark:bg-blue-900/10",
-              )}
-            >
-              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{notification.title}</p>
-              <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">{notification.message}</p>
-            </button>
-          ))
-        )}
-=======
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="text-[18px] font-semibold text-gray-900">
@@ -216,7 +142,9 @@ const Notifications = () => {
             <Empty
               image={Empty.PRESENTED_IMAGE_SIMPLE}
               description={
-                activeTab === "unread" ? "No unread notifications" : "No notifications"
+                activeTab === "unread"
+                  ? "No unread notifications"
+                  : "No notifications"
               }
             />
           </div>
@@ -225,7 +153,9 @@ const Notifications = () => {
             <div
               key={notification.id}
               className={`bg-white rounded-2xl border p-4 cursor-pointer transition-all hover:shadow-md hover:border-primary-300 ${
-                !notification.isRead ? "bg-blue-50 border-blue-200" : "border-gray-200"
+                !notification.isRead
+                  ? "bg-blue-50 border-blue-200"
+                  : "border-gray-200"
               }`}
               onClick={() => handleNotificationClick(notification)}
             >
@@ -238,7 +168,10 @@ const Notifications = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-4 mb-2">
                     <div className="flex-1">
-                      <Text strong={!notification.isRead} className="text-base text-gray-900">
+                      <Text
+                        strong={!notification.isRead}
+                        className="text-base text-gray-900"
+                      >
                         {notification.title}
                       </Text>
                       {!notification.isRead && (
@@ -267,9 +200,7 @@ const Notifications = () => {
             >
               Prev
             </Button>
-            <span className="text-sm text-gray-600">
-              Page {currentPage}
-            </span>
+            <span className="text-sm text-gray-600">Page {currentPage}</span>
             <Button
               disabled={currentPage * limit >= total}
               onClick={() => setCurrentPage((p) => p + 1)}
@@ -278,14 +209,9 @@ const Notifications = () => {
             </Button>
           </div>
         )}
->>>>>>> 0b3ccda9c44dca4e2436db7928ed77ec846ac7e1
       </div>
     </div>
   );
 };
 
 export default Notifications;
-<<<<<<< HEAD
-=======
-
->>>>>>> 0b3ccda9c44dca4e2436db7928ed77ec846ac7e1

@@ -40,16 +40,12 @@ import UnderDevelopment from "../pages/OtherPage/UnderDevelopment";
 import Payments from "../pages/Payments/Payments";
 import ProgramsSchools from "../pages/ProgramsSchools/ProgramsSchools";
 import ProfileSettings from "../pages/Settings/ProfileSettings";
-<<<<<<< HEAD
-import Notifications from "../pages/Notifications/Notifications";
-=======
 import StudentProfile from "../pages/Students/StudentProfile/StudentProfile";
 import Students from "../pages/Students/Students";
 import TeamMembers from "../pages/TeamMembers/TeamMembers";
 import { selectCurrentUser } from "../redux/features/auth/authSlice";
 import GuestOnlyAuthRoute from "./GuestOnlyAuthRoute";
 import ProtectedRoute from "./ProtectedRoute";
->>>>>>> 0b3ccda9c44dca4e2436db7928ed77ec846ac7e1
 
 function StudentProfileRedirect() {
   const { id } = useParams();
@@ -133,7 +129,10 @@ function AppRoutes() {
         >
           <Route index element={<DashboardOrRedirect />} />
           <Route path="media" element={<AllMediaList />} />
-          <Route path="onboarding/compliance" element={<RegularCompliancePage />} />
+          <Route
+            path="onboarding/compliance"
+            element={<RegularCompliancePage />}
+          />
           <Route path="onboarding" element={<OnboardingPage />} />
           <Route path="contract" element={<ContractPage />} />
           <Route path="contract/signed" element={<ContractSignedPage />} />

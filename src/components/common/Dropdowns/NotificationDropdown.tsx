@@ -10,7 +10,7 @@ import {
   useMarkAsReadMutation,
 } from "../../../redux/features/notifications/notificationApi";
 
-const normalizeNotificationLink = (link?: string) => {
+const normalizeNotificationLink = (link?: string | null) => {
   if (!link) return "";
   if (link.startsWith("/partner/")) return link.replace("/partner", "");
   return link;
