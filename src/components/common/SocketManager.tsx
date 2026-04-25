@@ -167,6 +167,13 @@ const playNotificationSound = () => {
       dispatch(notificationApi.util.invalidateTags(["Notification"]));
     };
 
+    const handleApplicationNotesChanged = (payload: any) => {
+      const event = new CustomEvent("application-notes-changed", {
+        detail: payload,
+      });
+      window.dispatchEvent(event);
+    };
+
     const handleConnectError = (error: Error) => {
       console.error("❌ Socket connection error:", error.message);
       isConnectingRef.current = false;
@@ -188,6 +195,7 @@ const playNotificationSound = () => {
     socket.on("connect", handleConnect);
     socket.on("notification", handleNotification);
     socket.on("notification:unreadCount", handleUnreadCount);
+    socket.on("application:notesChanged", handleApplicationNotesChanged);
     socket.on("connect_error", handleConnectError);
     socket.on("disconnect", handleDisconnect);
     socket.on("reconnect", handleReconnect);
@@ -202,6 +210,7 @@ const playNotificationSound = () => {
       socket.off("connect", handleConnect);
       socket.off("notification", handleNotification);
       socket.off("notification:unreadCount", handleUnreadCount);
+      socket.off("application:notesChanged", handleApplicationNotesChanged);
       socket.off("connect_error", handleConnectError);
       socket.off("disconnect", handleDisconnect);
       socket.off("reconnect", handleReconnect);
