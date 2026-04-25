@@ -3,6 +3,7 @@ import { Badge, Button, Dropdown, Empty, Spin, Typography } from "antd";
 import { useEffect, useState } from "react";
 import { RiCheckDoubleLine } from "react-icons/ri";
 import { useNavigate } from "react-router-dom";
+import { useGetAnnouncementsQuery } from "../../redux/features/announcements/announcementsApi";
 import {
   INotification,
   useGetNotificationsQuery,
@@ -12,6 +13,14 @@ import {
 import { formatTime } from "../../utils/formatTime";
 
 const { Text } = Typography;
+const ANNOUNCEMENT_READ_STORAGE_KEY = "partner_announcements_read_ids_v1";
+
+type AnnouncementItem = {
+  id: string;
+  title?: string;
+  body?: string;
+  createdAt?: string;
+};
 
 const NotificationDropdown = () => {
   const navigate = useNavigate();
@@ -26,14 +35,69 @@ const NotificationDropdown = () => {
   }, []);
 
   const { data, isLoading } = useGetNotificationsQuery({ page: 1, limit: 10 });
+  const { data: announcementsData, isLoading: announcementsLoading } =
+    useGetAnnouncementsQuery({
+      page: 1,
+      limit: 10,
+      isActive: true,
+    });
   const [markAsRead] = useMarkAsReadMutation();
   const [markAllAsRead] = useMarkAllAsReadMutation();
 
   const notifications = data?.data || [];
-  const displayedNotifications = notifications.slice(0, 3);
-  const unreadCount =
+  const announcements = (announcementsData?.data || []) as AnnouncementItem[];
+  const [announcementReadIds, setAnnouncementReadIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(ANNOUNCEMENT_READ_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        setAnnouncementReadIds(
+          parsed.filter((id): id is string => typeof id === "string"),
+        );
+      }
+    } catch {
+      setAnnouncementReadIds([]);
+    }
+  }, []);
+
+  const notificationUnreadCount =
     data?.meta?.unreadCount ??
     notifications.filter((n: INotification) => !n.isRead).length;
+  const announcementUnreadCount = announcements.filter(
+    (a) => !announcementReadIds.includes(a.id),
+  ).length;
+  const unreadCount = notificationUnreadCount + announcementUnreadCount;
+
+  const displayItems = [
+    ...notifications.map((n) => ({
+      kind: "notification" as const,
+      id: n.id,
+      createdAt: n.createdAt,
+      title: n.title,
+      message: n.message,
+      type: n.type,
+      isRead: n.isRead,
+      raw: n,
+    })),
+    ...announcements.map((a) => ({
+      kind: "announcement" as const,
+      id: `announcement-${a.id}`,
+      createdAt: a.createdAt || "",
+      title: a.title || "Announcement",
+      message: a.body || "",
+      type: "INFO" as const,
+      isRead: announcementReadIds.includes(a.id),
+      raw: a,
+    })),
+  ]
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime(),
+    )
+    .slice(0, 6);
 
   const handleNotificationClick = async (notification: INotification) => {
     if (!notification.isRead) {
@@ -53,6 +117,15 @@ const NotificationDropdown = () => {
   const handleMarkAllAsRead = async () => {
     try {
       await markAllAsRead().unwrap();
+      const announcementIds = announcements.map((a) => a.id);
+      const merged = Array.from(
+        new Set([...announcementReadIds, ...announcementIds]),
+      );
+      setAnnouncementReadIds(merged);
+      window.localStorage.setItem(
+        ANNOUNCEMENT_READ_STORAGE_KEY,
+        JSON.stringify(merged),
+      );
     } catch {
       // ignore
     }
@@ -118,7 +191,19 @@ const NotificationDropdown = () => {
               disabled: true,
             },
           ]
-        : notifications.length === 0
+        : announcementsLoading
+        ? [
+            {
+              key: "loading",
+              label: (
+                <div className="flex justify-center py-4">
+                  <Spin size="small" />
+                </div>
+              ),
+              disabled: true,
+            },
+          ]
+        : displayItems.length === 0
           ? [
               {
                 key: "empty",
@@ -135,25 +220,42 @@ const NotificationDropdown = () => {
               },
             ]
           : [
-              ...displayedNotifications.map((notification: INotification) => ({
-                key: notification.id,
+              ...displayItems.map((item) => ({
+                key: item.id,
                 label: (
                   <div
                     className={`px-3 py-2 hover:bg-gray-50 cursor-pointer transition-colors ${
-                      !notification.isRead ? "bg-blue-50" : ""
+                      !item.isRead ? "bg-blue-50" : ""
                     }`}
-                    onClick={() => handleNotificationClick(notification)}
+                    onClick={() => {
+                      if (item.kind === "notification") {
+                        handleNotificationClick(item.raw as INotification);
+                        return;
+                      }
+
+                      const announcement = item.raw as AnnouncementItem;
+                      if (!announcementReadIds.includes(announcement.id)) {
+                        const updated = [...announcementReadIds, announcement.id];
+                        setAnnouncementReadIds(updated);
+                        window.localStorage.setItem(
+                          ANNOUNCEMENT_READ_STORAGE_KEY,
+                          JSON.stringify(updated),
+                        );
+                      }
+                    }}
                   >
                     <div className="flex items-start gap-2">
                       <span className="text-lg">
-                        {getNotificationIcon(notification.type)}
+                        {item.kind === "announcement"
+                          ? "📢"
+                          : getNotificationIcon(item.type)}
                       </span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <Text strong={!notification.isRead} className="text-sm">
-                            {notification.title}
+                          <Text strong={!item.isRead} className="text-sm">
+                            {item.title}
                           </Text>
-                          {!notification.isRead && (
+                          {!item.isRead && (
                             <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1" />
                           )}
                         </div>
@@ -161,10 +263,10 @@ const NotificationDropdown = () => {
                           type="secondary"
                           className="text-xs block mt-1 line-clamp-2"
                         >
-                          {notification.message}
+                          {item.message}
                         </Text>
                         <Text type="secondary" className="text-xs block mt-1">
-                          {formatTime(notification.createdAt)}
+                          {formatTime(item.createdAt)}
                         </Text>
                       </div>
                     </div>
