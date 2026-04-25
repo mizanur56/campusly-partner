@@ -677,16 +677,26 @@ const UploadDocuments = ({
       title: "Additional Documents",
       desc: "Provide one of the listed certificates to determine your course eligibility.",
       items: [
-        ...backgroundDocList.map((doc: any) => ({
-          id: doc.id,
-          name: doc.name,
-          status: profileData?.documents?.some(
-            (d: any) => d.documentId === doc.id,
-          )
-            ? "submitted"
-            : "pending",
-          category: "document",
-        })),
+        ...backgroundDocList
+          .map((doc: any) => {
+            const isSubmitted = Boolean(
+              profileData?.documents?.some((d: any) => d.documentId === doc.id),
+            );
+
+            // Work experience should only appear here after it has been filled/submitted.
+            const isWorkExperience = String(doc?.name ?? "")
+              .toLowerCase()
+              .includes("work experience");
+            if (isWorkExperience && !isSubmitted) return null;
+
+            return {
+              id: doc.id,
+              name: doc.name,
+              status: isSubmitted ? "submitted" : "pending",
+              category: "document",
+            };
+          })
+          .filter(Boolean),
         {
           id: "sop",
           name: "Statement of Purpose",
@@ -700,7 +710,7 @@ const UploadDocuments = ({
 
   // /* ================= Upload Handler ================= */
   const handleFileUpload = async (file: File, item: DocumentItem) => {
-    const toastId = toast.loading(`Uploading ${item.name}...`);
+    // const toastId = toast.loading(`Uploading ${item.name}...`);
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -735,20 +745,15 @@ const UploadDocuments = ({
         }).unwrap();
       }
 
-      toast.update(toastId, {
-        render: `${item.name} uploaded!`,
-        type: "success",
-        isLoading: false,
-        autoClose: 3000,
-      });
+      // toast.update(toastId, {
+      //   render: `${item.name} uploaded!`,
+      //   type: "success",
+      //   isLoading: false,
+      //   autoClose: 3000,
+      // });
       refetch();
     } catch {
-      toast.update(toastId, {
-        render: "Upload failed",
-        type: "error",
-        isLoading: false,
-        autoClose: 3000,
-      });
+      toast.error("Upload failed");
     }
   };
 
@@ -904,7 +909,10 @@ const UploadDocuments = ({
       </Modal>
 
       <div className="flex justify-end mt-6">
-        <PrimaryButton text="Next" to="/profile?tab=apply-now" />
+        <PrimaryButton
+          text="Next"
+          to={`/students/${studentId}/profile?tab=apply-now`}
+        />
       </div>
     </div>
   );

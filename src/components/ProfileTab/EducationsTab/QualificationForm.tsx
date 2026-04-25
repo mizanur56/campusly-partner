@@ -577,7 +577,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from "react";
-import { Form, Button, Tooltip } from "antd";
+import { Form, Button, Tooltip, InputNumber } from "antd";
 import dayjs from "dayjs";
 import { toast } from "react-toastify";
 
@@ -830,13 +830,9 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
               options={gradeOptions}
               rules={[{ required: true, message: "Grading scale is required" }]}
             />
-            <FormInput
+            <Form.Item
               name="result"
               label="Result"
-              placeholder="Enter result"
-              type="number"
-              step="any"
-              disabled={!selectedGrade || !isEditing}
               rules={[
                 {
                   validator: (_: any, value: any) => {
@@ -849,7 +845,8 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
                       return Promise.reject(new Error("Result is required"));
                     }
 
-                    const numericValue = parseFloat(value);
+                    const numericValue =
+                      typeof value === "number" ? value : parseFloat(value);
                     const maxGrade = parseFloat(String(selectedGrade));
 
                     if (Number.isNaN(numericValue)) {
@@ -868,7 +865,17 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
                   },
                 },
               ]}
-            />
+            >
+              <InputNumber
+                className="w-full"
+                placeholder="Enter result"
+                min={1}
+                max={selectedGrade ? Number(selectedGrade) : undefined}
+                precision={2}
+                step={0.01}
+                disabled={!selectedGrade || !isEditing}
+              />
+            </Form.Item>
           </div>
 
           {isEditing && (
