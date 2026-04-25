@@ -200,6 +200,7 @@ import ApplicationRequirementsTab from "./components/ApplicationRequirementsTab"
 import NotesTab from "./components/NotesTab";
 import StudentRecordsTab from "./components/StudentRecordsTab";
 import { useRefetchApplicationNotesOnNoteNotification } from "../../hooks/useRefetchApplicationNotesOnNoteNotification";
+import { getApiImageUrl } from "../../utils/getApiImageUrl";
 
 const ApplicationDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -237,6 +238,54 @@ const ApplicationDetails = () => {
           profile_photo?: string | null;
         }
       | undefined;
+    const appId = applicationApiData?.applicationId
+      ? String(applicationApiData.applicationId)
+      : undefined;
+    const universityName =
+      applicationApiData?.course?.university?.name ??
+      applicationApiData?.university?.name;
+    const programName = applicationApiData?.course?.course?.name;
+    const intake = applicationApiData?.intake;
+    const level = applicationApiData?.studyLevel;
+    const country =
+      applicationApiData?.course?.country?.name ??
+      applicationApiData?.country?.name ??
+      applicationApiData?.course?.university?.country?.name;
+
+    const applicationFeeInvoice = applicationApiData?.invoices?.find(
+      (inv: any) => inv?.type === "APPLICATION_FEE",
+    );
+    const feeAmountText =
+      applicationFeeInvoice?.amount != null && applicationFeeInvoice?.currency
+        ? `${applicationFeeInvoice.amount} ${applicationFeeInvoice.currency}`
+        : applicationFeeInvoice?.amount != null
+          ? String(applicationFeeInvoice.amount)
+          : undefined;
+    const feeStatusText = applicationFeeInvoice?.status
+      ? String(applicationFeeInvoice.status)
+      : undefined;
+    const feeDateRaw =
+      applicationFeeInvoice?.paidAt ??
+      applicationFeeInvoice?.paymentDate ??
+      applicationFeeInvoice?.updatedAt ??
+      applicationFeeInvoice?.createdAt;
+    const feePaymentDateText = feeDateRaw
+      ? (() => {
+          try {
+            return new Date(feeDateRaw).toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            });
+          } catch {
+            return String(feeDateRaw);
+          }
+        })()
+      : undefined;
+    const feeReceiptUrl = applicationFeeInvoice?.invoiceFile
+      ? `${config.image_access_url}${applicationFeeInvoice.invoiceFile}`
+      : undefined;
+
     setStudent({
       id: studentIdForProfile,
       name: s
@@ -246,14 +295,38 @@ const ApplicationDetails = () => {
       phone: s?.phone ?? "",
       address: s?.address ?? "—",
       status: s?.status ?? "—",
-      avatar: s?.profile_photo
-        ? s.profile_photo.startsWith("http")
-          ? s.profile_photo
-          : `${config.image_access_url || ""}${s.profile_photo}`
-        : undefined,
+      avatar:
+        // Prefer student profile photo from partner student profile API (same as StudentProfile page)
+        getApiImageUrl(profileData?.image) ||
+        (profileData?.imageId
+          ? `${config.image_access_url}/media/${String(profileData.imageId)}`
+          : "") ||
+        // Fallback to auth user profile photo if present
+        (s?.profile_photo
+          ? s.profile_photo.startsWith("http")
+            ? s.profile_photo
+            : `${config.image_access_url || ""}${s.profile_photo}`
+          : "") ||
+        "/user.avif",
+      applicationSidebar: {
+        applicationId: appId,
+        intake: intake ? String(intake) : undefined,
+        program: programName ? String(programName) : undefined,
+        school: universityName ? String(universityName) : undefined,
+        country: country ? String(country) : undefined,
+        level: level ? String(level) : undefined,
+        applicationFee: applicationFeeInvoice
+          ? {
+              amountText: feeAmountText,
+              statusText: feeStatusText,
+              paymentDateText: feePaymentDateText,
+              receiptUrl: feeReceiptUrl,
+            }
+          : undefined,
+      },
     });
     return () => setStudent(null);
-  }, [studentIdForProfile, applicationApiData, setStudent]);
+  }, [studentIdForProfile, applicationApiData, profileData, setStudent]);
   // Scroll to top when component mounts or id changes
   useEffect(() => {
     window.scrollTo(0, 0);

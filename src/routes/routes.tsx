@@ -8,17 +8,6 @@ import {
 } from "react-router-dom";
 import MainLayout from "../layout/MainLayout";
 import Academy from "../pages/Academy/Academy";
-import ApplicationDetails from "../pages/Applications/ApplicationDetails";
-import Applications from "../pages/Applications/Applications";
-import Admission from "../pages/Applications/ApplicationStep/Admission";
-import Apply from "../pages/Applications/ApplicationStep/Apply";
-import ChecklistUpload from "../pages/Applications/ApplicationStep/ChecklistUpload";
-import EmbassySubmission from "../pages/Applications/ApplicationStep/EmbassySubmission";
-import Enroll from "../pages/Applications/ApplicationStep/Enroll";
-import FinalLetter from "../pages/Applications/ApplicationStep/FinalLetter";
-import VisaOutcome from "../pages/Applications/ApplicationStep/VisaOutcome";
-import VisaRejectPage from "../pages/Applications/ApplicationStep/VisaRejectPage";
-import VisaSuccessPage from "../pages/Applications/ApplicationStep/VisaSuccessPage";
 import ChangePassword from "../pages/Auth/ChangePassword";
 import ForgetPassword from "../pages/Auth/ForgetPassword";
 import Login from "../pages/Auth/Login";
@@ -28,18 +17,13 @@ import ResetPassword from "../pages/Auth/ResetPassword";
 import SetPasswordByInvite from "../pages/Auth/SetPasswordByInvite";
 import ContractPage from "../pages/Contract/ContractPage";
 import ContractSignedPage from "../pages/Contract/ContractSignedPage";
-<<<<<<< HEAD
-import Students from "../pages/Students/Students";
-import StudentProfile from "../pages/Students/StudentProfile/StudentProfile";
 import Applications from "../pages/Applications/Applications";
 import ApplicationDetails from "../pages/Applications/ApplicationDetails";
 import VisaRejectPage from "../pages/Applications/ApplicationStep/VisaRejectPage";
 import VisaSuccessPage from "../pages/Applications/ApplicationStep/VisaSuccessPage";
-=======
 import Dashboard from "../pages/Dashboard/Dashboard.tsx";
 import HotOffers from "../pages/HotOffers/HotOffers";
 import AllMediaList from "../pages/Media/Media";
->>>>>>> aca3e061bc7b68e27f54f1c6d4e97138b5baee79
 import MyTasks from "../pages/MyTasks/MyTasks";
 import Notifications from "../pages/Notifications/Notifications";
 import { OnboardingPage } from "../pages/Onboarding";
