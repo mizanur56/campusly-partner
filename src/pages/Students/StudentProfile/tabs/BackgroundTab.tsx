@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Button, Form, Modal, Tooltip } from "antd";
+import { Button, Form, Modal, Switch, Tooltip } from "antd";
 import dayjs from "dayjs";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import { FaRegEdit } from "react-icons/fa";
@@ -40,10 +40,15 @@ export default function BackgroundTab({
   canEdit,
   onUpdated,
 }: BackgroundTabProps) {
+  const VISA_SECTION_TOGGLE_KEY = useMemo(
+    () => `studentProfile:visaRejectionsEnabled:${studentId}`,
+    [studentId],
+  );
   const [visaForm] = Form.useForm();
   const [isEditingVisa, setIsEditingVisa] = useState(false);
   const [rejections, setRejections] = useState<{ id: string; isNew: boolean }[]>([]);
   const [deleteVisaId, setDeleteVisaId] = useState<string | null>(null);
+  const [visaSectionEnabled, setVisaSectionEnabled] = useState(false);
 
   const { data: backgroundData, isLoading: isLoadingBackground } = useGetDocumentsByCategoryQuery(
     { studentId, slug: "background-information" },
@@ -60,7 +65,33 @@ export default function BackgroundTab({
   const [updateVisa, { isLoading: isUpdatingVisa }] = useUpdateVisaRejectionMutation();
   const [deleteVisa, { isLoading: isDeletingVisa }] = useDeleteVisaRejectionMutation();
 
+  // Persistent toggle (default OFF). Per-student; reload preserves last choice.
   useEffect(() => {
+    try {
+      const raw = localStorage.getItem(VISA_SECTION_TOGGLE_KEY);
+      if (raw === "1") setVisaSectionEnabled(true);
+      else setVisaSectionEnabled(false);
+    } catch {
+      setVisaSectionEnabled(false);
+    }
+  }, [VISA_SECTION_TOGGLE_KEY]);
+
+  const handleVisaSectionToggle = (next: boolean) => {
+    setVisaSectionEnabled(next);
+    try {
+      localStorage.setItem(VISA_SECTION_TOGGLE_KEY, next ? "1" : "0");
+    } catch {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    if (!visaSectionEnabled) {
+      setIsEditingVisa(false);
+      setRejections([]);
+      visaForm.resetFields();
+      return;
+    }
     if (existingData.length > 0) {
       setIsEditingVisa(false);
       setRejections(existingData.map((r) => ({ id: r.id, isNew: false })));
@@ -75,7 +106,7 @@ export default function BackgroundTab({
       setRejections([{ id: `new_${Date.now()}`, isNew: true }]);
       visaForm.resetFields();
     }
-  }, [existingData, visaForm, canEdit]);
+  }, [existingData, visaForm, canEdit, visaSectionEnabled]);
 
   const handleVisaSave = async () => {
     try {
@@ -177,8 +208,15 @@ export default function BackgroundTab({
       )}
 
       {/* Visa Rejections - same card and form as student VisaRejectionForm */}
-      <div className="bg-white border rounded-lg p-4 relative">
+      <div className="bg-[#FFFFFF] border border-[#C7CACF] rounded-lg p-4 relative">
         <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+          <div className="flex items-center gap-2">
+           
+            <Switch
+              checked={visaSectionEnabled}
+              onChange={handleVisaSectionToggle}
+            />
+          </div>
           {existingData.length > 0 && canEdit && (
             <Tooltip title={isEditingVisa ? "Cancel" : "Edit"}>
               <button
@@ -197,6 +235,7 @@ export default function BackgroundTab({
           <p className="text-sm text-gray-500">Mention details if your visa was ever rejected</p>
         </div>
 
+        {visaSectionEnabled && (
         <Form form={visaForm} layout="vertical" disabled={!isEditingVisa}>
           <div className="space-y-4">
             {rejections.map((r) => (
@@ -258,6 +297,7 @@ export default function BackgroundTab({
             </div>
           )}
         </Form>
+        )}
       </div>
 
       <DeleteModal

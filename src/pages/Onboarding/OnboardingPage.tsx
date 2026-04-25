@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import OnboardingFormLayout from "./OnboardingFormLayout";
 import {
@@ -28,6 +28,12 @@ export default function OnboardingPage() {
   const { data: status, refetch } = useGetOnboardingStatusQuery(undefined);
   const [resubmitOnboarding, { isLoading: isResubmitting }] =
     useResubmitOnboardingMutation();
+  /**
+   * While ONBOARDING_IN_PROGRESS, only apply server-driven step once per "visit"
+   * to this workflow (initial load or re-entry). Saving a step refetches status and
+   * bumps onboardingStep — we must not auto-advance; only Next changes the step.
+   */
+  const didSyncInProgressStepRef = useRef(false);
 
   // Sync UI step with backend onboarding status
   useEffect(() => {
@@ -44,20 +50,22 @@ export default function OnboardingPage() {
     }
 
     if (workflowStatus === "ONBOARDING_IN_PROGRESS") {
-      // Treat backend step as "completed count" (1–5):
-      // - completed = number of finished steps
-      // - activeIndex = next step to fill (or last if all done)
-      const completed = Math.max(
-        0,
-        Math.min(ONBOARDING_FORM_STEP_COUNT, backendStep),
-      );
-      const activeIndex =
-        completed >= ONBOARDING_FORM_STEP_COUNT
-          ? ONBOARDING_FORM_STEP_COUNT - 1
-          : completed;
-      setStep(activeIndex as OnboardingStepIndex);
+      if (!didSyncInProgressStepRef.current) {
+        didSyncInProgressStepRef.current = true;
+        const completed = Math.max(
+          0,
+          Math.min(ONBOARDING_FORM_STEP_COUNT, backendStep),
+        );
+        const activeIndex =
+          completed >= ONBOARDING_FORM_STEP_COUNT
+            ? ONBOARDING_FORM_STEP_COUNT - 1
+            : completed;
+        setStep(activeIndex as OnboardingStepIndex);
+      }
       return;
     }
+
+    didSyncInProgressStepRef.current = false;
 
     if (
       workflowStatus === "AWAITING_CONTRACT_UPLOAD" ||

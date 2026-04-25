@@ -6,7 +6,10 @@ import {
   selectCurrentUser,
   useCurrentToken,
 } from "../redux/features/auth/authSlice";
-import { clearAuthLocalStorage } from "../lib/authLocalStorage";
+import {
+  clearAuthLocalStorage,
+  clientHasBearerToken,
+} from "../lib/authLocalStorage";
 import { clearLogoutCookie, hasLogoutCookie } from "../lib/logoutCookie";
 import {
   getPortalLoginUrl,
@@ -47,7 +50,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return () => window.removeEventListener("focus", check);
   }, [dispatch]);
 
-  const hasToken = token && localStorage.getItem("token");
+  const hasToken = clientHasBearerToken(token);
 
   if (!hasToken || !user) {
     if (redirectFromPortalRoleCookieIfNeeded()) return null;

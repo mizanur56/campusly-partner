@@ -14,6 +14,7 @@ import {
 import type { ColumnsType } from "antd/es/table";
 import PageMeta from "../../components/common/Meta/PageMeta";
 import DataTable from "../../components/common/Tables/DataTable";
+import PageHeader from "../../components/common/Navigation/PageHeader";
 import {
   useGetPartnerTasksQuery,
   useGetTaskByIdQuery,
@@ -60,6 +61,8 @@ function formatDateTime(iso: string | undefined | null): string {
     return "—";
   }
 }
+// bb
+
 
 function formatDate(iso: string | undefined | null): string {
   if (!iso) return "—";
@@ -319,23 +322,22 @@ export default function MyTasks() {
         title="My Tasks - Campus Transfer Partner"
         description="View and manage your tasks. Filter by status, assigned to me, or created by me."
       />
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
-            My Tasks
-          </h1>
-          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-            View and manage your tasks
-          </p>
-        </div>
-        <button
+
+      <PageHeader
+        title="My Tasks"
+        subtitle="View and manage your tasks"
+        breadcrumbs={[
+          { title: "Dashboard", path: "/" },
+          { title: "My Tasks" },
+        ]}
+        extra={<button
           type="button"
           onClick={() => setIsCreateModalOpen(true)}
           className="inline-flex items-center justify-center rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
         >
           + Create task
-        </button>
-      </div>
+        </button>}
+      />
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <Select

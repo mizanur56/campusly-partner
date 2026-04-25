@@ -577,7 +577,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from "react";
-import { Form, Button, Tooltip } from "antd";
+import { Form, Button, Tooltip, InputNumber } from "antd";
 import dayjs from "dayjs";
 import { toast } from "react-toastify";
 
@@ -672,7 +672,8 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
       if (!hideHeader) setIsEditing(false);
     } else {
       setIsEditing(true);
-      setIsExpanded(true);
+      // List view: stay collapsed until user expands (with or without saved data).
+      if (!hideHeader) setIsExpanded(false);
     }
   }, [educationData, form, hideHeader]);
 
@@ -789,27 +790,92 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
           className="space-y-4"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-            <FormInput name="instituteName" label="Institute Name" required />
+            <FormInput
+              name="instituteName"
+              label="Institute Name"
+              placeholder="Enter institute name"
+              rules={[{ required: true, message: "Institute name is required" }]}
+            />
             <FormSelect
               name="country"
               label="Country"
+              placeholder="Select country"
               options={countriesOptions}
+              rules={[{ required: true, message: "Country is required" }]}
             />
-            <FormDatePicker name="startYear" label="Start Year" picker="year" />
-            <FormDatePicker name="endYear" label="End Year" picker="year" />
-            <FormInput name="subject" label="Subject / Group" />
+            <FormDatePicker
+              name="startYear"
+              label="Start Date"
+              // picker="year"
+              placeholder="Select start Date"
+              rules={[{ required: true, message: "Start Date is required" }]}
+            />
+            <FormDatePicker
+              name="endYear"
+              label="End Date"
+              // picker="year"
+              placeholder="Select end Date"
+              rules={[{ required: true, message: "End Date is required" }]}
+            />
+            <FormInput
+              name="subject"
+              label="Subject / Group"
+              placeholder="Enter subject or group"
+              rules={[{ required: true, message: "Subject / group is required" }]}
+            />
             <FormSelect
               name="outOfGrade"
               label="Out of Grade"
+              placeholder="Select grading scale"
               options={gradeOptions}
+              rules={[{ required: true, message: "Grading scale is required" }]}
             />
-            <FormInput
+            <Form.Item
               name="result"
               label="Result"
-              type="number"
-              step="any"
-              disabled={!selectedGrade || !isEditing}
-            />
+              rules={[
+                {
+                  validator: (_: any, value: any) => {
+                    if (!selectedGrade) {
+                      return Promise.reject(
+                        new Error("Please select grading scale first"),
+                      );
+                    }
+                    if (value === undefined || value === null || value === "") {
+                      return Promise.reject(new Error("Result is required"));
+                    }
+
+                    const numericValue =
+                      typeof value === "number" ? value : parseFloat(value);
+                    const maxGrade = parseFloat(String(selectedGrade));
+
+                    if (Number.isNaN(numericValue)) {
+                      return Promise.reject(
+                        new Error("Please enter a valid number"),
+                      );
+                    }
+                    if (numericValue < 1 || numericValue > maxGrade) {
+                      return Promise.reject(
+                        new Error(
+                          `Result must be between 1 and ${selectedGrade}`,
+                        ),
+                      );
+                    }
+                    return Promise.resolve();
+                  },
+                },
+              ]}
+            >
+              <InputNumber
+                className="w-full"
+                placeholder="Enter result"
+                min={1}
+                max={selectedGrade ? Number(selectedGrade) : undefined}
+                precision={2}
+                step={0.01}
+                disabled={!selectedGrade || !isEditing}
+              />
+            </Form.Item>
           </div>
 
           {isEditing && (

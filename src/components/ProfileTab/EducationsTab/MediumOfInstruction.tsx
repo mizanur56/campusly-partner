@@ -114,9 +114,17 @@ const MediumOfInstruction = ({ studentId }: { studentId: string }) => {
           {!mediumOfInstructionFile && (
             <label
               htmlFor="medium-of-instruction-file-upload"
-              className="cursor-pointer"
+              className={
+                isUploadingMediumOfInstruction
+                  ? "cursor-not-allowed opacity-60"
+                  : "cursor-pointer"
+              }
             >
-              <FaPlusSquare size={24} color="#237D3B" title="Upload file" />
+              {isUploadingMediumOfInstruction ? (
+                <Spin size="small" />
+              ) : (
+                <FaPlusSquare size={24} color="#237D3B" title="Upload file" />
+              )}
             </label>
           )}
           <input
@@ -133,12 +141,6 @@ const MediumOfInstruction = ({ studentId }: { studentId: string }) => {
           />
         </div>
       </div>
-
-      {isUploadingMediumOfInstruction && (
-        <div className="mt-4 flex items-center justify-center py-4">
-          <Spin size="small" tip="Uploading file..." />
-        </div>
-      )}
 
       {mediumOfInstructionFile && !isUploadingMediumOfInstruction && (
         <div className="mt-4">
