@@ -1,5 +1,5 @@
 import { Tooltip } from "antd";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link, useLocation } from "react-router-dom";
 import { config } from "../../../config";
@@ -10,9 +10,11 @@ import { useFilteredSidebarItems } from "../../../hooks/useFilteredSidebarItems"
 import { ChevronDownIcon } from "../../../icons";
 import { clearAuthLocalStorage } from "../../../lib/authLocalStorage";
 import { getPortalLoginUrl } from "../../../lib/portalRouting";
+import { isPartnerStudentProfileApplyNowUnlocked } from "../../../lib/partnerStudentProfileGates";
 import { selectCurrentUser } from "../../../redux/features/auth/authSlice";
 import { useGetOnboardingStatusQuery } from "../../../redux/features/onboardingForm";
 import { useGetPartnerProfileQuery } from "../../../redux/features/profile/partnerProfileApi";
+import { useGetStudentProfileQuery } from "../../../redux/features/profile/studentProfileApi";
 import { NavItem, SubMenuItem } from "../../../types/interfaces";
 
 const SidebarItems: NavItem[] = [
@@ -249,6 +251,19 @@ const Sidebar: React.FC = () => {
   const showStudentSidebar =
     (isStudentContext && studentIdFromPath) ||
     (isApplicationDetailContext && student);
+
+  const { data: studentProfileForNav } = useGetStudentProfileQuery(
+    studentId!,
+    { skip: !studentId || !showStudentSidebar },
+  );
+
+  const studentNavItems = useMemo(() => {
+    const unlocked = isPartnerStudentProfileApplyNowUnlocked(
+      studentProfileForNav,
+    );
+    if (unlocked) return STUDENT_NAV;
+    return STUDENT_NAV.filter((item) => item.key !== "applications");
+  }, [studentProfileForNav]);
   const isOnboardingContext =
     (location.pathname === "/" && previewMode === "onboarding") ||
     location.pathname.startsWith("/onboarding") ||
@@ -749,7 +764,7 @@ const Sidebar: React.FC = () => {
             </div>
           </div>
           <nav className="mt-3 space-y-0.5">
-            {STUDENT_NAV.map((item) => {
+            {studentNavItems.map((item) => {
               const path = `/students/${studentId}/${item.path}`;
               const isActiveNav = location.pathname === path;
               return (

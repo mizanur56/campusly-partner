@@ -32,13 +32,6 @@ import Students from "../pages/Students/Students";
 import StudentProfile from "../pages/Students/StudentProfile/StudentProfile";
 import Applications from "../pages/Applications/Applications";
 import ApplicationDetails from "../pages/Applications/ApplicationDetails";
-import Admission from "../pages/Applications/ApplicationStep/Admission";
-import Apply from "../pages/Applications/ApplicationStep/Apply";
-import ChecklistUpload from "../pages/Applications/ApplicationStep/ChecklistUpload";
-import FinalLetter from "../pages/Applications/ApplicationStep/FinalLetter";
-import EmbassySubmission from "../pages/Applications/ApplicationStep/EmbassySubmission";
-import VisaOutcome from "../pages/Applications/ApplicationStep/VisaOutcome";
-import Enroll from "../pages/Applications/ApplicationStep/Enroll";
 import VisaRejectPage from "../pages/Applications/ApplicationStep/VisaRejectPage";
 import VisaSuccessPage from "../pages/Applications/ApplicationStep/VisaSuccessPage";
 import MyTasks from "../pages/MyTasks/MyTasks";
@@ -146,16 +139,7 @@ function AppRoutes() {
           <Route path="applications" element={<Applications />} />
           <Route path="visa-reject" element={<VisaRejectPage />} />
           <Route path="visa-success" element={<VisaSuccessPage />} />
-          <Route path="applications/:id" element={<ApplicationDetails />}>
-            <Route index element={<Admission />} />
-            <Route path="admission" element={<Admission />} />
-            <Route path="apply" element={<Apply />} />
-            <Route path="checklist" element={<ChecklistUpload />} />
-            <Route path="final-letter" element={<FinalLetter />} />
-            <Route path="embassy" element={<EmbassySubmission />} />
-            <Route path="visa" element={<VisaOutcome />} />
-            <Route path="enroll" element={<Enroll />} />
-          </Route>
+          <Route path="applications/:id" element={<ApplicationDetails />} />
           <Route path="team-members" element={<TeamMembers />} />
           <Route path="my-tasks" element={<MyTasks />} />
           <Route

@@ -72,7 +72,7 @@ export default function ApplyPreferenceModal({
       campus: data.campus || "Main Campus",
       duration: data.duration || "1 year",
       studyMode: formatStudyMode(data.modeOfStudy as string),
-      registrationForm: "https://example.com/form.pdf",
+      // registrationForm: "https://example.com/form.pdf",
     };
 
     try {

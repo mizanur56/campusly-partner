@@ -202,7 +202,6 @@ import StudentRecordsTab from "./components/StudentRecordsTab";
 
 const ApplicationDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const [isRedirecting, setIsRedirecting] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState<
     "requirements" | "records" | "notes"
   >("requirements");
@@ -309,7 +308,18 @@ const ApplicationDetails = () => {
       {
         id: "apply",
         name: "Apply",
-        isCompleted: !!applicationApiData?.conditionalOfferLetter,
+        isCompleted: (() => {
+          const tuitionFee = applicationApiData?.invoices?.find(
+            (inv: any) =>
+              inv?.type === "TUITION_FEE_HALF_BEFORE" ||
+              inv?.type === "TUITION_FEE_FULL" ||
+              inv?.type === "TUITION_FEE_FULL_BEFORE" ||
+              inv?.type === "TUITION_FEE_FULL_AFTER_VISA",
+          );
+          const tuitionCompleted =
+            !tuitionFee || tuitionFee?.amount === 0 || tuitionFee?.status === "PAID";
+          return Boolean(applicationApiData?.conditionalOfferLetter) && tuitionCompleted;
+        })(),
       },
       {
         id: "checklist",
@@ -372,36 +382,11 @@ const ApplicationDetails = () => {
   //   }
   // }, [location.pathname, isLoading, applicationApiData, id]);
 
-  useEffect(() => {
-    const isBaseRoute = location.pathname.endsWith(id!);
-
-    if (!isLoading && applicationApiData) {
-      if (isBaseRoute) {
-        // শেষ কমপ্লিটেড স্টেপ বের করা
-        let lastCompletedIndex = -1;
-        for (let i = steps.length - 1; i >= 0; i--) {
-          if (steps[i].isCompleted) {
-            lastCompletedIndex = i;
-            break;
-          }
-        }
-
-        const nextStepIndex = lastCompletedIndex + 1;
-        const targetStep = steps[nextStepIndex]
-          ? steps[nextStepIndex].id
-          : steps[steps.length - 1].id;
-
-        // রিডাইরেক্ট করা
-        navigate(`/applications/${id}/${targetStep}`, { replace: true });
-      } else {
-        // যদি অলরেডি কোনো সাব-রাউটে থাকে, তাহলে লোডিং বন্ধ করে দিবে
-        setIsRedirecting(false);
-      }
-    }
-  }, [isLoading, applicationApiData, id, location.pathname, steps]);
+  // NOTE: ApplicationDetails no longer uses step-based routing (e.g. /admission, /apply).
+  // It renders the full journey in-page (accordion) inside the Requirements tab.
 
   // ১. মেইন ডাটা লোড হওয়া বা রিডাইরেক্ট হওয়ার সময় ফুল পেজ স্পিনার দেখাবে
-  if (isLoading || isRedirecting) {
+  if (isLoading) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
         <Spin size="large" tip="Loading Application Details..." />
@@ -551,10 +536,11 @@ const ApplicationDetails = () => {
 
               <div className="space-y-10">
                 {steps.map((step, index) => {
+                  // Step routing removed; highlight the first incomplete step instead.
+                  const firstIncompleteIndex = steps.findIndex((s) => !s.isCompleted);
                   const isActive =
-                    location.pathname.endsWith(step.id) ||
-                    (location.pathname.endsWith(id!) &&
-                      step.id === "admission");
+                    (firstIncompleteIndex === -1 && index === steps.length - 1) ||
+                    index === (firstIncompleteIndex === -1 ? 0 : firstIncompleteIndex);
 
                   return (
                     <div
