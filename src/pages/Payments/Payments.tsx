@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
 import { Input, Tag, Badge, Modal, Upload } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { InboxOutlined } from "@ant-design/icons";
@@ -19,12 +18,12 @@ import {
   usePaySelectedApplicationsMutation,
   useClaimCommissionMutation,
 } from "../../redux/features/payments/partnerPaymentsApi";
+import { config } from "../../config";
 
 const { Dragger } = Upload;
 
-type TopTabKey = "purchase" | "commission";
 type PurchaseTabKey = "applications" | "history";
-type CommissionTabKey = "earned" | "history";
+type CommissionTabKey = "all" | "history";
 
 interface PurchaseApplicationRecord {
   key: string;
@@ -69,18 +68,21 @@ interface CommissionTransactionRecord {
 }
 
 export default function Payments() {
-  const { pathname } = useLocation();
-  const navigate = useNavigate();
-  const topTab: TopTabKey = pathname.includes("/commission")
-    ? "commission"
-    : "purchase";
+  const resolveMediaUrl = (raw?: string | null) => {
+    if (!raw) return "";
+    if (/^https?:\/\//i.test(raw)) return raw;
+    const base = config.image_access_url || "";
+    if (!base) return raw;
+    return `${base}${raw}`;
+  };
+
   const [purchaseTab, setPurchaseTab] =
     useState<PurchaseTabKey>("applications");
   const [commissionTab, setCommissionTab] =
-    useState<CommissionTabKey>("earned");
+    useState<CommissionTabKey>("all");
   const [searchText, setSearchText] = useState("");
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isBankModalOpen, setIsBankModalOpen] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [uploadCommissionId, setUploadCommissionId] = useState<string | null>(
     null,
   );
@@ -138,6 +140,22 @@ export default function Payments() {
     usePaySelectedApplicationsMutation();
   const [claimCommission, { isLoading: isClaiming }] =
     useClaimCommissionMutation();
+  const handleConfirmInvoiceUpload = async () => {
+    if (!uploadCommissionId || !uploadInvoiceFile) return;
+    try {
+      await claimCommission({
+        commissionId: uploadCommissionId,
+        invoice: uploadInvoiceFile,
+      }).unwrap();
+      setIsUploadModalOpen(false);
+      setUploadCommissionId(null);
+      setUploadApplicationId(null);
+      setUploadInvoiceFile(null);
+    } catch {
+      // errors handled globally
+    }
+  };
+
 
   const handleResetSearchOnTabChange = () => {
     setSearchText("");
@@ -365,22 +383,6 @@ export default function Payments() {
     }
   };
 
-  const handleConfirmInvoiceUpload = async () => {
-    if (!uploadCommissionId || !uploadInvoiceFile) return;
-    try {
-      await claimCommission({
-        commissionId: uploadCommissionId,
-        invoice: uploadInvoiceFile,
-      }).unwrap();
-      setIsUploadModalOpen(false);
-      setUploadCommissionId(null);
-      setUploadApplicationId(null);
-      setUploadInvoiceFile(null);
-    } catch {
-      // errors handled globally
-    }
-  };
-
   const purchaseApplicationsColumns: ColumnsType<PurchaseApplicationRecord> = [
 
   
@@ -475,11 +477,20 @@ export default function Payments() {
     {
       title: "Receipt",
       key: "receipt",
-      render: () => (
-        <button type="button" className="payments-link-button">
-          Download
-        </button>
-      ),
+      render: (_: unknown, record) => {
+        const fileUrl = resolveMediaUrl(record.raw?.receiptUrl);
+        if (!fileUrl) return <span className="text-xs text-gray-400">-</span>;
+        return (
+          <a
+            href={fileUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="payments-link-button"
+          >
+            Download
+          </a>
+        );
+      },
     },
   ];
 
@@ -528,20 +539,23 @@ export default function Payments() {
       title: "Action",
       key: "action",
       width: 160,
-      render: (_: unknown, record) => (
-        <button
-          type="button"
-          className="payments-primary-button"
-          onClick={() => {
-            setUploadCommissionId(record.commissionId);
-            setUploadApplicationId(record.applicationId);
-            setIsUploadModalOpen(true);
-            setUploadInvoiceFile(null);
-          }}
-        >
-          Upload Invoice
-        </button>
-      ),
+      render: (_: unknown, record) =>
+        record.status === "Unpaid" ? (
+          <button
+            type="button"
+            className="payments-primary-button"
+            onClick={() => {
+              setUploadCommissionId(record.commissionId);
+              setUploadApplicationId(record.applicationId);
+              setIsUploadModalOpen(true);
+              setUploadInvoiceFile(null);
+            }}
+          >
+            Upload Invoice
+          </button>
+        ) : (
+          <span className="text-xs text-gray-400">-</span>
+        ),
     },
   ];
 
@@ -585,11 +599,20 @@ export default function Payments() {
       {
         title: "Receipt",
         key: "receipt",
-        render: () => (
-          <button type="button" className="payments-link-button">
-            Download
-          </button>
-        ),
+        render: (_: unknown, record) => {
+          const fileUrl = resolveMediaUrl(record.raw?.receiptUrl);
+          if (!fileUrl) return <span className="text-xs text-gray-400">-</span>;
+          return (
+            <a
+              href={fileUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="payments-link-button"
+            >
+              Download
+            </a>
+          );
+        },
       },
     ];
 
@@ -688,85 +711,7 @@ export default function Payments() {
   );
 
   const renderTopCards = () => {
-    if (topTab === "purchase") {
-      if (purchaseTab === "applications") {
-        const stats = purchaseStats || {};
-        return (
-          <div className="payments-kpi-grid">
-            <div className="payments-kpi-card">
-              <div className="payments-kpi-row">
-                <span className="payments-kpi-icon">
-                  <img
-                    src="/document.png"
-                    alt="Total Applications"
-                    className="h-7 w-7 object-contain"
-                  />
-                </span>
-                <div>
-                  <p className="payments-kpi-label">Total Applications</p>
-                  <p className="payments-kpi-value">
-                    {stats.totalApplications ?? 0}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="payments-kpi-card">
-              <div className="payments-kpi-row">
-                <span className="payments-kpi-icon" aria-hidden>
-                <img
-                    src="/money-bag.png"
-                    alt="Total Before Discount"
-                    className="h-7 w-7 object-contain"
-                  />
-                </span>
-                <div>
-                  <p className="payments-kpi-label whitespace-nowrap">Total Before Discount</p>
-                  <p className="payments-kpi-value">
-                    €{(stats.totalBeforeDiscount ?? 0).toFixed?.(2) ?? "0.00"}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="payments-kpi-card">
-              <div className="payments-kpi-row">
-              <img
-                    src="/partypopper.png"
-                    alt="Total Applications"
-                    className="h-7 w-7 object-contain"
-                  />
-                <div>
-                  <p className="payments-kpi-label">Waiver (30%)</p>
-                  <p className="payments-kpi-value">
-                    {stats.avgWaiver != null
-                      ? `${stats.avgWaiver.toFixed?.(1) ?? stats.avgWaiver}%`
-                      : "0%"}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="payments-kpi-card">
-              <div className="payments-kpi-row">
-              <img
-                    src="/dollar.png"
-                    alt="Total Applications"
-                    className="h-7 w-7 object-contain"
-                  />
-                <div>
-                  <p className="payments-kpi-label">Total Due</p>
-                  <p className="payments-kpi-value">
-                    €{(stats.totalDue ?? 0).toFixed?.(2) ?? "0.00"}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      }
-      return null;
-    }
-
-    // commission tab
-    if (commissionTab === "earned") {
+    if (commissionTab === "all") {
       const stats = commissionStats || {};
       return (
         <div className="payments-kpi-grid payments-kpi-grid--3">
@@ -778,9 +723,9 @@ export default function Payments() {
                     className="h-7 w-7 object-contain"
                   />
               <div>
-                <p className="payments-kpi-label">Total Commission Earned</p>
+                <p className="payments-kpi-label">All</p>
                 <p className="payments-kpi-value">
-                  €{(stats.totalEarned ?? 0).toFixed?.(2) ?? "0.00"}
+                  €{(stats.total ?? 0).toFixed?.(2) ?? "0.00"}
                 </p>
               </div>
             </div>
@@ -794,9 +739,9 @@ export default function Payments() {
                   />
                 
               <div>
-                <p className="payments-kpi-label">Pending Payments</p>
+                <p className="payments-kpi-label">Unpaid</p>
                 <p className="payments-kpi-value">
-                  €{(stats.pending ?? 0).toFixed?.(2) ?? "0.00"}
+                  €{(stats.unpaid ?? 0).toFixed?.(2) ?? "0.00"}
                 </p>
               </div>
             </div>
@@ -824,56 +769,21 @@ export default function Payments() {
   };
 
   const renderInnerTabs = () => {
-    if (topTab === "purchase") {
-      return (
-        <div className="payments-inner-tabs">
-          <button
-            type="button"
-            className={
-              purchaseTab === "applications"
-                ? "payments-inner-tab payments-inner-tab--active"
-                : "payments-inner-tab"
-            }
-            onClick={() => {
-              setPurchaseTab("applications");
-              handleResetSearchOnTabChange();
-            }}
-          >
-            Applications
-          </button>
-          <button
-            type="button"
-            className={
-              purchaseTab === "history"
-                ? "payments-inner-tab payments-inner-tab--active"
-                : "payments-inner-tab"
-            }
-            onClick={() => {
-              setPurchaseTab("history");
-              handleResetSearchOnTabChange();
-            }}
-          >
-            Transaction History
-          </button>
-        </div>
-      );
-    }
-
     return (
       <div className="payments-inner-tabs">
         <button
           type="button"
           className={
-            commissionTab === "earned"
+            commissionTab === "all"
               ? "payments-inner-tab payments-inner-tab--active"
               : "payments-inner-tab"
           }
           onClick={() => {
-            setCommissionTab("earned");
+            setCommissionTab("all");
             handleResetSearchOnTabChange();
           }}
         >
-          Earned Commissions
+          All Commissions
         </button>
         <button
           type="button"
@@ -894,71 +804,7 @@ export default function Payments() {
   };
 
   const renderTableSection = () => {
-    if (topTab === "purchase") {
-      if (purchaseTab === "applications") {
-        return (
-          <>
-            <div className="bg-[#FFFFFF] p-6 rounded-lg border border-[#C7CACF] space-y-4">
-              {renderPurchaseApplicationsToolbar()}
-              <DataTable
-                data={purchaseApplications}
-                columns={purchaseApplicationsColumns}
-                rowKey="key"
-                loading={isPurchaseAppsLoading}
-                selectRow
-                onSelectRowsChange={(rows: PurchaseApplicationRecord[]) => {
-                  setSelectedPurchaseRecords(rows);
-                  setSelectedPurchaseKeys(rows.map((r) => r.key));
-                }}
-                currentPage={purchasePage}
-                setCurrentPage={setPurchasePage}
-                limit={purchasePageSize}
-                setLimit={setPurchasePageSize}
-                total={purchaseApplicationsData?.meta?.total ?? 0}
-                isPaginate
-                showHeader
-                showSizeChanger
-                noInnerBorder
-                pagination={{
-                  pageSizeOptions: ["10", "20", "50"],
-                  showTotal: (total: number) => `Total ${total} applications`,
-                }}
-              />
-            </div>
-          </>
-        );
-      }
-
-      // purchase / history
-      return (
-        <>
-          <div className="bg-[#FFFFFF] p-6 rounded-lg border border-[#C7CACF] space-y-4">
-            {renderSimpleToolbar("Search application ID, transaction ID")}
-            <DataTable
-              data={purchaseTransactions}
-              columns={purchaseTransactionsColumns}
-              rowKey="key"
-              loading={isPurchaseTxLoading}
-              currentPage={purchaseHistoryPage}
-              setCurrentPage={setPurchaseHistoryPage}
-              limit={purchaseHistoryPageSize}
-              setLimit={setPurchaseHistoryPageSize}
-              total={purchaseTransactionsData?.meta?.total ?? 0}
-              isPaginate
-              showHeader
-              showSizeChanger
-              noInnerBorder
-              pagination={{
-                showTotal: (total: number) => `Total ${total} transactions`,
-              }}
-            />
-          </div>
-        </>
-      );
-    }
-
-    // Commission
-    if (commissionTab === "earned") {
+    if (commissionTab === "all") {
       return (
         <>
           <div className="bg-[#FFFFFF] p-6 rounded-lg border border-[#C7CACF] space-y-4">
@@ -1017,12 +863,8 @@ export default function Payments() {
   return (
     <div className="payments-page">
       <PageMeta
-        title={`${topTab === "purchase" ? "Purchase" : "Commission"} - Payments | Campus Transfer Partner`}
-        description={
-          topTab === "purchase"
-            ? "Manage application payments and transaction history."
-            : "View earned commissions and commission transaction history."
-        }
+        title="Commission - Payments | Campus Transfer Partner"
+        description="View earned commissions and commission transaction history."
       />
       
 
@@ -1031,35 +873,9 @@ export default function Payments() {
           <h1 className="payments-title">
           Payments
           </h1>
-          <p className="payments-subtitle">Manage application payments and transaction history.</p>
+          <p className="payments-subtitle">Manage commission status and transaction history.</p>
         </div>
       </header>
-
-      {/* Top tabs: Purchase / Commission */}
-      <div className="payments-top-tabs">
-        <button
-          type="button"
-          className={
-            topTab === "purchase"
-              ? "payments-top-tab payments-top-tab--active"
-              : "payments-top-tab"
-          }
-          onClick={() => navigate("/payments/purchase")}
-        >
-          Purchase
-        </button>
-        <button
-          type="button"
-          className={
-            topTab === "commission"
-              ? "payments-top-tab payments-top-tab--active"
-              : "payments-top-tab"
-          }
-          onClick={() => navigate("/payments/commission")}
-        >
-          Commission
-        </button>
-      </div>
 
       {/* Inner tabs: Applications / Transaction History or Earned Commissions / Transaction History */}
       <div className="payments-inner-tabs-wrapper">{renderInnerTabs()}</div>
@@ -1070,7 +886,7 @@ export default function Payments() {
       {/* Table + toolbar */}
       <section className="payments-section">{renderTableSection()}</section>
 
-      {/* Upload Invoice modal */}
+      {/* Bank transfer / Pay selected modal */}
       <Modal
         open={isUploadModalOpen}
         title="Upload Invoice"
@@ -1121,7 +937,6 @@ export default function Payments() {
         </div>
       </Modal>
 
-      {/* Bank transfer / Pay selected modal */}
       <Modal
         open={isBankModalOpen}
         title="Bank Transfer Payment"
