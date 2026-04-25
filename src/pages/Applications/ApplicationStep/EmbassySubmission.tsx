@@ -39,11 +39,44 @@ export const EmbassySubmissionStep: React.FC<EmbassySubmissionStepProps> = ({
   const [uploadDocument] = useApplicationDocumentUploadMutation();
   const [fileSizes, setFileSizes] = React.useState<Record<string, string>>({});
 
+  const resolveAssetUrl = React.useCallback((url: string): string => {
+    if (!url) return "";
+    const raw = String(url);
+    if (raw.startsWith("http")) return raw;
+    return `${config.image_access_url}${raw}`;
+  }, []);
+
+  const downloadDocument = React.useCallback(async (url: string, name?: string) => {
+    if (!url) return;
+    const resolved = resolveAssetUrl(url);
+    try {
+      const res = await fetch(resolved, { credentials: "include" });
+      if (!res.ok) throw new Error(`Download failed (${res.status})`);
+      const blob = await res.blob();
+
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = name?.trim() ? name.trim() : "download";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+      console.error("Download failed:", err);
+      window.open(resolved, "_blank");
+    }
+  }, [resolveAssetUrl]);
+
   /* ================= Get File Size from URL ================= */
   const getFileSize = React.useCallback(
     async (url: string): Promise<string> => {
       try {
-        const response = await fetch(url, { method: "HEAD" });
+        const resolved = resolveAssetUrl(url);
+        const response = await fetch(resolved, {
+          method: "HEAD",
+          credentials: "include",
+        });
         const contentLength = response.headers.get("content-length");
 
         if (contentLength) {
@@ -52,7 +85,7 @@ export const EmbassySubmissionStep: React.FC<EmbassySubmissionStepProps> = ({
         }
 
         // Fallback: fetch the file to get size
-        const blobResponse = await fetch(url);
+        const blobResponse = await fetch(resolved, { credentials: "include" });
         const blob = await blobResponse.blob();
         return formatFileSize(blob.size);
       } catch (error) {
@@ -60,7 +93,7 @@ export const EmbassySubmissionStep: React.FC<EmbassySubmissionStepProps> = ({
         return "—";
       }
     },
-    [],
+    [resolveAssetUrl],
   );
 
   /* ================= Format File Size ================= */
@@ -100,7 +133,9 @@ export const EmbassySubmissionStep: React.FC<EmbassySubmissionStepProps> = ({
         category: "visaSubmissionProof",
         description:
           "Upload proof of visa submission (appointment confirmation / receipt).",
-        url: applicationApiData?.visaSubmissionProof && `${config.image_access_url}${applicationApiData?.visaSubmissionProof}`,
+        url: applicationApiData?.visaSubmissionProof
+          ? resolveAssetUrl(applicationApiData.visaSubmissionProof)
+          : null,
         isCompleted: !!applicationApiData?.visaSubmissionProof,
         type: "file",
       },
@@ -329,7 +364,9 @@ export const EmbassySubmissionStep: React.FC<EmbassySubmissionStepProps> = ({
                           </div>
                         </div>
                         <button
-                          onClick={() => window.open(section.url, "_blank")}
+                          onClick={() =>
+                            downloadDocument(section.url ?? "", `${section.title}`)
+                          }
                         >
                           <DownloadOutlined />
                         </button>

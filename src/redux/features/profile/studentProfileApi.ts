@@ -12,6 +12,26 @@ export type CreateStudentPayload = {
   fullName: string;
   password?: string;
   phone?: string;
+  /**
+   * Optional profile fields.
+   * Note: createStudent endpoint may ignore these; modal uses updateStudentProfile for full profile.
+   */
+  firstName?: string;
+  lastName?: string;
+  gender?: string;
+  /** ISO date string (YYYY-MM-DD) */
+  dateOfBirth?: string;
+  /** Country id */
+  countryId?: string;
+  passportNo?: string;
+  /** ISO date string (YYYY-MM-DD) */
+  passportExpDate?: string;
+  /** Study level / last education id */
+  lastEducationId?: string;
+  /** Passing year string (YYYY) or ISO date, depending on backend */
+  lastEducationPassingYear?: string;
+  /** Profile image media id */
+  imageId?: string;
 };
 
 export type CreateStudentResponse = {

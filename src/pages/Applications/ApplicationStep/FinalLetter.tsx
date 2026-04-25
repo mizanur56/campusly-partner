@@ -6,6 +6,7 @@ import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import PrimaryButton from "../../../components/common/Button/PrimaryButton";
 import { FaRegCircle } from "react-icons/fa";
 import { BsFileEarmarkBarGraph } from "react-icons/bs";
+import { config } from "../../../config";
 
 export type FinalLetterStepProps = {
   applicationApiData: any;
@@ -29,10 +30,43 @@ export const FinalLetterStep: React.FC<FinalLetterStepProps> = ({
   const moneyReceiptUrl = applicationApiData?.moneyReceipt;
   const [fileSizes, setFileSizes] = React.useState<Record<string, string>>({});
 
+  const resolveAssetUrl = React.useCallback((url: string): string => {
+    if (!url) return "";
+    const raw = String(url);
+    if (raw.startsWith("http")) return raw;
+    return `${config.image_access_url}${raw}`;
+  }, []);
+
+  const downloadDocument = React.useCallback(async (url: string, name?: string) => {
+    if (!url) return;
+    const resolved = resolveAssetUrl(url);
+    try {
+      const res = await fetch(resolved, { credentials: "include" });
+      if (!res.ok) throw new Error(`Download failed (${res.status})`);
+      const blob = await res.blob();
+
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = name?.trim() ? name.trim() : "download";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+      console.error("Download failed:", err);
+      window.open(resolved, "_blank");
+    }
+  }, [resolveAssetUrl]);
+
   /* ================= Get File Size from URL ================= */
   const getFileSize = React.useCallback(async (url: string): Promise<string> => {
     try {
-      const response = await fetch(url, { method: "HEAD" });
+      const resolved = resolveAssetUrl(url);
+      const response = await fetch(resolved, {
+        method: "HEAD",
+        credentials: "include",
+      });
       const contentLength = response.headers.get("content-length");
       
       if (contentLength) {
@@ -41,14 +75,14 @@ export const FinalLetterStep: React.FC<FinalLetterStepProps> = ({
       }
       
       // Fallback: fetch the file to get size
-      const blobResponse = await fetch(url);
+      const blobResponse = await fetch(resolved, { credentials: "include" });
       const blob = await blobResponse.blob();
       return formatFileSize(blob.size);
     } catch (error) {
       console.error("Error getting file size:", error);
       return "—";
     }
-  }, []);
+  }, [resolveAssetUrl]);
 
   /* ================= Format File Size ================= */
   const formatFileSize = (bytes: number): string => {
@@ -86,7 +120,7 @@ export const FinalLetterStep: React.FC<FinalLetterStepProps> = ({
       description:
         "Your documents has been submitted, you documents under review, we will send it to the college.",
       isCompleted: !!loaUrl,
-      url: loaUrl,
+      url: loaUrl ? resolveAssetUrl(loaUrl) : null,
       documentName: "Letter of Acceptance (LOA)",
     },
     {
@@ -95,10 +129,10 @@ export const FinalLetterStep: React.FC<FinalLetterStepProps> = ({
       description:
         "Your documents has been submitted, you documents under review, we will send it to the college.",
       isCompleted: !!moneyReceiptUrl,
-      url: moneyReceiptUrl,
+      url: moneyReceiptUrl ? resolveAssetUrl(moneyReceiptUrl) : null,
       documentName: "Money Receipt",
     },
-  ], [loaUrl, moneyReceiptUrl]);
+  ], [loaUrl, moneyReceiptUrl, resolveAssetUrl]);
 
   const isAllRequiredCompleted = sections.every((section) => !!section.url);
 
@@ -213,7 +247,9 @@ export const FinalLetterStep: React.FC<FinalLetterStepProps> = ({
                         </div>
                       </div>
                       <button
-                        onClick={() => window.open(section.url, "_blank")}
+                        onClick={() =>
+                          downloadDocument(section.url ?? "", `${section.documentName}.pdf`)
+                        }
                         className="text-[#4B5563] hover:text-[#237D3B] cursor-pointer"
                       >
                         <DownloadOutlined style={{ fontSize: 18 }} />

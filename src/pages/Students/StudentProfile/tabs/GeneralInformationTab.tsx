@@ -123,10 +123,14 @@ export default function GeneralInformationTab({
 
   const selectedCountryId = useMemo(() => {
     if (!profileData.country || !countriesData?.data) return null;
-    const c = (countriesData.data as { id: string; name: string }[]).find(
-      (x) => x.name.toLowerCase() === profileData.country.toLowerCase()
+    const list = countriesData.data as { id: string; name: string }[];
+    // Backend may store either country name or country id in `profile.country`.
+    const byId = list.find((x) => x.id === profileData.country);
+    if (byId) return byId.id;
+    const byName = list.find(
+      (x) => x.name.toLowerCase() === profileData.country.toLowerCase(),
     );
-    return c?.id ?? null;
+    return byName?.id ?? null;
   }, [profileData.country, countriesData?.data]);
 
   const { data: studyLevelsData } = useGetStudyLevelsByCountryQuery(selectedCountryId ?? "", {
@@ -137,7 +141,7 @@ export default function GeneralInformationTab({
     () =>
       (countriesData?.data ?? []).map((c: { id: string; name: string }) => ({
         label: c.name,
-        value: c.name,
+        value: c.id,
       })),
     [countriesData?.data]
   );
@@ -164,7 +168,8 @@ export default function GeneralInformationTab({
       lastName: profile.lastName ?? "",
       gender: profile.gender ?? "",
       dateOfBirth: profile.dateOfBirth ? dayjs(profile.dateOfBirth).format("DD-MM-YYYY") : "",
-      country: profile.country ? profile.country.charAt(0).toUpperCase() + profile.country.slice(1) : "",
+      // Store country as id (Select value). UI renders label from countriesOptions.
+      country: profile.country ?? "",
       passportNo: profile.passportNo ?? "",
       passportExpiryDate: profile.passportExpDate ? dayjs(profile.passportExpDate).format("DD-MM-YYYY") : "",
       contactNumber: profile.phone ? (profile.phone.startsWith("+") ? profile.phone : `+${profile.phone}`) : "",
@@ -216,7 +221,9 @@ export default function GeneralInformationTab({
         const v = formatDateForApi(editProfileData.dateOfBirth, "DD-MM-YYYY");
         if (v) payload.dateOfBirth = v;
       }
-      if (editProfileData.country !== profileData.country) payload.country = editProfileData.country ? editProfileData.country.toLowerCase() : null;
+      if (editProfileData.country !== profileData.country) {
+        payload.countryId = editProfileData.country || null;
+      }
       if (editProfileData.passportNo !== profileData.passportNo) payload.passportNo = editProfileData.passportNo || null;
       if (editProfileData.passportExpiryDate !== profileData.passportExpiryDate) {
         const v = formatDateForApi(editProfileData.passportExpiryDate, "DD-MM-YYYY");

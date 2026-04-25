@@ -8,6 +8,21 @@ export interface StudentProfileData {
   address?: string;
   status?: string;
   avatar?: string;
+  /** Extra sidebar info for Application Details context. */
+  applicationSidebar?: {
+    applicationId?: string;
+    intake?: string;
+    program?: string;
+    school?: string;
+    country?: string;
+    level?: string;
+    applicationFee?: {
+      amountText?: string;
+      statusText?: string;
+      paymentDateText?: string;
+      receiptUrl?: string;
+    };
+  };
 }
 
 const StudentProfileContext = createContext<{
@@ -17,6 +32,7 @@ const StudentProfileContext = createContext<{
 
 export function StudentProfileProvider({ children }: { children: React.ReactNode }) {
   const [student, setStudent] = useState<StudentProfileData | null>(null);
+
   return (
     <StudentProfileContext.Provider value={{ student, setStudent }}>
       {children}
