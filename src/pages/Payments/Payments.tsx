@@ -22,7 +22,6 @@ import { config } from "../../config";
 
 const { Dragger } = Upload;
 
-type TopTabKey = "purchase" | "commission";
 type PurchaseTabKey = "applications" | "history";
 type CommissionTabKey = "all" | "history";
 
@@ -77,7 +76,6 @@ export default function Payments() {
     return `${base}${raw}`;
   };
 
-  const topTab: TopTabKey = "commission";
   const [purchaseTab, setPurchaseTab] =
     useState<PurchaseTabKey>("applications");
   const [commissionTab, setCommissionTab] =
@@ -713,84 +711,6 @@ export default function Payments() {
   );
 
   const renderTopCards = () => {
-    if (topTab === "purchase") {
-      if (purchaseTab === "applications") {
-        const stats = purchaseStats || {};
-        return (
-          <div className="payments-kpi-grid">
-            <div className="payments-kpi-card">
-              <div className="payments-kpi-row">
-                <span className="payments-kpi-icon">
-                  <img
-                    src="/document.png"
-                    alt="Total Applications"
-                    className="h-7 w-7 object-contain"
-                  />
-                </span>
-                <div>
-                  <p className="payments-kpi-label">Total Applications</p>
-                  <p className="payments-kpi-value">
-                    {stats.totalApplications ?? 0}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="payments-kpi-card">
-              <div className="payments-kpi-row">
-                <span className="payments-kpi-icon" aria-hidden>
-                <img
-                    src="/money-bag.png"
-                    alt="Total Before Discount"
-                    className="h-7 w-7 object-contain"
-                  />
-                </span>
-                <div>
-                  <p className="payments-kpi-label whitespace-nowrap">Total Before Discount</p>
-                  <p className="payments-kpi-value">
-                    €{(stats.totalBeforeDiscount ?? 0).toFixed?.(2) ?? "0.00"}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="payments-kpi-card">
-              <div className="payments-kpi-row">
-              <img
-                    src="/partypopper.png"
-                    alt="Total Applications"
-                    className="h-7 w-7 object-contain"
-                  />
-                <div>
-                  <p className="payments-kpi-label">Waiver (30%)</p>
-                  <p className="payments-kpi-value">
-                    {stats.avgWaiver != null
-                      ? `${stats.avgWaiver.toFixed?.(1) ?? stats.avgWaiver}%`
-                      : "0%"}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="payments-kpi-card">
-              <div className="payments-kpi-row">
-              <img
-                    src="/dollar.png"
-                    alt="Total Applications"
-                    className="h-7 w-7 object-contain"
-                  />
-                <div>
-                  <p className="payments-kpi-label">Total Due</p>
-                  <p className="payments-kpi-value">
-                    €{(stats.totalDue ?? 0).toFixed?.(2) ?? "0.00"}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      }
-      return null;
-    }
-
-    // commission tab
     if (commissionTab === "all") {
       const stats = commissionStats || {};
       return (
@@ -849,41 +769,6 @@ export default function Payments() {
   };
 
   const renderInnerTabs = () => {
-    if (topTab === "purchase") {
-      return (
-        <div className="payments-inner-tabs">
-          <button
-            type="button"
-            className={
-              purchaseTab === "applications"
-                ? "payments-inner-tab payments-inner-tab--active"
-                : "payments-inner-tab"
-            }
-            onClick={() => {
-              setPurchaseTab("applications");
-              handleResetSearchOnTabChange();
-            }}
-          >
-            Applications
-          </button>
-          <button
-            type="button"
-            className={
-              purchaseTab === "history"
-                ? "payments-inner-tab payments-inner-tab--active"
-                : "payments-inner-tab"
-            }
-            onClick={() => {
-              setPurchaseTab("history");
-              handleResetSearchOnTabChange();
-            }}
-          >
-            Transaction History
-          </button>
-        </div>
-      );
-    }
-
     return (
       <div className="payments-inner-tabs">
         <button
@@ -919,70 +804,6 @@ export default function Payments() {
   };
 
   const renderTableSection = () => {
-    if (topTab === "purchase") {
-      if (purchaseTab === "applications") {
-        return (
-          <>
-            <div className="bg-[#FFFFFF] p-6 rounded-lg border border-[#C7CACF] space-y-4">
-              {renderPurchaseApplicationsToolbar()}
-              <DataTable
-                data={purchaseApplications}
-                columns={purchaseApplicationsColumns}
-                rowKey="key"
-                loading={isPurchaseAppsLoading}
-                selectRow
-                onSelectRowsChange={(rows: PurchaseApplicationRecord[]) => {
-                  setSelectedPurchaseRecords(rows);
-                  setSelectedPurchaseKeys(rows.map((r) => r.key));
-                }}
-                currentPage={purchasePage}
-                setCurrentPage={setPurchasePage}
-                limit={purchasePageSize}
-                setLimit={setPurchasePageSize}
-                total={purchaseApplicationsData?.meta?.total ?? 0}
-                isPaginate
-                showHeader
-                showSizeChanger
-                noInnerBorder
-                pagination={{
-                  pageSizeOptions: ["10", "20", "50"],
-                  showTotal: (total: number) => `Total ${total} applications`,
-                }}
-              />
-            </div>
-          </>
-        );
-      }
-
-      // purchase / history
-      return (
-        <>
-          <div className="bg-[#FFFFFF] p-6 rounded-lg border border-[#C7CACF] space-y-4">
-            {renderSimpleToolbar("Search application ID, transaction ID")}
-            <DataTable
-              data={purchaseTransactions}
-              columns={purchaseTransactionsColumns}
-              rowKey="key"
-              loading={isPurchaseTxLoading}
-              currentPage={purchaseHistoryPage}
-              setCurrentPage={setPurchaseHistoryPage}
-              limit={purchaseHistoryPageSize}
-              setLimit={setPurchaseHistoryPageSize}
-              total={purchaseTransactionsData?.meta?.total ?? 0}
-              isPaginate
-              showHeader
-              showSizeChanger
-              noInnerBorder
-              pagination={{
-                showTotal: (total: number) => `Total ${total} transactions`,
-              }}
-            />
-          </div>
-        </>
-      );
-    }
-
-    // Commission
     if (commissionTab === "all") {
       return (
         <>
@@ -1042,12 +863,8 @@ export default function Payments() {
   return (
     <div className="payments-page">
       <PageMeta
-        title={`${topTab === "purchase" ? "Purchase" : "Commission"} - Payments | Campus Transfer Partner`}
-        description={
-          topTab === "purchase"
-            ? "Manage application payments and transaction history."
-            : "View earned commissions and commission transaction history."
-        }
+        title="Commission - Payments | Campus Transfer Partner"
+        description="View earned commissions and commission transaction history."
       />
       
 
