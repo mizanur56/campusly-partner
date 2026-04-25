@@ -6,6 +6,7 @@ import {
   useCurrentToken,
 } from "../../redux/features/auth/authSlice";
 import { chatApi } from "../../redux/features/chat/chatApi";
+import { notificationApi } from "../../redux/features/notifications/notificationApi";
 import { getSocket } from "../../services/socket";
 
 const SocketManager = () => {
@@ -147,7 +148,7 @@ const playNotificationSound = () => {
         }
       );
 
-      // dispatch(notificationApi.util.invalidateTags(["Notification"]));
+      dispatch(notificationApi.util.invalidateTags(["Notification"]));
       dispatch(
         chatApi.util.invalidateTags([
           { type: "chatUnread", id: "TOTAL" },
@@ -159,6 +160,11 @@ const playNotificationSound = () => {
         detail: data,
       });
       window.dispatchEvent(event);
+    };
+
+    const handleUnreadCount = (_payload: any) => {
+      // simplest: refetch notification queries that provide this tag
+      dispatch(notificationApi.util.invalidateTags(["Notification"]));
     };
 
     const handleConnectError = (error: Error) => {
@@ -181,6 +187,7 @@ const playNotificationSound = () => {
 
     socket.on("connect", handleConnect);
     socket.on("notification", handleNotification);
+    socket.on("notification:unreadCount", handleUnreadCount);
     socket.on("connect_error", handleConnectError);
     socket.on("disconnect", handleDisconnect);
     socket.on("reconnect", handleReconnect);
@@ -194,6 +201,7 @@ const playNotificationSound = () => {
     return () => {
       socket.off("connect", handleConnect);
       socket.off("notification", handleNotification);
+      socket.off("notification:unreadCount", handleUnreadCount);
       socket.off("connect_error", handleConnectError);
       socket.off("disconnect", handleDisconnect);
       socket.off("reconnect", handleReconnect);

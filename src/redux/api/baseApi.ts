@@ -264,6 +264,7 @@ export const baseApi = createApi({
     "chatUnread",
     "announcements",
     "chatPartnerAdvisor",
+    "Notification",
   ],
   endpoints: () => ({}),
 });
