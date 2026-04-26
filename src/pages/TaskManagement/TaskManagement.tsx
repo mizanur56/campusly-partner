@@ -48,6 +48,8 @@ import {
 } from "../../redux/features/tasks/partnerTasksApi";
 import { useGetPartnerProfileQuery } from "../../redux/features/profile/partnerProfileApi";
 import { useGetTeamMembersQuery } from "../../redux/features/teams/partnerTeamsApi";
+import { useAppSelector } from "../../redux/features/hooks";
+import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 import "../../components/common/Tables/AntTable.css";
 import "../MyTasks/MyTasks.css";
 
@@ -108,6 +110,7 @@ export default function TaskManagement() {
   const [reviewNote, setReviewNote] = useState("");
   const [reviewReassignTo, setReviewReassignTo] = useState<string>();
   const [form] = Form.useForm();
+  const currentUser = useAppSelector(selectCurrentUser);
 
   const { data: profile } = useGetPartnerProfileQuery();
   const { data: teamMembersData } = useGetTeamMembersQuery({
@@ -139,20 +142,26 @@ export default function TaskManagement() {
   const assigneeOptions = useMemo(() => {
     const options: { value: string; label: string }[] = [];
     if (profile?.userId) {
+      const selfName = String(currentUser?.name || "Me").trim();
+      const selfEmail = String(currentUser?.email || "").trim();
       options.push({
         value: profile.userId,
-        label: "Me",
+        label: selfEmail ? `${selfName} (${selfEmail})` : selfName,
       });
     }
     const members = teamMembersData?.data ?? [];
     members
       .filter((m) => m.status === "ACTIVE" && m.userId)
       .forEach((m) => {
-        const label = [m.firstName, m.lastName].filter(Boolean).join(" ").trim() || m.email;
+        const memberName = [m.firstName, m.lastName].filter(Boolean).join(" ").trim();
+        const memberEmail = String(m.email || "").trim();
+        const label = memberEmail
+          ? `${memberName || memberEmail} (${memberEmail})`
+          : memberName || "Unknown";
         options.push({ value: m.userId!, label });
       });
     return options;
-  }, [profile, teamMembersData?.data]);
+  }, [profile, currentUser?.name, currentUser?.email, teamMembersData?.data]);
 
   const allRows = tasksData?.data ?? [];
   const rows = useMemo(() => {

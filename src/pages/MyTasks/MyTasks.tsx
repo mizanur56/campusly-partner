@@ -42,6 +42,8 @@ import {
 } from "../../redux/features/tasks/partnerTasksApi";
 import { useGetPartnerProfileQuery } from "../../redux/features/profile/partnerProfileApi";
 import { useGetTeamMembersQuery } from "../../redux/features/teams/partnerTeamsApi";
+import { useAppSelector } from "../../redux/features/hooks";
+import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 import "../../components/common/Tables/AntTable.css";
 import "./MyTasks.css";
 
@@ -92,6 +94,7 @@ export default function MyTasks() {
   const [submitNote, setSubmitNote] = useState("");
   const [editingTask, setEditingTask] = useState<PartnerTaskListItem | null>(null);
   const [editForm] = Form.useForm();
+  const currentUser = useAppSelector(selectCurrentUser);
 
   const { data: tasksData, isLoading, isFetching } = useGetPartnerTasksQuery({
     page,
@@ -257,17 +260,26 @@ export default function MyTasks() {
   const assigneeOptions = useMemo(() => {
     const options: { value: string; label: string }[] = [];
     if (profile?.userId) {
-      options.push({ value: profile.userId, label: "Me" });
+      const selfName = String(currentUser?.name || "Me").trim();
+      const selfEmail = String(currentUser?.email || "").trim();
+      options.push({
+        value: profile.userId,
+        label: selfEmail ? `${selfName} (${selfEmail})` : selfName,
+      });
     }
     const members = teamMembersData?.data ?? [];
     members
       .filter((m) => m.status === "ACTIVE" && m.userId)
       .forEach((m) => {
-        const label = [m.firstName, m.lastName].filter(Boolean).join(" ").trim() || m.email;
+        const memberName = [m.firstName, m.lastName].filter(Boolean).join(" ").trim();
+        const memberEmail = String(m.email || "").trim();
+        const label = memberEmail
+          ? `${memberName || memberEmail} (${memberEmail})`
+          : memberName || "Unknown";
         options.push({ value: m.userId!, label });
       });
     return options;
-  }, [profile, teamMembersData?.data]);
+  }, [profile, currentUser?.name, currentUser?.email, teamMembersData?.data]);
 
   return (
     <div className="space-y-4 my-tasks-page">
