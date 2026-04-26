@@ -58,7 +58,7 @@ type PartnerTaskPriority = "LOW" | "MEDIUM" | "HIGH";
 
 const STATUS_OPTIONS: PartnerTaskStatus[] = ["PENDING", "IN_PROGRESS", "SUBMITTED", "COMPLETED"];
 const PRIORITY_OPTIONS: PartnerTaskPriority[] = ["LOW", "MEDIUM", "HIGH"];
-const TASK_TYPE_OPTIONS: CreateTaskBody["taskType"][] = [
+const TASK_TYPE_OPTIONS: NonNullable<CreateTaskBody["taskType"]>[] = [
   "TO_DO",
   "FOLLOW_UP",
   "REMINDER",
