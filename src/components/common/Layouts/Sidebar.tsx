@@ -47,8 +47,11 @@ const SignedSidebarItems: NavItem[] = [
   },
   {
     icon: <i className="fa-solid fa-list-check"></i>,
-    name: "My Tasks",
-    path: "/my-tasks",
+    name: "Task Management",
+    subItems: [
+      { name: "Task Management", path: "/task-management" },
+      { name: "My Tasks", path: "/my-tasks" },
+    ],
   },
   {
     icon: <i className="fa-solid fa-credit-card"></i>,
@@ -72,24 +75,9 @@ const SignedSidebarItems: NavItem[] = [
   // },
 ];
 
-/** Restricted sidebar for PARTNER_TEAM_MEMBER: My Tasks first, then Students, Applications. No Home. */
-const TeamMemberSidebarItems: NavItem[] = [
-  {
-    icon: <i className="fa-solid fa-list-check"></i>,
-    name: "My Tasks",
-    path: "/my-tasks",
-  },
-  {
-    icon: <i className="fa-solid fa-users"></i>,
-    name: "Students",
-    path: "/students",
-  },
-  {
-    icon: <i className="fa-solid fa-file-lines"></i>,
-    name: "Applications",
-    path: "/applications",
-  },
-];
+const TeamMemberSidebarItems: NavItem[] = SignedSidebarItems.filter(
+  (item) => item.path !== "/team-members"
+);
 
 const SIGNED_ROUTE_PATHS = [
   "/programs-schools",
@@ -97,6 +85,7 @@ const SIGNED_ROUTE_PATHS = [
   "/team-members",
   "/applications",
   "/my-tasks",
+  "/task-management",
   "/payments",
   "/payments/commission",
   "/academy",
@@ -104,12 +93,9 @@ const SIGNED_ROUTE_PATHS = [
   "/settings/profile",
 ];
 
-const TEAM_MEMBER_ROUTE_PATHS = [
-  "/",
-  "/students",
-  "/applications",
-  "/my-tasks",
-];
+const TEAM_MEMBER_ROUTE_PATHS = SIGNED_ROUTE_PATHS.filter(
+  (path) => path !== "/team-members"
+);
 
 const othersSidebarItems: NavItem[] = [
   {

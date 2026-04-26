@@ -3,6 +3,7 @@ import { baseApi } from "../../api/baseApi";
 export interface PartnerTeamMember {
   id: string;
   userId?: string | null;
+  profilePhoto?: string | null;
   email: string;
   firstName: string;
   lastName: string;
@@ -91,7 +92,15 @@ export const partnerTeamsApi = baseApi.injectEndpoints({
 
     inviteTeamMember: builder.mutation<
       any,
-      { email: string; firstName: string; lastName: string; contactNumber?: string; countryCode?: string }
+      {
+        email: string;
+        firstName: string;
+        lastName: string;
+        contactNumber?: string;
+        countryCode?: string;
+        password: string;
+        profilePhotoId?: string;
+      }
     >({
       query: (body) => ({
         url: "/partners/team-members",
@@ -128,6 +137,18 @@ export const partnerTeamsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["partnerTeams"],
     }),
+
+    changeTeamMemberPassword: builder.mutation<
+      any,
+      { id: string; data: { newPassword: string; confirmPassword: string } }
+    >({
+      query: ({ id, data }) => ({
+        url: `/partners/team-members/${id}/change-password`,
+        method: "PATCH",
+        body: data,
+      }),
+      invalidatesTags: ["partnerTeams"],
+    }),
   }),
 });
 
@@ -139,5 +160,6 @@ export const {
   useResendTeamInviteMutation,
   useUpdateTeamMemberMutation,
   useDeleteTeamMemberMutation,
+  useChangeTeamMemberPasswordMutation,
 } = partnerTeamsApi;
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   Tag,
   Button,
@@ -11,6 +11,7 @@ import {
   message,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { useSelector } from "react-redux";
 import PageMeta from "../../components/common/Meta/PageMeta";
 import DataTable from "../../components/common/Tables/DataTable";
 import "./TeamMembers.css";
@@ -21,18 +22,29 @@ import {
   useResendTeamInviteMutation,
   useUpdateTeamMemberMutation,
   useDeleteTeamMemberMutation,
+  useChangeTeamMemberPasswordMutation,
   PartnerTeamMember,
 } from "../../redux/features/teams/partnerTeamsApi";
+import { selectCurrentUser } from "../../redux/features/auth/authSlice";
+import type { MediaImage } from "../../types/media";
+import { getApiImageUrl } from "../../utils/getApiImageUrl";
+import { useUploadImageMutation } from "../../redux/features/media/mediaApi";
 
 export default function TeamMembers() {
+  const user = useSelector(selectCurrentUser);
+  const isTeamMember = user?.role === "PARTNER_TEAM_MEMBER";
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<PartnerTeamMember | null>(null);
+  const [passwordMember, setPasswordMember] = useState<PartnerTeamMember | null>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<MediaImage | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
+  const [passwordForm] = Form.useForm();
 
   const { data: stats } = useGetTeamStatsQuery();
   const {
@@ -50,6 +62,9 @@ export default function TeamMembers() {
   const [resendInvite, { isLoading: isResending }] = useResendTeamInviteMutation();
   const [updateMember, { isLoading: isUpdating }] = useUpdateTeamMemberMutation();
   const [deleteMember, { isLoading: isDeleting }] = useDeleteTeamMemberMutation();
+  const [changeMemberPassword, { isLoading: isChangingPassword }] =
+    useChangeTeamMemberPasswordMutation();
+  const [uploadImage, { isLoading: isUploadingPhoto }] = useUploadImageMutation();
 
   const members: PartnerTeamMember[] = data?.data || [];
   const meta = data?.meta;
@@ -57,18 +72,70 @@ export default function TeamMembers() {
   const handleInviteSubmit = async () => {
     try {
       const values = await form.validateFields();
-      await inviteMember({
+      const createdRes = await inviteMember({
         email: values.email,
         firstName: values.firstName,
         lastName: values.lastName ?? "",
         contactNumber: values.contactNumber,
         countryCode: values.countryCode,
+        password: values.password,
+        profilePhotoId: selectedPhoto?.id,
       }).unwrap();
-      message.success("Team member invited successfully. They will receive an email.");
+      message.success("Team member created successfully.");
       setIsInviteModalOpen(false);
       form.resetFields();
+      setSelectedPhoto(null);
+      setPage(1);
+      setStatusFilter("");
+      setSearch("");
+      const createdMember = (createdRes?.data || createdRes) as PartnerTeamMember;
+      if (createdMember?.id) {
+        setEditingMember(createdMember);
+      }
+      editForm.setFieldsValue({
+        firstName: createdMember?.firstName ?? values.firstName,
+        lastName: createdMember?.lastName ?? values.lastName ?? "",
+        contactNumber: createdMember?.contactNumber ?? values.contactNumber ?? "",
+        countryCode: createdMember?.countryCode ?? values.countryCode ?? "",
+      });
+    } catch (err: any) {
+      const apiMessage =
+        err?.data?.message || err?.error?.message || err?.message || "";
+      const statusCode = err?.status || err?.data?.statusCode;
+      if (
+        statusCode === 409 ||
+        String(apiMessage).toLowerCase().includes("already registered")
+      ) {
+        form.setFields([
+          {
+            name: "email",
+            errors: ["This email is already registered in the system"],
+          },
+        ]);
+        message.error("This email is already registered in the system");
+        return;
+      }
+    }
+  };
+
+  const handlePhotoPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    const formData = new FormData();
+    formData.append("files", file);
+    formData.append("folder", "team-members");
+    try {
+      const res: any = await uploadImage(formData).unwrap();
+      const uploaded = (Array.isArray(res?.data) ? res.data[0] : res?.data) as MediaImage;
+      if (uploaded?.id) {
+        setSelectedPhoto(uploaded);
+        message.success("Photo uploaded successfully.");
+      } else {
+        message.error("Upload succeeded but no file data returned.");
+      }
     } catch {
-      // errors handled by baseApi toast
+      message.error("Failed to upload photo.");
     }
   };
 
@@ -174,7 +241,8 @@ export default function TeamMembers() {
       title: "Actions",
       key: "actions",
       width: 220,
-      render: (_: unknown, record: PartnerTeamMember) => (
+      render: (_: unknown, record: PartnerTeamMember) =>
+        isTeamMember ? null : (
         <Space size="small" wrap onClick={(e) => e.stopPropagation()}>
           <Button
             size="small"
@@ -192,6 +260,18 @@ export default function TeamMembers() {
               onClick={(e) => handleResend(e, record)}
             >
               Resend invite
+            </Button>
+          )}
+          {record.status === "ACTIVE" && (
+            <Button
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                setPasswordMember(record);
+                passwordForm.resetFields();
+              }}
+            >
+              Change password
             </Button>
           )}
           <Tooltip title="Remove member">
@@ -226,27 +306,23 @@ export default function TeamMembers() {
             Invite and manage your partner team.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setIsInviteModalOpen(true)}
-          className="inline-flex items-center justify-center rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-        >
-          Invite Team Member
-        </button>
+        {!isTeamMember && (
+          <button
+            type="button"
+            onClick={() => setIsInviteModalOpen(true)}
+            className="inline-flex items-center justify-center rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+          >
+            Create Team Member
+          </button>
+        )}
       </div>
 
       {/* Stats cards */}
-      <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <div className="text-xs text-gray-500 mb-1">Total Members</div>
           <div className="text-2xl font-semibold text-gray-900">
             {stats?.total ?? 0}
-          </div>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <div className="text-xs text-gray-500 mb-1">Pending Invites</div>
-          <div className="text-2xl font-semibold text-amber-600">
-            {stats?.pending ?? 0}
           </div>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4">
@@ -312,10 +388,11 @@ export default function TeamMembers() {
       {/* Invite modal */}
       <Modal
         open={isInviteModalOpen}
-        title="Invite Team Member"
+        title="Create Team Member"
         onCancel={() => {
           setIsInviteModalOpen(false);
           form.resetFields();
+          setSelectedPhoto(null);
         }}
         onOk={handleInviteSubmit}
         okText="Send invitation"
@@ -323,6 +400,31 @@ export default function TeamMembers() {
         destroyOnHidden
       >
         <Form layout="vertical" form={form}>
+          <Form.Item label="Photo">
+            <div className="space-y-3">
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/jpeg,image/jpg,image/png,image/webp"
+                className="hidden"
+                onChange={handlePhotoPick}
+              />
+              {selectedPhoto?.url ? (
+                <img
+                  src={getApiImageUrl(selectedPhoto.url)}
+                  alt="Team member preview"
+                  className="h-16 w-16 rounded-full object-cover border border-gray-200"
+                />
+              ) : null}
+              <Button
+                type="default"
+                loading={isUploadingPhoto}
+                onClick={() => photoInputRef.current?.click()}
+              >
+                {selectedPhoto ? "Change Photo" : "Upload Photo"}
+              </Button>
+            </div>
+          </Form.Item>
           <Form.Item
             label="First Name"
             name="firstName"
@@ -347,11 +449,100 @@ export default function TeamMembers() {
           >
             <Input type="email" placeholder="e.g. john@example.com" />
           </Form.Item>
+          <Form.Item
+            label="Password"
+            name="password"
+            rules={[
+              { required: true, message: "Password is required" },
+              { min: 6, message: "Password must be at least 6 characters" },
+            ]}
+          >
+            <Input.Password placeholder="Set initial password" />
+          </Form.Item>
+          <Form.Item
+            label="Confirm Password"
+            name="confirmPassword"
+            dependencies={["password"]}
+            rules={[
+              { required: true, message: "Confirm password is required" },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue("password") === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error("Passwords do not match"));
+                },
+              }),
+            ]}
+          >
+            <Input.Password placeholder="Confirm password" />
+          </Form.Item>
           <Form.Item label="Country Code" name="countryCode">
             <Input placeholder="+880" />
           </Form.Item>
           <Form.Item label="Contact Number" name="contactNumber">
             <Input placeholder="Phone number" />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        open={!!passwordMember}
+        title="Change Team Member Password"
+        onCancel={() => {
+          setPasswordMember(null);
+          passwordForm.resetFields();
+        }}
+        onOk={async () => {
+          if (!passwordMember) return;
+          try {
+            const values = await passwordForm.validateFields();
+            await changeMemberPassword({
+              id: passwordMember.id,
+              data: {
+                newPassword: values.newPassword,
+                confirmPassword: values.confirmPassword,
+              },
+            }).unwrap();
+            message.success("Password changed successfully.");
+            setPasswordMember(null);
+            passwordForm.resetFields();
+          } catch {
+            // errors handled by baseApi toast
+          }
+        }}
+        okText="Update Password"
+        okButtonProps={{ loading: isChangingPassword }}
+        destroyOnHidden
+      >
+        <Form layout="vertical" form={passwordForm}>
+          <Form.Item
+            label="New Password"
+            name="newPassword"
+            rules={[
+              { required: true, message: "New password is required" },
+              { min: 6, message: "Password must be at least 6 characters" },
+            ]}
+          >
+            <Input.Password placeholder="Enter new password" />
+          </Form.Item>
+          <Form.Item
+            label="Confirm Password"
+            name="confirmPassword"
+            dependencies={["newPassword"]}
+            rules={[
+              { required: true, message: "Confirm password is required" },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue("newPassword") === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error("Passwords do not match"));
+                },
+              }),
+            ]}
+          >
+            <Input.Password placeholder="Confirm new password" />
           </Form.Item>
         </Form>
       </Modal>
