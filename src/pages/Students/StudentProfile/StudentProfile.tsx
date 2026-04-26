@@ -166,7 +166,6 @@ export default function StudentProfile() {
     : passedStudent?.phone ?? "";
 
 
-  console.log(profile)
   const studentForContext = {
     id: studentId ?? passedStudent?.id ?? "",
     name: displayName,
