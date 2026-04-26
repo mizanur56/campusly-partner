@@ -91,7 +91,7 @@ export const partnerTeamsApi = baseApi.injectEndpoints({
 
     inviteTeamMember: builder.mutation<
       any,
-      { email: string; firstName: string; lastName: string; contactNumber?: string; countryCode?: string }
+      { email: string; firstName: string; lastName: string; contactNumber?: string; countryCode?: string; password: string }
     >({
       query: (body) => ({
         url: "/partners/team-members",

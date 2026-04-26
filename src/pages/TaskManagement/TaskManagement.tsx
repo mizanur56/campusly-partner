@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import type { ReactNode } from "react";
 import {
   AppstoreOutlined,
   ArrowDownOutlined,
@@ -7,6 +6,8 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   ControlOutlined,
+  DeleteOutlined,
+  EditOutlined,
   EyeOutlined,
   FireOutlined,
   InboxOutlined,
@@ -14,8 +15,11 @@ import {
 } from "@ant-design/icons";
 import {
   Button,
+  DatePicker,
+  Form,
   Input,
   Modal,
+  Popconfirm,
   Select,
   Space,
   Tag,
@@ -27,19 +31,32 @@ import PageMeta from "../../components/common/Meta/PageMeta";
 import DataTable from "../../components/common/Tables/DataTable";
 import PageHeader from "../../components/common/Navigation/PageHeader";
 import {
+  CreateTaskBody,
   PartnerTaskListItem,
+  useCreateTaskMutation,
+  useDeleteTaskMutation,
   useGetPartnerTasksQuery,
   useGetTaskByIdQuery,
+  useUpdateTaskMutation,
   useUpdateTaskStatusMutation,
 } from "../../redux/features/tasks/partnerTasksApi";
+import { useGetPartnerProfileQuery } from "../../redux/features/profile/partnerProfileApi";
+import { useGetTeamMembersQuery } from "../../redux/features/teams/partnerTeamsApi";
 import "../../components/common/Tables/AntTable.css";
-import "./MyTasks.css";
+import "../MyTasks/MyTasks.css";
 
 type PartnerTaskStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED";
 type PartnerTaskPriority = "LOW" | "MEDIUM" | "HIGH";
 
 const STATUS_OPTIONS: PartnerTaskStatus[] = ["PENDING", "IN_PROGRESS", "COMPLETED"];
 const PRIORITY_OPTIONS: PartnerTaskPriority[] = ["LOW", "MEDIUM", "HIGH"];
+const TASK_TYPE_OPTIONS: CreateTaskBody["taskType"][] = [
+  "TO_DO",
+  "FOLLOW_UP",
+  "REMINDER",
+  "INTERNAL_TASK",
+];
+
 const priorityColor: Record<PartnerTaskPriority, string> = {
   LOW: "default",
   MEDIUM: "blue",
@@ -56,7 +73,7 @@ function StatCardIcon({
   children,
   className = "",
 }: {
-  children: ReactNode;
+  children: React.ReactNode;
   className?: string;
 }) {
   return (
@@ -69,28 +86,59 @@ function StatCardIcon({
   );
 }
 
-export default function MyTasks() {
+export default function TaskManagement() {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [status, setStatus] = useState<PartnerTaskStatus | "">("");
   const [priority, setPriority] = useState<PartnerTaskPriority | "">("");
   const [searchTerm, setSearchTerm] = useState("");
 
+  const [openFormModal, setOpenFormModal] = useState(false);
+  const [editingTask, setEditingTask] = useState<PartnerTaskListItem | null>(null);
   const [viewTask, setViewTask] = useState<PartnerTaskListItem | null>(null);
+  const [form] = Form.useForm();
+
+  const { data: profile } = useGetPartnerProfileQuery();
+  const { data: teamMembersData } = useGetTeamMembersQuery({
+    page: 1,
+    limit: 100,
+    status: "ACTIVE",
+  });
 
   const { data: tasksData, isLoading, isFetching } = useGetPartnerTasksQuery({
     page,
     limit,
-    assignedToMe: true,
-    createdByMe: false,
+    createdByMe: true,
     status: status || undefined,
   });
 
-  const { data: taskDetail, isLoading: detailLoading } = useGetTaskByIdQuery(viewTask?.id ?? "", {
-    skip: !viewTask?.id,
-  });
+  const { data: taskDetail, isLoading: detailLoading } = useGetTaskByIdQuery(
+    viewTask?.id ?? editingTask?.id ?? "",
+    { skip: !viewTask?.id && !editingTask?.id },
+  );
 
+  const [createTask, { isLoading: creating }] = useCreateTaskMutation();
+  const [updateTask, { isLoading: updating }] = useUpdateTaskMutation();
   const [updateTaskStatus, { isLoading: updatingStatus }] = useUpdateTaskStatusMutation();
+  const [deleteTask, { isLoading: deleting }] = useDeleteTaskMutation();
+
+  const assigneeOptions = useMemo(() => {
+    const options: { value: string; label: string }[] = [];
+    if (profile?.userId) {
+      options.push({
+        value: profile.userId,
+        label: (profile as { name?: string }).name ?? "Partner",
+      });
+    }
+    const members = teamMembersData?.data ?? [];
+    members
+      .filter((m) => m.status === "ACTIVE" && m.userId)
+      .forEach((m) => {
+        const label = [m.firstName, m.lastName].filter(Boolean).join(" ").trim() || m.email;
+        options.push({ value: m.userId!, label });
+      });
+    return options;
+  }, [profile, teamMembersData?.data]);
 
   const allRows = tasksData?.data ?? [];
   const rows = useMemo(() => {
@@ -114,6 +162,7 @@ export default function MyTasks() {
           if (r.status === "PENDING") acc.pending += 1;
           if (r.status === "IN_PROGRESS") acc.inProgress += 1;
           if (r.status === "COMPLETED") acc.completed += 1;
+          if (r.status !== "COMPLETED") acc.reviewOpen += 1;
           if (r.priority === "LOW") acc.low += 1;
           if (r.priority === "MEDIUM") acc.medium += 1;
           if (r.priority === "HIGH") acc.high += 1;
@@ -124,13 +173,81 @@ export default function MyTasks() {
           pending: 0,
           inProgress: 0,
           completed: 0,
+          reviewOpen: 0,
           low: 0,
           medium: 0,
           high: 0,
-        }
+        },
       ),
-    [allRows]
+    [allRows],
   );
+
+  const onOpenCreate = () => {
+    setEditingTask(null);
+    form.resetFields();
+    form.setFieldsValue({ priority: "MEDIUM" });
+    setOpenFormModal(true);
+  };
+
+  const onOpenEdit = (task: PartnerTaskListItem) => {
+    const mergedDue = task.dueDate
+      ? dayjs(
+          task.dueTime
+            ? `${task.dueDate} ${task.dueTime}`
+            : task.dueDate,
+          task.dueTime ? ["YYYY-MM-DD h:mm A", "YYYY-MM-DD HH:mm"] : ["YYYY-MM-DD"],
+        )
+      : undefined;
+    setEditingTask(task);
+    form.setFieldsValue({
+      title: task.task_title,
+      taskType: task.taskType || undefined,
+      priority: task.priority || undefined,
+      dueDateTime: mergedDue && mergedDue.isValid() ? mergedDue : undefined,
+      assignedToUserId: taskDetail?.assignedTo?.id || undefined,
+      description: taskDetail?.task_description || "",
+    });
+    setOpenFormModal(true);
+  };
+
+  const handleSubmit = async () => {
+    const values = await form.validateFields();
+    const dueDateTime = values.dueDateTime ? dayjs(values.dueDateTime) : null;
+    const payload: CreateTaskBody = {
+      title: values.title,
+      description: values.description || undefined,
+      assignedToUserId: values.assignedToUserId,
+      taskType: values.taskType || undefined,
+      priority: values.priority || undefined,
+      dueDate: dueDateTime ? dueDateTime.format("YYYY-MM-DD") : undefined,
+      dueTime: dueDateTime ? dueDateTime.format("hh:mm A") : undefined,
+    };
+    if (editingTask) {
+      await updateTask({ id: editingTask.id, body: payload }).unwrap();
+    } else {
+      await createTask(payload).unwrap();
+    }
+    setOpenFormModal(false);
+    form.resetFields();
+    setEditingTask(null);
+  };
+
+  const disabledPastDate = (current: dayjs.Dayjs) =>
+    current && current.startOf("day").isBefore(dayjs().startOf("day"));
+
+  const disabledPastTimeForToday = (current: dayjs.Dayjs | null) => {
+    if (!current || !current.isSame(dayjs(), "day")) return {};
+    const now = dayjs();
+    const currentHour = now.hour();
+    const currentMinute = now.minute();
+    return {
+      disabledHours: () => Array.from({ length: currentHour }, (_, i) => i),
+      disabledMinutes: (selectedHour: number) =>
+        selectedHour === currentHour
+          ? Array.from({ length: currentMinute + 1 }, (_, i) => i)
+          : [],
+    };
+  };
 
   const statCardClass = (
     active: boolean,
@@ -173,12 +290,20 @@ export default function MyTasks() {
     { title: "Assigned To", dataIndex: "assigned_member_name" },
     {
       title: "Actions",
-      width: 90,
+      width: 140,
       render: (_: unknown, row: PartnerTaskListItem) => (
         <Space>
+          <Tooltip title="Edit task">
+            <Button type="text" size="small" icon={<EditOutlined />} onClick={() => onOpenEdit(row)} />
+          </Tooltip>
           <Tooltip title="View details">
             <Button type="text" size="small" icon={<EyeOutlined />} onClick={() => setViewTask(row)} />
           </Tooltip>
+          <Popconfirm title="Delete this task?" onConfirm={() => deleteTask(row.id)}>
+            <Tooltip title="Delete task">
+              <Button type="text" size="small" danger icon={<DeleteOutlined />} />
+            </Tooltip>
+          </Popconfirm>
         </Space>
       ),
     },
@@ -186,13 +311,13 @@ export default function MyTasks() {
 
   return (
     <div className="space-y-4 my-tasks-page">
-      <PageMeta title="My Tasks - Campus Transfer Partner" description="Tasks assigned to me by team members and managers." />
+      <PageMeta title="Task Management - Campus Transfer Partner" description="Create, assign and review team tasks." />
       <PageHeader
-        title="My Tasks"
-        subtitle="Track tasks assigned to you and update progress."
+        title="Task Management"
+        subtitle="See what you assigned, monitor progress and track pending reviews."
         breadcrumbs={[
           { title: "Dashboard", path: "/" },
-          { title: "My Tasks" },
+          { title: "Task Management" },
         ]}
       />
 
@@ -203,15 +328,15 @@ export default function MyTasks() {
           </span>
           <div>
             <Typography.Title level={5} className="!mb-0.5 !text-base">
-              Task status
+              Assignment status
             </Typography.Title>
           </div>
         </header>
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-5">
           <button type="button" onClick={() => setStatus("")} className={statCardClass(!status, "border-slate-200", "bg-slate-50/90", "indigo")}>
             <div className="flex items-start gap-2.5">
               <StatCardIcon className="bg-slate-100 text-slate-600"><AppstoreOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">All statuses</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-slate-900">{stats.total}</p></div>
+              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">All</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-slate-900">{stats.total}</p></div>
             </div>
           </button>
           <button type="button" onClick={() => setStatus("PENDING")} className={statCardClass(status === "PENDING", "border-slate-200", "bg-slate-50/90", "indigo")}>
@@ -232,6 +357,12 @@ export default function MyTasks() {
               <div><p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-800">Completed</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-emerald-950">{stats.completed}</p></div>
             </div>
           </button>
+          <button type="button" onClick={() => setStatus("PENDING")} className={statCardClass(status === "PENDING", "border-violet-200", "bg-violet-50/80", "indigo")}>
+            <div className="flex items-start gap-2.5">
+              <StatCardIcon className="bg-violet-100 text-violet-700"><ClockCircleOutlined /></StatCardIcon>
+              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-violet-800">Review open</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-violet-950">{stats.reviewOpen}</p></div>
+            </div>
+          </button>
         </div>
       </section>
 
@@ -250,7 +381,7 @@ export default function MyTasks() {
           <button type="button" onClick={() => setPriority("")} className={statCardClass(!priority, "border-slate-200", "bg-slate-50/90", "violet")}>
             <div className="flex items-start gap-2.5">
               <StatCardIcon className="bg-slate-100 text-slate-600"><ControlOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">All priorities</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-slate-900">{stats.total}</p></div>
+              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">All</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-slate-900">{stats.total}</p></div>
             </div>
           </button>
           <button type="button" onClick={() => setPriority("LOW")} className={statCardClass(priority === "LOW", "border-slate-200", "bg-slate-50/90", "violet")}>
@@ -274,7 +405,7 @@ export default function MyTasks() {
         </div>
       </section>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <Input.Search
           placeholder="Search task title/type/assignee"
           allowClear
@@ -284,6 +415,9 @@ export default function MyTasks() {
             setPage(1);
           }}
         />
+        <Button type="primary" onClick={onOpenCreate}>
+          Create Task
+        </Button>
       </div>
 
       <div className="my-tasks-table-wrapper overflow-hidden rounded-[24px] border border-neutral-100 bg-white dark:border-gray-800 dark:bg-gray-900">
@@ -291,7 +425,7 @@ export default function MyTasks() {
           rowKey="id"
           data={rows}
           columns={columns}
-          loading={isLoading || isFetching || updatingStatus}
+          loading={isLoading || isFetching || deleting || updatingStatus}
           currentPage={page}
           limit={limit}
           setCurrentPage={setPage}
@@ -308,6 +442,67 @@ export default function MyTasks() {
           }}
         />
       </div>
+
+      <Modal
+        title={editingTask ? "Update task" : "Create new task"}
+        open={openFormModal}
+        onCancel={() => {
+          setOpenFormModal(false);
+          setEditingTask(null);
+        }}
+        onOk={handleSubmit}
+        confirmLoading={creating || updating}
+        destroyOnHidden
+      >
+        <Form layout="vertical" form={form}>
+          <Form.Item name="title" label="Task title" rules={[{ required: true, message: "Task title is required" }]}>
+            <Input placeholder="Ex: Follow up with student" />
+          </Form.Item>
+          <Form.Item
+            name="assignedToUserId"
+            label="Assign to team member"
+            rules={[{ required: true, message: "Please select team member" }]}
+          >
+            <Select showSearch optionFilterProp="label" options={assigneeOptions} />
+          </Form.Item>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Form.Item name="priority" label="Priority" rules={[{ required: true, message: "Priority is required" }]}>
+              <Select options={PRIORITY_OPTIONS.map((p) => ({ value: p, label: p }))} />
+            </Form.Item>
+            <Form.Item name="taskType" label="Task type">
+              <Select options={TASK_TYPE_OPTIONS.map((t) => ({ value: t, label: t.replace(/_/g, " ") }))} allowClear />
+            </Form.Item>
+          </div>
+          <Form.Item
+            name="dueDateTime"
+            label="Due date & time"
+            rules={[
+              { required: true, message: "Due date and time is required" },
+              {
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+                  if (dayjs(value).isBefore(dayjs())) {
+                    return Promise.reject(new Error("Current or future time is required."));
+                  }
+                  return Promise.resolve();
+                },
+              },
+            ]}
+          >
+            <DatePicker
+              className="w-full"
+              format="YYYY-MM-DD HH:mm"
+              showTime={{ format: "HH:mm" }}
+              disabledDate={disabledPastDate}
+              disabledTime={disabledPastTimeForToday}
+              minuteStep={5}
+            />
+          </Form.Item>
+          <Form.Item name="description" label="Task description">
+            <Input.TextArea rows={4} placeholder="Write detailed task instructions..." />
+          </Form.Item>
+        </Form>
+      </Modal>
 
       <Modal
         title="Task details"
@@ -351,7 +546,7 @@ export default function MyTasks() {
               </div>
             </div>
             <div className="pt-2">
-              <p className="mb-2 text-xs uppercase text-gray-500">Update status</p>
+              <p className="mb-2 text-xs uppercase text-gray-500">Update status / review</p>
               <Select
                 value={taskDetail.status}
                 onChange={(nextStatus) =>
@@ -359,7 +554,7 @@ export default function MyTasks() {
                 }
                 options={STATUS_OPTIONS.map((s) => ({ value: s, label: s.replace(/_/g, " ") }))}
                 loading={updatingStatus}
-                style={{ minWidth: 180 }}
+                style={{ minWidth: 220 }}
               />
             </div>
           </div>

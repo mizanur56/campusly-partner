@@ -11,6 +11,7 @@ import {
   message,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { useSelector } from "react-redux";
 import PageMeta from "../../components/common/Meta/PageMeta";
 import DataTable from "../../components/common/Tables/DataTable";
 import "./TeamMembers.css";
@@ -23,8 +24,11 @@ import {
   useDeleteTeamMemberMutation,
   PartnerTeamMember,
 } from "../../redux/features/teams/partnerTeamsApi";
+import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 
 export default function TeamMembers() {
+  const user = useSelector(selectCurrentUser);
+  const isTeamMember = user?.role === "PARTNER_TEAM_MEMBER";
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState("");
@@ -63,8 +67,9 @@ export default function TeamMembers() {
         lastName: values.lastName ?? "",
         contactNumber: values.contactNumber,
         countryCode: values.countryCode,
+        password: values.password,
       }).unwrap();
-      message.success("Team member invited successfully. They will receive an email.");
+      message.success("Team member created successfully.");
       setIsInviteModalOpen(false);
       form.resetFields();
     } catch {
@@ -174,7 +179,8 @@ export default function TeamMembers() {
       title: "Actions",
       key: "actions",
       width: 220,
-      render: (_: unknown, record: PartnerTeamMember) => (
+      render: (_: unknown, record: PartnerTeamMember) =>
+        isTeamMember ? null : (
         <Space size="small" wrap onClick={(e) => e.stopPropagation()}>
           <Button
             size="small"
@@ -226,13 +232,15 @@ export default function TeamMembers() {
             Invite and manage your partner team.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setIsInviteModalOpen(true)}
-          className="inline-flex items-center justify-center rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-        >
-          Invite Team Member
-        </button>
+        {!isTeamMember && (
+          <button
+            type="button"
+            onClick={() => setIsInviteModalOpen(true)}
+            className="inline-flex items-center justify-center rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+          >
+            Create Team Member
+          </button>
+        )}
       </div>
 
       {/* Stats cards */}
@@ -312,7 +320,7 @@ export default function TeamMembers() {
       {/* Invite modal */}
       <Modal
         open={isInviteModalOpen}
-        title="Invite Team Member"
+        title="Create Team Member"
         onCancel={() => {
           setIsInviteModalOpen(false);
           form.resetFields();
@@ -346,6 +354,16 @@ export default function TeamMembers() {
             ]}
           >
             <Input type="email" placeholder="e.g. john@example.com" />
+          </Form.Item>
+          <Form.Item
+            label="Password"
+            name="password"
+            rules={[
+              { required: true, message: "Password is required" },
+              { min: 6, message: "Password must be at least 6 characters" },
+            ]}
+          >
+            <Input.Password placeholder="Set initial password" />
           </Form.Item>
           <Form.Item label="Country Code" name="countryCode">
             <Input placeholder="+880" />

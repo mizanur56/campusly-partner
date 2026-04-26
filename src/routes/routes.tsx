@@ -25,6 +25,7 @@ import Dashboard from "../pages/Dashboard/Dashboard.tsx";
 import HotOffers from "../pages/HotOffers/HotOffers";
 import AllMediaList from "../pages/Media/Media";
 import MyTasks from "../pages/MyTasks/MyTasks";
+import TaskManagement from "../pages/TaskManagement/TaskManagement";
 import Notifications from "../pages/Notifications/Notifications";
 import { OnboardingPage } from "../pages/Onboarding";
 import RegularCompliancePage from "../pages/Onboarding/RegularCompliancePage";
@@ -46,10 +47,6 @@ function StudentProfileRedirect() {
 }
 
 function DashboardOrRedirect() {
-  const user = useSelector(selectCurrentUser);
-  if (user?.role === "PARTNER_TEAM_MEMBER") {
-    return <Navigate to="/my-tasks" replace />;
-  }
   return <Dashboard />;
 }
 
@@ -146,6 +143,7 @@ function AppRoutes() {
           <Route path="applications/:id" element={<ApplicationDetails />} />
           <Route path="team-members" element={<TeamMembers />} />
           <Route path="my-tasks" element={<MyTasks />} />
+          <Route path="task-management" element={<TaskManagement />} />
           <Route path="notifications" element={<Notifications />} />
           <Route
             path="payments"
