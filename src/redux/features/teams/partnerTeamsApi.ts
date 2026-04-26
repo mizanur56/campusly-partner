@@ -128,6 +128,18 @@ export const partnerTeamsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["partnerTeams"],
     }),
+
+    changeTeamMemberPassword: builder.mutation<
+      any,
+      { id: string; data: { newPassword: string; confirmPassword: string } }
+    >({
+      query: ({ id, data }) => ({
+        url: `/partners/team-members/${id}/change-password`,
+        method: "PATCH",
+        body: data,
+      }),
+      invalidatesTags: ["partnerTeams"],
+    }),
   }),
 });
 
@@ -139,5 +151,6 @@ export const {
   useResendTeamInviteMutation,
   useUpdateTeamMemberMutation,
   useDeleteTeamMemberMutation,
+  useChangeTeamMemberPasswordMutation,
 } = partnerTeamsApi;
 

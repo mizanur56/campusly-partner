@@ -4,6 +4,7 @@ import {
   ArrowDownOutlined,
   ArrowUpOutlined,
   CheckCircleOutlined,
+  CloseCircleOutlined,
   ClockCircleOutlined,
   ControlOutlined,
   DeleteOutlined,
@@ -12,16 +13,21 @@ import {
   FireOutlined,
   InboxOutlined,
   MinusOutlined,
+  RedoOutlined,
+  SendOutlined,
+  ThunderboltOutlined,
 } from "@ant-design/icons";
 import {
   Button,
   DatePicker,
+  Divider,
   Form,
   Input,
   Modal,
   Popconfirm,
   Select,
   Space,
+  Tabs,
   Tag,
   Tooltip,
   Typography,
@@ -45,10 +51,10 @@ import { useGetTeamMembersQuery } from "../../redux/features/teams/partnerTeamsA
 import "../../components/common/Tables/AntTable.css";
 import "../MyTasks/MyTasks.css";
 
-type PartnerTaskStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED";
+type PartnerTaskStatus = "PENDING" | "IN_PROGRESS" | "SUBMITTED" | "COMPLETED";
 type PartnerTaskPriority = "LOW" | "MEDIUM" | "HIGH";
 
-const STATUS_OPTIONS: PartnerTaskStatus[] = ["PENDING", "IN_PROGRESS", "COMPLETED"];
+const STATUS_OPTIONS: PartnerTaskStatus[] = ["PENDING", "IN_PROGRESS", "SUBMITTED", "COMPLETED"];
 const PRIORITY_OPTIONS: PartnerTaskPriority[] = ["LOW", "MEDIUM", "HIGH"];
 const TASK_TYPE_OPTIONS: CreateTaskBody["taskType"][] = [
   "TO_DO",
@@ -66,6 +72,7 @@ const priorityColor: Record<PartnerTaskPriority, string> = {
 const statusColor: Record<PartnerTaskStatus, string> = {
   PENDING: "default",
   IN_PROGRESS: "processing",
+  SUBMITTED: "purple",
   COMPLETED: "success",
 };
 
@@ -96,6 +103,10 @@ export default function TaskManagement() {
   const [openFormModal, setOpenFormModal] = useState(false);
   const [editingTask, setEditingTask] = useState<PartnerTaskListItem | null>(null);
   const [viewTask, setViewTask] = useState<PartnerTaskListItem | null>(null);
+  const [reviewTask, setReviewTask] = useState<PartnerTaskListItem | null>(null);
+  const [reviewDecision, setReviewDecision] = useState<"COMPLETE" | "REASSIGN">("COMPLETE");
+  const [reviewNote, setReviewNote] = useState("");
+  const [reviewReassignTo, setReviewReassignTo] = useState<string>();
   const [form] = Form.useForm();
 
   const { data: profile } = useGetPartnerProfileQuery();
@@ -116,6 +127,9 @@ export default function TaskManagement() {
     viewTask?.id ?? editingTask?.id ?? "",
     { skip: !viewTask?.id && !editingTask?.id },
   );
+  const { data: reviewTaskDetail } = useGetTaskByIdQuery(reviewTask?.id ?? "", {
+    skip: !reviewTask?.id,
+  });
 
   const [createTask, { isLoading: creating }] = useCreateTaskMutation();
   const [updateTask, { isLoading: updating }] = useUpdateTaskMutation();
@@ -127,7 +141,7 @@ export default function TaskManagement() {
     if (profile?.userId) {
       options.push({
         value: profile.userId,
-        label: (profile as { name?: string }).name ?? "Partner",
+        label: "Me",
       });
     }
     const members = teamMembersData?.data ?? [];
@@ -154,15 +168,31 @@ export default function TaskManagement() {
     });
   }, [allRows, searchTerm, priority]);
 
-  const stats = useMemo(
-    () =>
-      allRows.reduce(
-        (acc, r) => {
+  const stats = useMemo(() => {
+    const apiStats = tasksData?.meta?.stats;
+    if (apiStats) {
+      return {
+        total: apiStats.total,
+        pending: apiStats.byStatus.PENDING,
+        inProgress: apiStats.byStatus.IN_PROGRESS,
+        submitted: apiStats.byStatus.SUBMITTED,
+        completed: apiStats.byStatus.COMPLETED,
+        reviewOpen: apiStats.byStatus.SUBMITTED,
+        low: apiStats.byPriority.LOW,
+        medium: apiStats.byPriority.MEDIUM,
+        high: apiStats.byPriority.HIGH,
+        cancelled: apiStats.byStatus.CANCELLED,
+        urgent: apiStats.byPriority.URGENT,
+      };
+    }
+    return allRows.reduce(
+      (acc, r) => {
           acc.total += 1;
           if (r.status === "PENDING") acc.pending += 1;
           if (r.status === "IN_PROGRESS") acc.inProgress += 1;
+          if (r.status === "SUBMITTED") acc.submitted += 1;
           if (r.status === "COMPLETED") acc.completed += 1;
-          if (r.status !== "COMPLETED") acc.reviewOpen += 1;
+          if (r.status === "SUBMITTED") acc.reviewOpen += 1;
           if (r.priority === "LOW") acc.low += 1;
           if (r.priority === "MEDIUM") acc.medium += 1;
           if (r.priority === "HIGH") acc.high += 1;
@@ -173,14 +203,16 @@ export default function TaskManagement() {
           pending: 0,
           inProgress: 0,
           completed: 0,
+          submitted: 0,
           reviewOpen: 0,
           low: 0,
           medium: 0,
           high: 0,
+          cancelled: 0,
+          urgent: 0,
         },
-      ),
-    [allRows],
-  );
+      );
+  }, [allRows, tasksData?.meta?.stats]);
 
   const onOpenCreate = () => {
     setEditingTask(null);
@@ -293,6 +325,21 @@ export default function TaskManagement() {
       width: 140,
       render: (_: unknown, row: PartnerTaskListItem) => (
         <Space>
+          {row.status === "SUBMITTED" && (
+            <Tooltip title="Review submission">
+              <Button
+                type="text"
+                size="small"
+                icon={<CheckCircleOutlined />}
+                onClick={() => {
+                  setReviewTask(row);
+                  setReviewDecision("COMPLETE");
+                  setReviewNote("");
+                  setReviewReassignTo(undefined);
+                }}
+              />
+            </Tooltip>
+          )}
           <Tooltip title="Edit task">
             <Button type="text" size="small" icon={<EditOutlined />} onClick={() => onOpenEdit(row)} />
           </Tooltip>
@@ -328,21 +375,24 @@ export default function TaskManagement() {
           </span>
           <div>
             <Typography.Title level={5} className="!mb-0.5 !text-base">
-              Assignment status
+              Task status
             </Typography.Title>
+            <Typography.Text type="secondary" className="text-xs">
+              Click a stage to filter the table. Numbers here are overall totals for this view and do not change when you filter.
+            </Typography.Text>
           </div>
         </header>
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-5">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
           <button type="button" onClick={() => setStatus("")} className={statCardClass(!status, "border-slate-200", "bg-slate-50/90", "indigo")}>
             <div className="flex items-start gap-2.5">
               <StatCardIcon className="bg-slate-100 text-slate-600"><AppstoreOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">All</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-slate-900">{stats.total}</p></div>
+              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">All statuses</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-slate-900">{stats.total}</p></div>
             </div>
           </button>
           <button type="button" onClick={() => setStatus("PENDING")} className={statCardClass(status === "PENDING", "border-slate-200", "bg-slate-50/90", "indigo")}>
             <div className="flex items-start gap-2.5">
               <StatCardIcon className="bg-slate-200/80 text-slate-700"><InboxOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">Pending</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-slate-900">{stats.pending}</p></div>
+              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">To do</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-slate-900">{stats.pending}</p></div>
             </div>
           </button>
           <button type="button" onClick={() => setStatus("IN_PROGRESS")} className={statCardClass(status === "IN_PROGRESS", "border-sky-200", "bg-sky-50/80", "indigo")}>
@@ -351,16 +401,22 @@ export default function TaskManagement() {
               <div><p className="text-[11px] font-semibold uppercase tracking-wide text-sky-800">In progress</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-sky-950">{stats.inProgress}</p></div>
             </div>
           </button>
+          <button type="button" onClick={() => setStatus("SUBMITTED")} className={statCardClass(status === "SUBMITTED", "border-violet-200", "bg-violet-50/80", "indigo")}>
+            <div className="flex items-start gap-2.5">
+              <StatCardIcon className="bg-violet-100 text-violet-700"><SendOutlined /></StatCardIcon>
+              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-violet-800">Submitted</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-violet-950">{stats.submitted}</p></div>
+            </div>
+          </button>
           <button type="button" onClick={() => setStatus("COMPLETED")} className={statCardClass(status === "COMPLETED", "border-emerald-200", "bg-emerald-50/80", "indigo")}>
             <div className="flex items-start gap-2.5">
               <StatCardIcon className="bg-emerald-100 text-emerald-700"><CheckCircleOutlined /></StatCardIcon>
               <div><p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-800">Completed</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-emerald-950">{stats.completed}</p></div>
             </div>
           </button>
-          <button type="button" onClick={() => setStatus("PENDING")} className={statCardClass(status === "PENDING", "border-violet-200", "bg-violet-50/80", "indigo")}>
+          <button type="button" disabled className="rounded-lg border border-rose-200 bg-rose-50/80 px-3 py-2.5 text-left opacity-70 cursor-not-allowed">
             <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-violet-100 text-violet-700"><ClockCircleOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-violet-800">Review open</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-violet-950">{stats.reviewOpen}</p></div>
+              <StatCardIcon className="bg-rose-100 text-rose-700"><CloseCircleOutlined /></StatCardIcon>
+              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-rose-800">Cancelled</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-rose-950">{stats.cancelled}</p></div>
             </div>
           </button>
         </div>
@@ -375,13 +431,16 @@ export default function TaskManagement() {
             <Typography.Title level={5} className="!mb-0.5 !text-base">
               Priority
             </Typography.Title>
+            <Typography.Text type="secondary" className="text-xs">
+              Click a level to filter by urgency. Counts stay as overall totals; they do not change when status or priority filters are applied.
+            </Typography.Text>
           </div>
         </header>
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
           <button type="button" onClick={() => setPriority("")} className={statCardClass(!priority, "border-slate-200", "bg-slate-50/90", "violet")}>
             <div className="flex items-start gap-2.5">
               <StatCardIcon className="bg-slate-100 text-slate-600"><ControlOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">All</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-slate-900">{stats.total}</p></div>
+              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">All priorities</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-slate-900">{stats.total}</p></div>
             </div>
           </button>
           <button type="button" onClick={() => setPriority("LOW")} className={statCardClass(priority === "LOW", "border-slate-200", "bg-slate-50/90", "violet")}>
@@ -400,6 +459,12 @@ export default function TaskManagement() {
             <div className="flex items-start gap-2.5">
               <StatCardIcon className="bg-amber-100 text-amber-800"><ArrowUpOutlined /></StatCardIcon>
               <div><p className="text-[11px] font-semibold uppercase tracking-wide text-amber-900">High</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-amber-950">{stats.high}</p></div>
+            </div>
+          </button>
+          <button type="button" disabled className="rounded-lg border border-red-200 bg-red-50/80 px-3 py-2.5 text-left opacity-70 cursor-not-allowed">
+            <div className="flex items-start gap-2.5">
+              <StatCardIcon className="bg-red-100 text-red-700"><ThunderboltOutlined /></StatCardIcon>
+              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-red-800">Urgent</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-red-950">{stats.urgent}</p></div>
             </div>
           </button>
         </div>
@@ -545,6 +610,20 @@ export default function TaskManagement() {
                 </p>
               </div>
             </div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div className="rounded-xl border border-purple-200 bg-purple-50 p-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-purple-700">Submission Note</p>
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-purple-900">
+                  {taskDetail.submissionNote || "No submission note provided."}
+                </p>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-700">Review Note</p>
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-900">
+                  {taskDetail.reviewNote || "No review note provided."}
+                </p>
+              </div>
+            </div>
             <div className="pt-2">
               <p className="mb-2 text-xs uppercase text-gray-500">Update status / review</p>
               <Select
@@ -559,6 +638,106 @@ export default function TaskManagement() {
             </div>
           </div>
         ) : null}
+      </Modal>
+
+      <Modal
+        title="Review submitted task"
+        open={!!reviewTask}
+        onCancel={() => setReviewTask(null)}
+        onOk={async () => {
+          if (!reviewTask) return;
+          if (reviewDecision === "COMPLETE") {
+            await updateTaskStatus({
+              id: reviewTask.id,
+              status: "COMPLETED",
+              note: reviewNote || undefined,
+            }).unwrap();
+          } else {
+            if (!reviewReassignTo) return;
+            await updateTaskStatus({
+              id: reviewTask.id,
+              status: "IN_PROGRESS",
+              note: reviewNote || undefined,
+              reassignToUserId: reviewReassignTo,
+            }).unwrap();
+          }
+          setReviewTask(null);
+        }}
+        confirmLoading={updatingStatus}
+        okText={reviewDecision === "COMPLETE" ? "Mark Complete" : "Reassign"}
+      >
+        <div className="space-y-3">
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+            <p className="text-xs text-gray-500">Task</p>
+            <p className="font-medium text-gray-800">{reviewTask?.task_title}</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Current assignee: {reviewTaskDetail?.assignedTo?.name || "N/A"}
+            </p>
+            {reviewTaskDetail?.submissionNote ? (
+              <>
+                <Divider className="my-2" />
+                <p className="text-xs text-purple-700">
+                  Submission note: {reviewTaskDetail.submissionNote}
+                </p>
+              </>
+            ) : null}
+          </div>
+          <Tabs
+            activeKey={reviewDecision}
+            onChange={(k) => setReviewDecision(k as "COMPLETE" | "REASSIGN")}
+            items={[
+              {
+                key: "COMPLETE",
+                label: (
+                  <span className="inline-flex items-center gap-2">
+                    <CheckCircleOutlined />
+                    Complete
+                  </span>
+                ),
+                children: (
+                  <Input.TextArea
+                    rows={4}
+                    placeholder="Add completion/review note..."
+                    value={reviewNote}
+                    onChange={(e) => setReviewNote(e.target.value)}
+                  />
+                ),
+              },
+              {
+                key: "REASSIGN",
+                label: (
+                  <span className="inline-flex items-center gap-2">
+                    <RedoOutlined />
+                    Reassign
+                  </span>
+                ),
+                children: (
+                  <div className="space-y-3">
+                    <Select
+                      className="w-full mb-3"
+                      placeholder="Select team member (same or different)"
+                      value={reviewReassignTo}
+                      onChange={(value) => setReviewReassignTo(value)}
+                      options={assigneeOptions.map((opt) => ({
+                        value: opt.value,
+                        label:
+                          opt.value === reviewTaskDetail?.assignedTo?.id
+                            ? `${opt.label} - current`
+                            : opt.label,
+                      }))}
+                    />
+                    <Input.TextArea
+                      rows={4}
+                      placeholder="Add reassign/rework note..."
+                      value={reviewNote}
+                      onChange={(e) => setReviewNote(e.target.value)}
+                    />
+                  </div>
+                ),
+              },
+            ]}
+          />
+        </div>
       </Modal>
     </div>
   );

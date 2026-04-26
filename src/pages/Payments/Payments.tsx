@@ -535,28 +535,7 @@ export default function Payments() {
         </Tag>
       ),
     },
-    {
-      title: "Action",
-      key: "action",
-      width: 160,
-      render: (_: unknown, record) =>
-        record.status === "Unpaid" ? (
-          <button
-            type="button"
-            className="payments-primary-button"
-            onClick={() => {
-              setUploadCommissionId(record.commissionId);
-              setUploadApplicationId(record.applicationId);
-              setIsUploadModalOpen(true);
-              setUploadInvoiceFile(null);
-            }}
-          >
-            Upload Invoice
-          </button>
-        ) : (
-          <span className="text-xs text-gray-400">-</span>
-        ),
-    },
+    // Action column intentionally removed per updated requirements.
   ];
 
   const commissionTransactionsColumns: ColumnsType<CommissionTransactionRecord> =

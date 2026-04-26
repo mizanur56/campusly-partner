@@ -22,6 +22,7 @@ import {
   useResendTeamInviteMutation,
   useUpdateTeamMemberMutation,
   useDeleteTeamMemberMutation,
+  useChangeTeamMemberPasswordMutation,
   PartnerTeamMember,
 } from "../../redux/features/teams/partnerTeamsApi";
 import { selectCurrentUser } from "../../redux/features/auth/authSlice";
@@ -35,8 +36,10 @@ export default function TeamMembers() {
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<PartnerTeamMember | null>(null);
+  const [passwordMember, setPasswordMember] = useState<PartnerTeamMember | null>(null);
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
+  const [passwordForm] = Form.useForm();
 
   const { data: stats } = useGetTeamStatsQuery();
   const {
@@ -54,6 +57,8 @@ export default function TeamMembers() {
   const [resendInvite, { isLoading: isResending }] = useResendTeamInviteMutation();
   const [updateMember, { isLoading: isUpdating }] = useUpdateTeamMemberMutation();
   const [deleteMember, { isLoading: isDeleting }] = useDeleteTeamMemberMutation();
+  const [changeMemberPassword, { isLoading: isChangingPassword }] =
+    useChangeTeamMemberPasswordMutation();
 
   const members: PartnerTeamMember[] = data?.data || [];
   const meta = data?.meta;
@@ -61,7 +66,7 @@ export default function TeamMembers() {
   const handleInviteSubmit = async () => {
     try {
       const values = await form.validateFields();
-      await inviteMember({
+      const createdRes = await inviteMember({
         email: values.email,
         firstName: values.firstName,
         lastName: values.lastName ?? "",
@@ -72,8 +77,36 @@ export default function TeamMembers() {
       message.success("Team member created successfully.");
       setIsInviteModalOpen(false);
       form.resetFields();
-    } catch {
-      // errors handled by baseApi toast
+      setPage(1);
+      setStatusFilter("");
+      setSearch("");
+      const createdMember = (createdRes?.data || createdRes) as PartnerTeamMember;
+      if (createdMember?.id) {
+        setEditingMember(createdMember);
+      }
+      editForm.setFieldsValue({
+        firstName: createdMember?.firstName ?? values.firstName,
+        lastName: createdMember?.lastName ?? values.lastName ?? "",
+        contactNumber: createdMember?.contactNumber ?? values.contactNumber ?? "",
+        countryCode: createdMember?.countryCode ?? values.countryCode ?? "",
+      });
+    } catch (err: any) {
+      const apiMessage =
+        err?.data?.message || err?.error?.message || err?.message || "";
+      const statusCode = err?.status || err?.data?.statusCode;
+      if (
+        statusCode === 409 ||
+        String(apiMessage).toLowerCase().includes("already registered")
+      ) {
+        form.setFields([
+          {
+            name: "email",
+            errors: ["This email is already registered in the system"],
+          },
+        ]);
+        message.error("This email is already registered in the system");
+        return;
+      }
     }
   };
 
@@ -198,6 +231,18 @@ export default function TeamMembers() {
               onClick={(e) => handleResend(e, record)}
             >
               Resend invite
+            </Button>
+          )}
+          {record.status === "ACTIVE" && (
+            <Button
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                setPasswordMember(record);
+                passwordForm.resetFields();
+              }}
+            >
+              Change password
             </Button>
           )}
           <Tooltip title="Remove member">
@@ -365,11 +410,90 @@ export default function TeamMembers() {
           >
             <Input.Password placeholder="Set initial password" />
           </Form.Item>
+          <Form.Item
+            label="Confirm Password"
+            name="confirmPassword"
+            dependencies={["password"]}
+            rules={[
+              { required: true, message: "Confirm password is required" },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue("password") === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error("Passwords do not match"));
+                },
+              }),
+            ]}
+          >
+            <Input.Password placeholder="Confirm password" />
+          </Form.Item>
           <Form.Item label="Country Code" name="countryCode">
             <Input placeholder="+880" />
           </Form.Item>
           <Form.Item label="Contact Number" name="contactNumber">
             <Input placeholder="Phone number" />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        open={!!passwordMember}
+        title="Change Team Member Password"
+        onCancel={() => {
+          setPasswordMember(null);
+          passwordForm.resetFields();
+        }}
+        onOk={async () => {
+          if (!passwordMember) return;
+          try {
+            const values = await passwordForm.validateFields();
+            await changeMemberPassword({
+              id: passwordMember.id,
+              data: {
+                newPassword: values.newPassword,
+                confirmPassword: values.confirmPassword,
+              },
+            }).unwrap();
+            message.success("Password changed successfully.");
+            setPasswordMember(null);
+            passwordForm.resetFields();
+          } catch {
+            // errors handled by baseApi toast
+          }
+        }}
+        okText="Update Password"
+        okButtonProps={{ loading: isChangingPassword }}
+        destroyOnHidden
+      >
+        <Form layout="vertical" form={passwordForm}>
+          <Form.Item
+            label="New Password"
+            name="newPassword"
+            rules={[
+              { required: true, message: "New password is required" },
+              { min: 6, message: "Password must be at least 6 characters" },
+            ]}
+          >
+            <Input.Password placeholder="Enter new password" />
+          </Form.Item>
+          <Form.Item
+            label="Confirm Password"
+            name="confirmPassword"
+            dependencies={["newPassword"]}
+            rules={[
+              { required: true, message: "Confirm password is required" },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue("newPassword") === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error("Passwords do not match"));
+                },
+              }),
+            ]}
+          >
+            <Input.Password placeholder="Confirm new password" />
           </Form.Item>
         </Form>
       </Modal>
