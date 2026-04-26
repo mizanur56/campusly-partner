@@ -556,53 +556,25 @@ export default function Payments() {
   );
 
   const renderTopCards = () => {
+    const stats = commissionStats || {};
+
     if (commissionTab === "unpaid") {
-      const stats = commissionStats || {};
       return (
-        <div className="payments-kpi-grid payments-kpi-grid--3">
-          <div className="payments-kpi-card">
-            <div className="payments-kpi-row">
-            <img
-                    src="/money-bag.png"
-                    alt="Total Commission Earned"
-                    className="h-7 w-7 object-contain"
-                  />
-              <div>
-                <p className="payments-kpi-label">All</p>
-                <p className="payments-kpi-value">
-                  €{(stats.total ?? 0).toFixed?.(2) ?? "0.00"}
-                </p>
-              </div>
-            </div>
-          </div>
+        <div className="payments-kpi-grid payments-kpi-grid--1">
           <div className="payments-kpi-card">
             <div className="payments-kpi-row">
             <img
                     src="/hourglass.png"
-                    alt="Pending Commission"
+                    alt="Unpaid Commission"
                     className="h-7 w-7 object-contain"
                   />
-                
               <div>
                 <p className="payments-kpi-label">Unpaid</p>
                 <p className="payments-kpi-value">
                   €{(stats.unpaid ?? 0).toFixed?.(2) ?? "0.00"}
                 </p>
-              </div>
-            </div>
-          </div>
-          <div className="payments-kpi-card">
-            <div className="payments-kpi-row">
-            <img
-                    src="/dollar.png"
-                    alt="Paid Commission"
-                    className="h-7 w-7 object-contain"
-                  />
-              
-              <div>
-                <p className="payments-kpi-label">Paid</p>
-                <p className="payments-kpi-value">
-                  €{(stats.paid ?? 0).toFixed?.(2) ?? "0.00"}
+                <p className="payments-kpi-subtext">
+                  {stats?.counts?.unpaid ?? 0} applications
                 </p>
               </div>
             </div>
@@ -610,7 +582,40 @@ export default function Payments() {
         </div>
       );
     }
-    return null;
+
+    const paidAmount = Number(stats?.paid ?? 0);
+    const paidApplications = Number(stats?.counts?.paid ?? 0);
+
+    return (
+      <div className="payments-kpi-grid payments-kpi-grid--2">
+        <div className="payments-kpi-card">
+          <div className="payments-kpi-row">
+            <img
+              src="/dollar.png"
+              alt="Total Paid"
+              className="h-7 w-7 object-contain"
+            />
+            <div>
+              <p className="payments-kpi-label">Total Paid</p>
+              <p className="payments-kpi-value">€{paidAmount.toFixed(2)}</p>
+            </div>
+          </div>
+        </div>
+        <div className="payments-kpi-card">
+          <div className="payments-kpi-row">
+            <img
+              src="/money-bag.png"
+              alt="Paid Applications"
+              className="h-7 w-7 object-contain"
+            />
+            <div>
+              <p className="payments-kpi-label">Paid Applications</p>
+              <p className="payments-kpi-value">{paidApplications}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const renderInnerTabs = () => {
@@ -626,6 +631,7 @@ export default function Payments() {
           onClick={() => {
             setCommissionTab("unpaid");
             handleResetSearchOnTabChange();
+            setCommissionPage(1);
           }}
         >
           Unpaid Commission
@@ -640,6 +646,7 @@ export default function Payments() {
           onClick={() => {
             setCommissionTab("history");
             handleResetSearchOnTabChange();
+            setCommissionHistoryPage(1);
           }}
         >
           Transaction History
