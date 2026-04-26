@@ -75,7 +75,9 @@ const SignedSidebarItems: NavItem[] = [
   // },
 ];
 
-const TeamMemberSidebarItems: NavItem[] = SignedSidebarItems;
+const TeamMemberSidebarItems: NavItem[] = SignedSidebarItems.filter(
+  (item) => item.path !== "/team-members"
+);
 
 const SIGNED_ROUTE_PATHS = [
   "/programs-schools",
@@ -91,7 +93,9 @@ const SIGNED_ROUTE_PATHS = [
   "/settings/profile",
 ];
 
-const TEAM_MEMBER_ROUTE_PATHS = SIGNED_ROUTE_PATHS;
+const TEAM_MEMBER_ROUTE_PATHS = SIGNED_ROUTE_PATHS.filter(
+  (path) => path !== "/team-members"
+);
 
 const othersSidebarItems: NavItem[] = [
   {

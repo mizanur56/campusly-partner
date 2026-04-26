@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   Tag,
   Button,
@@ -26,6 +26,9 @@ import {
   PartnerTeamMember,
 } from "../../redux/features/teams/partnerTeamsApi";
 import { selectCurrentUser } from "../../redux/features/auth/authSlice";
+import type { MediaImage } from "../../types/media";
+import { getApiImageUrl } from "../../utils/getApiImageUrl";
+import { useUploadImageMutation } from "../../redux/features/media/mediaApi";
 
 export default function TeamMembers() {
   const user = useSelector(selectCurrentUser);
@@ -37,6 +40,8 @@ export default function TeamMembers() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<PartnerTeamMember | null>(null);
   const [passwordMember, setPasswordMember] = useState<PartnerTeamMember | null>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<MediaImage | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
   const [passwordForm] = Form.useForm();
@@ -59,6 +64,7 @@ export default function TeamMembers() {
   const [deleteMember, { isLoading: isDeleting }] = useDeleteTeamMemberMutation();
   const [changeMemberPassword, { isLoading: isChangingPassword }] =
     useChangeTeamMemberPasswordMutation();
+  const [uploadImage, { isLoading: isUploadingPhoto }] = useUploadImageMutation();
 
   const members: PartnerTeamMember[] = data?.data || [];
   const meta = data?.meta;
@@ -73,10 +79,12 @@ export default function TeamMembers() {
         contactNumber: values.contactNumber,
         countryCode: values.countryCode,
         password: values.password,
+        profilePhotoId: selectedPhoto?.id,
       }).unwrap();
       message.success("Team member created successfully.");
       setIsInviteModalOpen(false);
       form.resetFields();
+      setSelectedPhoto(null);
       setPage(1);
       setStatusFilter("");
       setSearch("");
@@ -107,6 +115,27 @@ export default function TeamMembers() {
         message.error("This email is already registered in the system");
         return;
       }
+    }
+  };
+
+  const handlePhotoPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    const formData = new FormData();
+    formData.append("files", file);
+    formData.append("folder", "team-members");
+    try {
+      const res: any = await uploadImage(formData).unwrap();
+      const uploaded = (Array.isArray(res?.data) ? res.data[0] : res?.data) as MediaImage;
+      if (uploaded?.id) {
+        setSelectedPhoto(uploaded);
+        message.success("Photo uploaded successfully.");
+      } else {
+        message.error("Upload succeeded but no file data returned.");
+      }
+    } catch {
+      message.error("Failed to upload photo.");
     }
   };
 
@@ -289,17 +318,11 @@ export default function TeamMembers() {
       </div>
 
       {/* Stats cards */}
-      <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <div className="text-xs text-gray-500 mb-1">Total Members</div>
           <div className="text-2xl font-semibold text-gray-900">
             {stats?.total ?? 0}
-          </div>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <div className="text-xs text-gray-500 mb-1">Pending Invites</div>
-          <div className="text-2xl font-semibold text-amber-600">
-            {stats?.pending ?? 0}
           </div>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4">
@@ -369,6 +392,7 @@ export default function TeamMembers() {
         onCancel={() => {
           setIsInviteModalOpen(false);
           form.resetFields();
+          setSelectedPhoto(null);
         }}
         onOk={handleInviteSubmit}
         okText="Send invitation"
@@ -376,6 +400,31 @@ export default function TeamMembers() {
         destroyOnHidden
       >
         <Form layout="vertical" form={form}>
+          <Form.Item label="Photo">
+            <div className="space-y-3">
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/jpeg,image/jpg,image/png,image/webp"
+                className="hidden"
+                onChange={handlePhotoPick}
+              />
+              {selectedPhoto?.url ? (
+                <img
+                  src={getApiImageUrl(selectedPhoto.url)}
+                  alt="Team member preview"
+                  className="h-16 w-16 rounded-full object-cover border border-gray-200"
+                />
+              ) : null}
+              <Button
+                type="default"
+                loading={isUploadingPhoto}
+                onClick={() => photoInputRef.current?.click()}
+              >
+                {selectedPhoto ? "Change Photo" : "Upload Photo"}
+              </Button>
+            </div>
+          </Form.Item>
           <Form.Item
             label="First Name"
             name="firstName"

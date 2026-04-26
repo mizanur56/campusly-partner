@@ -50,6 +50,14 @@ function DashboardOrRedirect() {
   return <Dashboard />;
 }
 
+function TeamMembersOrRedirect() {
+  const currentUser = useSelector(selectCurrentUser);
+  if (currentUser?.role === "PARTNER_TEAM_MEMBER") {
+    return <Navigate to="/" replace />;
+  }
+  return <TeamMembers />;
+}
+
 function AppRoutes() {
   return (
     <BrowserRouter
@@ -141,7 +149,7 @@ function AppRoutes() {
           <Route path="visa-reject" element={<VisaRejectPage />} />
           <Route path="visa-success" element={<VisaSuccessPage />} />
           <Route path="applications/:id" element={<ApplicationDetails />} />
-          <Route path="team-members" element={<TeamMembers />} />
+          <Route path="team-members" element={<TeamMembersOrRedirect />} />
           <Route path="my-tasks" element={<MyTasks />} />
           <Route path="task-management" element={<TaskManagement />} />
           <Route path="notifications" element={<Notifications />} />
