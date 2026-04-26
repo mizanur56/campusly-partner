@@ -10,7 +10,6 @@ import { useFilteredSidebarItems } from "../../../hooks/useFilteredSidebarItems"
 import { ChevronDownIcon } from "../../../icons";
 import { clearAuthLocalStorage } from "../../../lib/authLocalStorage";
 import { getPortalLoginUrl } from "../../../lib/portalRouting";
-import { isPartnerStudentProfileApplyNowUnlocked } from "../../../lib/partnerStudentProfileGates";
 import { selectCurrentUser } from "../../../redux/features/auth/authSlice";
 import { useGetOnboardingStatusQuery } from "../../../redux/features/onboardingForm";
 import { useGetPartnerProfileQuery } from "../../../redux/features/profile/partnerProfileApi";
@@ -115,12 +114,6 @@ const fallbackManagedBy = {
 
 const STUDENT_NAV = [
   {
-    key: "activity",
-    label: "Activity",
-    icon: "fa-solid fa-chart-line",
-    path: "activity",
-  },
-  {
     key: "profile",
     label: "Profile",
     icon: "fa-solid fa-user",
@@ -131,12 +124,6 @@ const STUDENT_NAV = [
     label: "Applications",
     icon: "fa-solid fa-file-lines",
     path: "applications",
-  },
-  {
-    key: "tasks",
-    label: "Tasks",
-    icon: "fa-solid fa-list-check",
-    path: "tasks",
   },
 ];
 
@@ -277,13 +264,7 @@ const Sidebar: React.FC = () => {
     { skip: !studentId || !showStudentSidebar },
   );
 
-  const studentNavItems = useMemo(() => {
-    const unlocked = isPartnerStudentProfileApplyNowUnlocked(
-      studentProfileForNav,
-    );
-    if (unlocked) return STUDENT_NAV;
-    return STUDENT_NAV.filter((item) => item.key !== "applications");
-  }, [studentProfileForNav]);
+  const studentNavItems = useMemo(() => STUDENT_NAV, []);
   const isOnboardingContext =
     (location.pathname === "/" && previewMode === "onboarding") ||
     location.pathname.startsWith("/onboarding") ||
