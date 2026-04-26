@@ -16,14 +16,13 @@ import {
   useGetCommissionEarnedQuery,
   useGetCommissionTransactionsQuery,
   usePaySelectedApplicationsMutation,
-  useClaimCommissionMutation,
 } from "../../redux/features/payments/partnerPaymentsApi";
 import { config } from "../../config";
 
 const { Dragger } = Upload;
 
 type PurchaseTabKey = "applications" | "history";
-type CommissionTabKey = "all" | "history";
+type CommissionTabKey = "unpaid" | "history";
 
 interface PurchaseApplicationRecord {
   key: string;
@@ -79,17 +78,9 @@ export default function Payments() {
   const [purchaseTab, setPurchaseTab] =
     useState<PurchaseTabKey>("applications");
   const [commissionTab, setCommissionTab] =
-    useState<CommissionTabKey>("all");
+    useState<CommissionTabKey>("unpaid");
   const [searchText, setSearchText] = useState("");
   const [isBankModalOpen, setIsBankModalOpen] = useState(false);
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [uploadCommissionId, setUploadCommissionId] = useState<string | null>(
-    null,
-  );
-  const [uploadApplicationId, setUploadApplicationId] = useState<string | null>(
-    null,
-  );
-  const [uploadInvoiceFile, setUploadInvoiceFile] = useState<File | null>(null);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [selectedPurchaseKeys, setSelectedPurchaseKeys] = useState<React.Key[]>(
     [],
@@ -127,36 +118,19 @@ export default function Payments() {
     useGetCommissionEarnedQuery({
       page: commissionPage,
       limit: commissionPageSize,
+      status: commissionTab === "unpaid" ? "UNPAID" : undefined,
       search: searchText || undefined,
     });
   const { data: commissionTransactionsData, isLoading: isCommissionTxLoading } =
     useGetCommissionTransactionsQuery({
       page: commissionHistoryPage,
       limit: commissionHistoryPageSize,
+      status: "COMPLETED",
       search: searchText || undefined,
     });
 
   const [paySelectedApplications, { isLoading: isPaying }] =
     usePaySelectedApplicationsMutation();
-  const [claimCommission, { isLoading: isClaiming }] =
-    useClaimCommissionMutation();
-  const handleConfirmInvoiceUpload = async () => {
-    if (!uploadCommissionId || !uploadInvoiceFile) return;
-    try {
-      await claimCommission({
-        commissionId: uploadCommissionId,
-        invoice: uploadInvoiceFile,
-      }).unwrap();
-      setIsUploadModalOpen(false);
-      setUploadCommissionId(null);
-      setUploadApplicationId(null);
-      setUploadInvoiceFile(null);
-    } catch {
-      // errors handled globally
-    }
-  };
-
-
   const handleResetSearchOnTabChange = () => {
     setSearchText("");
   };
@@ -243,37 +217,6 @@ export default function Payments() {
 
   const commissionEarned: CommissionEarnedRecord[] = useMemo(() => {
     const items = commissionEarnedData?.data || [];
-    if (!isCommissionEarnedLoading && items.length === 0) {
-      return [
-        {
-          key: "static-earned-1",
-          commissionId: "COM-0001",
-          applicationId: "APP-10234",
-          studentName: "John Doe",
-          earned: 120,
-          status: "Pending",
-          raw: null,
-        },
-        {
-          key: "static-earned-2",
-          commissionId: "COM-0002",
-          applicationId: "APP-10210",
-          studentName: "Ayesha Rahman",
-          earned: 85,
-          status: "Paid",
-          raw: null,
-        },
-        {
-          key: "static-earned-3",
-          commissionId: "COM-0003",
-          applicationId: "APP-10198",
-          studentName: "Sabbir Hossain",
-          earned: 60,
-          status: "Unpaid",
-          raw: null,
-        },
-      ];
-    }
     return items.map((c: any, index: number) => {
       const app = c.application;
       const studentName =
@@ -297,41 +240,10 @@ export default function Payments() {
         raw: c,
       };
     });
-  }, [commissionEarnedData, isCommissionEarnedLoading]);
+  }, [commissionEarnedData]);
 
   const commissionTransactions: CommissionTransactionRecord[] = useMemo(() => {
     const items = commissionTransactionsData?.data || [];
-    if (!isCommissionTxLoading && items.length === 0) {
-      return [
-        {
-          key: "static-ctx-1",
-          transactionId: "TXN-COM-9812",
-          date: "2026-04-18",
-          applicationId: "APP-10210",
-          amount: 85,
-          status: "Completed",
-          raw: null,
-        },
-        {
-          key: "static-ctx-2",
-          transactionId: "TXN-COM-9827",
-          date: "2026-04-20",
-          applicationId: "APP-10234",
-          amount: 120,
-          status: "Pending",
-          raw: null,
-        },
-        {
-          key: "static-ctx-3",
-          transactionId: "TXN-COM-9833",
-          date: "2026-04-21",
-          applicationId: "APP-10198",
-          amount: 60,
-          status: "Completed",
-          raw: null,
-        },
-      ];
-    }
     return items.map((p: any, index: number) => ({
       key: p.id || `${index}`,
       transactionId: p.txnRef || "",
@@ -344,7 +256,7 @@ export default function Payments() {
       status: p.status === "COMPLETED" ? "Completed" : "Pending",
       raw: p,
     }));
-  }, [commissionTransactionsData, isCommissionTxLoading]);
+  }, [commissionTransactionsData]);
 
   const selectedTotalPayable = useMemo(
     () =>
@@ -610,28 +522,6 @@ export default function Payments() {
         size="large"
       />
       <div className="payments-toolbar-actions">
-        <button type="button" className="payments-filter-button">
-          <span className="payments-filter-icon" aria-hidden="true">
-            <svg
-              width="26"
-              height="26"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M4 6h16M7 12h10M10 18h4"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              />
-            </svg>
-          </span>
-          <span className="payments-filter-label">Filter</span>
-          <span className="payments-filter-badge-wrap">
-            <Badge count={0} size="small" className="payments-filter-badge" />
-          </span>
-        </button>
         <button
           type="button"
           className="payments-primary-button"
@@ -662,35 +552,11 @@ export default function Payments() {
         className="payments-search"
         size="large"
       />
-      <div className="payments-toolbar-actions">
-        <button type="button" className="payments-filter-button">
-          <span className="payments-filter-icon" aria-hidden="true">
-            <svg
-              width="26"
-              height="26"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M4 6h16M7 12h10M10 18h4"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              />
-            </svg>
-          </span>
-          <span className="payments-filter-label">Filter</span>
-          <span className="payments-filter-badge-wrap">
-            <Badge count={0} size="small" className="payments-filter-badge" />
-          </span>
-        </button>
-      </div>
     </div>
   );
 
   const renderTopCards = () => {
-    if (commissionTab === "all") {
+    if (commissionTab === "unpaid") {
       const stats = commissionStats || {};
       return (
         <div className="payments-kpi-grid payments-kpi-grid--3">
@@ -753,16 +619,16 @@ export default function Payments() {
         <button
           type="button"
           className={
-            commissionTab === "all"
+            commissionTab === "unpaid"
               ? "payments-inner-tab payments-inner-tab--active"
               : "payments-inner-tab"
           }
           onClick={() => {
-            setCommissionTab("all");
+            setCommissionTab("unpaid");
             handleResetSearchOnTabChange();
           }}
         >
-          All Commissions
+          Unpaid Commission
         </button>
         <button
           type="button"
@@ -783,7 +649,7 @@ export default function Payments() {
   };
 
   const renderTableSection = () => {
-    if (commissionTab === "all") {
+    if (commissionTab === "unpaid") {
       return (
         <>
           <div className="bg-[#FFFFFF] p-6 rounded-lg border border-[#C7CACF] space-y-4">
@@ -864,57 +730,6 @@ export default function Payments() {
 
       {/* Table + toolbar */}
       <section className="payments-section">{renderTableSection()}</section>
-
-      {/* Bank transfer / Pay selected modal */}
-      <Modal
-        open={isUploadModalOpen}
-        title="Upload Invoice"
-        onCancel={() => {
-          setIsUploadModalOpen(false);
-          setUploadInvoiceFile(null);
-          setUploadCommissionId(null);
-          setUploadApplicationId(null);
-        }}
-        onOk={handleConfirmInvoiceUpload}
-        okText={isClaiming ? "Submitting..." : "Confirm"}
-        cancelText="Cancel"
-        centered
-        width={560}
-        okButtonProps={{ disabled: !uploadInvoiceFile || isClaiming }}
-      >
-        <div className="payments-upload-modal">
-          {uploadApplicationId && (
-            <p className="payments-upload-application">
-              Application ID : <span>{uploadApplicationId}</span>
-            </p>
-          )}
-          <Dragger
-            multiple={false}
-            showUploadList={!!uploadInvoiceFile}
-            beforeUpload={(file) => {
-              setUploadInvoiceFile(file);
-              return false;
-            }}
-            onRemove={() => {
-              setUploadInvoiceFile(null);
-            }}
-            className="payments-dragger"
-          >
-            <p className="ant-upload-drag-icon">
-              <InboxOutlined />
-            </p>
-            <p className="payments-dragger-title">
-              Drag &amp; drop your Invoice
-            </p>
-            <button type="button" className="payments-primary-button mt-2">
-              Choose file
-            </button>
-            <p className="payments-dragger-hint">
-              Supported formats: PDF, JPG, PNG (max. 10MB)
-            </p>
-          </Dragger>
-        </div>
-      </Modal>
 
       <Modal
         open={isBankModalOpen}
