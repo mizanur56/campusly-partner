@@ -106,18 +106,18 @@ export default function ContractPage() {
     if (!raw) return null;
     if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
 
-    const path = raw.replace(/^\/+/, "");
-
-    // In dev, prefer same-origin `/uploads/...` so pdf.js can fetch without CORS.
-    if (import.meta.env.DEV) {
-      const withUploadsPrefix = path.startsWith("uploads/")
-        ? `/${path}`
-        : `/uploads/${path}`;
-      return withUploadsPrefix;
-    }
-
+    const normalizedPath = raw.startsWith("/") ? raw : `/${raw}`;
     const base = (config.image_access_url ?? "").replace(/\/+$/, "");
-    return `${base}/${path}`;
+    if (!base) return normalizedPath;
+
+    const baseEndsWithUploads = /\/uploads$/i.test(base);
+    const pathStartsWithUploads = /^\/uploads\//i.test(normalizedPath);
+    const dedupedPath =
+      baseEndsWithUploads && pathStartsWithUploads
+        ? normalizedPath.replace(/^\/uploads/i, "")
+        : normalizedPath;
+
+    return `${base}${dedupedPath}`;
   }, [contractData?.contractDocumentUrl]);
 
   useEffect(() => {
