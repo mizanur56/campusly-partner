@@ -1,18 +1,18 @@
-import React, { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Input } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { Search } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import PageMeta from "../../components/common/Meta/PageMeta";
 import CreateStudentModal from "../../components/common/Modals/CreateStudentModal";
-import "../../components/common/Tables/AntTable.css";
-import { DataTable } from "../../components/common/Tables";
-import { useGetStudentsWithActiveTasksQuery } from "../../redux/features/tasks/partnerTasksApi";
-import { selectCurrentUser } from "../../redux/features/auth/authSlice";
-import { useGetStudentsQuery } from "../../redux/features/users/usersApi";
-import "./Students.css";
 import PageHeader from "../../components/common/Navigation/PageHeader";
-import { Search } from "lucide-react";
+import { DataTable } from "../../components/common/Tables";
+import "../../components/common/Tables/AntTable.css";
+import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 import { useGetAllStudentsByPartnerIdQuery } from "../../redux/features/profile/studentProfileApi";
+import { useGetStudentsWithActiveTasksQuery } from "../../redux/features/tasks/partnerTasksApi";
+import "./Students.css";
 
 interface StudentRecord {
   key: string;
@@ -22,6 +22,13 @@ interface StudentRecord {
   phone: string;
   status: string;
   lastLogin: string;
+}
+
+interface AssignedStudentRecord {
+  key: string;
+  studentId: string;
+  studentName: string;
+  activeTaskCount: number;
 }
 
 function formatDate(iso: string | null): string {
@@ -40,6 +47,8 @@ function formatDate(iso: string | null): string {
 
 export default function Students() {
   const navigate = useNavigate();
+  const user = useSelector(selectCurrentUser);
+  const isTeamMember = user?.role === "PARTNER_TEAM_MEMBER";
 
   const [searchText, setSearchText] = useState("");
   const [page, setPage] = useState(1);
@@ -144,7 +153,9 @@ export default function Students() {
         title="Students - Campus Transfer Partner"
         description="View and manage your students, applications, and enrollment status in the Campus Transfer Partner panel."
       />
-      <PageHeader title="Students" subtitle="Easily manage every student you onboard and support."  extra={<button
+      <PageHeader title="Students" subtitle={isTeamMember
+              ? "Students with tasks assigned to you."
+              : "Easily manage every student you onboard and support."}  extra={<button
               type="button"
               onClick={() => setCreateStudentOpen(true)}
               className="inline cursor-pointer flex items-center justify-center rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
@@ -152,17 +163,21 @@ export default function Students() {
               + Add student
             </button>} breadcrumbs={[{ title: "Dashboard", path: "/" }, { title: "Students" }]}/>
 
-            <CreateStudentModal
-              open={createStudentOpen}
-              onClose={() => setCreateStudentOpen(false)}
-            />
+            {!isTeamMember && (
+              <CreateStudentModal
+                open={createStudentOpen}
+                onClose={() => setCreateStudentOpen(false)}
+              />
+            )}
     
    <div className="bg-[#FFFFFF] p-6 rounded-lg border border-[#C7CACF]">
     
    <div className="mb-6 max-w-sm">
         <Input
           placeholder={
-            "Search by name, email, status or phone"
+            isTeamMember
+              ? "Search by student name"
+              : "Search by name, email, status or phone"
           }
           allowClear
           value={searchText}

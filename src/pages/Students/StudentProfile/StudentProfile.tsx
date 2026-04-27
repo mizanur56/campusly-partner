@@ -1,27 +1,26 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Link, useParams, useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { Table, Input, Tooltip, Spin, Alert } from "antd";
-import { FiEye } from "react-icons/fi";
-import { FileText, ArrowLeft } from "lucide-react";
-import { FaCircleCheck } from "react-icons/fa6";
+import { Alert, Input, Spin, Table, Tooltip } from "antd";
 import dayjs from "dayjs";
+import { useEffect, useMemo, useState } from "react";
+import { FiEye } from "react-icons/fi";
+import { useSelector } from "react-redux";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import PageMeta from "../../../components/common/Meta/PageMeta";
 import PageHeader from "../../../components/common/Navigation/PageHeader";
-import { useStudentProfile } from "../../../context/StudentProfileContext";
-import {
-  useGetStudentProfileQuery,
-  useGetStudentApplicationsQuery,
-} from "../../../redux/features/profile/studentProfileApi";
-import { selectCurrentUser } from "../../../redux/features/auth/authSlice";
-import { useSelector } from "react-redux";
-import { getApiImageUrl } from "../../../utils/getApiImageUrl";
-import GeneralInformationTab from "./tabs/GeneralInformationTab";
-import EducationHistoryTab from "./tabs/EducationHistoryTab";
-import BackgroundTab from "./tabs/BackgroundTab";
-import UploadDocumentsTab from "./tabs/UploadDocumentsTab";
-import ApplyNowTab from "./tabs/ApplyNowTab";
 import "../../../components/common/Tables/AntTable.css";
+import { config } from "../../../config";
+import { useStudentProfile } from "../../../context/StudentProfileContext";
+import { selectCurrentUser } from "../../../redux/features/auth/authSlice";
+import {
+  useGetStudentApplicationsQuery,
+  useGetStudentProfileQuery,
+} from "../../../redux/features/profile/studentProfileApi";
+import { getApiImageUrl } from "../../../utils/getApiImageUrl";
 import "./StudentProfile.css";
+import ApplyNowTab from "./tabs/ApplyNowTab";
+import BackgroundTab from "./tabs/BackgroundTab";
+import EducationHistoryTab from "./tabs/EducationHistoryTab";
+import GeneralInformationTab from "./tabs/GeneralInformationTab";
+import UploadDocumentsTab from "./tabs/UploadDocumentsTab";
 
 type ProfileTabKey =
   | "general"
