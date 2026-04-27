@@ -9,9 +9,13 @@ import PageMeta from "../../components/common/Meta/PageMeta";
 import DataTable from "../../components/common/Tables/DataTable";
 import "./Applications.css";
 import DeleteModal from "../../components/shared/DeleteModal";
-import { useGetMyAllApplicationsQuery } from "../../redux/features/application/applicationApi";
+import {
+  useDeleteApplicationMutation,
+  useGetMyAllApplicationsQuery,
+} from "../../redux/features/application/applicationApi";
 import { config } from "../../config";
 import PageHeader from "../../components/common/Navigation/PageHeader";
+import { toast } from "react-toastify";
 
 const { Option } = Select;
 
@@ -59,6 +63,8 @@ export default function Applications() {
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState<any>(null);
+  const [deleteApplication, { isLoading: isDeletingApplication }] =
+    useDeleteApplicationMutation();
 
   const { data, isLoading, isFetching } = useGetMyAllApplicationsQuery({
     page: currentPage,
@@ -277,9 +283,23 @@ export default function Applications() {
         open={deleteModalOpen}
         onCancel={() => setDeleteModalOpen(false)}
         onConfirm={async () => {
-          // TODO: hook up partner delete API when available
-          setDeleteModalOpen(false);
+          if (!selectedApplication?.id) {
+            toast.error("Application not selected");
+            return;
+          }
+
+          try {
+            await deleteApplication(selectedApplication.id).unwrap();
+            toast.success("Application deleted successfully");
+            setDeleteModalOpen(false);
+            setSelectedApplication(null);
+          } catch (error: any) {
+            toast.error(
+              error?.data?.message || "Failed to delete application",
+            );
+          }
         }}
+        loading={isDeletingApplication}
         title="Delete Application"
         message="Are you sure you want to delete this application?"
       />

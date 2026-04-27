@@ -13,25 +13,49 @@ export function getOnboardingStepPayload(
   return root as Record<string, unknown>;
 }
 
+// export function step1HasPersistedData(
+//   payload: Record<string, unknown> | null,
+// ): boolean {
+//   if (!payload) return false;
+//   return String(payload.registeredCompanyName ?? "").trim().length > 0;
+// }
 export function step1HasPersistedData(
   payload: Record<string, unknown> | null,
 ): boolean {
   if (!payload) return false;
-  return String(payload.registeredCompanyName ?? "").trim().length > 0;
+
+  const hasCompanyName =
+    String(payload.registeredCompanyName ?? "").trim().length > 0;
+  const hasRegistrationNumber =
+    String(payload.companyRegistrationNumber ?? "").trim().length > 0;
+  const hasCountry =
+    String(payload.countryOfRegistration ?? "").trim().length > 0;
+  const hasMobile =
+    String(payload.mobileNumber ?? "").replace(/\D/g, "").length > 0;
+
+  return hasCompanyName && hasRegistrationNumber && hasCountry && hasMobile;
 }
 
 export function step2HasPersistedData(
   payload: Record<string, unknown> | null,
 ): boolean {
   if (!payload) return false;
-  return String(payload.fullName ?? "").trim().length > 0;
+  const hasFullName = String(payload.fullName ?? "").trim().length > 0;
+  const hasEmail = String(payload.email ?? "").trim().length > 0;
+  const hasMobile = String(payload.mobileNumber ?? "").replace(/\D/g, "").length > 0;
+  return hasFullName && hasEmail && hasMobile;
 }
 
 export function step3HasPersistedData(
   payload: Record<string, unknown> | null,
 ): boolean {
   if (!payload) return false;
-  return String(payload.fullName ?? "").trim().length > 0;
+  const hasFullName = String(payload.fullName ?? "").trim().length > 0;
+  const hasPosition = String(payload.position ?? "").trim().length > 0;
+  const hasEmail = String(payload.email ?? "").trim().length > 0;
+  const hasTelephone =
+    String(payload.telephoneNumber ?? "").replace(/\D/g, "").length > 0;
+  return hasFullName && hasPosition && hasEmail && hasTelephone;
 }
 
 export function step4HasPersistedData(

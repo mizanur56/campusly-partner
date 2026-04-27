@@ -310,6 +310,9 @@ const ApplicationDetails = () => {
         "/user.avif",
       applicationSidebar: {
         applicationId: appId,
+        applicationStatus: applicationApiData?.status
+          ? String(applicationApiData.status)
+          : undefined,
         intake: intake ? String(intake) : undefined,
         program: programName ? String(programName) : undefined,
         school: universityName ? String(universityName) : undefined,

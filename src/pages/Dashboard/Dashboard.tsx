@@ -625,10 +625,12 @@
 
 import { useEffect, useState } from "react";
 import { CiClock2 } from "react-icons/ci";
+import { useSelector } from "react-redux";
 import PageMeta from "../../components/common/Meta/PageMeta";
 import { Button } from "../../components/ui/button";
 import { usePreviewMode } from "../../context/PreviewModeContext";
 import SignedDashboardView from "./SignedDashboardView";
+import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 import { useGetOnboardingStatusQuery } from "../../redux/features/onboardingForm";
 
 const REVIEW_ORANGE = "#FFA500";
@@ -779,6 +781,8 @@ function StepDot({
 
 const Dashboard = () => {
   const { previewMode, setPreviewMode } = usePreviewMode();
+  const user = useSelector(selectCurrentUser);
+  const isTeamMember = user?.role === "PARTNER_TEAM_MEMBER";
   const [onboardingOpen, setOnboardingOpen] = useState(true);
   const [contractOpen, setContractOpen] = useState(true);
 
@@ -858,12 +862,12 @@ const Dashboard = () => {
   useEffect(() => {
     if (isLoading) return;
 
-    if (hasUnlockedPortal && previewMode !== "signed") {
+    if ((hasUnlockedPortal || isTeamMember) && previewMode !== "signed") {
       setPreviewMode("signed");
-    } else if (!hasUnlockedPortal && previewMode !== "onboarding") {
+    } else if (!hasUnlockedPortal && !isTeamMember && previewMode !== "onboarding") {
       setPreviewMode("onboarding");
     }
-  }, [hasUnlockedPortal, isLoading, previewMode, setPreviewMode]);
+  }, [hasUnlockedPortal, isLoading, isTeamMember, previewMode, setPreviewMode]);
 
   return (
     <>
@@ -879,7 +883,7 @@ const Dashboard = () => {
             <p className="text-sm font-medium">Loading your dashboard...</p>
           </div>
         </div>
-      ) : previewMode === "signed" || hasUnlockedPortal ? (
+      ) : previewMode === "signed" || hasUnlockedPortal || isTeamMember ? (
         <SignedDashboardView />
       ) : (
         <div className="min-h-[calc(100vh-4rem)] -mx-4 px-0 py-0 md:-mx-6 md:px-0 lg:-mx-8">

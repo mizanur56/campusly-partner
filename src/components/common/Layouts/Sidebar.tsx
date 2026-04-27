@@ -1,5 +1,6 @@
 import { Tooltip } from "antd";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { MdOutlineContentPaste } from "react-icons/md";
 import { useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { config } from "../../../config";
@@ -15,7 +16,6 @@ import { useGetOnboardingStatusQuery } from "../../../redux/features/onboardingF
 import { useGetPartnerProfileQuery } from "../../../redux/features/profile/partnerProfileApi";
 import { useGetStudentProfileQuery } from "../../../redux/features/profile/studentProfileApi";
 import { NavItem, SubMenuItem } from "../../../types/interfaces";
-import { MdOutlineContentPaste } from "react-icons/md";
 
 const SidebarItems: NavItem[] = [
   { icon: <i className="fa-solid fa-house"></i>, name: "Home", path: "/" },
@@ -84,12 +84,9 @@ const SIGNED_ROUTE_PATHS = [
   "/team-members",
   "/applications",
   "/my-tasks",
-<<<<<<< HEAD
   "/announcements",
   "/notifications",
-=======
   "/task-management",
->>>>>>> f7bb661fb80137263fe53f2f19e1e487addcecf8
   "/payments",
   "/payments/commission",
   "/academy",
@@ -97,20 +94,11 @@ const SIGNED_ROUTE_PATHS = [
   "/settings/profile",
 ];
 
-<<<<<<< HEAD
 const TEAM_MEMBER_ROUTE_PATHS = [
   "/",
-  "/students",
-  "/applications",
-  "/my-tasks",
-  "/announcements",
-  "/notifications",
+  ...SIGNED_ROUTE_PATHS.filter((path) => path !== "/team-members"),
 ];
-=======
-const TEAM_MEMBER_ROUTE_PATHS = SIGNED_ROUTE_PATHS.filter(
-  (path) => path !== "/team-members"
-);
->>>>>>> f7bb661fb80137263fe53f2f19e1e487addcecf8
+
 
 const othersSidebarItems: NavItem[] = [
   {
@@ -241,12 +229,12 @@ const Sidebar: React.FC = () => {
     !isTeamMember && (isPartnerProfileLoading || isPartnerProfileFetching);
 
   // Signed sidebar: partner sees advisor details, team member keeps own account details.
-  const signedProfileName = isTeamMember ? (user?.name ?? profileName) : profileName;
-  const signedProfileEmail = isTeamMember
+  const _signedProfileName = isTeamMember ? (user?.name ?? profileName) : profileName;
+  const _signedProfileEmail = isTeamMember
     ? (user?.email ?? profileEmail)
     : profileEmail;
-  const signedProfilePhone = isTeamMember ? "" : profilePhone;
-  const signedProfilePhotoUrl = isTeamMember ? null : profilePhotoUrl;
+  const _signedProfilePhone = isTeamMember ? "" : profilePhone;
+  const _signedProfilePhotoUrl = isTeamMember ? null : profilePhotoUrl;
 
   const handleLogout = () => {
     clearAuthLocalStorage();
@@ -276,7 +264,7 @@ const Sidebar: React.FC = () => {
     (isStudentContext && studentIdFromPath) ||
     (isApplicationDetailContext && student);
 
-  const { data: studentProfileForNav } = useGetStudentProfileQuery(
+  const { data: _studentProfileForNav } = useGetStudentProfileQuery(
     studentId!,
     { skip: !studentId || !showStudentSidebar },
   );
@@ -295,7 +283,7 @@ const Sidebar: React.FC = () => {
     ((location.pathname === "/" &&
       (previewMode === "signed" || hasUnlockedPortal || isTeamMember)) ||
       signedPaths.includes(location.pathname) ||
-      (!isTeamMember && location.pathname.startsWith("/payments")) ||
+      location.pathname.startsWith("/payments") ||
       (isTeamMember &&
         (location.pathname.startsWith("/students/") ||
           location.pathname.startsWith("/applications/"))));
@@ -822,7 +810,12 @@ const Sidebar: React.FC = () => {
                 {student?.email }
               </p>
               <p className="mt-0.5 text-[14px] text-gray-600 dark:text-gray-300">
-                Status: <strong>{student?.status ?? "Active"}</strong>
+                Status:{" "}
+                <strong>
+                  {student?.applicationSidebar?.applicationStatus ??
+                    student?.status ??
+                    "Active"}
+                </strong>
               </p>
             </div>
             <div className="flex items-center gap-2">

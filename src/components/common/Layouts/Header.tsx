@@ -47,12 +47,9 @@ const SIGNED_HEADER_PATHS = [
   "/students",
   "/applications",
   "/my-tasks",
-<<<<<<< HEAD
   "/announcements",
   "/notifications",
-=======
   "/task-management",
->>>>>>> f7bb661fb80137263fe53f2f19e1e487addcecf8
   "/academy",
   "/hot-offers",
   "/team-members",
@@ -85,12 +82,9 @@ const Header: React.FC = () => {
       "/students",
       "/applications",
       "/my-tasks",
-<<<<<<< HEAD
       "/announcements",
       "/notifications",
-=======
       "/task-management",
->>>>>>> f7bb661fb80137263fe53f2f19e1e487addcecf8
       "/academy",
       "/hot-offers",
       "/team-members",
