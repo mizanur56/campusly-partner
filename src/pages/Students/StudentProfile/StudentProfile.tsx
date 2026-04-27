@@ -22,7 +22,6 @@ import UploadDocumentsTab from "./tabs/UploadDocumentsTab";
 import ApplyNowTab from "./tabs/ApplyNowTab";
 import "../../../components/common/Tables/AntTable.css";
 import "./StudentProfile.css";
-import { config } from "../../../config";
 
 type ProfileTabKey =
   | "general"
@@ -165,31 +164,33 @@ export default function StudentProfile() {
     ? (profile.phone.startsWith("+") ? profile.phone : `+${profile.phone}`)
     : passedStudent?.phone ?? "";
 
-
-  console.log(profile)
-  const studentForContext = {
-    id: studentId ?? passedStudent?.id ?? "",
-    name: displayName,
-    email: displayEmail,
-    phone: displayPhone,
-    address: "",
-    status: "",
-    avatar: profile?.image?.url
-      ? `${config.image_access_url}${profile.image.url}`
-      : "/user.avif",
-  };
+  const contextAvatar = getApiImageUrl(profile?.image) || "/user.avif";
 
   useEffect(() => {
-    if (studentId && (displayName || studentId)) {
-      setStudent({
-        ...studentForContext,
-        avatar:
-          studentForContext.avatar ||
-          `/user.avif`,
-      });
-    }
+    const id = studentId ?? passedStudent?.id;
+    if (!id) return;
+    setStudent({
+      id,
+      name: displayName,
+      email: displayEmail,
+      phone: displayPhone,
+      address: "",
+      status: "",
+      avatar: contextAvatar,
+    });
+  }, [
+    studentId,
+    passedStudent?.id,
+    displayName,
+    displayEmail,
+    displayPhone,
+    contextAvatar,
+    setStudent,
+  ]);
+
+  useEffect(() => {
     return () => setStudent(null);
-  }, [studentId, displayName, displayEmail, displayPhone]);
+  }, [setStudent]);
 
   const profileTabs: { key: ProfileTabKey; label: string }[] = [
     { key: "general", label: "General Information" },

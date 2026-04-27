@@ -300,9 +300,12 @@ export default function GeneralInformationTab({
     return opt?.label ?? qualificationId;
   };
 
-  const imageSrc = profileData?.image
-    ? (profileData.image.startsWith("http") ? profileData.image : `${config.image_access_url || ""}${profileData.image}`)
-    : "/images/user.jpg";
+  const rawImage = String(profileData?.image ?? "").trim();
+  const imageSrc = rawImage
+    ? rawImage.startsWith("http")
+      ? rawImage
+      : `${config.image_access_url || ""}${rawImage}`
+    : "/user.png";
 
 
   return (

@@ -174,6 +174,12 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
 
   const { data: countriesData } = useGetCountriesQuery({ page: 1, limit: 1000 });
   const selectedCountryName = Form.useWatch("country", form) as string | undefined;
+  const selectedQualificationId = Form.useWatch("qualifications", form) as
+    | string
+    | undefined;
+  const hasSelectedQualification = Boolean(
+    String(selectedQualificationId ?? "").trim(),
+  );
 
   const selectedCountryId = React.useMemo(() => {
     if (!selectedCountryName || !countriesData?.data) return null;
@@ -212,6 +218,12 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
       value: item.studyLevel?.id ?? item.studyLevelId ?? "",
     }));
   }, [studyLevelsData]);
+
+  React.useEffect(() => {
+    if (!hasSelectedQualification) {
+      form.setFieldValue("passingYear", undefined);
+    }
+  }, [form, hasSelectedQualification]);
 
   const handleSubmit = async (
     values: CreateStudentPayload & {
@@ -278,9 +290,9 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
           profilePayload.passportExpDate = null;
         }
 
-      console.log(profilePayload)
+      
       const result = await createStudent(profilePayload as any).unwrap();
-      console.log(result)
+      
 
       // 2) Update profile: countryId + qualificationId + other form fields
       const studentId = result?.studentId;
@@ -536,7 +548,12 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
                 name="passingYear"
                 label={<span className="text-[12px] text-[#20242A]">Passing Year</span>}
               >
-                <DatePicker picker="year" className="w-full" placeholder="dd/mm/yyyy" />
+                <DatePicker
+                  picker="year"
+                  className="w-full"
+                  placeholder="dd/mm/yyyy"
+                  disabled={!hasSelectedQualification}
+                />
               </Form.Item>
             </div>
           </div>

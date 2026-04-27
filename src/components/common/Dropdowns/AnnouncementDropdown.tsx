@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { RiCheckDoubleLine } from "react-icons/ri";
+import {
+  getStoredAnnouncementReadIds,
+  persistAnnouncementReadIds,
+} from "../../../lib/partnerAnnouncementReadIds";
 import { useGetAnnouncementsQuery } from "../../../redux/features/announcements/announcementsApi";
 
 type AnnouncementItem = {
@@ -17,9 +22,8 @@ const formatTime = (date?: string) => {
   return parsed.toLocaleDateString("en-GB");
 };
 
-const ANNOUNCEMENT_READ_STORAGE_KEY = "partner_announcements_read_ids_v1";
-
 export default function AnnouncementDropdown() {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [readIds, setReadIds] = useState<string[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -43,28 +47,12 @@ export default function AnnouncementDropdown() {
   const unreadCount = unreadAnnouncements.length;
 
   useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(ANNOUNCEMENT_READ_STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        setReadIds(parsed.filter((id): id is string => typeof id === "string"));
-      }
-    } catch {
-      setReadIds([]);
-    }
+    setReadIds(getStoredAnnouncementReadIds());
   }, []);
 
   const persistReadIds = (ids: string[]) => {
     setReadIds(ids);
-    try {
-      window.localStorage.setItem(
-        ANNOUNCEMENT_READ_STORAGE_KEY,
-        JSON.stringify(ids),
-      );
-    } catch {
-      // ignore storage write failures
-    }
+    persistAnnouncementReadIds(ids);
   };
 
   const handleMarkAllAsRead = () => {
@@ -133,9 +121,14 @@ export default function AnnouncementDropdown() {
               </div>
             ) : (
               announcements.map((announcement) => (
-                <div
+                <button
                   key={announcement.id}
-                  className="w-full border-b border-gray-100 px-4 py-3 text-left dark:border-gray-800"
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false);
+                    navigate(`/announcements?id=${encodeURIComponent(announcement.id)}`);
+                  }}
+                  className="w-full border-b border-gray-100 px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/60"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
@@ -151,13 +144,20 @@ export default function AnnouncementDropdown() {
                   <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
                     {formatTime(announcement.createdAt)}
                   </p>
-                </div>
+                </button>
               ))
             )}
           </div>
-          <div className="flex w-full items-center gap-1 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
+          <button
+            type="button"
+            onClick={() => {
+              setIsOpen(false);
+              navigate("/announcements");
+            }}
+            className="flex w-full items-center gap-1 px-4 py-3 text-left text-sm font-medium text-gray-700 transition-colors "
+          >
             Recent announcements <ChevronRight className="h-4 w-4" />
-          </div>
+          </button>
         </div>
       ) : null}
     </div>

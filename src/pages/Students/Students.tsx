@@ -7,12 +7,12 @@ import PageMeta from "../../components/common/Meta/PageMeta";
 import CreateStudentModal from "../../components/common/Modals/CreateStudentModal";
 import "../../components/common/Tables/AntTable.css";
 import { DataTable } from "../../components/common/Tables";
-import { useGetStudentsQuery } from "../../redux/features/users/usersApi";
 import { useGetStudentsWithActiveTasksQuery } from "../../redux/features/tasks/partnerTasksApi";
 import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 import "./Students.css";
 import PageHeader from "../../components/common/Navigation/PageHeader";
 import { Search } from "lucide-react";
+import { useGetAllStudentsByPartnerIdQuery } from "../../redux/features/profile/studentProfileApi";
 
 interface StudentRecord {
   key: string;
@@ -55,38 +55,45 @@ export default function Students() {
   const [pageSize, setPageSize] = useState(10);
   const [createStudentOpen, setCreateStudentOpen] = useState(false);
 
-  const { data, isFetching } = useGetStudentsQuery(
-    { page, limit: pageSize },
-    { skip: isTeamMember }
-  );
   const { data: assignedStudents = [], isFetching: isFetchingAssigned } =
     useGetStudentsWithActiveTasksQuery(
       isTeamMember ? { assignedToMe: true } : undefined,
       { skip: !isTeamMember }
     );
+  const {
+    data: allStudents,
+    isLoading: isPartnerStudentsLoading,
+    isFetching: isPartnerStudentsFetching,
+  } = useGetAllStudentsByPartnerIdQuery(
+    { partnerId: user?.id as string },
+    { skip: !user?.id || isTeamMember }
+  );
+
+  
+
+  console.log(allStudents)
 
   const tableData: StudentRecord[] = useMemo(() => {
     if (isTeamMember) return [];
-    if (!data?.data) return [];
-    const rows = data.data.map((u) => ({
+    if (!allStudents?.data) return [];
+    const rows = allStudents.data.map((u: any) => ({
       key: u.id,
       id: u.id,
-      name: u.name,
+      name: u.user.name,
       email: u.email,
       phone: u.phone ?? "—",
-      status: u.isActive ? "Active" : "Inactive",
-      lastLogin: formatDate(u.lastLogin),
+      passportNo: u.passportNo ?? "—",
+      AssignedTo: u?.advisor?.name ?? "—",
     }));
     if (!searchText.trim()) return rows;
     const q = searchText.toLowerCase();
     return rows.filter(
-      (row) =>
+      (row: StudentRecord) =>
         row.name.toLowerCase().includes(q) ||
         row.email.toLowerCase().includes(q) ||
-        row.phone.includes(searchText) ||
-        row.status.toLowerCase().includes(q)
+        row.phone.includes(searchText) 
     );
-  }, [data?.data, searchText, isTeamMember]);
+  }, [allStudents, searchText, isTeamMember]);
 
   const assignedTableData: AssignedStudentRecord[] = useMemo(() => {
     if (!isTeamMember) return [];
@@ -111,29 +118,9 @@ export default function Students() {
     },
     { title: "Email", dataIndex: "email", key: "email", width: 220 },
     { title: "Phone", dataIndex: "phone", key: "phone", width: 140 },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      width: 120,
-      render: (status: string) => (
-        <span
-          className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-            status === "Active"
-              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-              : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400"
-          }`}
-        >
-          {status}
-        </span>
-      ),
-    },
-    {
-      title: "Last Login",
-      dataIndex: "lastLogin",
-      key: "lastLogin",
-      width: 120,
-    },
+    { title: "Passport No", dataIndex: "passportNo", key: "passportNo", width: 140 },
+    { title: "Assigned To", dataIndex: "AssignedTo", key: "AssignedTo", width: 140 },
+ 
   ];
 
   const assignedColumns: ColumnsType<AssignedStudentRecord> = [
@@ -156,7 +143,9 @@ export default function Students() {
     },
   ];
 
-  const loading = isTeamMember ? isFetchingAssigned : isFetching;
+  const loading = isTeamMember
+    ? isFetchingAssigned
+    : Boolean(user?.id) && (isPartnerStudentsLoading || isPartnerStudentsFetching);
 
   return (
     <div className="students-page">
@@ -233,7 +222,6 @@ export default function Students() {
             setCurrentPage={setPage}
             limit={pageSize}
             setLimit={setPageSize}
-            total={data?.meta?.total ?? 0}
             showSizeChanger
             onRow={(record: StudentRecord) => ({
               onClick: () =>

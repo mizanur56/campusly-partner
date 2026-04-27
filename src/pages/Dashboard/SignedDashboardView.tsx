@@ -8,7 +8,6 @@ import {
   PartnerDashboardUniversity,
   PartnerDashboardSubject,
 } from "../../redux/features/profile/partnerProfileApi";
-import { getApiImageUrl } from "../../utils/getApiImageUrl";
 import CreateStudentModal from "../../components/common/Modals/CreateStudentModal";
 
 import KpiCards from "./signed/components/KpiCards";
@@ -24,7 +23,13 @@ export default function SignedDashboardView() {
   const userName = user?.name ?? "Partner User";
   const navigate = useNavigate();
   const [createStudentOpen, setCreateStudentOpen] = useState(false);
-  const { data: dashboard, isLoading } = useGetPartnerDashboardQuery();
+  const { data: dashboard, isLoading } = useGetPartnerDashboardQuery(
+    undefined,
+    {
+      /** Refetch every time this view mounts (e.g. each navigation to dashboard). */
+      refetchOnMountOrArgChange: true,
+    },
+  );
 
   const supportPanel = dashboard?.supportPanel ?? [];
   

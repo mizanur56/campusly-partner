@@ -97,6 +97,8 @@ const SIGNED_ROUTE_PATHS = [
   "/team-members",
   "/applications",
   "/my-tasks",
+  "/announcements",
+  "/notifications",
   "/payments",
   "/payments/commission",
   "/academy",
@@ -109,6 +111,8 @@ const TEAM_MEMBER_ROUTE_PATHS = [
   "/students",
   "/applications",
   "/my-tasks",
+  "/announcements",
+  "/notifications",
 ];
 
 const othersSidebarItems: NavItem[] = [
@@ -232,6 +236,7 @@ const Sidebar: React.FC = () => {
     }
     return null;
   };
+
 
   // Advisor details from partner profile (for "Managed by" / signed card). For team member, use logged-in user only.
   const advisor = partnerProfile?.advisor;
