@@ -28,8 +28,14 @@ const LayoutContent: React.FC = () => {
   const navigate = useNavigate();
   const user = useSelector(selectCurrentUser);
   const isTeamMember = user?.role === "PARTNER_TEAM_MEMBER";
-  const { data: onboardingStatus, isLoading: isOnboardingStatusLoading } =
-    useGetOnboardingStatusQuery();
+  const {
+    data: onboardingStatus,
+    isSuccess: isOnboardingStatusSuccess,
+    isError: isOnboardingStatusError,
+  } = useGetOnboardingStatusQuery();
+  /** RTK Query v2: `isLoading` can be false while the request has not finished; use settled state so we never redirect before `/form-status` returns. */
+  const isOnboardingStatusPending =
+    !isOnboardingStatusSuccess && !isOnboardingStatusError;
   const hasUnlockedPortal = isPartnerPortalUnlocked(onboardingStatus);
   const { previewMode, togglePreviewMode } = usePreviewMode();
   const [wipePhase, setWipePhase] = useState<"enter" | "exit" | null>(null);
@@ -64,14 +70,14 @@ const LayoutContent: React.FC = () => {
   // useRoutePermission(); // Disabled for design migration
 
   if (!isTeamMember && !hasUnlockedPortal) {
-    if (isOnboardingStatusLoading && !isPathAllowedBeforePartnerPortalUnlock(pathname)) {
+    if (isOnboardingStatusPending && !isPathAllowedBeforePartnerPortalUnlock(pathname)) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-[#fefefe] dark:bg-neutral-900">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-primary-600 dark:border-gray-700 dark:border-t-primary-400" />
         </div>
       );
     }
-    if (!isOnboardingStatusLoading && !portalRouteAllowed) {
+    if (!isOnboardingStatusPending && !portalRouteAllowed) {
       return <Navigate to="/onboarding" replace />;
     }
   }

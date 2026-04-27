@@ -12,14 +12,20 @@ import ProfileSettings from "../pages/Settings/ProfileSettings";
 export default function ProfileSettingsRoute() {
   const user = useSelector(selectCurrentUser);
   const isTeamMember = user?.role === "PARTNER_TEAM_MEMBER";
-  const { data: onboardingStatus, isLoading } = useGetOnboardingStatusQuery();
+  const {
+    data: onboardingStatus,
+    isSuccess: isOnboardingStatusSuccess,
+    isError: isOnboardingStatusError,
+  } = useGetOnboardingStatusQuery();
   const hasUnlockedPortal = isPartnerPortalUnlocked(onboardingStatus);
+  const isOnboardingStatusPending =
+    !isOnboardingStatusSuccess && !isOnboardingStatusError;
 
   if (isTeamMember) {
     return <ProfileSettings />;
   }
 
-  if (isLoading) {
+  if (isOnboardingStatusPending) {
     return null;
   }
 

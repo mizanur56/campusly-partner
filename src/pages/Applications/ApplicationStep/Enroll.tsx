@@ -29,7 +29,7 @@ export const EnrollStep: React.FC<EnrollStepProps> = ({
   const [isExpanded, setIsExpanded] = React.useState(true);
   const [uploadingId, setUploadingId] = React.useState<string | null>(null);
 
-  console.log(applicationApiData);
+
 
   // Get Tuition Fee Invoice
   const tuitionFeeInvoice = applicationApiData?.invoices?.find(

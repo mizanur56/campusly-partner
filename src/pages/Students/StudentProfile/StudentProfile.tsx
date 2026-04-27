@@ -22,6 +22,7 @@ import UploadDocumentsTab from "./tabs/UploadDocumentsTab";
 import ApplyNowTab from "./tabs/ApplyNowTab";
 import "../../../components/common/Tables/AntTable.css";
 import "./StudentProfile.css";
+import { config } from "../../../config";
 
 type ProfileTabKey =
   | "general"
@@ -164,6 +165,7 @@ export default function StudentProfile() {
     ? (profile.phone.startsWith("+") ? profile.phone : `+${profile.phone}`)
     : passedStudent?.phone ?? "";
 
+
   const studentForContext = {
     id: studentId ?? passedStudent?.id ?? "",
     name: displayName,
@@ -171,9 +173,9 @@ export default function StudentProfile() {
     phone: displayPhone,
     address: "",
     status: "",
-    avatar: profile?.image
-      ? getApiImageUrl(profile.image as { url?: string })
-      : undefined,
+    avatar: profile?.image?.url
+      ? `${config.image_access_url}${profile.image.url}`
+      : "/user.avif",
   };
 
   useEffect(() => {
@@ -182,7 +184,7 @@ export default function StudentProfile() {
         ...studentForContext,
         avatar:
           studentForContext.avatar ||
-          `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}`,
+          `/user.avif`,
       });
     }
     return () => setStudent(null);

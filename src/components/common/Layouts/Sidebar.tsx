@@ -1,7 +1,7 @@
 import { Tooltip } from "antd";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { config } from "../../../config";
 import { usePreviewMode } from "../../../context/PreviewModeContext";
 import { useSidebar } from "../../../context/SidebarContext";
@@ -13,7 +13,9 @@ import { getPortalLoginUrl } from "../../../lib/portalRouting";
 import { selectCurrentUser } from "../../../redux/features/auth/authSlice";
 import { useGetOnboardingStatusQuery } from "../../../redux/features/onboardingForm";
 import { useGetPartnerProfileQuery } from "../../../redux/features/profile/partnerProfileApi";
+import { useGetStudentProfileQuery } from "../../../redux/features/profile/studentProfileApi";
 import { NavItem, SubMenuItem } from "../../../types/interfaces";
+import { MdOutlineContentPaste } from "react-icons/md";
 
 const SidebarItems: NavItem[] = [
   { icon: <i className="fa-solid fa-house"></i>, name: "Home", path: "/" },
@@ -44,8 +46,11 @@ const SignedSidebarItems: NavItem[] = [
   },
   {
     icon: <i className="fa-solid fa-list-check"></i>,
-    name: "My Tasks",
-    path: "/my-tasks",
+    name: "Task Management",
+    subItems: [
+      { name: "Task Management", path: "/task-management" },
+      { name: "My Tasks", path: "/my-tasks" },
+    ],
   },
   {
     icon: <i className="fa-solid fa-credit-card"></i>,
@@ -69,24 +74,9 @@ const SignedSidebarItems: NavItem[] = [
   // },
 ];
 
-/** Restricted sidebar for PARTNER_TEAM_MEMBER: My Tasks first, then Students, Applications. No Home. */
-const TeamMemberSidebarItems: NavItem[] = [
-  {
-    icon: <i className="fa-solid fa-list-check"></i>,
-    name: "My Tasks",
-    path: "/my-tasks",
-  },
-  {
-    icon: <i className="fa-solid fa-users"></i>,
-    name: "Students",
-    path: "/students",
-  },
-  {
-    icon: <i className="fa-solid fa-file-lines"></i>,
-    name: "Applications",
-    path: "/applications",
-  },
-];
+const TeamMemberSidebarItems: NavItem[] = SignedSidebarItems.filter(
+  (item) => item.path !== "/team-members"
+);
 
 const SIGNED_ROUTE_PATHS = [
   "/programs-schools",
@@ -94,6 +84,7 @@ const SIGNED_ROUTE_PATHS = [
   "/team-members",
   "/applications",
   "/my-tasks",
+  "/task-management",
   "/payments",
   "/payments/commission",
   "/academy",
@@ -101,12 +92,9 @@ const SIGNED_ROUTE_PATHS = [
   "/settings/profile",
 ];
 
-const TEAM_MEMBER_ROUTE_PATHS = [
-  "/",
-  "/students",
-  "/applications",
-  "/my-tasks",
-];
+const TEAM_MEMBER_ROUTE_PATHS = SIGNED_ROUTE_PATHS.filter(
+  (path) => path !== "/team-members"
+);
 
 const othersSidebarItems: NavItem[] = [
   {
@@ -126,12 +114,6 @@ const fallbackManagedBy = {
 
 const STUDENT_NAV = [
   {
-    key: "activity",
-    label: "Activity",
-    icon: "fa-solid fa-chart-line",
-    path: "activity",
-  },
-  {
     key: "profile",
     label: "Profile",
     icon: "fa-solid fa-user",
@@ -149,8 +131,36 @@ const Sidebar: React.FC = () => {
   const { isExpanded, isMobileOpen } = useSidebar();
   const { previewMode } = usePreviewMode();
   const location = useLocation();
+  const navigate = useNavigate();
   const { student } = useStudentProfile();
+
   const user = useSelector(selectCurrentUser);
+
+  const downloadDocument = useCallback(async (url: string, name?: string) => {
+    const resolved = String(url || "").trim();
+    if (!resolved) return;
+    try {
+      const res = await fetch(resolved, { credentials: "include" });
+      if (!res.ok) throw new Error(`Download failed (${res.status})`);
+      const blob = await res.blob();
+
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = name?.trim() ? name.trim() : "download";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+      console.error("Download failed:", err);
+      try {
+        window.open(resolved, "_blank");
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
 
   // Fetch partner profile to get advisor details
   const {
@@ -248,6 +258,13 @@ const Sidebar: React.FC = () => {
   const showStudentSidebar =
     (isStudentContext && studentIdFromPath) ||
     (isApplicationDetailContext && student);
+
+  const { data: studentProfileForNav } = useGetStudentProfileQuery(
+    studentId!,
+    { skip: !studentId || !showStudentSidebar },
+  );
+
+  const studentNavItems = useMemo(() => STUDENT_NAV, []);
   const isOnboardingContext =
     (location.pathname === "/" && previewMode === "onboarding") ||
     location.pathname.startsWith("/onboarding") ||
@@ -525,6 +542,12 @@ const Sidebar: React.FC = () => {
     </ul>
   );
 
+
+ 
+
+
+
+
   return (
     <aside
       className={`fixed top-0 left-0 z-50 mt-16 flex h-screen flex-col transition-all duration-300 ease-in-out lg:mt-0
@@ -552,6 +575,8 @@ const Sidebar: React.FC = () => {
         </Link>
       </div>
 
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto no-scrollbar">
       {/* Sidebar preview: UNSIGNED (onboarding) partner view – "Managed by" card */}
       {(isExpanded || isMobileOpen) && isOnboardingContext && (
         <div className="mx-3 mt-0 rounded-xl bg-gray-50/80 p-3 dark:bg-gray-800/40">
@@ -635,7 +660,7 @@ const Sidebar: React.FC = () => {
       )}
 
       {/* Sidebar preview: SIGNED view – show own profile info (logged-in user) */}
-      {(isExpanded || isMobileOpen) && isSignedContext && (
+      {/* {(isExpanded || isMobileOpen) && isSignedContext && (
         <div className="mx-3 mt-0 rounded-xl bg-gray-50/80 p-3 dark:bg-gray-800/40">
           <div className="mt-0 flex items-center gap-2.5">
             {signedProfilePhotoUrl ? (
@@ -703,52 +728,255 @@ const Sidebar: React.FC = () => {
             )}
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Sidebar preview: APPLICATION DETAIL (loading skeleton while student sidebar data loads) */}
       {(isExpanded || isMobileOpen) && isApplicationDetailLoading && (
-        <div className="mx-3 mt-0 rounded-xl border border-gray-200/60 bg-gray-50/80 p-3 dark:border-gray-700 dark:bg-gray-800/40 animate-pulse">
-          <div className="flex items-center gap-2.5">
-            <div className="h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-700" />
-            <div className="flex-1 space-y-2">
-              <div className="h-3 w-24 rounded bg-gray-200 dark:bg-gray-700" />
-              <div className="h-2 w-32 rounded bg-gray-200 dark:bg-gray-700" />
+        <div className="mt-3 animate-pulse">
+          <div className="flex flex-col items-center gap-2.5">
+            <div className="h-20 w-20 rounded-full bg-gray-200 dark:bg-gray-700" />
+            <div className="w-full px-4 text-center space-y-2">
+              <div className="mx-auto h-4 w-40 rounded bg-gray-200 dark:bg-gray-700" />
+              <div className="mx-auto h-3 w-48 rounded bg-gray-200 dark:bg-gray-700" />
+              <div className="mx-auto h-3 w-24 rounded bg-gray-200 dark:bg-gray-700" />
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-700" />
+              <div className="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-700" />
             </div>
           </div>
-          <div className="mt-3 space-y-2">
-            <div className="h-2 w-full rounded bg-gray-200 dark:bg-gray-700" />
-            <div className="h-2 w-2/3 rounded bg-gray-200 dark:bg-gray-700" />
+
+          <div className="mt-3 space-y-2 mx-4">
+            <div className="rounded-2xl border border-gray-200/60 bg-white p-5 dark:border-gray-700 dark:bg-gray-900/40">
+              <div className="flex items-center justify-between">
+                <div className="h-4 w-32 rounded bg-gray-200 dark:bg-gray-700" />
+                <div className="h-4 w-20 rounded bg-gray-200 dark:bg-gray-700" />
+              </div>
+              <div className="mt-5 space-y-3">
+                <div className="h-4 w-28 rounded bg-gray-200 dark:bg-gray-700" />
+                <div className="h-3 w-40 rounded bg-gray-200 dark:bg-gray-700" />
+                <div className="h-3 w-full rounded bg-gray-200 dark:bg-gray-700" />
+                <div className="h-3 w-5/6 rounded bg-gray-200 dark:bg-gray-700" />
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-gray-200/60 bg-white p-5 dark:border-gray-700 dark:bg-gray-900/40">
+              <div className="flex items-center justify-between">
+                <div className="h-4 w-32 rounded bg-gray-200 dark:bg-gray-700" />
+                <div className="h-4 w-16 rounded bg-gray-200 dark:bg-gray-700" />
+              </div>
+              <div className="mt-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="h-4 w-28 rounded bg-gray-200 dark:bg-gray-700" />
+                  <div className="h-4 w-16 rounded bg-gray-200 dark:bg-gray-700" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="h-4 w-28 rounded bg-gray-200 dark:bg-gray-700" />
+                  <div className="h-4 w-24 rounded bg-gray-200 dark:bg-gray-700" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="h-4 w-16 rounded bg-gray-200 dark:bg-gray-700" />
+                  <div className="h-4 w-28 rounded bg-gray-200 dark:bg-gray-700" />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
       {/* Sidebar preview: STUDENT / APPLICATION DETAIL – student profile card + Activity/Profile/Applications/Tasks */}
       {(isExpanded || isMobileOpen) && showStudentSidebar && studentId && (
-        <div className="mx-3 mt-0 rounded-xl border border-gray-200/60 bg-gray-50/80 p-3 dark:border-gray-700 dark:bg-gray-800/40">
-          <div className="flex items-center gap-2.5">
+        <div className="mt-3">
+          <div className="flex flex-col items-center gap-2.5">
             <div className="shrink-0">
               <img
                 src={
                   student?.avatar ?? `https://i.pravatar.cc/80?u=${studentId}`
                 }
                 alt=""
-                className="h-12 w-12 rounded-full object-cover"
+                className="h-20 w-20 rounded-full object-cover"
               />
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-gray-800 dark:text-gray-100">
+            <div className="min-w-0 flex-1 text-center space-y-2">
+              <p className="truncate text-[18px] font-semibold text-gray-800 dark:text-gray-100">
                 {student?.name ?? "Student"}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 leading-snug break-words">
-                {student?.address ?? "Dhaka North City Corporation, Dhaka"}
+              <p className="text-[14px] text-gray-500 dark:text-gray-400 leading-snug break-words">
+                {student?.email }
               </p>
-              <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-300">
-                Status: <strong>{student?.status ?? "SQL"}</strong>
+              <p className="mt-0.5 text-[14px] text-gray-600 dark:text-gray-300">
+                Status: <strong>{student?.status ?? "Active"}</strong>
               </p>
             </div>
+            <div className="flex items-center gap-2">
+              <Tooltip title="Edit profile" placement="bottom">
+                <button
+                  type="button"
+                  onClick={() => navigate(`/students/${studentId}/profile`)}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-[#E9F2EB] text-[#237D3B] hover:bg-[#E9F2EB] hover:text-[#237D3B] transition-colors dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300 dark:hover:bg-gray-800"
+                  aria-label="Edit profile"
+                >
+                  <i className="fa-solid fa-pen-to-square text-sm" />
+                </button>
+              </Tooltip>
+
+              <Tooltip title="Copy email" placement="bottom">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const text = (student?.email ?? "").trim();
+                    if (!text) return;
+                    try {
+                      await navigator.clipboard.writeText(text);
+                    } catch {
+                      // Fallback for older browsers
+                      const ta = document.createElement("textarea");
+                      ta.value = text;
+                      ta.style.position = "fixed";
+                      ta.style.left = "-9999px";
+                      document.body.appendChild(ta);
+                      ta.select();
+                      document.execCommand("copy");
+                      ta.remove();
+                    }
+                  }}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-[#E9F2EB] text-[#237D3B] hover:bg-[#E9F2EB] hover:text-[#237D3B] transition-colors dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300 dark:hover:bg-gray-800"
+                  aria-label="Copy email"
+                >
+                  <MdOutlineContentPaste className="text-sm" />
+                </button>
+              </Tooltip>
+            </div>
           </div>
+
+          {/* Application details cards (only in Application Details context) */}
+          {isApplicationDetailContext && student?.applicationSidebar && (
+            <div className="mt-3 space-y-2 mx-4">
+              <div className="rounded-2xl border border-[#CFCACF] bg-[#FFFFFF] p-5 dark:border-gray-700 dark:bg-gray-900/40">
+                <div className="flex items-center justify-between">
+                  <p className="text-[14px] font-semibold text-[#20242A] dark:text-gray-100">
+                    Application ID
+                  </p>
+                  <p className="text-[14px] text-[#20242A] dark:text-gray-200">
+                    {student.applicationSidebar.applicationId ?? "—"}
+                  </p>
+                </div>
+
+                <div className="mt-5 space-y-5">
+                  <p className="text-[14px] font-bold tracking-wide text-[#20242A] dark:text-gray-100">
+                    MAIN PROGRAM
+                  </p>
+
+                  <div className="space-y-1">
+                    <p className="text-[14px] text-[#4B5563] dark:text-gray-300">
+                      Selected intake
+                    </p>
+                    <p className="text-[14px] text-[#4B5563] dark:text-gray-300">
+                      {student.applicationSidebar.intake ?? "—"}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-[14px] font-semibold text-[#20242A] dark:text-gray-100">
+                      Program
+                    </p>
+                    <p className="text-[14px] font-medium text-[#237D3B] ">
+                      {student.applicationSidebar.program ?? "—"}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="flex items-center gap-2 text-[14px] font-semibold text-[#20242A] dark:text-gray-100">
+                      <i className="fa-solid fa-graduation-cap" />
+                      School
+                    </p>
+                    <p className="text-[14px] font-medium text-[#237D3B] leading-snug">
+                      {student.applicationSidebar.school ?? "—"}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="flex items-center gap-2 text-[14px] font-semibold text-[#20242A] dark:text-gray-100">
+                      <i className="fa-solid fa-globe" />
+                      Country
+                    </p>
+                    <p className="text-[14px] text-[#20242A] dark:text-gray-200">
+                      {student.applicationSidebar.country ?? "—"}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-[14px] font-semibold text-[#20242A] dark:text-gray-100">
+                      Level
+                    </p>
+                    <p className="text-[14px] text-[#4B5563] dark:text-gray-300">
+                      {student.applicationSidebar.level ?? "—"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {student.applicationSidebar.applicationFee && (
+                <div className="rounded-2xl border border-[#CFCACF] bg-[#FFFFFF] p-5 dark:border-gray-700 dark:bg-gray-900/40">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[14px] font-semibold text-[#20242A] dark:text-gray-100">
+                      Application fee
+                    </p>
+                    <p className="text-[14px]  text-[#20242A] dark:text-gray-100">
+                      {student.applicationSidebar.applicationFee.amountText ?? "—"}
+                    </p>
+                  </div>
+
+                  <div className="mt-5 space-y-5">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[14px] font-semibold text-[#20242A] dark:text-gray-100">
+                        Payment status
+                      </p>
+                      <p className="text-[14px] text-[#20242A] dark:text-gray-200">
+                        {student.applicationSidebar.applicationFee.statusText ?? "—"}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <p className="text-[14px] font-semibold text-[#20242A] dark:text-gray-100">
+                        Payment date
+                      </p>
+                      <p className="text-[14px] text-[#20242A] dark:text-gray-200">
+                        {student.applicationSidebar.applicationFee.paymentDateText ?? "—"}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <p className="text-[14px] font-semibold text-[#20242A] dark:text-gray-100">
+                        Receipt
+                      </p>
+                      {student.applicationSidebar.applicationFee.receiptUrl ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            downloadDocument(
+                              student?.applicationSidebar?.applicationFee?.receiptUrl ?? "",
+                              "application-fee-receipt",
+                            )
+                          }
+                          className="text-[14px] font-medium text-[#237D3B] hover:underline underline-offset-4"
+                        >
+                          Download receipt
+                        </button>
+                      ) : (
+                        <p className="text-[14px] text-[#20242A] dark:text-gray-200">
+                          —
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <nav className="mt-3 space-y-0.5">
-            {STUDENT_NAV.map((item) => {
+            {studentNavItems.map((item) => {
               const path = `/students/${studentId}/${item.path}`;
               const isActiveNav = location.pathname === path;
               return (
@@ -771,9 +999,9 @@ const Sidebar: React.FC = () => {
       )}
 
       {/* Sidebar preview nav: UNSIGNED → Home only | SIGNED → full partner nav | STUDENT/APPLICATION → hidden (handled by student sidebar above) */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-col">
         {isApplicationDetailLoading && (
-          <div className="flex-1 overflow-y-auto px-3 py-4 no-scrollbar">
+          <div className="px-3 py-4">
             <div className="flex flex-col gap-2 animate-pulse">
               {[1, 2, 3, 4].map((i) => (
                 <div
@@ -785,7 +1013,7 @@ const Sidebar: React.FC = () => {
           </div>
         )}
         {!showStudentSidebar && !isApplicationDetailLoading && (
-          <div className="flex-1 overflow-y-auto px-3 py-4 no-scrollbar">
+          <div className="px-3 py-4">
             <nav className="flex flex-col gap-1">
               {renderMenuItems(filteredSidebarItems, "main")}
             </nav>
@@ -794,7 +1022,7 @@ const Sidebar: React.FC = () => {
 
         {/* Sidebar preview: STUDENT / APPLICATION – back link below student sidebar */}
         {showStudentSidebar && studentId && (
-          <div className="flex-1 px-3 py-4">
+          <div className="px-3 py-4">
             <Link
               to={isApplicationDetailContext ? "/applications" : "/students"}
               className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[0.9375rem] font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:hover:bg-gray-700/50 dark:hover:text-gray-100 transition-colors"
@@ -831,6 +1059,7 @@ const Sidebar: React.FC = () => {
             {(isExpanded || isMobileOpen) && <span>Logout</span>}
           </button>
         </div>
+      </div>
       </div>
     </aside>
   );

@@ -59,9 +59,13 @@ const EducationHistory = ({
 
     if (!profileCountryName || !countryList) return null;
 
+    const raw = String(profileCountryName).trim();
+    // Backend may store either the country id or the country name.
+    const byId = countryList.find((c) => c.id === raw);
+    if (byId) return byId.id;
+
     const matchedCountry = countryList.find(
-      (c) =>
-        c.name.trim().toLowerCase() === profileCountryName.trim().toLowerCase(),
+      (c) => c.name.trim().toLowerCase() === raw.toLowerCase(),
     );
 
     return matchedCountry ? matchedCountry.id : null;

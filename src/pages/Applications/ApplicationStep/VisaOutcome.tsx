@@ -33,11 +33,50 @@ export const VisaOutcomeStep: React.FC<VisaOutcomeStepProps> = ({
   const [uploadDocument] = useApplicationDocumentUploadMutation();
   const [fileSizes, setFileSizes] = React.useState<Record<string, string>>({});
 
+  const hasVisaCopy = Boolean(applicationApiData?.visaCopy);
+  const hasVisaRejectedSlip = Boolean(applicationApiData?.visaRejectedSlip);
+
+  const resolveAssetUrl = React.useCallback((url: string): string => {
+    if (!url) return "";
+    const raw = String(url);
+    if (raw.startsWith("http")) return raw;
+    return `${config.image_access_url}${raw}`;
+  }, []);
+
+  const downloadDocument = React.useCallback(
+    async (url: string, name?: string) => {
+      if (!url) return;
+      const resolved = resolveAssetUrl(url);
+      try {
+        const res = await fetch(resolved, { credentials: "include" });
+        if (!res.ok) throw new Error(`Download failed (${res.status})`);
+        const blob = await res.blob();
+
+        const objectUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = objectUrl;
+        a.download = name?.trim() ? name.trim() : "download";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(objectUrl);
+      } catch (err) {
+        console.error("Download failed:", err);
+        window.open(resolved, "_blank");
+      }
+    },
+    [resolveAssetUrl],
+  );
+
   /* ================= Get File Size from URL ================= */
   const getFileSize = React.useCallback(
     async (url: string): Promise<string> => {
       try {
-        const response = await fetch(url, { method: "HEAD" });
+        const resolved = resolveAssetUrl(url);
+        const response = await fetch(resolved, {
+          method: "HEAD",
+          credentials: "include",
+        });
         const contentLength = response.headers.get("content-length");
 
         if (contentLength) {
@@ -46,7 +85,7 @@ export const VisaOutcomeStep: React.FC<VisaOutcomeStepProps> = ({
         }
 
         // Fallback: fetch the file to get size
-        const blobResponse = await fetch(url);
+        const blobResponse = await fetch(resolved, { credentials: "include" });
         const blob = await blobResponse.blob();
         return formatFileSize(blob.size);
       } catch (error) {
@@ -54,7 +93,7 @@ export const VisaOutcomeStep: React.FC<VisaOutcomeStepProps> = ({
         return "—";
       }
     },
-    [],
+    [resolveAssetUrl],
   );
 
   /* ================= Format File Size ================= */
@@ -115,10 +154,12 @@ export const VisaOutcomeStep: React.FC<VisaOutcomeStepProps> = ({
             description: "Visa approved by the embassy.",
             docTitle: "Visa Copy",
             docDesc: "Upload your approved visa copy issued by the embassy.",
+            disabled: hasVisaRejectedSlip,
 
             url:
-              applicationApiData?.visaCopy &&
-              `${config.image_access_url}${applicationApiData?.visaCopy}`,
+              applicationApiData?.visaCopy
+                ? resolveAssetUrl(applicationApiData.visaCopy)
+                : null,
           },
           {
             id: "visa_rejected",
@@ -130,14 +171,16 @@ export const VisaOutcomeStep: React.FC<VisaOutcomeStepProps> = ({
             docTitle: "Visa Rejection Slip",
             docDesc:
               "Upload the rejection letter or slip provided by the embassy.",
+            disabled: hasVisaCopy,
             url:
-              applicationApiData?.visaRejectedSlip &&
-              `${config.image_access_url}${applicationApiData?.visaRejectedSlip}`,
+              applicationApiData?.visaRejectedSlip
+                ? resolveAssetUrl(applicationApiData.visaRejectedSlip)
+                : null,
           },
         ],
       },
     ],
-    [applicationApiData],
+    [applicationApiData, resolveAssetUrl, hasVisaCopy, hasVisaRejectedSlip],
   );
 
   const selectedData =
@@ -276,11 +319,17 @@ export const VisaOutcomeStep: React.FC<VisaOutcomeStepProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {section.subSections.map((sub) => {
                     const isSelected = selectedSub === sub.id;
+                    const isDisabled = Boolean((sub as any).disabled);
                     return (
                       <div
                         key={sub.id}
-                        onClick={() => setSelectedSub(sub.id)}
-                        className={`cursor-pointer border rounded-lg p-4 transition ${
+                        onClick={() => {
+                          if (isDisabled) return;
+                          setSelectedSub(sub.id);
+                        }}
+                        className={`border rounded-lg p-4 transition ${
+                          isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                        } ${
                           isSelected
                             ? "border-[#16A34A] bg-[#F0FDF4]"
                             : "border-[#D1D5DB]"
@@ -302,6 +351,11 @@ export const VisaOutcomeStep: React.FC<VisaOutcomeStepProps> = ({
                             <p className="text-[12px] text-[#6B7280]">
                               {sub.description}
                             </p>
+                            {isDisabled && (
+                              <p className="text-[12px] text-[#6B7280] mt-1">
+                                Already submitted the other outcome.
+                              </p>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -323,7 +377,7 @@ export const VisaOutcomeStep: React.FC<VisaOutcomeStepProps> = ({
                       </div>
 
                       <button
-                        disabled={!!uploadingId}
+                        disabled={!!uploadingId || Boolean((selectedData as any).disabled)}
                         onClick={() => triggerFileInput(selectedData.category)}
                         className="border border-[#237D3B] text-[#237D3B] rounded-md cursor-pointer p-2 hover:bg-[#F0FDF4] transition disabled:opacity-50"
                       >
@@ -360,7 +414,10 @@ export const VisaOutcomeStep: React.FC<VisaOutcomeStepProps> = ({
                           </div>
                           <button
                             onClick={() =>
-                              window.open(selectedData?.url, "_blank")
+                              downloadDocument(
+                                selectedData?.url ?? "",
+                                selectedData?.docTitle,
+                              )
                             }
                             className="text-[#4B5563] hover:text-[#237D3B] cursor-pointer"
                           >
