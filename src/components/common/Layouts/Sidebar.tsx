@@ -96,12 +96,7 @@ const SIGNED_ROUTE_PATHS = [
 
 const TEAM_MEMBER_ROUTE_PATHS = [
   "/",
-  "/students",
-  "/applications",
-  "/my-tasks",
-  "/announcements",
-  "/notifications",
-  "/team-members"
+  ...SIGNED_ROUTE_PATHS.filter((path) => path !== "/team-members"),
 ];
 
 
@@ -234,12 +229,12 @@ const Sidebar: React.FC = () => {
     !isTeamMember && (isPartnerProfileLoading || isPartnerProfileFetching);
 
   // Signed sidebar: partner sees advisor details, team member keeps own account details.
-  const signedProfileName = isTeamMember ? (user?.name ?? profileName) : profileName;
-  const signedProfileEmail = isTeamMember
+  const _signedProfileName = isTeamMember ? (user?.name ?? profileName) : profileName;
+  const _signedProfileEmail = isTeamMember
     ? (user?.email ?? profileEmail)
     : profileEmail;
-  const signedProfilePhone = isTeamMember ? "" : profilePhone;
-  const signedProfilePhotoUrl = isTeamMember ? null : profilePhotoUrl;
+  const _signedProfilePhone = isTeamMember ? "" : profilePhone;
+  const _signedProfilePhotoUrl = isTeamMember ? null : profilePhotoUrl;
 
   const handleLogout = () => {
     clearAuthLocalStorage();
@@ -269,7 +264,7 @@ const Sidebar: React.FC = () => {
     (isStudentContext && studentIdFromPath) ||
     (isApplicationDetailContext && student);
 
-  const { data: studentProfileForNav } = useGetStudentProfileQuery(
+  const { data: _studentProfileForNav } = useGetStudentProfileQuery(
     studentId!,
     { skip: !studentId || !showStudentSidebar },
   );
@@ -288,7 +283,7 @@ const Sidebar: React.FC = () => {
     ((location.pathname === "/" &&
       (previewMode === "signed" || hasUnlockedPortal || isTeamMember)) ||
       signedPaths.includes(location.pathname) ||
-      (!isTeamMember && location.pathname.startsWith("/payments")) ||
+      location.pathname.startsWith("/payments") ||
       (isTeamMember &&
         (location.pathname.startsWith("/students/") ||
           location.pathname.startsWith("/applications/"))));
