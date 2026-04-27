@@ -164,6 +164,7 @@ export default function StudentProfile() {
     ? (profile.phone.startsWith("+") ? profile.phone : `+${profile.phone}`)
     : passedStudent?.phone ?? "";
 
+<<<<<<< HEAD
   const contextAvatar = getApiImageUrl(profile?.image) || "/user.avif";
 
   useEffect(() => {
@@ -187,6 +188,20 @@ export default function StudentProfile() {
     contextAvatar,
     setStudent,
   ]);
+=======
+
+  const studentForContext = {
+    id: studentId ?? passedStudent?.id ?? "",
+    name: displayName,
+    email: displayEmail,
+    phone: displayPhone,
+    address: "",
+    status: "",
+    avatar: profile?.image?.url
+      ? `${config.image_access_url}${profile.image.url}`
+      : "/user.avif",
+  };
+>>>>>>> f7bb661fb80137263fe53f2f19e1e487addcecf8
 
   useEffect(() => {
     return () => setStudent(null);

@@ -10,7 +10,6 @@ import { useFilteredSidebarItems } from "../../../hooks/useFilteredSidebarItems"
 import { ChevronDownIcon } from "../../../icons";
 import { clearAuthLocalStorage } from "../../../lib/authLocalStorage";
 import { getPortalLoginUrl } from "../../../lib/portalRouting";
-import { isPartnerStudentProfileApplyNowUnlocked } from "../../../lib/partnerStudentProfileGates";
 import { selectCurrentUser } from "../../../redux/features/auth/authSlice";
 import { useGetOnboardingStatusQuery } from "../../../redux/features/onboardingForm";
 import { useGetPartnerProfileQuery } from "../../../redux/features/profile/partnerProfileApi";
@@ -47,8 +46,11 @@ const SignedSidebarItems: NavItem[] = [
   },
   {
     icon: <i className="fa-solid fa-list-check"></i>,
-    name: "My Tasks",
-    path: "/my-tasks",
+    name: "Task Management",
+    subItems: [
+      { name: "Task Management", path: "/task-management" },
+      { name: "My Tasks", path: "/my-tasks" },
+    ],
   },
   {
     icon: <i className="fa-solid fa-credit-card"></i>,
@@ -72,24 +74,9 @@ const SignedSidebarItems: NavItem[] = [
   // },
 ];
 
-/** Restricted sidebar for PARTNER_TEAM_MEMBER: My Tasks first, then Students, Applications. No Home. */
-const TeamMemberSidebarItems: NavItem[] = [
-  {
-    icon: <i className="fa-solid fa-list-check"></i>,
-    name: "My Tasks",
-    path: "/my-tasks",
-  },
-  {
-    icon: <i className="fa-solid fa-users"></i>,
-    name: "Students",
-    path: "/students",
-  },
-  {
-    icon: <i className="fa-solid fa-file-lines"></i>,
-    name: "Applications",
-    path: "/applications",
-  },
-];
+const TeamMemberSidebarItems: NavItem[] = SignedSidebarItems.filter(
+  (item) => item.path !== "/team-members"
+);
 
 const SIGNED_ROUTE_PATHS = [
   "/programs-schools",
@@ -97,8 +84,12 @@ const SIGNED_ROUTE_PATHS = [
   "/team-members",
   "/applications",
   "/my-tasks",
+<<<<<<< HEAD
   "/announcements",
   "/notifications",
+=======
+  "/task-management",
+>>>>>>> f7bb661fb80137263fe53f2f19e1e487addcecf8
   "/payments",
   "/payments/commission",
   "/academy",
@@ -106,6 +97,7 @@ const SIGNED_ROUTE_PATHS = [
   "/settings/profile",
 ];
 
+<<<<<<< HEAD
 const TEAM_MEMBER_ROUTE_PATHS = [
   "/",
   "/students",
@@ -114,6 +106,11 @@ const TEAM_MEMBER_ROUTE_PATHS = [
   "/announcements",
   "/notifications",
 ];
+=======
+const TEAM_MEMBER_ROUTE_PATHS = SIGNED_ROUTE_PATHS.filter(
+  (path) => path !== "/team-members"
+);
+>>>>>>> f7bb661fb80137263fe53f2f19e1e487addcecf8
 
 const othersSidebarItems: NavItem[] = [
   {
@@ -133,12 +130,6 @@ const fallbackManagedBy = {
 
 const STUDENT_NAV = [
   {
-    key: "activity",
-    label: "Activity",
-    icon: "fa-solid fa-chart-line",
-    path: "activity",
-  },
-  {
     key: "profile",
     label: "Profile",
     icon: "fa-solid fa-user",
@@ -149,12 +140,6 @@ const STUDENT_NAV = [
     label: "Applications",
     icon: "fa-solid fa-file-lines",
     path: "applications",
-  },
-  {
-    key: "tasks",
-    label: "Tasks",
-    icon: "fa-solid fa-list-check",
-    path: "tasks",
   },
 ];
 
@@ -296,13 +281,7 @@ const Sidebar: React.FC = () => {
     { skip: !studentId || !showStudentSidebar },
   );
 
-  const studentNavItems = useMemo(() => {
-    const unlocked = isPartnerStudentProfileApplyNowUnlocked(
-      studentProfileForNav,
-    );
-    if (unlocked) return STUDENT_NAV;
-    return STUDENT_NAV.filter((item) => item.key !== "applications");
-  }, [studentProfileForNav]);
+  const studentNavItems = useMemo(() => STUDENT_NAV, []);
   const isOnboardingContext =
     (location.pathname === "/" && previewMode === "onboarding") ||
     location.pathname.startsWith("/onboarding") ||
