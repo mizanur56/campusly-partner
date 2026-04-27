@@ -8,17 +8,6 @@ import {
 } from "react-router-dom";
 import MainLayout from "../layout/MainLayout";
 import Academy from "../pages/Academy/Academy";
-import ApplicationDetails from "../pages/Applications/ApplicationDetails";
-import Applications from "../pages/Applications/Applications";
-import Admission from "../pages/Applications/ApplicationStep/Admission";
-import Apply from "../pages/Applications/ApplicationStep/Apply";
-import ChecklistUpload from "../pages/Applications/ApplicationStep/ChecklistUpload";
-import EmbassySubmission from "../pages/Applications/ApplicationStep/EmbassySubmission";
-import Enroll from "../pages/Applications/ApplicationStep/Enroll";
-import FinalLetter from "../pages/Applications/ApplicationStep/FinalLetter";
-import VisaOutcome from "../pages/Applications/ApplicationStep/VisaOutcome";
-import VisaRejectPage from "../pages/Applications/ApplicationStep/VisaRejectPage";
-import VisaSuccessPage from "../pages/Applications/ApplicationStep/VisaSuccessPage";
 import ChangePassword from "../pages/Auth/ChangePassword";
 import ForgetPassword from "../pages/Auth/ForgetPassword";
 import Login from "../pages/Auth/Login";
@@ -28,11 +17,17 @@ import ResetPassword from "../pages/Auth/ResetPassword";
 import SetPasswordByInvite from "../pages/Auth/SetPasswordByInvite";
 import ContractPage from "../pages/Contract/ContractPage";
 import ContractSignedPage from "../pages/Contract/ContractSignedPage";
+import Applications from "../pages/Applications/Applications";
+import ApplicationDetails from "../pages/Applications/ApplicationDetails";
+import VisaRejectPage from "../pages/Applications/ApplicationStep/VisaRejectPage";
+import VisaSuccessPage from "../pages/Applications/ApplicationStep/VisaSuccessPage";
 import Dashboard from "../pages/Dashboard/Dashboard.tsx";
 import HotOffers from "../pages/HotOffers/HotOffers";
 import AllMediaList from "../pages/Media/Media";
 import MyTasks from "../pages/MyTasks/MyTasks";
+import TaskManagement from "../pages/TaskManagement/TaskManagement";
 import Notifications from "../pages/Notifications/Notifications";
+import AnnouncementsDetailsPage from "../pages/Announcements/AnnouncementsDetailsPage";
 import { OnboardingPage } from "../pages/Onboarding";
 import RegularCompliancePage from "../pages/Onboarding/RegularCompliancePage";
 import NotFound from "../pages/OtherPage/NotFound";
@@ -53,11 +48,15 @@ function StudentProfileRedirect() {
 }
 
 function DashboardOrRedirect() {
-  const user = useSelector(selectCurrentUser);
-  if (user?.role === "PARTNER_TEAM_MEMBER") {
-    return <Navigate to="/my-tasks" replace />;
-  }
   return <Dashboard />;
+}
+
+function TeamMembersOrRedirect() {
+  const currentUser = useSelector(selectCurrentUser);
+  if (currentUser?.role === "PARTNER_TEAM_MEMBER") {
+    return <Navigate to="/" replace />;
+  }
+  return <TeamMembers />;
 }
 
 function AppRoutes() {
@@ -150,19 +149,12 @@ function AppRoutes() {
           <Route path="applications" element={<Applications />} />
           <Route path="visa-reject" element={<VisaRejectPage />} />
           <Route path="visa-success" element={<VisaSuccessPage />} />
-          <Route path="applications/:id" element={<ApplicationDetails />}>
-            <Route index element={<Admission />} />
-            <Route path="admission" element={<Admission />} />
-            <Route path="apply" element={<Apply />} />
-            <Route path="checklist" element={<ChecklistUpload />} />
-            <Route path="final-letter" element={<FinalLetter />} />
-            <Route path="embassy" element={<EmbassySubmission />} />
-            <Route path="visa" element={<VisaOutcome />} />
-            <Route path="enroll" element={<Enroll />} />
-          </Route>
-          <Route path="team-members" element={<TeamMembers />} />
+          <Route path="applications/:id" element={<ApplicationDetails />} />
+          <Route path="team-members" element={<TeamMembersOrRedirect />} />
           <Route path="my-tasks" element={<MyTasks />} />
+          <Route path="task-management" element={<TaskManagement />} />
           <Route path="notifications" element={<Notifications />} />
+          <Route path="announcements" element={<AnnouncementsDetailsPage />} />
           <Route
             path="payments"
             element={<Navigate to="/payments/commission" replace />}

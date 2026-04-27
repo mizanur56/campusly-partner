@@ -41,6 +41,27 @@ export const ChecklistUploadStep: React.FC<ChecklistUploadStepProps> = ({
   const [uploadDocument] = useApplicationDocumentUploadMutation();
   const [fileSizes, setFileSizes] = React.useState<Record<string, string>>({});
 
+  const downloadDocument = React.useCallback(async (url: string, name?: string) => {
+    if (!url) return;
+    try {
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) throw new Error(`Download failed (${res.status})`);
+      const blob = await res.blob();
+
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = name?.trim() ? name.trim() : "download";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+      console.error("Download failed:", err);
+      window.open(url, "_blank");
+    }
+  }, []);
+
   const toggleDocuments = (id: string) => {
     setExpandedDocuments((prev) => ({
       ...prev,
@@ -52,7 +73,15 @@ export const ChecklistUploadStep: React.FC<ChecklistUploadStepProps> = ({
   const getFileSize = React.useCallback(
     async (url: string): Promise<string> => {
       try {
-        const response = await fetch(url, { method: "HEAD" });
+        const resolved =
+          url && String(url).startsWith("http")
+            ? url
+            : `${config.image_access_url}${String(url || "")}`;
+
+        const response = await fetch(resolved, {
+          method: "HEAD",
+          credentials: "include",
+        });
         const contentLength = response.headers.get("content-length");
 
         if (contentLength) {
@@ -61,7 +90,7 @@ export const ChecklistUploadStep: React.FC<ChecklistUploadStepProps> = ({
         }
 
         // Fallback: fetch the file to get size
-        const blobResponse = await fetch(url);
+        const blobResponse = await fetch(resolved, { credentials: "include" });
         const blob = await blobResponse.blob();
         return formatFileSize(blob.size);
       } catch (error) {
@@ -89,23 +118,27 @@ export const ChecklistUploadStep: React.FC<ChecklistUploadStepProps> = ({
       // Fetch sizes for all document URLs
       if (applicationApiData?.vfsAppointmentLetter) {
         sizes.vfsAppointmentLetter = await getFileSize(
-          applicationApiData.vfsAppointmentLetter,
+          `${config.image_access_url}${applicationApiData.vfsAppointmentLetter}`,
         );
       }
       if (applicationApiData?.bankStatement) {
         sizes.bankStatement = await getFileSize(
-          applicationApiData.bankStatement,
+          `${config.image_access_url}${applicationApiData.bankStatement}`,
         );
       }
       if (applicationApiData?.affidavit) {
-        sizes.affidavit = await getFileSize(applicationApiData.affidavit);
+        sizes.affidavit = await getFileSize(
+          `${config.image_access_url}${applicationApiData.affidavit}`,
+        );
       }
       if (applicationApiData?.sponsor) {
-        sizes.sponsor = await getFileSize(applicationApiData.sponsor);
+        sizes.sponsor = await getFileSize(
+          `${config.image_access_url}${applicationApiData.sponsor}`,
+        );
       }
       if (applicationApiData?.internationalBankCard) {
         sizes.internationalBankCard = await getFileSize(
-          applicationApiData.internationalBankCard,
+          `${config.image_access_url}${applicationApiData.internationalBankCard}`,
         );
       }
 
@@ -368,9 +401,7 @@ export const ChecklistUploadStep: React.FC<ChecklistUploadStepProps> = ({
                               </div>
                             </div>
                             <button
-                              onClick={() =>
-                                window.open(section?.url, "_blank")
-                              }
+                              onClick={() => downloadDocument(section?.url ?? "", section?.title)}
                               className="text-[#4B5563] hover:text-[#237D3B] cursor-pointer"
                             >
                               <DownloadOutlined style={{ fontSize: 18 }} />

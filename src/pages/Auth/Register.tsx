@@ -2,7 +2,7 @@ import { MailOutlined, UserOutlined } from "@ant-design/icons";
 import { Button, Checkbox, Form, Input, Select, Typography } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import PageMeta from "../../components/common/Meta/PageMeta";
 import AuthIllustration from "../../components/auth/AuthIllustration";
 import { persistAuthLocalStorage } from "../../lib/authLocalStorage";
@@ -14,6 +14,7 @@ import {
   isPartnerPortalSession,
 } from "../../lib/portalRouting";
 import { setPostRegistrationWelcomeSession } from "../../lib/registrationWelcomeSession";
+import { useGetCountriesQuery } from "../../redux/features/countries/countriesApi";
 
 const { Link: AntLink } = Typography;
 
@@ -53,16 +54,16 @@ const passwordStrengthRules = [
   },
 ];
 
-const countryOptions = [
-  { value: "bangladesh", label: "Bangladesh" },
-  { value: "india", label: "India" },
-  { value: "pakistan", label: "Pakistan" },
-  { value: "germany", label: "Germany" },
-  { value: "uk", label: "United Kingdom" },
-  { value: "usa", label: "United States" },
-  { value: "canada", label: "Canada" },
-  { value: "australia", label: "Australia" },
-];
+// const countryOptions = [
+//   { value: "bangladesh", label: "Bangladesh" },
+//   { value: "india", label: "India" },
+//   { value: "pakistan", label: "Pakistan" },
+//   { value: "germany", label: "Germany" },
+//   { value: "uk", label: "United Kingdom" },
+//   { value: "usa", label: "United States" },
+//   { value: "canada", label: "Canada" },
+//   { value: "australia", label: "Australia" },
+// ];
 
 const howDidYouHearOptions = [
   { value: "facebook", label: "Facebook" },
@@ -73,6 +74,7 @@ const howDidYouHearOptions = [
 ];
 
 const Register = () => {
+  const { data: countriesData } = useGetCountriesQuery({ page: 1, limit: 1000 });
   const [form] = Form.useForm<Step1Values & Step2Values>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -80,6 +82,16 @@ const Register = () => {
   const [step, setStep] = useState<1 | 2>(1);
   const [step1Values, setStep1Values] = useState<Step1Values | null>(null);
 
+  // console.log(countriesData);
+  // const countriesData = countries;
+  const countryOptions = React.useMemo(
+    () =>
+      (countriesData?.data ?? []).map((c: { id: string; name: string }) => ({
+        label: c.name,
+        value: c.name, // send country name from modal
+      })),
+    [countriesData?.data],
+  );
   const onStep1Finish = (values: Step1Values) => {
     setStep1Values(values);
     setStep(2);
@@ -87,6 +99,8 @@ const Register = () => {
 
   const onStep2Finish = async (values: Step2Values) => {
     const step1 = step1Values!;
+
+
     try {
       const res = await registerPartner({
         businessName: step1.businessName,
@@ -98,6 +112,8 @@ const Register = () => {
         confirmPassword: values.confirmPassword,
       }).unwrap();
 
+      console.log(res);
+
       if (res?.data?.token && res?.data?.user) {
         const userData = { ...res.data.user, type: "user" as const };
         if (!isPartnerPortalSession(userData)) {
@@ -108,7 +124,11 @@ const Register = () => {
         setPostRegistrationWelcomeSession(step1.contactPersonName);
         dispatch(setUser({ user: userData, token: res.data.token }));
         toast.success("Registration successful! Welcome.");
-        window.location.replace(`${window.location.origin}/register/welcome`);
+        // Use SPA navigation (no full reload) so redux auth state is preserved.
+        navigate("/register/welcome", {
+          replace: true,
+          state: { name: step1.contactPersonName },
+        });
         return;
       } else {
         toast.success("Registration successful! Please log in.");
@@ -219,7 +239,7 @@ const Register = () => {
                   layout="vertical"
                   size="large"
                   initialValues={{
-                    country: "bangladesh",
+                    country: "Bangladesh",
                     howDidYouHear: "facebook",
                   }}
                 >

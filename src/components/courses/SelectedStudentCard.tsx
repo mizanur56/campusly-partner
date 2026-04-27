@@ -12,8 +12,7 @@ interface SelectedStudentCardProps {
   onRemove?: () => void;
 }
 
-const defaultAvatar =
-  "https://i.pravatar.cc/80?u=student";
+const DEFAULT_AVATAR = "/user.png";
 
 export default function SelectedStudentCard({
   student,
@@ -21,23 +20,17 @@ export default function SelectedStudentCard({
 }: SelectedStudentCardProps) {
   if (!student) return null;
 
+  const avatarSrc = student.avatar?.trim() ? student.avatar : DEFAULT_AVATAR;
+
   return (
     <div className="rounded-lg border border-primary-200 bg-primary-50/40 p-3">
       <div className="flex items-center gap-3">
         <div className="flex-shrink-0 w-9 h-9 rounded-full overflow-hidden bg-gray-100">
-          {student.avatar ? (
-            <img
-              src={student.avatar}
-              alt={student.name}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <img
-              src={defaultAvatar}
-              alt={student.name}
-              className="w-full h-full object-cover"
-            />
-          )}
+          <img
+            src={avatarSrc}
+            alt={student.name}
+            className="w-full h-full object-cover"
+          />
         </div>
         <div className="min-w-0 flex-1">
           <p className="font-medium text-sm text-gray-900 truncate">

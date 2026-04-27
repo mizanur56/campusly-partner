@@ -10,6 +10,11 @@ import { useInviteTeamMemberMutation } from "../../../redux/features/teams/partn
 
 type PhoneCountryMeta = { dialCode: string };
 
+function generateTemporaryPassword(): string {
+  const rand = Math.random().toString(36).slice(-8);
+  return `Tmp@${rand}1`;
+}
+
 export default function InviteTeamModal({
   open,
   onClose,
@@ -37,6 +42,7 @@ export default function InviteTeamModal({
         lastName: values.lastName,
         countryCode: dial ? `+${dial}` : undefined,
         contactNumber: national || undefined,
+        password: generateTemporaryPassword(),
       }).unwrap();
 
       message.success(

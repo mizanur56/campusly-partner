@@ -10,10 +10,13 @@ import {
   useMarkAllAsReadMutation,
   useMarkAsReadMutation,
 } from "../../redux/features/notifications/notificationApi";
+import {
+  getStoredAnnouncementReadIds,
+  persistAnnouncementReadIds,
+} from "../../lib/partnerAnnouncementReadIds";
 import { formatTime } from "../../utils/formatTime";
 
 const { Text } = Typography;
-const ANNOUNCEMENT_READ_STORAGE_KEY = "partner_announcements_read_ids_v1";
 
 type AnnouncementItem = {
   id: string;
@@ -49,18 +52,7 @@ const NotificationDropdown = () => {
   const [announcementReadIds, setAnnouncementReadIds] = useState<string[]>([]);
 
   useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(ANNOUNCEMENT_READ_STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        setAnnouncementReadIds(
-          parsed.filter((id): id is string => typeof id === "string"),
-        );
-      }
-    } catch {
-      setAnnouncementReadIds([]);
-    }
+    setAnnouncementReadIds(getStoredAnnouncementReadIds());
   }, []);
 
   const notificationUnreadCount =
@@ -122,10 +114,7 @@ const NotificationDropdown = () => {
         new Set([...announcementReadIds, ...announcementIds]),
       );
       setAnnouncementReadIds(merged);
-      window.localStorage.setItem(
-        ANNOUNCEMENT_READ_STORAGE_KEY,
-        JSON.stringify(merged),
-      );
+      persistAnnouncementReadIds(merged);
     } catch {
       // ignore
     }
@@ -237,11 +226,12 @@ const NotificationDropdown = () => {
                       if (!announcementReadIds.includes(announcement.id)) {
                         const updated = [...announcementReadIds, announcement.id];
                         setAnnouncementReadIds(updated);
-                        window.localStorage.setItem(
-                          ANNOUNCEMENT_READ_STORAGE_KEY,
-                          JSON.stringify(updated),
-                        );
+                        persistAnnouncementReadIds(updated);
                       }
+                      setIsOpen(false);
+                      navigate(
+                        `/announcements?id=${encodeURIComponent(announcement.id)}`,
+                      );
                     }}
                   >
                     <div className="flex items-start gap-2">

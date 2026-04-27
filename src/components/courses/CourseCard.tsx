@@ -27,6 +27,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
   onStartApplication,
   onViewDetails,
 }) => {
+ 
   return (
     <div className="bg-white border border-neutral-100 rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.02)] p-5 sm:p-6">
       {/* Title and Level */}

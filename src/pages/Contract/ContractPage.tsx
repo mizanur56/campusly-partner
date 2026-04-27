@@ -420,8 +420,6 @@ export default function ContractPage() {
     });
   };
 
-  console.log(contractPdfUrl);
-
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gray-50/50 py-2 dark:bg-gray-950/30">
       <div className="mx-auto flex max-w-5xl flex-col gap-8 lg:flex-row lg:gap-10">
@@ -456,18 +454,17 @@ export default function ContractPage() {
                     </svg>
                   ) : null}
                 </span>
-                <span
-                  className={
-                    "text-gray-600 dark:text-gray-300"
-                  }
-                >
+                <span className={"text-gray-600 dark:text-gray-300"}>
                   View and sign
                 </span>
               </li>
               {hasSigned && (
                 <li className="flex items-center gap-3 text-sm">
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-primary-500 bg-white dark:border-primary-400 dark:bg-gray-900">
-                    <span aria-hidden className="h-2 w-2 rounded-full bg-primary-500" />
+                    <span
+                      aria-hidden
+                      className="h-2 w-2 rounded-full bg-primary-500"
+                    />
                   </span>
                   <span className="font-semibold text-primary-700 dark:text-primary-300">
                     Complete
@@ -540,7 +537,9 @@ export default function ContractPage() {
                         <button
                           type="button"
                           disabled={pdfZoom <= 50}
-                          onClick={() => setPdfZoom((z) => Math.max(50, z - 25))}
+                          onClick={() =>
+                            setPdfZoom((z) => Math.max(50, z - 25))
+                          }
                           className={`inline-flex h-7 w-7 items-center justify-center bg-white text-[#20242A] dark:border-gray-700 dark:bg-gray-900 ${
                             pdfZoom <= 50
                               ? "cursor-not-allowed opacity-50"
@@ -553,7 +552,9 @@ export default function ContractPage() {
                         <button
                           type="button"
                           disabled={pdfZoom >= 200}
-                          onClick={() => setPdfZoom((z) => Math.min(200, z + 25))}
+                          onClick={() =>
+                            setPdfZoom((z) => Math.min(200, z + 25))
+                          }
                           className={`inline-flex h-7 w-7 items-center justify-center bg-white text-[#20242A] dark:border-gray-700 dark:bg-gray-900 ${
                             pdfZoom >= 200
                               ? "cursor-not-allowed opacity-50"
@@ -563,7 +564,10 @@ export default function ContractPage() {
                         >
                           <FiZoomIn aria-hidden className="h-4 w-4" />
                         </button>
-                        <span className="mx-1 h-4 w-px bg-gray-200 dark:bg-gray-700" aria-hidden />
+                        <span
+                          className="mx-1 h-4 w-px bg-gray-200 dark:bg-gray-700"
+                          aria-hidden
+                        />
                         <button
                           type="button"
                           disabled={!canGoPrev}
@@ -766,47 +770,45 @@ export default function ContractPage() {
                       </div>
                     </div>
                   ) : (
-               <div>
-
-<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-gray-200 text-sm font-semibold text-gray-500 dark:bg-gray-700 dark:text-gray-200">
-                          {advisorPhotoUrl ? (
-                            <img
-                              src={advisorPhotoUrl}
-                              alt={advisor?.name || "Campus Transfer"}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <>
-                              {advisor?.name
-                                ? advisor.name
-                                    .split(" ")
-                                    .map((n) => n[0])
-                                    .join("")
-                                    .slice(0, 2)
-                                    .toUpperCase()
-                                : "CT"}
-                            </>
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">
-                            {advisor?.name || "Campus Transfer"}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {advisor?.email || "support@campustransfer.com"}
-                          </p>
-                          {advisor?.phone && (
-                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                              {advisor.phone}
+                    <div>
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-gray-200 text-sm font-semibold text-gray-500 dark:bg-gray-700 dark:text-gray-200">
+                            {advisorPhotoUrl ? (
+                              <img
+                                src={advisorPhotoUrl}
+                                alt={advisor?.name || "Campus Transfer"}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <>
+                                {advisor?.name
+                                  ? advisor.name
+                                      .split(" ")
+                                      .map((n) => n[0])
+                                      .join("")
+                                      .slice(0, 2)
+                                      .toUpperCase()
+                                  : "CT"}
+                              </>
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">
+                              {advisor?.name || "Campus Transfer"}
                             </p>
-                          )}
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {advisor?.email || "support@campustransfer.com"}
+                            </p>
+                            {advisor?.phone && (
+                              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                {advisor.phone}
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </div>
-                   
-                    </div>
-                    <div className="mt-4">
+                      <div className="mt-4">
                         <Button
                           variant="primary"
                           size="sm"
@@ -817,8 +819,7 @@ export default function ContractPage() {
                           Arrange meeting
                         </Button>
                       </div>
-
-                </div>
+                    </div>
                   )}
                 </div>
               </section>
@@ -828,7 +829,10 @@ export default function ContractPage() {
                 <div className="flex items-center justify-between border-b border-[#C7CACF] px-4 py-5 dark:border-gray-800 sm:px-5">
                   <h2 className="flex items-center gap-2 text-[18px] font-semibold text-[#20242A] dark:text-gray-100">
                     <span className="inline-flex h-6 w-6 items-center justify-center text-[#20242A] dark:text-gray-200">
-                      <LuNotebookPen aria-hidden className="h-5 w-5 text-[#20242A]" />
+                      <LuNotebookPen
+                        aria-hidden
+                        className="h-5 w-5 text-[#20242A]"
+                      />
                     </span>
                     Digital Signature
                   </h2>
@@ -867,17 +871,17 @@ export default function ContractPage() {
                           contract.
                         </p>
                         <div className="mt-6 flex justify-center">
-                        <Button
-                          variant="primary"
-                          size="md"
-                          onClick={() => setShowSignaturePad(true)}
-                        >
-                          <span className="inline-flex items-center gap-2">
-                            <LuPenTool aria-hidden className="h-4 w-4" />
-                            Add your signature
-                          </span>
-                        </Button>
-                      </div>
+                          <Button
+                            variant="primary"
+                            size="md"
+                            onClick={() => setShowSignaturePad(true)}
+                          >
+                            <span className="inline-flex items-center gap-2">
+                              <LuPenTool aria-hidden className="h-4 w-4" />
+                              Add your signature
+                            </span>
+                          </Button>
+                        </div>
                       </div>
                     </>
                   ) : (
@@ -938,7 +942,9 @@ export default function ContractPage() {
                             variant="primary"
                             size="md"
                             onClick={handleSubmitSignedContract}
-                            disabled={isSigningContract || !signatureImageDataUrl}
+                            disabled={
+                              isSigningContract || !signatureImageDataUrl
+                            }
                             className="w-full sm:w-72"
                           >
                             <span className="inline-flex items-center justify-center gap-2">

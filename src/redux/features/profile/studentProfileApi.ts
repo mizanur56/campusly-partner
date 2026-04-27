@@ -12,6 +12,27 @@ export type CreateStudentPayload = {
   fullName: string;
   password?: string;
   phone?: string;
+  agentId?:string;
+  /**
+   * Optional profile fields.
+   * Note: createStudent endpoint may ignore these; modal uses updateStudentProfile for full profile.
+   */
+  firstName?: string;
+  lastName?: string;
+  gender?: string;
+  /** ISO date string (YYYY-MM-DD) */
+  dateOfBirth?: string;
+  /** Country id */
+  countryId?: string;
+  passportNo?: string;
+  /** ISO date string (YYYY-MM-DD) */
+  passportExpDate?: string;
+  /** Study level / last education id */
+  lastEducationId?: string;
+  /** Passing year string (YYYY) or ISO date, depending on backend */
+  lastEducationPassingYear?: string;
+  /** Profile image media id */
+  imageId?: string;
 };
 
 export type CreateStudentResponse = {
@@ -33,7 +54,7 @@ export const partnerStudentProfileApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: ["users"],
+      invalidatesTags: ["users", "partnerProfile"],
     }),
 
     getStudentProfile: builder.query({
@@ -62,6 +83,8 @@ export const partnerStudentProfileApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: (_result, _err, { studentId }) => [
         { type: "studentProfile", id: studentId },
+        "users",
+        "partnerProfile",
       ],
     }),
 
@@ -268,6 +291,17 @@ export const partnerStudentProfileApi = baseApi.injectEndpoints({
       }),
       providesTags: ["countryStudyLevels"],
     }),
+
+    getAllStudentsByPartnerId:builder.query({
+      query: ({ partnerId }) => ({
+        url: PARTNER_STUDENT_BASE,
+        method: "GET",
+        params: {
+         partnerId
+        },
+      }),
+      providesTags: ["users"],
+    }),
   }),
 });
 
@@ -288,4 +322,5 @@ export const {
   useUpsertDocumentMutation,
   useDeleteDocumentMutation,
   useGetEligibleStudyLevelsByCountryQuery,
+  useGetAllStudentsByPartnerIdQuery,
 } = partnerStudentProfileApi;

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useGetAnnouncementsQuery } from "../../../../redux/features/announcements/announcementsApi";
 import { config } from "../../../../config";
 import CardShell from "./CardShell";
@@ -41,12 +42,12 @@ export default function RecentAnnouncementsCard() {
     <CardShell
       title="Recent Announcements"
       right={
-        <button
-          type="button"
+        <Link
+          to="/announcements"
           className="text-xs font-medium text-emerald-700 hover:underline dark:text-emerald-300"
         >
           View all →
-        </button>
+        </Link>
       }
     >
       <div className="space-y-3">

@@ -317,20 +317,30 @@ const DocumentCard: React.FC<{
   doc: Document;
 }> = ({ doc }) => {
   // সরাসরি ডাউনলোড করার ফাংশন
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!doc?.url) return;
   
-    const link = document.createElement("a");
-    link.href = doc.url;
-  
     // filename ঠিক করে দাও (important)
-    const fileName = doc.name || doc.url.split("/").pop() || "file";
-  
-    link.setAttribute("download", fileName);
-  
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const fileName = doc.name || doc.url.split("/").pop() || "download";
+
+    try {
+      const res = await fetch(doc.url, { credentials: "include" });
+      if (!res.ok) throw new Error(`Download failed (${res.status})`);
+      const blob = await res.blob();
+
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.setAttribute("download", fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+      console.error("Download failed:", err);
+      // Fallback: open in new tab if browser/server blocks download
+      window.open(doc.url, "_blank");
+    }
   };
   return (
     <div className="flex items-center justify-between border border-[#D1D5DB] rounded-lg p-4">

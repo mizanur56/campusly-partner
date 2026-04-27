@@ -23,6 +23,8 @@ export interface PartnerTaskDetail {
   due_time?: string | null;
   associated_with?: string | null;
   created_by?: string | null;
+  submissionNote?: string | null;
+  reviewNote?: string | null;
   assignedTo?: { id: string; name: string | null; email: string | null };
   studentId?: string | null;
   applicationId?: string | null;
@@ -41,6 +43,22 @@ interface PaginatedMeta {
   page: number;
   limit: number;
   totalPages: number;
+  stats?: {
+    total: number;
+    byStatus: {
+      PENDING: number;
+      IN_PROGRESS: number;
+      SUBMITTED: number;
+      COMPLETED: number;
+      CANCELLED: number;
+    };
+    byPriority: {
+      LOW: number;
+      MEDIUM: number;
+      HIGH: number;
+      URGENT: number;
+    };
+  };
 }
 
 interface PaginatedResponse<T> {
@@ -117,6 +135,8 @@ export const partnerTasksApi = baseApi.injectEndpoints({
           due_time: d.due_time,
           associated_with: d.associated_with,
           created_by: d.created_by,
+          submissionNote: d.submissionNote,
+          reviewNote: d.reviewNote,
           assignedTo: d.assignedTo,
           studentId: d.studentId,
           applicationId: d.applicationId,
@@ -161,11 +181,18 @@ export const partnerTasksApi = baseApi.injectEndpoints({
       invalidatesTags: ["partnerTasks"],
     }),
 
-    updateTaskStatus: builder.mutation<unknown, { id: string; status: string }>({
-      query: ({ id, status }) => ({
+    updateTaskStatus: builder.mutation<
+      unknown,
+      { id: string; status: string; note?: string; reassignToUserId?: string }
+    >({
+      query: ({ id, status, note, reassignToUserId }) => ({
         url: `/partners/tasks/${id}/status`,
         method: "PATCH",
-        body: { status },
+        body: {
+          status,
+          ...(note !== undefined ? { note } : {}),
+          ...(reassignToUserId !== undefined ? { reassignToUserId } : {}),
+        },
       }),
       invalidatesTags: ["partnerTasks"],
     }),
