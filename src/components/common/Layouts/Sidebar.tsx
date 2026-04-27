@@ -1,5 +1,6 @@
 import { Tooltip } from "antd";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { MdOutlineContentPaste } from "react-icons/md";
 import { useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { config } from "../../../config";
@@ -15,7 +16,6 @@ import { useGetOnboardingStatusQuery } from "../../../redux/features/onboardingF
 import { useGetPartnerProfileQuery } from "../../../redux/features/profile/partnerProfileApi";
 import { useGetStudentProfileQuery } from "../../../redux/features/profile/studentProfileApi";
 import { NavItem, SubMenuItem } from "../../../types/interfaces";
-import { MdOutlineContentPaste } from "react-icons/md";
 
 const SidebarItems: NavItem[] = [
   { icon: <i className="fa-solid fa-house"></i>, name: "Home", path: "/" },
@@ -101,10 +101,9 @@ const TEAM_MEMBER_ROUTE_PATHS = [
   "/my-tasks",
   "/announcements",
   "/notifications",
+  "/team-members"
 ];
-const TEAM_MEMBER_ROUTE_PATHS = SIGNED_ROUTE_PATHS.filter(
-  (path) => path !== "/team-members"
-);
+
 
 const othersSidebarItems: NavItem[] = [
   {
