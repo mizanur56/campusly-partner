@@ -6,10 +6,13 @@ import PageMeta from "../../components/common/Meta/PageMeta";
 import CreateStudentModal from "../../components/common/Modals/CreateStudentModal";
 import "../../components/common/Tables/AntTable.css";
 import { DataTable } from "../../components/common/Tables";
+import { useGetStudentsWithActiveTasksQuery } from "../../redux/features/tasks/partnerTasksApi";
+import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 import { useGetStudentsQuery } from "../../redux/features/users/usersApi";
 import "./Students.css";
 import PageHeader from "../../components/common/Navigation/PageHeader";
 import { Search } from "lucide-react";
+import { useGetAllStudentsByPartnerIdQuery } from "../../redux/features/profile/studentProfileApi";
 
 interface StudentRecord {
   key: string;
@@ -43,31 +46,58 @@ export default function Students() {
   const [pageSize, setPageSize] = useState(10);
   const [createStudentOpen, setCreateStudentOpen] = useState(false);
 
-  const { data, isFetching } = useGetStudentsQuery(
-    { page, limit: pageSize }
+  const { data: assignedStudents = [], isFetching: isFetchingAssigned } =
+    useGetStudentsWithActiveTasksQuery(
+      isTeamMember ? { assignedToMe: true } : undefined,
+      { skip: !isTeamMember }
+    );
+  const {
+    data: allStudents,
+    isLoading: isPartnerStudentsLoading,
+    isFetching: isPartnerStudentsFetching,
+  } = useGetAllStudentsByPartnerIdQuery(
+    { partnerId: user?.id as string },
+    { skip: !user?.id || isTeamMember }
   );
 
+  
+
+  console.log(allStudents)
+
   const tableData: StudentRecord[] = useMemo(() => {
-    if (!data?.data) return [];
-    const rows = data.data.map((u) => ({
+    if (isTeamMember) return [];
+    if (!allStudents?.data) return [];
+    const rows = allStudents.data.map((u: any) => ({
       key: u.id,
       id: u.id,
-      name: u.name,
+      name: u.user.name,
       email: u.email,
       phone: u.phone ?? "—",
-      status: u.isActive ? "Active" : "Inactive",
-      lastLogin: formatDate(u.lastLogin),
+      passportNo: u.passportNo ?? "—",
+      AssignedTo: u?.advisor?.name ?? "—",
     }));
     if (!searchText.trim()) return rows;
     const q = searchText.toLowerCase();
     return rows.filter(
-      (row) =>
+      (row: StudentRecord) =>
         row.name.toLowerCase().includes(q) ||
         row.email.toLowerCase().includes(q) ||
-        row.phone.includes(searchText) ||
-        row.status.toLowerCase().includes(q)
+        row.phone.includes(searchText) 
     );
-  }, [data?.data, searchText]);
+  }, [allStudents, searchText, isTeamMember]);
+
+  const assignedTableData: AssignedStudentRecord[] = useMemo(() => {
+    if (!isTeamMember) return [];
+    const rows = assignedStudents.map((s) => ({
+      key: s.studentId,
+      studentId: s.studentId,
+      studentName: s.studentName,
+      activeTaskCount: s.activeTaskCount,
+    }));
+    if (!searchText.trim()) return rows;
+    const q = searchText.toLowerCase();
+    return rows.filter((row) => row.studentName.toLowerCase().includes(q));
+  }, [assignedStudents, searchText, isTeamMember]);
 
   const columns: ColumnsType<StudentRecord> = [
     {
@@ -79,32 +109,34 @@ export default function Students() {
     },
     { title: "Email", dataIndex: "email", key: "email", width: 220 },
     { title: "Phone", dataIndex: "phone", key: "phone", width: 140 },
+    { title: "Passport No", dataIndex: "passportNo", key: "passportNo", width: 140 },
+    { title: "Assigned To", dataIndex: "AssignedTo", key: "AssignedTo", width: 140 },
+ 
+  ];
+
+  const assignedColumns: ColumnsType<AssignedStudentRecord> = [
     {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
+      title: "Student",
+      dataIndex: "studentName",
+      key: "studentName",
+      width: 280,
+    },
+    {
+      title: "Active tasks",
+      dataIndex: "activeTaskCount",
+      key: "activeTaskCount",
       width: 120,
-      render: (status: string) => (
-        <span
-          className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-            status === "Active"
-              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-              : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400"
-          }`}
-        >
-          {status}
+      render: (n: number) => (
+        <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+          {n} task{n !== 1 ? "s" : ""}
         </span>
       ),
     },
-    {
-      title: "Last Login",
-      dataIndex: "lastLogin",
-      key: "lastLogin",
-      width: 120,
-    },
   ];
 
-  const loading = isFetching;
+  const loading = isTeamMember
+    ? isFetchingAssigned
+    : Boolean(user?.id) && (isPartnerStudentsLoading || isPartnerStudentsFetching);
 
   return (
     <div className="students-page">
@@ -141,32 +173,54 @@ export default function Students() {
       </div>
 
       <div className="overflow-hidden rounded-[24px] border border-neutral-100 bg-white card-shadow dark:border-gray-800 dark:bg-gray-900">
-        <DataTable
-          data={tableData}
-          columns={columns}
-          rowKey="key"
-          loading={loading}
-          showHeader
-          isPaginate
-          noInnerBorder
-          currentPage={page}
-          setCurrentPage={setPage}
-          limit={pageSize}
-          setLimit={setPageSize}
-          total={data?.meta?.total ?? 0}
-          showSizeChanger
-          onRow={(record: StudentRecord) => ({
-            onClick: () =>
-              navigate(`/students/${record.id}/profile`, {
-                state: { student: record },
-              }),
-            style: { cursor: "pointer" },
-          })}
-          pagination={{
-            pageSizeOptions: ["10", "20", "50"],
-            // showTotal: (total: number) => `Total ${total} students`,
-          }}
-        />
+        {isTeamMember ? (
+          <DataTable
+            data={assignedTableData}
+            columns={assignedColumns}
+            rowKey="key"
+            loading={loading}
+            showHeader
+            isPaginate
+            noInnerBorder
+            onRow={(record: AssignedStudentRecord) => ({
+              onClick: () =>
+                navigate(`/students/${record.studentId}/profile`, {
+                  state: { student: { id: record.studentId, name: record.studentName } },
+                }),
+              style: { cursor: "pointer" },
+            })}
+            pagination={{
+              pageSize: 10,
+              showTotal: (total: number) => `Total ${total} students`,
+            }}
+          />
+        ) : (
+          <DataTable
+            data={tableData}
+            columns={columns}
+            rowKey="key"
+            loading={loading}
+            showHeader
+            isPaginate
+            noInnerBorder
+            currentPage={page}
+            setCurrentPage={setPage}
+            limit={pageSize}
+            setLimit={setPageSize}
+            showSizeChanger
+            onRow={(record: StudentRecord) => ({
+              onClick: () =>
+                navigate(`/students/${record.id}/profile`, {
+                  state: { student: record },
+                }),
+              style: { cursor: "pointer" },
+            })}
+            pagination={{
+              pageSizeOptions: ["10", "20", "50"],
+              // showTotal: (total: number) => `Total ${total} students`,
+            }}
+          />
+        )}
       </div>
    </div>
     </div>

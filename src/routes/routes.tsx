@@ -27,6 +27,7 @@ import AllMediaList from "../pages/Media/Media";
 import MyTasks from "../pages/MyTasks/MyTasks";
 import TaskManagement from "../pages/TaskManagement/TaskManagement";
 import Notifications from "../pages/Notifications/Notifications";
+import AnnouncementsDetailsPage from "../pages/Announcements/AnnouncementsDetailsPage";
 import { OnboardingPage } from "../pages/Onboarding";
 import RegularCompliancePage from "../pages/Onboarding/RegularCompliancePage";
 import NotFound from "../pages/OtherPage/NotFound";
@@ -153,6 +154,7 @@ function AppRoutes() {
           <Route path="my-tasks" element={<MyTasks />} />
           <Route path="task-management" element={<TaskManagement />} />
           <Route path="notifications" element={<Notifications />} />
+          <Route path="announcements" element={<AnnouncementsDetailsPage />} />
           <Route
             path="payments"
             element={<Navigate to="/payments/commission" replace />}

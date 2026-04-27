@@ -22,7 +22,6 @@ import UploadDocumentsTab from "./tabs/UploadDocumentsTab";
 import ApplyNowTab from "./tabs/ApplyNowTab";
 import "../../../components/common/Tables/AntTable.css";
 import "./StudentProfile.css";
-import { config } from "../../../config";
 
 type ProfileTabKey =
   | "general"
@@ -165,7 +164,29 @@ export default function StudentProfile() {
     ? (profile.phone.startsWith("+") ? profile.phone : `+${profile.phone}`)
     : passedStudent?.phone ?? "";
 
+  const contextAvatar = getApiImageUrl(profile?.image) || "/user.avif";
 
+  useEffect(() => {
+    const id = studentId ?? passedStudent?.id;
+    if (!id) return;
+    setStudent({
+      id,
+      name: displayName,
+      email: displayEmail,
+      phone: displayPhone,
+      address: "",
+      status: "",
+      avatar: contextAvatar,
+    });
+  }, [
+    studentId,
+    passedStudent?.id,
+    displayName,
+    displayEmail,
+    displayPhone,
+    contextAvatar,
+    setStudent,
+  ]);
   const studentForContext = {
     id: studentId ?? passedStudent?.id ?? "",
     name: displayName,
@@ -179,16 +200,8 @@ export default function StudentProfile() {
   };
 
   useEffect(() => {
-    if (studentId && (displayName || studentId)) {
-      setStudent({
-        ...studentForContext,
-        avatar:
-          studentForContext.avatar ||
-          `/user.avif`,
-      });
-    }
     return () => setStudent(null);
-  }, [studentId, displayName, displayEmail, displayPhone]);
+  }, [setStudent]);
 
   const profileTabs: { key: ProfileTabKey; label: string }[] = [
     { key: "general", label: "General Information" },

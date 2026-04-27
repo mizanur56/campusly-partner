@@ -12,6 +12,7 @@ export type CreateStudentPayload = {
   fullName: string;
   password?: string;
   phone?: string;
+  agentId?:string;
   /**
    * Optional profile fields.
    * Note: createStudent endpoint may ignore these; modal uses updateStudentProfile for full profile.
@@ -53,7 +54,7 @@ export const partnerStudentProfileApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: ["users"],
+      invalidatesTags: ["users", "partnerProfile"],
     }),
 
     getStudentProfile: builder.query({
@@ -82,6 +83,8 @@ export const partnerStudentProfileApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: (_result, _err, { studentId }) => [
         { type: "studentProfile", id: studentId },
+        "users",
+        "partnerProfile",
       ],
     }),
 
@@ -288,6 +291,17 @@ export const partnerStudentProfileApi = baseApi.injectEndpoints({
       }),
       providesTags: ["countryStudyLevels"],
     }),
+
+    getAllStudentsByPartnerId:builder.query({
+      query: ({ partnerId }) => ({
+        url: PARTNER_STUDENT_BASE,
+        method: "GET",
+        params: {
+         partnerId
+        },
+      }),
+      providesTags: ["users"],
+    }),
   }),
 });
 
@@ -308,4 +322,5 @@ export const {
   useUpsertDocumentMutation,
   useDeleteDocumentMutation,
   useGetEligibleStudyLevelsByCountryQuery,
+  useGetAllStudentsByPartnerIdQuery,
 } = partnerStudentProfileApi;

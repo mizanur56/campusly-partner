@@ -108,22 +108,38 @@ export default function ContractPage() {
 
     const path = raw.replace(/^\/+/, "");
 
-    // In dev, prefer same-origin `/uploads/...` so pdf.js can fetch without CORS.
-    if (import.meta.env.DEV) {
-      const withUploadsPrefix = path.startsWith("uploads/")
+    // Contract documents are served from `/uploads/...` on the API origin.
+    // If backend returns "uploads/..." or "/uploads/...", normalize it.
+    const normalizedUploadsPath = path.startsWith("uploads/")
+      ? `/${path}`
+      : path.startsWith("uploads")
         ? `/${path}`
         : `/uploads/${path}`;
-      return withUploadsPrefix;
-    }
 
-    const base = (config.image_access_url ?? "").replace(/\/+$/, "");
-    return `${base}/${path}`;
+    const apiOrigin =
+      ("https://api.campustransfer.com/".replace(/\/+$/, "")) ||
+      (() => {
+        if (config.api?.startsWith("http")) {
+          try {
+            return new URL(config.api).origin;
+          } catch {
+            return "";
+          }
+        }
+        return typeof window !== "undefined" ? window.location.origin : "";
+      })();
+
+    // If we couldn't infer an origin, fall back to same-origin relative path.
+    if (!apiOrigin) return normalizedUploadsPath;
+    return `${apiOrigin}${normalizedUploadsPath}`;
   }, [contractData?.contractDocumentUrl]);
 
   useEffect(() => {
     setPdfPage(1);
     setPdfZoom(80);
   }, [contractPdfUrl]);
+
+  
 
   const contractKnownTotalPages = useMemo(() => {
     const raw =
@@ -420,7 +436,6 @@ export default function ContractPage() {
     });
   };
 
-  console.log(contractPdfUrl);
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gray-50/50 py-2 dark:bg-gray-950/30">
