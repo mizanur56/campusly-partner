@@ -25,6 +25,7 @@ import Dashboard from "../pages/Dashboard/Dashboard.tsx";
 import HotOffers from "../pages/HotOffers/HotOffers";
 import AllMediaList from "../pages/Media/Media";
 import MyTasks from "../pages/MyTasks/MyTasks";
+import TaskManagement from "../pages/TaskManagement/TaskManagement";
 import Notifications from "../pages/Notifications/Notifications";
 import AnnouncementsDetailsPage from "../pages/Announcements/AnnouncementsDetailsPage";
 import { OnboardingPage } from "../pages/Onboarding";
@@ -47,11 +48,15 @@ function StudentProfileRedirect() {
 }
 
 function DashboardOrRedirect() {
-  const user = useSelector(selectCurrentUser);
-  if (user?.role === "PARTNER_TEAM_MEMBER") {
-    return <Navigate to="/my-tasks" replace />;
-  }
   return <Dashboard />;
+}
+
+function TeamMembersOrRedirect() {
+  const currentUser = useSelector(selectCurrentUser);
+  if (currentUser?.role === "PARTNER_TEAM_MEMBER") {
+    return <Navigate to="/" replace />;
+  }
+  return <TeamMembers />;
 }
 
 function AppRoutes() {
@@ -145,8 +150,9 @@ function AppRoutes() {
           <Route path="visa-reject" element={<VisaRejectPage />} />
           <Route path="visa-success" element={<VisaSuccessPage />} />
           <Route path="applications/:id" element={<ApplicationDetails />} />
-          <Route path="team-members" element={<TeamMembers />} />
+          <Route path="team-members" element={<TeamMembersOrRedirect />} />
           <Route path="my-tasks" element={<MyTasks />} />
+          <Route path="task-management" element={<TaskManagement />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="announcements" element={<AnnouncementsDetailsPage />} />
           <Route

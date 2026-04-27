@@ -187,6 +187,17 @@ export default function StudentProfile() {
     contextAvatar,
     setStudent,
   ]);
+  const studentForContext = {
+    id: studentId ?? passedStudent?.id ?? "",
+    name: displayName,
+    email: displayEmail,
+    phone: displayPhone,
+    address: "",
+    status: "",
+    avatar: profile?.image?.url
+      ? `${config.image_access_url}${profile.image.url}`
+      : "/user.avif",
+  };
 
   useEffect(() => {
     return () => setStudent(null);
