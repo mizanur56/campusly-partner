@@ -7,7 +7,10 @@ import {
   useUpdatePartnerProfileMutation,
 } from "../../redux/features/profile/partnerProfileApi";
 import { useChangePasswordMutation } from "../../redux/features/auth/authApi";
-import { selectCurrentUser, setProfile } from "../../redux/features/auth/authSlice";
+import {
+  selectCurrentUser,
+  setProfile,
+} from "../../redux/features/auth/authSlice";
 import { getApiImageUrl } from "../../utils/getApiImageUrl";
 import type { MediaImage } from "../../types/media";
 import React, { useState } from "react";
@@ -40,7 +43,9 @@ const ProfileSettings: React.FC = () => {
     ? getApiImageUrl(partnerProfile.businessPhoto as string)
     : undefined;
 
-  const handleProfilePhotoChange = async (image: MediaImage | MediaImage[] | null) => {
+  const handleProfilePhotoChange = async (
+    image: MediaImage | MediaImage[] | null,
+  ) => {
     const selected = Array.isArray(image) ? image[0] : image;
     if (!selected) return;
     try {
@@ -52,7 +57,9 @@ const ProfileSettings: React.FC = () => {
     }
   };
 
-  const handleBusinessPhotoChange = async (image: MediaImage | MediaImage[] | null) => {
+  const handleBusinessPhotoChange = async (
+    image: MediaImage | MediaImage[] | null,
+  ) => {
     const selected = Array.isArray(image) ? image[0] : image;
     if (!selected) return;
     try {
@@ -83,8 +90,7 @@ const ProfileSettings: React.FC = () => {
     }
   };
 
-  const partnerIdText =
-    partnerProfile?.id != null ? String(partnerProfile.id) : "—";
+  const partnerId: any = partnerProfile?.agentId ? partnerProfile.agentId : "—";
 
   const pageHeaderExtra =
     activeTab === "teamMember" ? (
@@ -102,7 +108,7 @@ const ProfileSettings: React.FC = () => {
       </div>
     ) : (
       <p className="account-partner-id account-partner-id--solo">
-        Recruitment Partner ID: <span>001112</span>
+        Recruitment Partner ID: <span>{partnerId}</span>
       </p>
     );
 
@@ -188,4 +194,3 @@ const ProfileSettings: React.FC = () => {
 };
 
 export default ProfileSettings;
-

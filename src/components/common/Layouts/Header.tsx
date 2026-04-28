@@ -1,3 +1,4 @@
+/* eslint-disable no-constant-binary-expression */
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { usePreviewMode } from "../../../context/PreviewModeContext";
