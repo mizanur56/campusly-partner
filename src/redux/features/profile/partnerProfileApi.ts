@@ -14,12 +14,31 @@ export interface Advisor {
   } | null;
 }
 
+export interface AdvisorAvailabilityTemplate {
+  id: string;
+  userId: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  slotMinutes: number;
+  meetingLink: string | null;
+  isActive: boolean;
+}
+
+export interface AdvisorAvailableSlot {
+  slot: string;
+  label: string;
+  date: string;
+}
+
 export interface PartnerProfileResponse {
   id: string;
   userId: string;
   registeredCompanyName: string | null;
   status: string;
   advisor: Advisor | null;
+  advisorAvailability?: AdvisorAvailabilityTemplate[];
+  advisorAvailableSlots?: AdvisorAvailableSlot[];
   businessName?: string | null;
   businessPhoto?: string | null;
   // Add other fields as needed
