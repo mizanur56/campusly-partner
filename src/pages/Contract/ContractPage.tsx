@@ -10,7 +10,6 @@ import {
   FiChevronLeft,
   FiChevronRight,
   FiCheck,
-  FiEye,
   FiCalendar,
   FiDownload,
   FiEdit2,
@@ -865,18 +864,6 @@ export default function ContractPage() {
                         </div>
 
                         <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center sm:gap-4">
-                          <Button
-                            variant="secondary"
-                            size="md"
-                            type="button"
-                            className="w-full sm:w-60"
-                          >
-                            <span className="inline-flex items-center justify-center gap-2">
-                              <FiEye aria-hidden className="h-4 w-4" />
-                              View Signed Contract
-                            </span>
-                          </Button>
-
                           <Button
                             type="button"
                             variant="primary"
