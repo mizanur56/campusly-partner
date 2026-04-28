@@ -960,7 +960,10 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
       ? "cursor-not-allowed opacity-50"
       : "cursor-pointer";
 
+   
+
   const stageLockedVisual = embedded && !stageUnlocked;
+ 
   const stageCardClass = stageLockedVisual
     ? "border border-[#D1D5DB] rounded-lg overflow-hidden bg-[#F4F6F5]"
     : "border border-[#C7CACF] rounded-lg overflow-hidden";
