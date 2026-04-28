@@ -505,6 +505,22 @@ interface UploadDocumentsTabProps {
   onUpdated?: () => void;
 }
 
+const IMAGE_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+]);
+
+const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
+
+function isImageFile(file: File): boolean {
+  if (file.type && IMAGE_MIME_TYPES.has(file.type.toLowerCase())) return true;
+  const lowerName = file.name.toLowerCase();
+  return IMAGE_EXTENSIONS.some((ext) => lowerName.endsWith(ext));
+}
+
 const UploadDocuments = ({
   studentId,
   profile: _profile,
@@ -526,23 +542,36 @@ const UploadDocuments = ({
   const { data: countries } = useGetCountriesQuery({ page: 1, limit: 1000 });
 
   const selectedCountryId = useMemo(() => {
+    
     // ১. ডাটা এখনো লোড হচ্ছে কি না তা চেক করুন (প্রোফাইল অবজেক্টের ভেতর ডাটা আছে কি না)
     const profileCountryName =
       profileData?.data?.country || profileData?.country;
     const countryList = countries?.data;
-
+    
     if (!profileCountryName || !countryList) return null;
 
     // ২. ট্রিম এবং লোয়ারকেস করে ম্যাচ খুঁজুন
-    const matchedCountry = countryList.find(
-      (c) =>
-        c.name.trim().toLowerCase() === profileCountryName.trim().toLowerCase(),
-    );
+    // const matchedCountry = countryList.find(
+    //   (c) =>
+    //     c.name.trim().toLowerCase() === profileCountryName.trim().toLowerCase(),
+    // );
 
+    const matchedCountry = countryList.find((c) => {
+      const input = profileCountryName?.toString().trim().toLowerCase();
+    
+      return (
+        c.id?.toString() === profileCountryName?.toString() ||
+        c.name?.trim().toLowerCase() === input
+      );
+    });
+
+ 
     return matchedCountry ? matchedCountry.id : null;
   }, [profileData, countries]);
 
-  const userId = profileData?.userId;
+ 
+  const userId = profileData?.userId as string;
+ 
 
   const { data: studyLevelsRes } = useGetEligibleStudyLevelsByCountryQuery(
     {
@@ -554,6 +583,8 @@ const UploadDocuments = ({
       skip: !selectedCountryId || !studentId,
     },
   );
+
+
   const studyLevelData = studyLevelsRes?.data || [];
 
   const { data: backgroundData } = useGetDocumentsByCategoryQuery(
@@ -583,14 +614,17 @@ const UploadDocuments = ({
   // Hidden input ref for direct uploads
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeItem, setActiveItem] = useState<DocumentItem | null>(null);
+  const [uploadingItemId, setUploadingItemId] = useState<string | null>(null);
 
   // /* ================= Academic Groups ================= */
   const academicGroups: DocumentGroup[] = useMemo(() => {
+
     return studyLevelData.map((level: any) => {
       const edu = profileData?.educations?.find(
         (e: any) => e.studyLevelId === level.id,
       );
 
+    
       return {
         label: level.countryStudyLevelName,
         studyLevelId: level.id,
@@ -711,7 +745,13 @@ const UploadDocuments = ({
   // /* ================= Upload Handler ================= */
   const handleFileUpload = async (file: File, item: DocumentItem) => {
     // const toastId = toast.loading(`Uploading ${item.name}...`);
+    setUploadingItemId(item.id);
     try {
+      if (item.category === "profile" && !isImageFile(file)) {
+        toast.error("Only image file (.jpg, .png, .webp, .gif) allowed.");
+        return;
+      }
+
       const formData = new FormData();
       formData.append("file", file);
       formData.append("category", item.category);
@@ -754,6 +794,8 @@ const UploadDocuments = ({
       refetch();
     } catch {
       toast.error("Upload failed");
+    } finally {
+      setUploadingItemId((prev) => (prev === item.id ? null : prev));
     }
   };
 
@@ -769,6 +811,11 @@ const UploadDocuments = ({
         type="file"
         className="hidden"
         ref={fileInputRef}
+        accept={
+          activeItem?.category === "profile"
+            ? "image/jpeg,image/jpg,image/png,image/webp,image/gif"
+            : undefined
+        }
         onChange={(e) => {
           if (e.target.files?.[0] && activeItem) {
             handleFileUpload(e.target.files[0], activeItem);
@@ -872,10 +919,14 @@ const UploadDocuments = ({
                   {item.status === "submitted" ? (
                     <FaCircleCheck className="text-green-500 text-xl" />
                   ) : (
-                    <FaPlusSquare
-                      className="text-primary text-xl cursor-pointer hover:scale-110 transition-transform"
-                      onClick={() => triggerDirectUpload(item)}
-                    />
+                    uploadingItemId === item.id ? (
+                      <div className="h-5 w-5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                    ) : (
+                      <FaPlusSquare
+                        className="text-primary text-xl cursor-pointer hover:scale-110 transition-transform"
+                        onClick={() => triggerDirectUpload(item)}
+                      />
+                    )
                   )}
                 </div>
               ))}

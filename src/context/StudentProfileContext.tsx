@@ -11,6 +11,7 @@ export interface StudentProfileData {
   /** Extra sidebar info for Application Details context. */
   applicationSidebar?: {
     applicationId?: string;
+    applicationStatus?: string;
     intake?: string;
     program?: string;
     school?: string;

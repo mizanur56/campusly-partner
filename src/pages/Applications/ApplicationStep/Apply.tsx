@@ -613,6 +613,7 @@ export const ApplyStep: React.FC<ApplyStepProps> = ({
   );
 
   const isAllRequiredCompleted = sections.every((sec) => sec.isCompleted);
+ 
 
   const didInitExpand = React.useRef(false);
   React.useEffect(() => {
@@ -632,14 +633,17 @@ export const ApplyStep: React.FC<ApplyStepProps> = ({
       ? "cursor-not-allowed opacity-50"
       : "cursor-pointer";
 
+    
+
   const stageLockedVisual = embedded && !stageUnlocked;
   const stageCardClass = stageLockedVisual
     ? "border border-[#D1D5DB] rounded-lg overflow-hidden bg-[#F4F6F5]"
     : "border border-[#C7CACF] rounded-lg overflow-hidden";
   const stageHeaderClass = stageLockedVisual
     ? "bg-[#EEF2EF]"
-    : "bg-[#E9F2EB]";
+    : "bg-[#DFF2E6] border-[#237D3B] border rounded-lg";
 
+    
   const handleFileUpload = async (categoryId: string, file: File) => {
     setUploadingCategoryId(categoryId);
     try {
@@ -688,12 +692,21 @@ export const ApplyStep: React.FC<ApplyStepProps> = ({
           className={`${stageHeaderClass} p-6 flex items-center justify-between`}
         >
           <div>
-            <h3 className="text-[20px] font-semibold text-[#20242A]">
-              Stage: 2 Apply
+ 
+            <h3
+              className={`text-[20px] font-semibold ${
+                isAllRequiredCompleted ? "text-primary" : "text-[#20242A]"
+              }`}
+            >
+                Stage: 2 Apply
             </h3>
-            <p className="text-[14px] text-[#4B5563]">
+            <p
+              className={`text-[14px] ${
+                isAllRequiredCompleted ? "text-primary" : "text-[#4B5563]"
+              }`}
+            >
               Review your application package and upload any required receipts.
-            </p>
+              </p>
           </div>
           <div
             title={

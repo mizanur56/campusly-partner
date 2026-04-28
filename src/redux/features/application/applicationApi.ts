@@ -33,6 +33,14 @@ const applicationApi = baseApi.injectEndpoints({
       }),
       providesTags: ["applications"],
     }),
+
+    deleteApplication: builder.mutation({
+      query: (id) => ({
+        url: `/applications/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["applications"],
+    }),
     applicationDocumentUpload: builder.mutation({
       query: ({ id, ...info }) => ({
         url: `/applications/partner/${id}`,
@@ -152,6 +160,7 @@ export const {
   useCreateApplicationMutation,
   useGetMyAllApplicationsQuery,
   useGetApplicationByIdQuery,
+  useDeleteApplicationMutation,
   useApplicationDocumentUploadMutation,
   useSubmitPaymentReceiptMutation,
   useGetAllInvoicePaymentsQuery,
