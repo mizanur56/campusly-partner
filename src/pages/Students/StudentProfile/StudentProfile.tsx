@@ -406,7 +406,7 @@ export default function StudentProfile() {
                 <GeneralInformationTab
                   studentId={studentId}
                   profile={profile as Parameters<typeof GeneralInformationTab>[0]["profile"]}
-                  canEdit={!isTeamMember}
+                  canEdit={true}
                   onUpdated={() => refetchProfile()}
                 />
               )}
@@ -416,7 +416,7 @@ export default function StudentProfile() {
                   studentId={studentId}
                   profile={profile as Parameters<typeof EducationHistoryTab>[0]["profile"]}
                   educations={educations as Parameters<typeof EducationHistoryTab>[0]["educations"]}
-                  canEdit={!isTeamMember}
+                  canEdit={true}
                   onUpdated={() => refetchProfile()}
                 />
               )}
@@ -427,7 +427,7 @@ export default function StudentProfile() {
                   visaRejections={visaRejections as Parameters<typeof BackgroundTab>[0]["visaRejections"]}
                   cv={(profile as { cv?: string }).cv}
                   statementOfPurpose={(profile as { statementOfPurpose?: string }).statementOfPurpose}
-                  canEdit={!isTeamMember}
+                  canEdit={true}
                   onUpdated={() => refetchProfile()}
                 />
               )}
@@ -436,7 +436,7 @@ export default function StudentProfile() {
                 <UploadDocumentsTab
                   studentId={studentId}
                   profile={profile as Parameters<typeof UploadDocumentsTab>[0]["profile"]}
-                  canEdit={!isTeamMember}
+                  canEdit={true}
                   onUpdated={() => refetchProfile()}
                 />
               )}
