@@ -1,12 +1,8 @@
-import React, { useCallback, useMemo } from "react";
-import { useLazySearchCoursesQuery } from "../../redux/features/search/searchApi";
+import React, { useCallback, useMemo, useEffect } from "react";
+import { useLazySearchCoursesQuery, useGetFilterOptionsQuery } from "../../redux/features/search/searchApi";
 import { useAppDispatch } from "../../redux/features/hooks";
 import { updateCoursesMeta } from "../../redux/features/search/searchMetaSlice";
 import { useInfiniteScrollPagination } from "../../hooks/useInfiniteScrollPagination";
-import { useGetCountriesQuery } from "../../redux/features/countries/countriesApi";
-import { useGetCitiesQuery } from "../../redux/features/cities/citiesApi";
-import { useGetUniversityCoursesQuery } from "../../redux/features/universityCourses/universityCoursesApi";
-import { useGetStudyLevelsQuery } from "../../redux/features/studyLevels/studyLevelsApi";
 import CourseList from "./CourseList";
 import Spinner from "../common/Loading/Spinner";
 import SkeletonCourseCard from "./SkeletonCourseCard";
@@ -66,41 +62,50 @@ export default function CoursesResultsView({
   const dispatch = useAppDispatch();
   const [triggerCoursesSearch] = useLazySearchCoursesQuery();
 
-  const { data: countriesResponse } = useGetCountriesQuery({
-    page: 1,
-    limit: 100000,
-  });
-  const { data: citiesResponse } = useGetCitiesQuery({
-    page: 1,
-    limit: 10000000,
-  });
-  const { data: coursesResponse } = useGetUniversityCoursesQuery({
-    page: 1,
-    limit: 10000000,
-  });
-  const { data: studyLevelsResponse } = useGetStudyLevelsQuery({
-    page: 1,
-    limit: 100000,
-  });
+  // Fetch all filter options from single endpoint
+  const { data: filterOptionsResponse } = useGetFilterOptionsQuery();
+
+  // Transform filter-options response into the format expected by transformFiltersToApi
+  const apiResponsesForTransform = useMemo(() => {
+    if (!filterOptionsResponse?.data) return null;
+    
+    const filterData = filterOptionsResponse.data;
+    return {
+      countriesResponse: {
+        data: filterData.countries || [],
+      },
+      citiesResponse: {
+        data: filterData.countries?.flatMap((c) => 
+          (c.cities || []).map((city) => ({
+            ...city,
+            country: { name: c.name },
+          }))
+        ) || [],
+      },
+      coursesResponse: {
+        data: filterData.courses || [],
+      },
+      studyLevelsResponse: {
+        data: filterData.studyLevels || [],
+      },
+    };
+  }, [filterOptionsResponse?.data]);
 
   const apiFilters = useMemo(() => {
     const filterFormData = transformToFilterFormData(filters);
-    if (!filterFormData) return undefined;
+    if (!filterFormData || !apiResponsesForTransform) return undefined;
     return transformFiltersToApi(
       filterFormData,
       searchQuery || "",
-      countriesResponse,
-      citiesResponse,
-      coursesResponse,
-      studyLevelsResponse,
+      apiResponsesForTransform.countriesResponse,
+      apiResponsesForTransform.citiesResponse,
+      apiResponsesForTransform.coursesResponse,
+      apiResponsesForTransform.studyLevelsResponse,
     );
   }, [
     filters,
     searchQuery,
-    countriesResponse,
-    citiesResponse,
-    coursesResponse,
-    studyLevelsResponse,
+    apiResponsesForTransform,
   ]);
 
   const fetchCourses = useCallback(
@@ -166,6 +171,13 @@ export default function CoursesResultsView({
       })),
     [courses],
   );
+
+  // Scroll to top only when initial results load (not on every filter change)
+  useEffect(() => {
+    if (!isLoading && courses.length > 0) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [filtersKey, isLoading, courses.length]);
 
   if (isLoading) {
     return (

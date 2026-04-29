@@ -47,7 +47,6 @@ export default function ProgramsSchoolsPage() {
 
   const handleFilterChange = (newFilters: FilterState) => {
     setFilters(newFilters);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (

@@ -6,9 +6,7 @@ import React, {
   useMemo,
 } from "react";
 import { KeywordGroup } from "../common/Tabs";
-import { useGetCountriesQuery } from "../../redux/features/countries/countriesApi";
-import { useGetCitiesQuery } from "../../redux/features/cities/citiesApi";
-import { useGetUniversityCoursesQuery } from "../../redux/features/universityCourses/universityCoursesApi";
+import { useGetFilterOptionsQuery } from "../../redux/features/search/searchApi";
 import {
   extractCountryNames,
   extractSubjectNames,
@@ -61,63 +59,107 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
     },
   });
 
-  // Fetch data from APIs
-  const { data: countriesResponse, isLoading: isLoadingCountries } =
-    useGetCountriesQuery({
-      page: 1,
-      limit: 100000,
-    });
+  // Fetch data from single filter-options API
+  const { data: filterOptionsResponse, isLoading: isLoadingFilterOptions } =
+    useGetFilterOptionsQuery();
 
-  const { data: citiesResponse, isLoading: isLoadingCities } =
-    useGetCitiesQuery({
-      page: 1,
-      limit: 10000000,
-    });
-
-  const { data: coursesResponse, isLoading: isLoadingCourses } =
-    useGetUniversityCoursesQuery({
-      page: 1,
-      limit: 10000000,
-    });
-
-  // Extract dynamic data using helper functions
+  // Extract data from filter-options API
   const studyDestinations = useMemo(() => {
-    const countries = extractCountryNames(countriesResponse);
+    const countries = filterOptionsResponse?.data?.countries || [];
     return countries.map((country) => ({
-      value: country,
-      label: country,
+      value: country.name,
+      label: country.name,
     }));
-  }, [countriesResponse]);
+  }, [filterOptionsResponse?.data?.countries]);
 
   const availableSubjects = useMemo(() => {
-    // Get the selected country name
-    const selectedCountry = filters.studyDestination;
-    if (!selectedCountry) return [];
-
-    // Extract subjects filtered by the selected country
-    return extractSubjectNames(coursesResponse, [selectedCountry], undefined);
-  }, [coursesResponse, filters.studyDestination]);
+    const courses = filterOptionsResponse?.data?.courses || [];
+    return courses.map((course) => course.name);
+  }, [filterOptionsResponse?.data?.courses]);
 
   const institutions = useMemo(() => {
-    // Get the selected country name
+    const universities = filterOptionsResponse?.data?.universities || [];
     const selectedCountry = filters.studyDestination;
     if (!selectedCountry) return [];
+    
+    return universities
+      .filter((u) => u.countryName === selectedCountry)
+      .map((u) => u.name)
+      .sort();
+  }, [filterOptionsResponse?.data?.universities, filters.studyDestination]);
 
-    // Extract institutions filtered by the selected country
-    return extractInstitutionNames(
-      coursesResponse,
-      [selectedCountry],
-      undefined,
-    );
-  }, [coursesResponse, filters.studyDestination]);
+  // Extract study levels - Only show Postgraduate and Undergraduate
+  const studyLevels = useMemo(() => {
+    const levels = filterOptionsResponse?.data?.studyLevels || [];
+    
+    return levels
+      .filter((level) => level.description === "Postgraduate" || level.description === "Undergraduate")
+      .map((level) => level.description)
+      .sort((a, b) => a.localeCompare(b));
+  }, [filterOptionsResponse?.data?.studyLevels]);
+
+  // Extract fee ranges from API response
+  const feeRangeFromApi = useMemo(() => {
+    const ranges = filterOptionsResponse?.data?.ranges?.fee;
+    return {
+      min: ranges?.min ?? 0,
+      max: ranges?.max ?? 100000,
+    };
+  }, [filterOptionsResponse?.data?.ranges?.fee]);
 
   const [isDraggingMin, setIsDraggingMin] = useState(false);
   const [isDraggingMax, setIsDraggingMax] = useState(false);
   const sliderRef = useRef<HTMLDivElement>(null);
 
+  // Track if currently dragging any slider handle
+  const isDraggingRef = useRef(false);
+
+  // Debounce timer for filter changes to prevent infinite search loops while dragging range slider
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Debounced callback for filter changes - only trigger when NOT dragging
+  useEffect(() => {
+    // Update the ref to track dragging state
+    isDraggingRef.current = isDraggingMin || isDraggingMax;
+
+    // If currently dragging, don't trigger any updates
+    if (isDraggingRef.current) {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      return;
+    }
+
+    // Only proceed if not dragging
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      onFilterChange?.(filters);
+    }, 300);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [filters, onFilterChange, isDraggingMin, isDraggingMax]);
+
+  // Initialize fee range when API data arrives
+  useEffect(() => {
+    if (feeRangeFromApi.max > 0) {
+      setFilters((prev) => ({
+        ...prev,
+        feeRange: {
+          min: feeRangeFromApi.min,
+          max: feeRangeFromApi.max,
+        },
+      }));
+    }
+  }, [feeRangeFromApi.min, feeRangeFromApi.max]);
+
   // Tabs options
-  const studyLevels = ["Postgraduate", "Undergraduate"];
-  const startYears = ["Any", "2025", "2026", "2027", "2028"];
   const startMonths = [
     "January",
     "February",
@@ -132,19 +174,20 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
     "November",
     "December",
   ];
+  const startYears = ["Any", "2025", "2026", "2027", "2028"];
   const durations = [
     "Less than 1 year",
-    "1 to 2 years",
-    "2 to 3 years",
-    "3 to 4 years",
-    "4 to 5 years",
+    "1 - 2 years",
+    "2 - 3 years",
+    "3 - 4 years",
+    "4 - 5 years",
     "More than 5 years",
   ];
 
   const updateFilter = (key: keyof FilterState, value: any) => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
-    onFilterChange?.(newFilters);
+    // onFilterChange will be called by debounced useEffect
   };
 
   const handleSubjectRemove = (subjectToRemove: string) => {
@@ -172,12 +215,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
         subjects: [], // Reset subjects when country changes
         institution: "", // Reset institution when country changes
       });
-      onFilterChange?.({
-        ...filters,
-        studyDestination: value,
-        subjects: [],
-        institution: "",
-      });
+      // onFilterChange will be called by debounced useEffect
       setShowStudyDestinationDropdown(false);
     } else {
       updateFilter(key, value);
@@ -214,11 +252,13 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
     });
   };
 
-  const handleMinSliderMouseDown = () => {
+  const handleMinSliderMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
     setIsDraggingMin(true);
   };
 
-  const handleMaxSliderMouseDown = () => {
+  const handleMaxSliderMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
     setIsDraggingMax(true);
   };
 
@@ -348,7 +388,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
                   <span
                     className={`text-sm ${!filters.studyDestination ? "text-gray-400" : "text-gray-700"}`}
                   >
-                    {isLoadingCountries
+                    {isLoadingFilterOptions
                       ? "Loading destinations..."
                       : filters.studyDestination
                         ? studyDestinations.find(
@@ -377,7 +417,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
                 {showStudyDestinationDropdown && (
                   <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     <div className="p-2">
-                      {isLoadingCountries ? (
+                      {isLoadingFilterOptions ? (
                         <div className="px-4 py-2.5 text-sm text-gray-500 text-center">
                           Loading destinations...
                         </div>
@@ -424,18 +464,24 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Study level
               </label>
-              <KeywordGroup
-                options={studyLevels.map((level) => ({
-                  value: level,
-                  label: level,
-                }))}
-                value={filters.studyLevel}
-                onChange={(value) => {
-                  const newValue = Array.isArray(value) ? value : [value];
-                  updateFilter("studyLevel", newValue);
-                }}
-                multiple={true}
-              />
+              {isLoadingFilterOptions ? (
+                <div className="text-sm text-gray-400">Loading study levels...</div>
+              ) : (
+                <KeywordGroup
+                  options={studyLevels.map((level) => ({
+                    value: level,
+                    label: level,
+                  }))}
+                  value={filters.studyLevel}
+                  onChange={(value) => {
+                    updateFilter(
+                      "studyLevel",
+                      Array.isArray(value) ? value : [value],
+                    );
+                  }}
+                  multiple={true}
+                />
+              )}
             </div>
 
             {/* Start Year - Tabs */}
@@ -450,10 +496,12 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
                 }))}
                 value={filters.startYear}
                 onChange={(value) => {
-                  const newValue = Array.isArray(value) ? value : [value];
-                  updateFilter("startYear", newValue);
+                  updateFilter(
+                    "startYear",
+                    Array.isArray(value) ? value : [value],
+                  );
                 }}
-                multiple={true}
+                multiple={false}
                 className="flex-wrap"
               />
             </div>
@@ -470,10 +518,12 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
                 }))}
                 value={filters.startMonth}
                 onChange={(value) => {
-                  const newValue = Array.isArray(value) ? value : [value];
-                  updateFilter("startMonth", newValue);
+                  updateFilter(
+                    "startMonth",
+                    Array.isArray(value) ? value : [value],
+                  );
                 }}
-                multiple={true}
+                multiple={false}
                 className="flex-wrap"
               />
             </div>
@@ -527,7 +577,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
                       ))
                     ) : (
                       <span className="text-sm text-gray-400">
-                        {isLoadingCourses
+                        {isLoadingFilterOptions
                           ? "Loading subjects..."
                           : !filters.studyDestination
                             ? "Select a destination first"
@@ -558,7 +608,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
                 {showSubjectDropdown && (
                   <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     <div className="p-2">
-                      {isLoadingCourses ? (
+                      {isLoadingFilterOptions ? (
                         <div className="px-4 py-2.5 text-sm text-gray-500 text-center">
                           Loading subjects...
                         </div>
@@ -659,7 +709,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
                   <span
                     className={`text-sm ${!filters.institution ? "text-gray-400" : "text-gray-700"}`}
                   >
-                    {isLoadingCourses
+                    {isLoadingFilterOptions
                       ? "Loading institutions..."
                       : !filters.studyDestination
                         ? "Select a destination first"
@@ -686,7 +736,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
                 {showInstitutionDropdown && (
                   <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     <div className="p-2">
-                      {isLoadingCourses ? (
+                      {isLoadingFilterOptions ? (
                         <div className="px-4 py-2.5 text-sm text-gray-500 text-center">
                           Loading institutions...
                         </div>
@@ -776,7 +826,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
                 >
                   {/* Selected Range Track */}
                   <div
-                    className="absolute h-full bg-primary-500 rounded-full"
+                    className="absolute h-full bg-primary-500 rounded-full pointer-events-none"
                     style={{
                       left: `${(filters.feeRange.min / 100000) * 100}%`,
                       width: `${((filters.feeRange.max - filters.feeRange.min) / 100000) * 100}%`,
@@ -785,7 +835,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
 
                   {/* Min Handle */}
                   <div
-                    className="absolute top-1/2 w-4 h-4 bg-white border-2 border-primary-500 rounded-full cursor-pointer -translate-y-1/2 -translate-x-1/2 shadow-md hover:scale-110 transition-transform"
+                    className="absolute top-1/2 w-4 h-4 bg-white border-2 border-primary-500 rounded-full cursor-pointer -translate-y-1/2 -translate-x-1/2 shadow-md hover:scale-110 transition-transform user-select-none"
                     style={{
                       left: `${(filters.feeRange.min / 100000) * 100}%`,
                     }}
@@ -794,7 +844,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
 
                   {/* Max Handle */}
                   <div
-                    className="absolute top-1/2 w-4 h-4 bg-white border-2 border-primary-500 rounded-full cursor-pointer -translate-y-1/2 -translate-x-1/2 shadow-md hover:scale-110 transition-transform"
+                    className="absolute top-1/2 w-4 h-4 bg-white border-2 border-primary-500 rounded-full cursor-pointer -translate-y-1/2 -translate-x-1/2 shadow-md hover:scale-110 transition-transform user-select-none"
                     style={{
                       left: `${(filters.feeRange.max / 100000) * 100}%`,
                     }}

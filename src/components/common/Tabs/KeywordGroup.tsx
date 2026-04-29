@@ -23,24 +23,35 @@ const KeywordGroup: React.FC<KeywordGroupProps> = ({
   const shouldUseFlex1 = options.length <= 2;
 
   const handleClick = (optionValue: string) => {
+    const currentValues = Array.isArray(value)
+      ? value
+      : typeof value === "string"
+        ? [value]
+        : [];
+
     if (multiple) {
-      const currentValues = Array.isArray(value) ? value : [];
       if (currentValues.includes(optionValue)) {
         onChange(currentValues.filter((v) => v !== optionValue));
       } else {
         onChange([...currentValues, optionValue]);
       }
     } else {
-      onChange(optionValue);
+      // For single select, always return array format
+      if (currentValues.includes(optionValue)) {
+        onChange([]); // Unselect
+      } else {
+        onChange([optionValue]); // Select
+      }
     }
   };
 
   const isActive = (optionValue: string) => {
-    if (multiple) {
-      const currentValues = Array.isArray(value) ? value : [];
-      return currentValues.includes(optionValue);
-    }
-    return value === optionValue;
+    const currentValues = Array.isArray(value)
+      ? value
+      : typeof value === "string"
+        ? [value]
+        : [];
+    return currentValues.includes(optionValue);
   };
 
   return (
