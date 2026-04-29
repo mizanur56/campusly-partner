@@ -117,8 +117,7 @@ export default function MyTasks() {
       const passSearch =
         !q ||
         r.task_title?.toLowerCase().includes(q) ||
-        r.assigned_member_name?.toLowerCase().includes(q) ||
-        r.taskType?.toLowerCase().includes(q);
+        r.assigned_member_name?.toLowerCase().includes(q);
       return passPriority && passSearch;
     });
   }, [allRows, searchTerm, priority]);
@@ -144,9 +143,12 @@ export default function MyTasks() {
           if (r.status === "IN_PROGRESS") acc.inProgress += 1;
           if (r.status === "SUBMITTED") acc.submitted += 1;
           if (r.status === "COMPLETED") acc.completed += 1;
-          if (r.priority === "LOW") acc.low += 1;
-          if (r.priority === "MEDIUM") acc.medium += 1;
-          if (r.priority === "HIGH") acc.high += 1;
+          if (r.status !== "COMPLETED" && r.status !== "CANCELLED") {
+            if (r.priority === "LOW") acc.low += 1;
+            if (r.priority === "MEDIUM") acc.medium += 1;
+            if (r.priority === "HIGH") acc.high += 1;
+          }
+          if (r.status === "CANCELLED") acc.cancelled += 1;
           return acc;
         },
         {
@@ -195,11 +197,6 @@ export default function MyTasks() {
       title: "Status",
       dataIndex: "status",
       render: (s: PartnerTaskStatus) => <Tag color={statusColor[s]}>{s.replace(/_/g, " ")}</Tag>,
-    },
-    {
-      title: "Type",
-      dataIndex: "taskType",
-      render: (t: string | null) => (t ? t.replace(/_/g, " ") : "—"),
     },
     { title: "Assigned To", dataIndex: "assigned_member_name" },
     {

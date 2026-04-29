@@ -59,12 +59,6 @@ type PartnerTaskPriority = "LOW" | "MEDIUM" | "HIGH";
 
 const STATUS_OPTIONS: PartnerTaskStatus[] = ["IN_PROGRESS", "SUBMITTED", "COMPLETED", "CANCELLED"];
 const PRIORITY_OPTIONS: PartnerTaskPriority[] = ["LOW", "MEDIUM", "HIGH"];
-const TASK_TYPE_OPTIONS: NonNullable<CreateTaskBody["taskType"]>[] = [
-  "TO_DO",
-  "FOLLOW_UP",
-  "REMINDER",
-  "INTERNAL_TASK",
-];
 
 const priorityColor: Record<PartnerTaskPriority, string> = {
   LOW: "default",
@@ -143,17 +137,33 @@ export default function TaskManagement() {
 
   const assigneeOptions = useMemo(() => {
     const options: { value: string; label: string }[] = [];
-    if (profile?.userId) {
+    const currentUserId = currentUser?.id;
+    const partnerUserId = profile?.userId;
+
+    // 1. Add current user as "Me"
+    if (currentUserId) {
       const selfName = String(currentUser?.name || "Me").trim();
       const selfEmail = String(currentUser?.email || "").trim();
       options.push({
-        value: profile.userId,
-        label: selfEmail ? `${selfName} (${selfEmail})` : selfName,
+        value: currentUserId,
+        label: selfEmail ? `${selfName} (Me - ${selfEmail})` : `${selfName} (Me)`,
       });
     }
+
+    // 2. Add Partner Owner if different from current user
+    if (partnerUserId && partnerUserId !== currentUserId) {
+      const partnerName = String(profile?.contactPersonName || profile?.businessName || "Partner Owner").trim();
+      const partnerEmail = String(profile?.businessEmail || "").trim();
+      options.push({
+        value: partnerUserId,
+        label: partnerEmail ? `${partnerName} (Owner - ${partnerEmail})` : `${partnerName} (Owner)`,
+      });
+    }
+
+    // 3. Add team members, skipping current user and partner owner to avoid duplicates
     const members = teamMembersData?.data ?? [];
     members
-      .filter((m) => m.status === "ACTIVE" && m.userId)
+      .filter((m) => m.status === "ACTIVE" && m.userId && m.userId !== currentUserId && m.userId !== partnerUserId)
       .forEach((m) => {
         const memberName = [m.firstName, m.lastName].filter(Boolean).join(" ").trim();
         const memberEmail = String(m.email || "").trim();
@@ -163,7 +173,7 @@ export default function TaskManagement() {
         options.push({ value: m.userId!, label });
       });
     return options;
-  }, [profile, currentUser?.name, currentUser?.email, teamMembersData?.data]);
+  }, [currentUser?.id, currentUser?.name, currentUser?.email, profile, teamMembersData?.data]);
 
   const allRows = tasksData?.data ?? [];
   const rows = useMemo(() => {
@@ -173,8 +183,7 @@ export default function TaskManagement() {
       const passSearch =
         !q ||
         r.task_title?.toLowerCase().includes(q) ||
-        r.assigned_member_name?.toLowerCase().includes(q) ||
-        r.taskType?.toLowerCase().includes(q);
+        r.assigned_member_name?.toLowerCase().includes(q);
       return passPriority && passSearch;
     });
   }, [allRows, searchTerm, priority]);
@@ -202,9 +211,12 @@ export default function TaskManagement() {
           if (r.status === "SUBMITTED") acc.submitted += 1;
           if (r.status === "COMPLETED") acc.completed += 1;
           if (r.status === "SUBMITTED") acc.reviewOpen += 1;
-          if (r.priority === "LOW") acc.low += 1;
-          if (r.priority === "MEDIUM") acc.medium += 1;
-          if (r.priority === "HIGH") acc.high += 1;
+          if (r.status !== "COMPLETED" && r.status !== "CANCELLED") {
+            if (r.priority === "LOW") acc.low += 1;
+            if (r.priority === "MEDIUM") acc.medium += 1;
+            if (r.priority === "HIGH") acc.high += 1;
+          }
+          if (r.status === "CANCELLED") acc.cancelled += 1;
           return acc;
         },
         {
@@ -241,7 +253,6 @@ export default function TaskManagement() {
     setEditingTask(task);
     form.setFieldsValue({
       title: task.task_title,
-      taskType: task.taskType || undefined,
       priority: task.priority || undefined,
       dueDateTime: mergedDue && mergedDue.isValid() ? mergedDue : undefined,
       assignedToUserId: taskDetail?.assignedTo?.id || undefined,
@@ -257,7 +268,6 @@ export default function TaskManagement() {
       title: values.title,
       description: values.description || undefined,
       assignedToUserId: values.assignedToUserId,
-      taskType: values.taskType || undefined,
       priority: values.priority || undefined,
       dueDate: dueDateTime ? dueDateTime.format("YYYY-MM-DD") : undefined,
       dueTime: dueDateTime ? dueDateTime.format("hh:mm A") : undefined,
@@ -325,11 +335,6 @@ export default function TaskManagement() {
           {s === "SUBMITTED" ? "IN REVIEW" : s.replace(/_/g, " ")}
         </Tag>
       ),
-    },
-    {
-      title: "Type",
-      dataIndex: "taskType",
-      render: (t: string | null) => (t ? t.replace(/_/g, " ") : "—"),
     },
     { title: "Assigned To", dataIndex: "assigned_member_name" },
     {
@@ -520,12 +525,9 @@ export default function TaskManagement() {
           >
             <Select showSearch optionFilterProp="label" options={assigneeOptions} />
           </Form.Item>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-3">
             <Form.Item name="priority" label="Priority" rules={[{ required: true, message: "Priority is required" }]}>
               <Select options={PRIORITY_OPTIONS.map((p) => ({ value: p, label: p }))} />
-            </Form.Item>
-            <Form.Item name="taskType" label="Task type">
-              <Select options={TASK_TYPE_OPTIONS.map((t) => ({ value: t, label: t.replace(/_/g, " ") }))} allowClear />
             </Form.Item>
           </div>
           <Form.Item
