@@ -96,6 +96,17 @@ export default function MyTasks() {
     status: status || undefined,
   });
 
+  // Debug: Log the query and response
+  console.log('MyTasks Debug - Current User ID:', currentUser?.id);
+  console.log('MyTasks Debug - Query Params:', {
+    page,
+    limit,
+    assignedToMe: true,
+    createdByMe: false,
+    status: status || undefined,
+  });
+  console.log('MyTasks Debug - Tasks Response:', tasksData);
+
   const { data: taskDetail, isLoading: detailLoading } = useGetTaskByIdQuery(viewTask?.id ?? "", {
     skip: !viewTask?.id,
   });

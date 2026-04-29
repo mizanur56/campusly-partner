@@ -118,8 +118,8 @@ export default function TaskManagement() {
   const { data: tasksData, isLoading, isFetching } = useGetPartnerTasksQuery({
     page,
     limit,
-    createdByMe: true,
     status: status || undefined,
+    createdByMe: true,
   });
 
   const { data: taskDetail, isLoading: detailLoading } = useGetTaskByIdQuery(
