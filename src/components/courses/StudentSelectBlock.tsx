@@ -84,7 +84,7 @@ export default function StudentSelectBlock({
     isError: isPartnerError,
   } = useGetAllStudentsByPartnerIdQuery(
     { partnerId: user?.id as string },
-    { skip: !user?.id || isTeamMember },
+    { skip: !user?.id },
   );
 
   const {
@@ -98,15 +98,8 @@ export default function StudentSelectBlock({
   );
 
   const sourceRecords = useMemo((): Record<string, unknown>[] => {
-    if (isTeamMember) {
-      return assignedStudents.map((s) => ({
-        id: s.studentId,
-        user: { name: s.studentName },
-        email: "",
-      }));
-    }
     return (allStudents?.data as Record<string, unknown>[]) || [];
-  }, [isTeamMember, assignedStudents, allStudents?.data]);
+  }, [allStudents?.data]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -196,10 +189,8 @@ export default function StudentSelectBlock({
     );
   }, [studentsList, search]);
 
-  const isLoading = isTeamMember
-    ? isTeamLoading || isTeamFetching
-    : Boolean(user?.id) && (isPartnerLoading || isPartnerFetching);
-  const isError = isTeamMember ? isTeamError : isPartnerError;
+  const isLoading = Boolean(user?.id) && (isPartnerLoading || isPartnerFetching);
+  const isError = isPartnerError;
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -281,11 +272,7 @@ export default function StudentSelectBlock({
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder={
-                isTeamMember
-                  ? "Search by name"
-                  : "Search by name, email or ID"
-              }
+              placeholder="Search by name, email or ID"
               className="w-full rounded-md border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
             />
           </div>

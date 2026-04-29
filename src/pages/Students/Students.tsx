@@ -66,7 +66,7 @@ export default function Students() {
     isFetching: isPartnerStudentsFetching,
   } = useGetAllStudentsByPartnerIdQuery(
     { partnerId: user?.id as string },
-    { skip: !user?.id || isTeamMember }
+    { skip: !user?.id }
   );
 
   
@@ -74,7 +74,6 @@ export default function Students() {
   console.log(allStudents)
 
   const tableData: StudentRecord[] = useMemo(() => {
-    if (isTeamMember) return [];
     if (!allStudents?.data) return [];
     const rows = allStudents.data.map((u: any) => ({
       key: u.id,
@@ -153,9 +152,7 @@ export default function Students() {
         title="Students - Campus Transfer Partner"
         description="View and manage your students, applications, and enrollment status in the Campus Transfer Partner panel."
       />
-      <PageHeader title="Students" subtitle={isTeamMember
-              ? "Students with tasks assigned to you."
-              : "Easily manage every student you onboard and support."}  extra={<button
+      <PageHeader title="Students" subtitle="Easily manage every student in your team."  extra={<button
               type="button"
               onClick={() => setCreateStudentOpen(true)}
               className="inline cursor-pointer flex items-center justify-center rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
@@ -174,11 +171,7 @@ export default function Students() {
     
    <div className="mb-6 max-w-sm">
         <Input
-          placeholder={
-            isTeamMember
-              ? "Search by student name"
-              : "Search by name, email, status or phone"
-          }
+          placeholder="Search by name, email, status or phone"
           allowClear
           value={searchText}
           prefix={<Search size={16} className="text-[#4B5563]" />}
@@ -188,54 +181,31 @@ export default function Students() {
       </div>
 
       <div className="overflow-hidden rounded-[24px] border border-neutral-100 bg-white card-shadow dark:border-gray-800 dark:bg-gray-900">
-        {isTeamMember ? (
-          <DataTable
-            data={assignedTableData}
-            columns={assignedColumns}
-            rowKey="key"
-            loading={loading}
-            showHeader
-            isPaginate
-            noInnerBorder
-            onRow={(record: AssignedStudentRecord) => ({
-              onClick: () =>
-                navigate(`/students/${record.studentId}/profile`, {
-                  state: { student: { id: record.studentId, name: record.studentName } },
-                }),
-              style: { cursor: "pointer" },
-            })}
-            pagination={{
-              pageSize: 10,
-              showTotal: (total: number) => `Total ${total} students`,
-            }}
-          />
-        ) : (
-          <DataTable
-            data={tableData}
-            columns={columns}
-            rowKey="key"
-            loading={loading}
-            showHeader
-            isPaginate
-            noInnerBorder
-            currentPage={page}
-            setCurrentPage={setPage}
-            limit={pageSize}
-            setLimit={setPageSize}
-            showSizeChanger
-            onRow={(record: StudentRecord) => ({
-              onClick: () =>
-                navigate(`/students/${record.id}/profile`, {
-                  state: { student: record },
-                }),
-              style: { cursor: "pointer" },
-            })}
-            pagination={{
-              pageSizeOptions: ["10", "20", "50"],
-              // showTotal: (total: number) => `Total ${total} students`,
-            }}
-          />
-        )}
+        <DataTable
+          data={tableData}
+          columns={columns}
+          rowKey="key"
+          loading={loading}
+          showHeader
+          isPaginate
+          noInnerBorder
+          currentPage={page}
+          setCurrentPage={setPage}
+          limit={pageSize}
+          setLimit={setPageSize}
+          showSizeChanger
+          onRow={(record: StudentRecord) => ({
+            onClick: () =>
+              navigate(`/students/${record.id}/profile`, {
+                state: { student: record },
+              }),
+            style: { cursor: "pointer" },
+          })}
+          pagination={{
+            pageSizeOptions: ["10", "20", "50"],
+            showTotal: (total: number) => `Total ${total} students`,
+          }}
+        />
       </div>
    </div>
     </div>
