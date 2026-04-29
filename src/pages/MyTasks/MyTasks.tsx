@@ -8,7 +8,6 @@ import {
   CloseCircleOutlined,
   ClockCircleOutlined,
   ControlOutlined,
-  EditOutlined,
   EyeOutlined,
   FireOutlined,
   InboxOutlined,
@@ -18,8 +17,6 @@ import {
 } from "@ant-design/icons";
 import {
   Button,
-  DatePicker,
-  Form,
   Input,
   Modal,
   Select,
@@ -34,10 +31,8 @@ import DataTable from "../../components/common/Tables/DataTable";
 import PageHeader from "../../components/common/Navigation/PageHeader";
 import {
   PartnerTaskListItem,
-  UpdateTaskBody,
   useGetPartnerTasksQuery,
   useGetTaskByIdQuery,
-  useUpdateTaskMutation,
   useUpdateTaskStatusMutation,
 } from "../../redux/features/tasks/partnerTasksApi";
 import { useGetPartnerProfileQuery } from "../../redux/features/profile/partnerProfileApi";
@@ -47,10 +42,10 @@ import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 import "../../components/common/Tables/AntTable.css";
 import "./MyTasks.css";
 
-type PartnerTaskStatus = "PENDING" | "IN_PROGRESS" | "SUBMITTED" | "COMPLETED";
+type PartnerTaskStatus = "IN_PROGRESS" | "SUBMITTED" | "COMPLETED";
 type PartnerTaskPriority = "LOW" | "MEDIUM" | "HIGH";
 
-const STATUS_OPTIONS: PartnerTaskStatus[] = ["PENDING", "IN_PROGRESS", "SUBMITTED", "COMPLETED"];
+const STATUS_OPTIONS: PartnerTaskStatus[] = ["IN_PROGRESS", "SUBMITTED", "COMPLETED"];
 const PRIORITY_OPTIONS: PartnerTaskPriority[] = ["LOW", "MEDIUM", "HIGH"];
 const priorityColor: Record<PartnerTaskPriority, string> = {
   LOW: "default",
@@ -59,7 +54,6 @@ const priorityColor: Record<PartnerTaskPriority, string> = {
 };
 
 const statusColor: Record<PartnerTaskStatus, string> = {
-  PENDING: "default",
   IN_PROGRESS: "processing",
   SUBMITTED: "purple",
   COMPLETED: "success",
@@ -92,8 +86,6 @@ export default function MyTasks() {
   const [viewTask, setViewTask] = useState<PartnerTaskListItem | null>(null);
   const [submitModalTask, setSubmitModalTask] = useState<PartnerTaskListItem | null>(null);
   const [submitNote, setSubmitNote] = useState("");
-  const [editingTask, setEditingTask] = useState<PartnerTaskListItem | null>(null);
-  const [editForm] = Form.useForm();
   const currentUser = useAppSelector(selectCurrentUser);
 
   const { data: tasksData, isLoading, isFetching } = useGetPartnerTasksQuery({
@@ -116,7 +108,6 @@ export default function MyTasks() {
   });
 
   const [updateTaskStatus, { isLoading: updatingStatus }] = useUpdateTaskStatusMutation();
-  const [updateTask, { isLoading: updatingTask }] = useUpdateTaskMutation();
 
   const allRows = tasksData?.data ?? [];
   const rows = useMemo(() => {
@@ -134,24 +125,22 @@ export default function MyTasks() {
 
   const stats = useMemo(() => {
     const apiStats = tasksData?.meta?.stats;
-    if (apiStats) {
+    if (apiStats && typeof apiStats === 'object') {
       return {
-        total: apiStats.total,
-        pending: apiStats.byStatus.PENDING,
-        inProgress: apiStats.byStatus.IN_PROGRESS,
-        submitted: apiStats.byStatus.SUBMITTED,
-        completed: apiStats.byStatus.COMPLETED,
-        low: apiStats.byPriority.LOW,
-        medium: apiStats.byPriority.MEDIUM,
-        high: apiStats.byPriority.HIGH,
-        cancelled: apiStats.byStatus.CANCELLED,
-        urgent: apiStats.byPriority.URGENT,
+        total: apiStats.total || 0,
+        inProgress: (apiStats as any).inProgress || 0,
+        submitted: (apiStats as any).submitted || 0,
+        completed: (apiStats as any).completed || 0,
+        low: (apiStats as any).low || 0,
+        medium: (apiStats as any).medium || 0,
+        high: (apiStats as any).high || 0,
+        cancelled: (apiStats as any).cancelled || 0,
+        urgent: (apiStats as any).urgent || 0,
       };
     }
     return allRows.reduce(
       (acc, r) => {
           acc.total += 1;
-          if (r.status === "PENDING") acc.pending += 1;
           if (r.status === "IN_PROGRESS") acc.inProgress += 1;
           if (r.status === "SUBMITTED") acc.submitted += 1;
           if (r.status === "COMPLETED") acc.completed += 1;
@@ -162,7 +151,6 @@ export default function MyTasks() {
         },
         {
           total: 0,
-          pending: 0,
           inProgress: 0,
           submitted: 0,
           completed: 0,
@@ -171,7 +159,7 @@ export default function MyTasks() {
           high: 0,
           cancelled: 0,
           urgent: 0,
-        }
+        },
       );
   }, [allRows, tasksData?.meta?.stats]);
 
@@ -219,27 +207,10 @@ export default function MyTasks() {
       width: 180,
       render: (_: unknown, row: PartnerTaskListItem) => (
         <Space>
-          <Tooltip title="Edit task">
-            <Button
-              type="text"
-              size="small"
-              icon={<EditOutlined />}
-              onClick={() => {
-                setEditingTask(row);
-                editForm.setFieldsValue({
-                  title: row.task_title,
-                  priority: row.priority || undefined,
-                  taskType: row.taskType || undefined,
-                  dueDate: row.dueDate ? dayjs(row.dueDate) : undefined,
-                  dueTime: row.dueTime || undefined,
-                });
-              }}
-            />
-          </Tooltip>
           <Tooltip title="View details">
             <Button type="text" size="small" icon={<EyeOutlined />} onClick={() => setViewTask(row)} />
           </Tooltip>
-          {(row.status === "PENDING" || row.status === "IN_PROGRESS") && (
+          {row.status === "IN_PROGRESS" && (
             <Tooltip title="Submit task">
               <Button
                 type="text"
@@ -257,30 +228,7 @@ export default function MyTasks() {
     },
   ];
 
-  const assigneeOptions = useMemo(() => {
-    const options: { value: string; label: string }[] = [];
-    if (profile?.userId) {
-      const selfName = String(currentUser?.name || "Me").trim();
-      const selfEmail = String(currentUser?.email || "").trim();
-      options.push({
-        value: profile.userId,
-        label: selfEmail ? `${selfName} (${selfEmail})` : selfName,
-      });
-    }
-    const members = teamMembersData?.data ?? [];
-    members
-      .filter((m) => m.status === "ACTIVE" && m.userId)
-      .forEach((m) => {
-        const memberName = [m.firstName, m.lastName].filter(Boolean).join(" ").trim();
-        const memberEmail = String(m.email || "").trim();
-        const label = memberEmail
-          ? `${memberName || memberEmail} (${memberEmail})`
-          : memberName || "Unknown";
-        options.push({ value: m.userId!, label });
-      });
-    return options;
-  }, [profile, currentUser?.name, currentUser?.email, teamMembersData?.data]);
-
+  
   return (
     <div className="space-y-4 my-tasks-page">
       <PageMeta title="My Tasks - Campus Transfer Partner" description="Tasks assigned to me by team members and managers." />
@@ -293,104 +241,72 @@ export default function MyTasks() {
         ]}
       />
 
-      <section className="rounded-xl border border-slate-200 bg-white p-4">
-        <header className="mb-3 flex items-start gap-3 border-b border-slate-100 pb-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-lg text-slate-600">
-            <CheckCircleOutlined />
-          </span>
-          <div>
-            <Typography.Title level={5} className="!mb-0.5 !text-base">
-              Task status
-            </Typography.Title>
-            <Typography.Text type="secondary" className="text-xs">
-              Click a stage to filter the table. Numbers here are overall totals for this view and do not change when you filter.
-            </Typography.Text>
-          </div>
+      <section className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+        <header className="px-4 pt-4 pb-3 flex items-center border-b border-slate-100">
+          <Typography.Title level={5} className="!mb-0 !text-gray-800 font-semibold">Task Status</Typography.Title>
         </header>
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
-          <button type="button" onClick={() => setStatus("")} className={statCardClass(!status, "border-slate-200", "bg-slate-50/90", "indigo")}>
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-slate-100 text-slate-600"><AppstoreOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">All statuses</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-slate-900">{stats.total}</p></div>
-            </div>
+        <div className="flex divide-x divide-slate-200">
+          <button type="button" onClick={() => { setStatus(""); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-400 ${!status ? "bg-indigo-50" : "bg-white hover:bg-slate-50"}`}>
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <AppstoreOutlined className="text-[10px]" /> All
+            </span>
+            <p className={`text-2xl font-bold tabular-nums ${!status ? "text-indigo-600" : "text-slate-800"}`}>{stats.total}</p>
           </button>
-          <button type="button" onClick={() => setStatus("PENDING")} className={statCardClass(status === "PENDING", "border-slate-200", "bg-slate-50/90", "indigo")}>
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-slate-200/80 text-slate-700"><InboxOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">To do</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-slate-900">{stats.pending}</p></div>
-            </div>
+          <button type="button" onClick={() => { setStatus("IN_PROGRESS"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-400 ${status === "IN_PROGRESS" ? "bg-sky-50" : "bg-white hover:bg-slate-50"}`}>
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <ClockCircleOutlined className="text-[10px]" /> In Progress
+            </span>
+            <p className={`text-2xl font-bold tabular-nums ${status === "IN_PROGRESS" ? "text-sky-600" : "text-slate-800"}`}>{stats.inProgress}</p>
           </button>
-          <button type="button" onClick={() => setStatus("IN_PROGRESS")} className={statCardClass(status === "IN_PROGRESS", "border-sky-200", "bg-sky-50/80", "indigo")}>
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-sky-100 text-sky-700"><ClockCircleOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-sky-800">In progress</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-sky-950">{stats.inProgress}</p></div>
-            </div>
+          <button type="button" onClick={() => { setStatus("SUBMITTED"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-400 ${status === "SUBMITTED" ? "bg-violet-50" : "bg-white hover:bg-slate-50"}`}>
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <SendOutlined className="text-[10px]" /> Submitted
+            </span>
+            <p className={`text-2xl font-bold tabular-nums ${status === "SUBMITTED" ? "text-violet-600" : "text-slate-800"}`}>{stats.submitted}</p>
           </button>
-          <button type="button" onClick={() => setStatus("SUBMITTED")} className={statCardClass(status === "SUBMITTED", "border-violet-200", "bg-violet-50/80", "indigo")}>
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-violet-100 text-violet-700"><SendOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-violet-800">Submitted</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-violet-950">{stats.submitted}</p></div>
-            </div>
+          <button type="button" onClick={() => { setStatus("COMPLETED"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 ${status === "COMPLETED" ? "bg-emerald-50" : "bg-white hover:bg-slate-50"}`}>
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <CheckCircleOutlined className="text-[10px]" /> Completed
+            </span>
+            <p className={`text-2xl font-bold tabular-nums ${status === "COMPLETED" ? "text-emerald-600" : "text-slate-800"}`}>{stats.completed}</p>
           </button>
-          <button type="button" onClick={() => setStatus("COMPLETED")} className={statCardClass(status === "COMPLETED", "border-emerald-200", "bg-emerald-50/80", "indigo")}>
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-emerald-100 text-emerald-700"><CheckCircleOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-800">Completed</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-emerald-950">{stats.completed}</p></div>
-            </div>
-          </button>
-          <button type="button" disabled className="rounded-lg border border-rose-200 bg-rose-50/80 px-3 py-2.5 text-left opacity-70 cursor-not-allowed">
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-rose-100 text-rose-700"><CloseCircleOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-rose-800">Cancelled</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-rose-950">{stats.cancelled}</p></div>
-            </div>
+          <button type="button" onClick={() => { setStatus("CANCELLED" as PartnerTaskStatus); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-rose-400 ${status === "CANCELLED" ? "bg-rose-50" : "bg-white hover:bg-slate-50"}`}>
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <CloseCircleOutlined className="text-[10px]" /> Cancelled
+            </span>
+            <p className={`text-2xl font-bold tabular-nums ${status === "CANCELLED" ? "text-rose-600" : "text-slate-800"}`}>{stats.cancelled}</p>
           </button>
         </div>
       </section>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-4">
-        <header className="mb-3 flex items-start gap-3 border-b border-slate-100 pb-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-lg text-slate-600">
-            <FireOutlined />
-          </span>
-          <div>
-            <Typography.Title level={5} className="!mb-0.5 !text-base">
-              Priority
-            </Typography.Title>
-            <Typography.Text type="secondary" className="text-xs">
-              Click a level to filter by urgency. Counts stay as overall totals; they do not change when status or priority filters are applied.
-            </Typography.Text>
-          </div>
+      <section className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+        <header className="px-4 pt-4 pb-3 flex items-center border-b border-slate-100">
+          <Typography.Title level={5} className="!mb-0 !text-gray-800 font-semibold">Priority</Typography.Title>
         </header>
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
-          <button type="button" onClick={() => setPriority("")} className={statCardClass(!priority, "border-slate-200", "bg-slate-50/90", "violet")}>
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-slate-100 text-slate-600"><ControlOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">All priorities</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-slate-900">{stats.total}</p></div>
-            </div>
+        <div className="flex divide-x divide-slate-200">
+          <button type="button" onClick={() => { setPriority(""); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-400 ${!priority ? "bg-violet-50" : "bg-white hover:bg-slate-50"}`}>
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <ControlOutlined className="text-[10px]" /> All
+            </span>
+            <p className={`text-2xl font-bold tabular-nums ${!priority ? "text-violet-600" : "text-slate-800"}`}>{stats.low + stats.medium + stats.high}</p>
           </button>
-          <button type="button" onClick={() => setPriority("LOW")} className={statCardClass(priority === "LOW", "border-slate-200", "bg-slate-50/90", "violet")}>
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-slate-200/80 text-slate-600"><ArrowDownOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">Low</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-slate-900">{stats.low}</p></div>
-            </div>
+          <button type="button" onClick={() => { setPriority("LOW"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-400 ${priority === "LOW" ? "bg-slate-100" : "bg-white hover:bg-slate-50"}`}>
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <ArrowDownOutlined className="text-[10px]" /> Low
+            </span>
+            <p className={`text-2xl font-bold tabular-nums ${priority === "LOW" ? "text-slate-700" : "text-slate-800"}`}>{stats.low}</p>
           </button>
-          <button type="button" onClick={() => setPriority("MEDIUM")} className={statCardClass(priority === "MEDIUM", "border-blue-200", "bg-blue-50/80", "violet")}>
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-blue-100 text-blue-700"><MinusOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-blue-800">Medium</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-blue-950">{stats.medium}</p></div>
-            </div>
+          <button type="button" onClick={() => { setPriority("MEDIUM"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400 ${priority === "MEDIUM" ? "bg-blue-50" : "bg-white hover:bg-slate-50"}`}>
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <MinusOutlined className="text-[10px]" /> Medium
+            </span>
+            <p className={`text-2xl font-bold tabular-nums ${priority === "MEDIUM" ? "text-blue-600" : "text-slate-800"}`}>{stats.medium}</p>
           </button>
-          <button type="button" onClick={() => setPriority("HIGH")} className={statCardClass(priority === "HIGH", "border-amber-200", "bg-amber-50/80", "violet")}>
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-amber-100 text-amber-800"><ArrowUpOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-amber-900">High</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-amber-950">{stats.high}</p></div>
-            </div>
-          </button>
-          <button type="button" disabled className="rounded-lg border border-red-200 bg-red-50/80 px-3 py-2.5 text-left opacity-70 cursor-not-allowed">
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-red-100 text-red-700"><ThunderboltOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-red-800">Urgent</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-red-950">{stats.urgent}</p></div>
-            </div>
+          <button type="button" onClick={() => { setPriority("HIGH"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-400 ${priority === "HIGH" ? "bg-amber-50" : "bg-white hover:bg-slate-50"}`}>
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <ArrowUpOutlined className="text-[10px]" /> High
+            </span>
+            <p className={`text-2xl font-bold tabular-nums ${priority === "HIGH" ? "text-amber-600" : "text-slate-800"}`}>{stats.high}</p>
           </button>
         </div>
       </section>
@@ -485,19 +401,7 @@ export default function MyTasks() {
                 </p>
               </div>
             </div>
-            <div className="pt-2">
-              <p className="mb-2 text-xs uppercase text-gray-500">Update status</p>
-              <Select
-                value={taskDetail.status}
-                onChange={(nextStatus) =>
-                  updateTaskStatus({ id: taskDetail.id, status: nextStatus }).unwrap()
-                }
-                options={STATUS_OPTIONS.map((s) => ({ value: s, label: s.replace(/_/g, " ") }))}
-                loading={updatingStatus}
-                style={{ minWidth: 180 }}
-              />
-            </div>
-          </div>
+                      </div>
         ) : null}
       </Modal>
 
@@ -536,65 +440,6 @@ export default function MyTasks() {
         />
       </Modal>
 
-      <Modal
-        title="Edit task"
-        open={!!editingTask}
-        onCancel={() => {
-          setEditingTask(null);
-          editForm.resetFields();
-        }}
-        onOk={async () => {
-          if (!editingTask) return;
-          const values = await editForm.validateFields();
-          const payload: UpdateTaskBody = {
-            title: values.title,
-            priority: values.priority || undefined,
-            taskType: values.taskType || undefined,
-            dueDate: values.dueDate ? dayjs(values.dueDate).format("YYYY-MM-DD") : undefined,
-            dueTime: values.dueTime || undefined,
-            assignedToUserId: values.assignedToUserId || undefined,
-          };
-          await updateTask({ id: editingTask.id, body: payload }).unwrap();
-          setEditingTask(null);
-          editForm.resetFields();
-        }}
-        okText="Save"
-        confirmLoading={updatingTask}
-        destroyOnHidden
-      >
-        <Form form={editForm} layout="vertical">
-          <Form.Item name="title" label="Task title" rules={[{ required: true, message: "Task title is required" }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="assignedToUserId" label="Assign to team member">
-            <Select options={assigneeOptions} showSearch optionFilterProp="label" />
-          </Form.Item>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Form.Item name="priority" label="Priority">
-              <Select options={PRIORITY_OPTIONS.map((p) => ({ value: p, label: p }))} allowClear />
-            </Form.Item>
-            <Form.Item name="taskType" label="Task type">
-              <Select
-                options={[
-                  { value: "TO_DO", label: "To Do" },
-                  { value: "FOLLOW_UP", label: "Follow Up" },
-                  { value: "REMINDER", label: "Reminder" },
-                  { value: "INTERNAL_TASK", label: "Internal Task" },
-                ]}
-                allowClear
-              />
-            </Form.Item>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Form.Item name="dueDate" label="Due date">
-              <DatePicker className="w-full" />
-            </Form.Item>
-            <Form.Item name="dueTime" label="Due time">
-              <Input placeholder="e.g. 04:30 PM" />
-            </Form.Item>
-          </div>
-        </Form>
-      </Modal>
-    </div>
   );
 }

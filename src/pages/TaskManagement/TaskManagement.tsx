@@ -15,6 +15,7 @@ import {
   MinusOutlined,
   RedoOutlined,
   SendOutlined,
+  StopOutlined,
   ThunderboltOutlined,
 } from "@ant-design/icons";
 import {
@@ -53,10 +54,10 @@ import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 import "../../components/common/Tables/AntTable.css";
 import "../MyTasks/MyTasks.css";
 
-type PartnerTaskStatus = "PENDING" | "IN_PROGRESS" | "SUBMITTED" | "COMPLETED";
+type PartnerTaskStatus = "IN_PROGRESS" | "SUBMITTED" | "COMPLETED" | "CANCELLED";
 type PartnerTaskPriority = "LOW" | "MEDIUM" | "HIGH";
 
-const STATUS_OPTIONS: PartnerTaskStatus[] = ["PENDING", "IN_PROGRESS", "SUBMITTED", "COMPLETED"];
+const STATUS_OPTIONS: PartnerTaskStatus[] = ["IN_PROGRESS", "SUBMITTED", "COMPLETED", "CANCELLED"];
 const PRIORITY_OPTIONS: PartnerTaskPriority[] = ["LOW", "MEDIUM", "HIGH"];
 const TASK_TYPE_OPTIONS: NonNullable<CreateTaskBody["taskType"]>[] = [
   "TO_DO",
@@ -72,10 +73,10 @@ const priorityColor: Record<PartnerTaskPriority, string> = {
 };
 
 const statusColor: Record<PartnerTaskStatus, string> = {
-  PENDING: "default",
   IN_PROGRESS: "processing",
   SUBMITTED: "purple",
   COMPLETED: "success",
+  CANCELLED: "error",
 };
 
 function StatCardIcon({
@@ -109,6 +110,7 @@ export default function TaskManagement() {
   const [reviewDecision, setReviewDecision] = useState<"COMPLETE" | "REASSIGN">("COMPLETE");
   const [reviewNote, setReviewNote] = useState("");
   const [reviewReassignTo, setReviewReassignTo] = useState<string>();
+  const [cancelTask, setCancelTask] = useState<PartnerTaskListItem | null>(null);
   const [form] = Form.useForm();
   const currentUser = useAppSelector(selectCurrentUser);
 
@@ -179,25 +181,23 @@ export default function TaskManagement() {
 
   const stats = useMemo(() => {
     const apiStats = tasksData?.meta?.stats;
-    if (apiStats) {
+    if (apiStats && typeof apiStats === 'object') {
       return {
-        total: apiStats.total,
-        pending: apiStats.byStatus.PENDING,
-        inProgress: apiStats.byStatus.IN_PROGRESS,
-        submitted: apiStats.byStatus.SUBMITTED,
-        completed: apiStats.byStatus.COMPLETED,
-        reviewOpen: apiStats.byStatus.SUBMITTED,
-        low: apiStats.byPriority.LOW,
-        medium: apiStats.byPriority.MEDIUM,
-        high: apiStats.byPriority.HIGH,
-        cancelled: apiStats.byStatus.CANCELLED,
-        urgent: apiStats.byPriority.URGENT,
+        total: (apiStats as any).total || 0,
+        inProgress: (apiStats as any).inProgress || 0,
+        submitted: (apiStats as any).submitted || 0,
+        completed: (apiStats as any).completed || 0,
+        reviewOpen: (apiStats as any).submitted || 0,
+        low: (apiStats as any).low || 0,
+        medium: (apiStats as any).medium || 0,
+        high: (apiStats as any).high || 0,
+        cancelled: (apiStats as any).cancelled || 0,
+        urgent: (apiStats as any).urgent || 0,
       };
     }
     return allRows.reduce(
       (acc, r) => {
           acc.total += 1;
-          if (r.status === "PENDING") acc.pending += 1;
           if (r.status === "IN_PROGRESS") acc.inProgress += 1;
           if (r.status === "SUBMITTED") acc.submitted += 1;
           if (r.status === "COMPLETED") acc.completed += 1;
@@ -209,7 +209,6 @@ export default function TaskManagement() {
         },
         {
           total: 0,
-          pending: 0,
           inProgress: 0,
           completed: 0,
           submitted: 0,
@@ -321,7 +320,11 @@ export default function TaskManagement() {
     {
       title: "Status",
       dataIndex: "status",
-      render: (s: PartnerTaskStatus) => <Tag color={statusColor[s]}>{s.replace(/_/g, " ")}</Tag>,
+      render: (s: PartnerTaskStatus) => (
+        <Tag color={statusColor[s]}>
+          {s === "SUBMITTED" ? "IN REVIEW" : s.replace(/_/g, " ")}
+        </Tag>
+      ),
     },
     {
       title: "Type",
@@ -331,9 +334,21 @@ export default function TaskManagement() {
     { title: "Assigned To", dataIndex: "assigned_member_name" },
     {
       title: "Actions",
-      width: 140,
+      width: 180,
       render: (_: unknown, row: PartnerTaskListItem) => (
         <Space>
+          {(row.status === "IN_PROGRESS" || row.status === "SUBMITTED") && (
+            <Tooltip title="Cancel task">
+              <Button
+                type="text"
+                size="small"
+                icon={<StopOutlined />}
+                onClick={() => {
+                  setCancelTask(row);
+                }}
+              />
+            </Tooltip>
+          )}
           {row.status === "SUBMITTED" && (
             <Tooltip title="Review submission">
               <Button
@@ -377,104 +392,72 @@ export default function TaskManagement() {
         ]}
       />
 
-      <section className="rounded-xl border border-slate-200 bg-white p-4">
-        <header className="mb-3 flex items-start gap-3 border-b border-slate-100 pb-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-lg text-slate-600">
-            <CheckCircleOutlined />
-          </span>
-          <div>
-            <Typography.Title level={5} className="!mb-0.5 !text-base">
-              Task status
-            </Typography.Title>
-            <Typography.Text type="secondary" className="text-xs">
-              Click a stage to filter the table. Numbers here are overall totals for this view and do not change when you filter.
-            </Typography.Text>
-          </div>
+      <section className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+        <header className="px-4 pt-4 pb-3 flex items-center border-b border-slate-100">
+          <Typography.Title level={4} className="!mb-0 !text-gray-800 font-semibold">Task Status</Typography.Title>
         </header>
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
-          <button type="button" onClick={() => setStatus("")} className={statCardClass(!status, "border-slate-200", "bg-slate-50/90", "indigo")}>
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-slate-100 text-slate-600"><AppstoreOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">All statuses</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-slate-900">{stats.total}</p></div>
-            </div>
+        <div className="flex divide-x divide-slate-200">
+          <button type="button" onClick={() => { setStatus(""); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-400 ${!status ? "bg-indigo-50" : "bg-white hover:bg-slate-50"}`}>
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <AppstoreOutlined className="text-[10px]" /> All
+            </span>
+            <p className={`text-2xl font-bold tabular-nums ${!status ? "text-indigo-600" : "text-slate-800"}`}>{stats.total}</p>
           </button>
-          <button type="button" onClick={() => setStatus("PENDING")} className={statCardClass(status === "PENDING", "border-slate-200", "bg-slate-50/90", "indigo")}>
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-slate-200/80 text-slate-700"><InboxOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">To do</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-slate-900">{stats.pending}</p></div>
-            </div>
+          <button type="button" onClick={() => { setStatus("IN_PROGRESS"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-400 ${status === "IN_PROGRESS" ? "bg-sky-50" : "bg-white hover:bg-slate-50"}`}>
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <ClockCircleOutlined className="text-[10px]" /> In Progress
+            </span>
+            <p className={`text-2xl font-bold tabular-nums ${status === "IN_PROGRESS" ? "text-sky-600" : "text-slate-800"}`}>{stats.inProgress}</p>
           </button>
-          <button type="button" onClick={() => setStatus("IN_PROGRESS")} className={statCardClass(status === "IN_PROGRESS", "border-sky-200", "bg-sky-50/80", "indigo")}>
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-sky-100 text-sky-700"><ClockCircleOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-sky-800">In progress</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-sky-950">{stats.inProgress}</p></div>
-            </div>
+          <button type="button" onClick={() => { setStatus("SUBMITTED"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-400 ${status === "SUBMITTED" ? "bg-violet-50" : "bg-white hover:bg-slate-50"}`}>
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <SendOutlined className="text-[10px]" /> In Review
+            </span>
+            <p className={`text-2xl font-bold tabular-nums ${status === "SUBMITTED" ? "text-violet-600" : "text-slate-800"}`}>{stats.submitted}</p>
           </button>
-          <button type="button" onClick={() => setStatus("SUBMITTED")} className={statCardClass(status === "SUBMITTED", "border-violet-200", "bg-violet-50/80", "indigo")}>
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-violet-100 text-violet-700"><SendOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-violet-800">Submitted</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-violet-950">{stats.submitted}</p></div>
-            </div>
+          <button type="button" onClick={() => { setStatus("COMPLETED"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 ${status === "COMPLETED" ? "bg-emerald-50" : "bg-white hover:bg-slate-50"}`}>
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <CheckCircleOutlined className="text-[10px]" /> Completed
+            </span>
+            <p className={`text-2xl font-bold tabular-nums ${status === "COMPLETED" ? "text-emerald-600" : "text-slate-800"}`}>{stats.completed}</p>
           </button>
-          <button type="button" onClick={() => setStatus("COMPLETED")} className={statCardClass(status === "COMPLETED", "border-emerald-200", "bg-emerald-50/80", "indigo")}>
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-emerald-100 text-emerald-700"><CheckCircleOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-800">Completed</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-emerald-950">{stats.completed}</p></div>
-            </div>
-          </button>
-          <button type="button" disabled className="rounded-lg border border-rose-200 bg-rose-50/80 px-3 py-2.5 text-left opacity-70 cursor-not-allowed">
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-rose-100 text-rose-700"><CloseCircleOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-rose-800">Cancelled</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-rose-950">{stats.cancelled}</p></div>
-            </div>
+          <button type="button" onClick={() => { setStatus("CANCELLED"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-rose-400 ${status === "CANCELLED" ? "bg-rose-50" : "bg-white hover:bg-slate-50"}`}>
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <CloseCircleOutlined className="text-[10px]" /> Cancelled
+            </span>
+            <p className={`text-2xl font-bold tabular-nums ${status === "CANCELLED" ? "text-rose-600" : "text-slate-800"}`}>{stats.cancelled}</p>
           </button>
         </div>
       </section>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-4">
-        <header className="mb-3 flex items-start gap-3 border-b border-slate-100 pb-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-lg text-slate-600">
-            <FireOutlined />
-          </span>
-          <div>
-            <Typography.Title level={5} className="!mb-0.5 !text-base">
-              Priority
-            </Typography.Title>
-            <Typography.Text type="secondary" className="text-xs">
-              Click a level to filter by urgency. Counts stay as overall totals; they do not change when status or priority filters are applied.
-            </Typography.Text>
-          </div>
+      <section className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+        <header className="px-4 pt-4 pb-3 flex items-center border-b border-slate-100">
+          <Typography.Title level={4} className="!mb-0 !text-gray-800 font-semibold">Priority</Typography.Title>
         </header>
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
-          <button type="button" onClick={() => setPriority("")} className={statCardClass(!priority, "border-slate-200", "bg-slate-50/90", "violet")}>
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-slate-100 text-slate-600"><ControlOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">All priorities</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-slate-900">{stats.total}</p></div>
-            </div>
+        <div className="flex divide-x divide-slate-200">
+          <button type="button" onClick={() => { setPriority(""); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-400 ${!priority ? "bg-violet-50" : "bg-white hover:bg-slate-50"}`}>
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <ControlOutlined className="text-[10px]" /> All
+            </span>
+            <p className={`text-2xl font-bold tabular-nums ${!priority ? "text-violet-600" : "text-slate-800"}`}>{stats.low + stats.medium + stats.high}</p>
           </button>
-          <button type="button" onClick={() => setPriority("LOW")} className={statCardClass(priority === "LOW", "border-slate-200", "bg-slate-50/90", "violet")}>
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-slate-200/80 text-slate-600"><ArrowDownOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">Low</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-slate-900">{stats.low}</p></div>
-            </div>
+          <button type="button" onClick={() => { setPriority("LOW"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-400 ${priority === "LOW" ? "bg-slate-100" : "bg-white hover:bg-slate-50"}`}>
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <ArrowDownOutlined className="text-[10px]" /> Low
+            </span>
+            <p className={`text-2xl font-bold tabular-nums ${priority === "LOW" ? "text-slate-700" : "text-slate-800"}`}>{stats.low}</p>
           </button>
-          <button type="button" onClick={() => setPriority("MEDIUM")} className={statCardClass(priority === "MEDIUM", "border-blue-200", "bg-blue-50/80", "violet")}>
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-blue-100 text-blue-700"><MinusOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-blue-800">Medium</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-blue-950">{stats.medium}</p></div>
-            </div>
+          <button type="button" onClick={() => { setPriority("MEDIUM"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400 ${priority === "MEDIUM" ? "bg-blue-50" : "bg-white hover:bg-slate-50"}`}>
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <MinusOutlined className="text-[10px]" /> Medium
+            </span>
+            <p className={`text-2xl font-bold tabular-nums ${priority === "MEDIUM" ? "text-blue-600" : "text-slate-800"}`}>{stats.medium}</p>
           </button>
-          <button type="button" onClick={() => setPriority("HIGH")} className={statCardClass(priority === "HIGH", "border-amber-200", "bg-amber-50/80", "violet")}>
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-amber-100 text-amber-800"><ArrowUpOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-amber-900">High</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-amber-950">{stats.high}</p></div>
-            </div>
-          </button>
-          <button type="button" disabled className="rounded-lg border border-red-200 bg-red-50/80 px-3 py-2.5 text-left opacity-70 cursor-not-allowed">
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-red-100 text-red-700"><ThunderboltOutlined /></StatCardIcon>
-              <div><p className="text-[11px] font-semibold uppercase tracking-wide text-red-800">Urgent</p><p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-red-950">{stats.urgent}</p></div>
-            </div>
+          <button type="button" onClick={() => { setPriority("HIGH"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-400 ${priority === "HIGH" ? "bg-amber-50" : "bg-white hover:bg-slate-50"}`}>
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <ArrowUpOutlined className="text-[10px]" /> High
+            </span>
+            <p className={`text-2xl font-bold tabular-nums ${priority === "HIGH" ? "text-amber-600" : "text-slate-800"}`}>{stats.high}</p>
           </button>
         </div>
       </section>
@@ -489,9 +472,7 @@ export default function TaskManagement() {
             setPage(1);
           }}
         />
-        <Button type="primary" onClick={onOpenCreate}>
-          Create Task
-        </Button>
+        <Button type="primary" onClick={onOpenCreate}>Create Task</Button>
       </div>
 
       <div className="my-tasks-table-wrapper overflow-hidden rounded-[24px] border border-neutral-100 bg-white dark:border-gray-800 dark:bg-gray-900">
@@ -747,6 +728,28 @@ export default function TaskManagement() {
             ]}
           />
         </div>
+      </Modal>
+
+      <Modal
+        title="Cancel task"
+        open={!!cancelTask}
+        onCancel={() => setCancelTask(null)}
+        onOk={async () => {
+          if (!cancelTask) return;
+          await updateTaskStatus({
+            id: cancelTask.id,
+            status: "CANCELLED",
+            note: "Task cancelled by creator",
+          }).unwrap();
+          setCancelTask(null);
+        }}
+        okText="Cancel Task"
+        okButtonProps={{ danger: true }}
+      >
+        <Typography.Paragraph type="secondary">
+          Are you sure you want to cancel this task? This action cannot be undone.
+        </Typography.Paragraph>
+        <Typography.Text strong>Task: {cancelTask?.task_title || 'Unknown Task'}</Typography.Text>
       </Modal>
     </div>
   );
