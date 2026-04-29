@@ -115,7 +115,7 @@ export default function TeamMembers() {
       const values = await form.validateFields();
       const { countryCode, contactNumber } = parsePhoneNumber(values.phone);
       
-      const createdRes = await inviteMember({
+      await inviteMember({
         email: values.email,
         firstName: values.firstName,
         lastName: values.lastName ?? "",
@@ -131,15 +131,6 @@ export default function TeamMembers() {
       setPage(1);
       setStatusFilter("");
       setSearch("");
-      const createdMember = (createdRes?.data || createdRes) as PartnerTeamMember;
-      if (createdMember?.id) {
-        setEditingMember(createdMember);
-      }
-      editForm.setFieldsValue({
-        firstName: createdMember?.firstName ?? values.firstName,
-        lastName: createdMember?.lastName ?? values.lastName ?? "",
-        phone: createdMember?.countryCode ? `${createdMember.countryCode}${createdMember.contactNumber}` : "",
-      });
     } catch (err: any) {
       const apiMessage =
         err?.data?.message || err?.error?.message || err?.message || "";
