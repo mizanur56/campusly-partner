@@ -1,4 +1,4 @@
-import { Dropdown, Input, Select, Tag, Tooltip } from "antd";
+import { Button, Dropdown, Input, Select, Tag, Tooltip } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { Search } from "lucide-react";
 import { useState } from "react";
@@ -6,6 +6,7 @@ import { FiEye, FiTrash2 } from "react-icons/fi";
 import { IoFilterSharp } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import PageCard from "../../components/common/Card/PageCard";
 import PageMeta from "../../components/common/Meta/PageMeta";
 import PageHeader from "../../components/common/Navigation/PageHeader";
 import DataTable from "../../components/common/Tables/DataTable";
@@ -195,13 +196,9 @@ export default function Applications() {
         title="Applications"
         subtitle="Manage your applications"
         extra={
-          <button
-            type="button"
-            onClick={() => navigate("/programs-schools")}
-            className="inline-flex items-center justify-center rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-          >
+          <Button type="primary" onClick={() => navigate("/programs-schools")}>
             Find More Programs
-          </button>
+          </Button>
         }
         breadcrumbs={[
           { title: "Dashboard", path: "/" },
@@ -209,7 +206,7 @@ export default function Applications() {
         ]}
       />
 
-      <div className="bg-[#FFFFFF] p-6 rounded-lg border border-[#C7CACF]">
+      <PageCard>
         <div className="mb-6 flex items-center justify-between">
           <Input
             placeholder="Search by ID, course, university or status"
@@ -266,27 +263,25 @@ export default function Applications() {
           </Dropdown>
         </div>
 
-        <div className="applications-table-wrapper overflow-hidden rounded-[24px] border border-neutral-100 bg-white dark:border-gray-800 dark:bg-gray-900">
-          <DataTable
-            data={tableData}
-            columns={columns}
-            rowKey="id"
-            currentPage={currentPage}
-            setCurrentPage={setCurrentPage}
-            limit={limit}
-            setLimit={setLimit}
-            total={total}
-            loading={isLoading || isFetching}
-            isPaginate
-            showHeader
-            showSizeChanger
-            noInnerBorder
-            pagination={{
-              pageSizeOptions: ["10", "20", "50"],
-            }}
-          />
-        </div>
-      </div>
+        <DataTable
+          data={tableData}
+          columns={columns}
+          rowKey="id"
+          currentPage={currentPage}
+          setCurrentPage={setCurrentPage}
+          limit={limit}
+          setLimit={setLimit}
+          total={total}
+          loading={isLoading || isFetching}
+          isPaginate
+          showHeader
+          showSizeChanger
+          noInnerBorder
+          pagination={{
+            pageSizeOptions: ["10", "20", "50"],
+          }}
+        />
+      </PageCard>
 
       <DeleteModal
         open={deleteModalOpen}

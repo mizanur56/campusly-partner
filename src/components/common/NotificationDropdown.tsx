@@ -1,29 +1,14 @@
 import { BellOutlined } from "@ant-design/icons";
-import { Badge, Button, Dropdown, Empty, Spin, Typography } from "antd";
+import { Button, Dropdown, Empty, Spin } from "antd";
 import { useEffect, useState } from "react";
-import { RiCheckDoubleLine } from "react-icons/ri";
 import { useNavigate } from "react-router-dom";
-import { useGetAnnouncementsQuery } from "../../redux/features/announcements/announcementsApi";
 import {
   INotification,
   useGetNotificationsQuery,
   useMarkAllAsReadMutation,
   useMarkAsReadMutation,
 } from "../../redux/features/notifications/notificationApi";
-import {
-  getStoredAnnouncementReadIds,
-  persistAnnouncementReadIds,
-} from "../../lib/partnerAnnouncementReadIds";
 import { formatTime } from "../../utils/formatTime";
-
-const { Text } = Typography;
-
-type AnnouncementItem = {
-  id: string;
-  title?: string;
-  body?: string;
-  createdAt?: string;
-};
 
 const NotificationDropdown = () => {
   const navigate = useNavigate();
@@ -38,65 +23,24 @@ const NotificationDropdown = () => {
   }, []);
 
   const { data, isLoading } = useGetNotificationsQuery({ page: 1, limit: 10 });
-  const { data: announcementsData, isLoading: announcementsLoading } =
-    useGetAnnouncementsQuery({
-      page: 1,
-      limit: 10,
-      isActive: true,
-    });
+
   const [markAsRead] = useMarkAsReadMutation();
   const [markAllAsRead] = useMarkAllAsReadMutation();
 
   const notifications = data?.data || [];
-  const announcements = (announcementsData?.data || []) as AnnouncementItem[];
-  const [announcementReadIds, setAnnouncementReadIds] = useState<string[]>([]);
-
-  useEffect(() => {
-    setAnnouncementReadIds(getStoredAnnouncementReadIds());
-  }, []);
+  const displayedNotifications = notifications.slice(0, 3);
 
   const notificationUnreadCount =
     data?.meta?.unreadCount ??
     notifications.filter((n: INotification) => !n.isRead).length;
-  const announcementUnreadCount = announcements.filter(
-    (a) => !announcementReadIds.includes(a.id),
-  ).length;
-  const unreadCount = notificationUnreadCount + announcementUnreadCount;
-
-  const displayItems = [
-    ...notifications.map((n) => ({
-      kind: "notification" as const,
-      id: n.id,
-      createdAt: n.createdAt,
-      title: n.title,
-      message: n.message,
-      type: n.type,
-      isRead: n.isRead,
-      raw: n,
-    })),
-    ...announcements.map((a) => ({
-      kind: "announcement" as const,
-      id: `announcement-${a.id}`,
-      createdAt: a.createdAt || "",
-      title: a.title || "Announcement",
-      message: a.body || "",
-      type: "INFO" as const,
-      isRead: announcementReadIds.includes(a.id),
-      raw: a,
-    })),
-  ]
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime(),
-    )
-    .slice(0, 6);
+  const unreadCount = notificationUnreadCount;
 
   const handleNotificationClick = async (notification: INotification) => {
     if (!notification.isRead) {
       try {
         await markAsRead(notification.id).unwrap();
-      } catch {
-        // ignore
+      } catch (error) {
+        console.error(error);
       }
     }
 
@@ -109,27 +53,8 @@ const NotificationDropdown = () => {
   const handleMarkAllAsRead = async () => {
     try {
       await markAllAsRead().unwrap();
-      const announcementIds = announcements.map((a) => a.id);
-      const merged = Array.from(
-        new Set([...announcementReadIds, ...announcementIds]),
-      );
-      setAnnouncementReadIds(merged);
-      persistAnnouncementReadIds(merged);
-    } catch {
-      // ignore
-    }
-  };
-
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case "SUCCESS":
-        return "✅";
-      case "ERROR":
-        return "❌";
-      case "WARNING":
-        return "⚠️";
-      default:
-        return "ℹ️";
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -138,36 +63,35 @@ const NotificationDropdown = () => {
       {
         key: "header",
         label: (
-          <div className="flex items-center justify-between gap-2 px-2 py-2 border-b">
-            <div className="flex items-center gap-1 flex-wrap">
-              <Text strong className="text-sm sm:text-base">
+          <div className="flex items-center justify-between py-5 px-4 border-b border-[#C7CACF]">
+            <div className="flex items-center gap-2">
+              <h2 className="text-[18px] font-semibold text-gray-800">
                 Notifications
-              </Text>
+              </h2>
+
               {unreadCount > 0 && (
-                <span className="text-[10px] text-primary-600 font-normal">
-                  {unreadCount} Unread Notification{unreadCount > 1 ? "s" : ""}
+                <span className="w-[22px] h-[22px] flex items-center justify-center rounded-full bg-red-500 text-white text-[12px] font-medium">
+                  {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}
             </div>
+
             {unreadCount > 0 && (
-              <button
-                type="button"
+              <Button
+                type="link"
+                size="small"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleMarkAllAsRead();
                 }}
-                className="flex items-center cursor-pointer gap-1 p-1.5 text-xs text-gray-500 hover:text-gray-700 font-medium transition-colors rounded-lg hover:bg-gray-100 flex-shrink-0"
               >
-                <RiCheckDoubleLine className="w-4 h-4 text-primary-600" />
-                <span className="text-[12px] text-primary-600 font-medium whitespace-nowrap">
-                  Mark all as read
-                </span>
-              </button>
+                Mark all as read
+              </Button>
             )}
           </div>
         ),
-        disabled: true,
       },
+
       ...(isLoading
         ? [
             {
@@ -180,89 +104,57 @@ const NotificationDropdown = () => {
               disabled: true,
             },
           ]
-        : announcementsLoading
-        ? [
-            {
-              key: "loading",
-              label: (
-                <div className="flex justify-center py-4">
-                  <Spin size="small" />
-                </div>
-              ),
-              disabled: true,
-            },
-          ]
-        : displayItems.length === 0
+        : notifications.length === 0
           ? [
               {
                 key: "empty",
                 label: (
                   <div className="py-8">
-                    <Empty
-                      image={Empty.PRESENTED_IMAGE_SIMPLE}
-                      description="No notifications"
-                      style={{ margin: 0 }}
-                    />
+                    <Empty description="No notifications" />
                   </div>
                 ),
                 disabled: true,
               },
             ]
           : [
-              ...displayItems.map((item) => ({
-                key: item.id,
+              ...displayedNotifications.map((notification: INotification) => ({
+                key: notification.id,
                 label: (
                   <div
-                    className={`px-3 py-2 hover:bg-gray-50 cursor-pointer transition-colors ${
-                      !item.isRead ? "bg-blue-50" : ""
-                    }`}
-                    onClick={() => {
-                      if (item.kind === "notification") {
-                        handleNotificationClick(item.raw as INotification);
-                        return;
-                      }
-
-                      const announcement = item.raw as AnnouncementItem;
-                      if (!announcementReadIds.includes(announcement.id)) {
-                        const updated = [...announcementReadIds, announcement.id];
-                        setAnnouncementReadIds(updated);
-                        persistAnnouncementReadIds(updated);
-                      }
-                      setIsOpen(false);
-                      navigate(
-                        `/announcements?id=${encodeURIComponent(announcement.id)}`,
-                      );
-                    }}
+                    className={`
+                    p-3 cursor-pointer border-b border-[#C7CACF] hover:bg-primary-50 transition-all duration-300
+                  `}
+                    onClick={() => handleNotificationClick(notification)}
                   >
                     <div className="flex items-start gap-2">
-                      <span className="text-lg">
-                        {item.kind === "announcement"
-                          ? "📢"
-                          : getNotificationIcon(item.type)}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <Text strong={!item.isRead} className="text-sm">
-                            {item.title}
-                          </Text>
-                          {!item.isRead && (
-                            <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1" />
-                          )}
+                      <div className="flex-1">
+                        <div className="-space-y-1">
+                          <div className="flex justify-between gap-2">
+                            <p
+                              className={`text-[14px] font-semibold ${!notification.isRead ? "text-primary-600 font-bold" : "text-gray-900"}`}
+                            >
+                              {notification.title}
+                            </p>
+
+                            {!notification.isRead && (
+                              <span className="w-2 h-2 bg-primary-400 rounded-full mt-1" />
+                            )}
+                          </div>
+
+                          <p className="text-xs block mt-1 line-clamp-1 text-gray-600">
+                            {notification.message}
+                          </p>
                         </div>
-                        <Text
-                          type="secondary"
-                          className="text-xs block mt-1 line-clamp-2"
-                        >
-                          {item.message}
-                        </Text>
-                        <Text type="secondary" className="text-xs block mt-1">
-                          {formatTime(item.createdAt)}
-                        </Text>
+
+                        <p className="text-xs block mt-1">
+                          {formatTime(notification.createdAt)}
+                        </p>
                       </div>
                     </div>
                   </div>
                 ),
               })),
+
               {
                 key: "view-all",
                 label: (
@@ -275,9 +167,9 @@ const NotificationDropdown = () => {
                         navigate("/notifications");
                         setIsOpen(false);
                       }}
-                      className="text-primary-600 font-medium text-sm p-0 h-auto"
+                      className="text-[#237D3B] text-[14px] font-medium hover:underline hover:text-[#237D3B]/80 transition-all duration-300"
                     >
-                      All Notifications
+                      View all notifications
                     </Button>
                   </div>
                 ),
@@ -287,33 +179,74 @@ const NotificationDropdown = () => {
   };
 
   return (
-    <Dropdown
-      menu={menuItems}
-      trigger={["click"]}
-      open={isOpen}
-      onOpenChange={setIsOpen}
-      placement={isMobile ? "bottom" : "bottomRight"}
-      overlayStyle={{
-        width: isMobile ? "calc(100vw - 32px)" : "450px",
-        maxWidth: "450px",
-        maxHeight: "500px",
-        overflowY: "auto",
-      }}
-    >
-      <button className="relative cursor-pointer p-1.5 sm:p-2 text-gray-600 hover:text-gray-900 transition-colors">
-        <BellOutlined className="text-xl sm:text-2xl" />
-        {unreadCount > 0 && (
-          <Badge
-            count={unreadCount > 9 ? "9+" : unreadCount}
-            size={isMobile ? "small" : "default"}
-            className="absolute -top-2 sm:-top-4 -left-2 sm:-left-3"
-            style={{ fontSize: isMobile ? "10px" : "12px" }}
-          />
-        )}
-      </button>
-    </Dropdown>
+    <>
+      {/* ✅ SAME FILE CSS OVERRIDE */}
+      <style>{`
+        .notification-dropdown-overlay .ant-dropdown-menu {
+          padding: 0 !important;
+          margin: 0 !important;
+          border: 0.5px solid #C7CACF !important;
+          border-radius: 17px !important;
+          box-shadow: none !important;
+        }
+
+        .notification-dropdown-overlay .ant-dropdown-menu-item {
+          padding: 0 !important;
+          background: transparent !important;
+        }
+
+        .notification-dropdown-overlay .ant-dropdown-menu-item:hover {
+          background: transparent !important;
+        }
+
+        .notification-dropdown-overlay .ant-dropdown-menu-item:first-child:hover {
+          background: transparent !important;
+        }
+
+        .notification-dropdown-overlay .ant-dropdown-menu-item-active {
+          background: transparent !important;
+        }
+      `}</style>
+
+      <Dropdown
+        menu={menuItems}
+        trigger={["click"]}
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        placement={isMobile ? "bottom" : "bottomRight"}
+        overlayStyle={{
+          width: isMobile ? "calc(100vw - 32px)" : "350px",
+          maxHeight: "500px",
+        }}
+        overlayClassName="notification-dropdown-overlay"
+      >
+        <div
+          className="
+            relative flex items-center justify-center
+            w-10 h-10 rounded-xl
+            border border-gray-200
+            bg-white
+            text-gray-600
+
+            transition-all duration-200 ease-in-out
+            hover:border-primary-500
+            hover:text-primary-600
+            hover:shadow-md
+
+            cursor-pointer
+          "
+        >
+          <BellOutlined className="text-[20px]" />
+
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] px-[4px]">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
+        </div>
+      </Dropdown>
+    </>
   );
 };
 
 export default NotificationDropdown;
-

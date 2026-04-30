@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Button, Dropdown, Spin } from "antd";
 import { ChevronRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
 import { RiCheckDoubleLine } from "react-icons/ri";
+import { useNavigate } from "react-router-dom";
 import {
   getStoredAnnouncementReadIds,
   persistAnnouncementReadIds,
@@ -26,25 +27,28 @@ export default function AnnouncementDropdown() {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [readIds, setReadIds] = useState<string[]>([]);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const { data, isLoading } = useGetAnnouncementsQuery(
     { page: 1, limit: 10, isActive: true },
-    {
-      pollingInterval: 60000,
-      refetchOnMountOrArgChange: true,
-    },
+    { pollingInterval: 60000, refetchOnMountOrArgChange: true },
   );
 
   const announcements = useMemo<AnnouncementItem[]>(
     () => (data?.data as AnnouncementItem[]) || [],
     [data],
   );
-  const unreadAnnouncements = useMemo(
-    () => announcements.filter((item) => !readIds.includes(item.id)),
+  const unreadCount = useMemo(
+    () => announcements.filter((item) => !readIds.includes(item.id)).length,
     [announcements, readIds],
   );
-  const unreadCount = unreadAnnouncements.length;
 
   useEffect(() => {
     setReadIds(getStoredAnnouncementReadIds());
@@ -56,110 +60,176 @@ export default function AnnouncementDropdown() {
   };
 
   const handleMarkAllAsRead = () => {
-    const allIds = announcements.map((item) => item.id);
-    const merged = Array.from(new Set([...readIds, ...allIds]));
+    const merged = Array.from(
+      new Set([...readIds, ...announcements.map((a) => a.id)]),
+    );
     persistReadIds(merged);
   };
 
-  useEffect(() => {
-    const handleOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener("mousedown", handleOutside);
-    }
-    return () => document.removeEventListener("mousedown", handleOutside);
-  }, [isOpen]);
-
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
-        className="relative flex items-center justify-center rounded-full p-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-        aria-label="Announcements"
-      >
-        <i className="fa-solid fa-bullhorn text-[18px]" />
-        {unreadCount > 0 ? (
-          <span className="absolute -right-0.5 -top-0.5 flex min-w-[16px] items-center justify-center rounded-full bg-emerald-600 px-1 text-[10px] font-semibold leading-4 text-white">
-            {unreadCount > 99 ? "99+" : unreadCount}
-          </span>
-        ) : null}
-      </button>
-
-      {isOpen ? (
-        <div className="absolute right-0 mt-2 w-[360px] rounded-xl border border-gray-200 bg-white shadow-xl z-[120] dark:border-gray-700 dark:bg-gray-900">
-          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+  const menuItems = {
+    items: [
+      {
+        key: "header",
+        label: (
+          <div className="flex items-center justify-between py-3 px-4 border-b border-[#C7CACF]">
+            <h2 className="text-[18px] font-semibold text-gray-800">
               Announcements
-            </span>
-            {unreadCount > 0 ? (
-              <button
-                type="button"
-                onClick={handleMarkAllAsRead}
-                className="flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-600"
+            </h2>
+            {unreadCount > 0 && (
+              <Button
+                type="link"
+                size="small"
+                icon={<RiCheckDoubleLine />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleMarkAllAsRead();
+                }}
               >
-                <RiCheckDoubleLine className="h-3.5 w-3.5" />
                 Mark all as read
-              </button>
-            ) : null}
-          </div>
-          <div className="max-h-[360px] overflow-y-auto">
-            {isLoading ? (
-              <div className="px-4 py-8 text-center text-sm text-gray-500">
-                Loading announcements...
-              </div>
-            ) : announcements.length === 0 ? (
-              <div className="px-4 py-8 text-center text-sm text-gray-500">
-                No announcements yet
-              </div>
-            ) : (
-              announcements.map((announcement) => (
-                <button
-                  key={announcement.id}
-                  type="button"
-                  onClick={() => {
-                    setIsOpen(false);
-                    navigate(`/announcements?id=${encodeURIComponent(announcement.id)}`);
-                  }}
-                  className="w-full border-b border-gray-100 px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/60"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                      {announcement.title || "Announcement"}
-                    </p>
-                    {!readIds.includes(announcement.id) ? (
-                      <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
-                    ) : null}
-                  </div>
-                  <p className="mt-1 line-clamp-2 text-xs text-gray-600 dark:text-gray-300">
-                    {announcement.body || ""}
-                  </p>
-                  <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
-                    {formatTime(announcement.createdAt)}
-                  </p>
-                </button>
-              ))
+              </Button>
             )}
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              setIsOpen(false);
-              navigate("/announcements");
-            }}
-            className="flex w-full items-center gap-1 px-4 py-3 text-left text-sm font-medium text-gray-700 transition-colors "
-          >
-            Recent announcements <ChevronRight className="h-4 w-4" />
-          </button>
+        ),
+      },
+
+      ...(isLoading
+        ? [
+            {
+              key: "loading",
+              label: (
+                <div className="flex justify-center py-4">
+                  <Spin size="small" />
+                </div>
+              ),
+              disabled: true,
+            },
+          ]
+        : announcements.length === 0
+          ? [
+              {
+                key: "empty",
+                label: (
+                  <div className="px-4 py-8 text-center text-sm text-gray-500">
+                    No announcements yet
+                  </div>
+                ),
+                disabled: true,
+              },
+            ]
+          : announcements.map((announcement) => ({
+              key: announcement.id,
+              label: (
+                <div
+                  className="p-3 cursor-pointer border-b border-[#C7CACF] hover:bg-primary-50 transition-all duration-300"
+                  onClick={() => {
+                    if (!readIds.includes(announcement.id)) {
+                      persistReadIds([...readIds, announcement.id]);
+                    }
+                    setIsOpen(false);
+                    navigate(
+                      `/announcements?id=${encodeURIComponent(announcement.id)}`,
+                    );
+                  }}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-semibold text-gray-900">
+                      {announcement.title || "Announcement"}
+                    </p>
+                    {!readIds.includes(announcement.id) && (
+                      <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+                    )}
+                  </div>
+                  <p className="mt-1 line-clamp-2 text-xs text-gray-600">
+                    {announcement.body || ""}
+                  </p>
+                  <p className="mt-1 text-[11px] text-gray-500">
+                    {formatTime(announcement.createdAt)}
+                  </p>
+                </div>
+              ),
+            }))),
+
+      {
+        key: "view-all",
+        label: (
+          <div className="px-3 py-2 border-t">
+            <Button
+              type="link"
+              block
+              icon={<ChevronRight className="h-4 w-4" />}
+              iconPosition="end"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsOpen(false);
+                navigate("/announcements");
+              }}
+              className="text-[#237D3B]! text-[14px] font-medium hover:underline transition-all duration-300"
+            >
+              Recent announcements
+            </Button>
+          </div>
+        ),
+      },
+    ],
+  };
+
+  return (
+    <>
+      <style>{`
+        .announcement-dropdown-overlay .ant-dropdown-menu {
+          padding: 0 !important;
+          margin: 0 !important;
+          border: 0.5px solid #C7CACF !important;
+          border-radius: 17px !important;
+          box-shadow: none !important;
+        }
+        .announcement-dropdown-overlay .ant-dropdown-menu-item {
+          padding: 0 !important;
+          background: transparent !important;
+        }
+        .announcement-dropdown-overlay .ant-dropdown-menu-item:hover {
+          background: transparent !important;
+        }
+        .announcement-dropdown-overlay .ant-dropdown-menu-item-active {
+          background: transparent !important;
+        }
+      `}</style>
+
+      <Dropdown
+        menu={menuItems}
+        trigger={["click"]}
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        placement={isMobile ? "bottom" : "bottomRight"}
+        overlayStyle={{
+          width: isMobile ? "calc(100vw - 32px)" : "360px",
+          maxHeight: "500px",
+        }}
+        overlayClassName="announcement-dropdown-overlay"
+      >
+        <div
+          className="
+            relative flex items-center justify-center
+            w-10 h-10 rounded-xl
+            border border-gray-200
+            bg-white
+            text-gray-600
+            transition-all duration-200 ease-in-out
+            hover:border-primary-500
+            hover:text-primary-600
+            hover:shadow-md
+            cursor-pointer
+          "
+          aria-label="Announcements"
+        >
+          <i className="fa-solid fa-bullhorn text-[18px]" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-emerald-600 text-white text-[10px] px-[4px]">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
         </div>
-      ) : null}
-    </div>
+      </Dropdown>
+    </>
   );
 }

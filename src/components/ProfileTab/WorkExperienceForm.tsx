@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Form, Tooltip, Switch } from "antd";
+import { Button, Form, Tooltip, Switch } from "antd";
 import dayjs from "dayjs";
 import { toast } from "react-toastify";
 import {
@@ -260,13 +260,9 @@ const WorkExperienceForm = ({
                   <p className="font-medium text-[#20242A] truncate max-w-50">{certificate.name}</p>
                 </div>
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => window.open(resolveUrl(certificate), "_blank")} className="p-2 cursor-pointer hover:bg-gray-200 rounded">
-                    <EyeOutlined />
-                  </button>
+                  <Button type="text" icon={<EyeOutlined />} onClick={() => window.open(resolveUrl(certificate), "_blank")} />
                   {canEdit && isEditing && (
-                    <button type="button" onClick={() => setCertificate(null)} className="p-2 cursor-pointer hover:bg-red-100 text-red-500 rounded">
-                      <DeleteOutlined />
-                    </button>
+                    <Button type="text" danger icon={<DeleteOutlined />} onClick={() => setCertificate(null)} />
                   )}
                 </div>
               </div>
@@ -285,9 +281,7 @@ const WorkExperienceForm = ({
             {canEdit && isEditing && (
               <div className="flex justify-end mt-6 gap-3">
                 {workExperienceDoc && (
-                  <button type="button" onClick={() => setIsEditing(false)} className="px-6 py-2 border rounded-md hover:border-[#237D3B] hover:text-[#237D3B] cursor-pointer">
-                    Discard
-                  </button>
+                  <Button onClick={() => setIsEditing(false)}>Discard</Button>
                 )}
                 <PrimaryButton text={saving ? "Saving..." : "Save"} onClick={save} loading={saving} disabled={saving} />
               </div>
