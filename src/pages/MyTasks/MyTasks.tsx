@@ -9,36 +9,28 @@ import {
   ClockCircleOutlined,
   ControlOutlined,
   EyeOutlined,
-  FireOutlined,
-  InboxOutlined,
   MinusOutlined,
-  SendOutlined,
-  ThunderboltOutlined,
 } from "@ant-design/icons";
 import {
   Button,
-  Input,
   Modal,
-  Select,
   Space,
   Tag,
   Tooltip,
   Typography,
 } from "antd";
+import RichTextEditor from "../../components/common/Forms/RichTextEditor";
 import dayjs from "dayjs";
 import PageMeta from "../../components/common/Meta/PageMeta";
 import DataTable from "../../components/common/Tables/DataTable";
 import PageHeader from "../../components/common/Navigation/PageHeader";
+import DateTimeHighlight from "../../components/common/DateTimeHighlight";
 import {
   PartnerTaskListItem,
   useGetPartnerTasksQuery,
   useGetTaskByIdQuery,
   useUpdateTaskStatusMutation,
 } from "../../redux/features/tasks/partnerTasksApi";
-import { useGetPartnerProfileQuery } from "../../redux/features/profile/partnerProfileApi";
-import { useGetTeamMembersQuery } from "../../redux/features/teams/partnerTeamsApi";
-import { useAppSelector } from "../../redux/features/hooks";
-import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 import "../../components/common/Tables/AntTable.css";
 import "./MyTasks.css";
 
@@ -81,12 +73,9 @@ export default function MyTasks() {
   const [limit] = useState(10);
   const [status, setStatus] = useState<PartnerTaskStatus | "">("");
   const [priority, setPriority] = useState<PartnerTaskPriority | "">("");
-  const [searchTerm, setSearchTerm] = useState("");
-
   const [viewTask, setViewTask] = useState<PartnerTaskListItem | null>(null);
-  const [submitModalTask, setSubmitModalTask] = useState<PartnerTaskListItem | null>(null);
-  const [submitNote, setSubmitNote] = useState("");
-  const currentUser = useAppSelector(selectCurrentUser);
+  const [completeModalTask, setCompleteModalTask] = useState<PartnerTaskListItem | null>(null);
+  const [completeNote, setCompleteNote] = useState("");
 
   const { data: tasksData, isLoading, isFetching } = useGetPartnerTasksQuery({
     page,
@@ -99,27 +88,13 @@ export default function MyTasks() {
     skip: !viewTask?.id,
   });
 
-  const { data: profile } = useGetPartnerProfileQuery();
-  const { data: teamMembersData } = useGetTeamMembersQuery({
-    page: 1,
-    limit: 100,
-    status: "ACTIVE",
-  });
-
   const [updateTaskStatus, { isLoading: updatingStatus }] = useUpdateTaskStatusMutation();
 
   const allRows = tasksData?.data ?? [];
-  const rows = useMemo(() => {
-    const q = searchTerm.trim().toLowerCase();
-    return allRows.filter((r) => {
-      const passPriority = !priority || r.priority === priority;
-      const passSearch =
-        !q ||
-        r.task_title?.toLowerCase().includes(q) ||
-        r.assigned_member_name?.toLowerCase().includes(q);
-      return passPriority && passSearch;
-    });
-  }, [allRows, searchTerm, priority]);
+  const rows = useMemo(
+    () => allRows.filter((r) => !priority || r.priority === priority),
+    [allRows, priority],
+  );
 
   const stats = useMemo(() => {
     const apiStats = tasksData?.meta?.stats;
@@ -198,9 +173,19 @@ export default function MyTasks() {
       render: (s: PartnerTaskStatus) => <Tag color={statusColor[s]}>{s.replace(/_/g, " ")}</Tag>,
     },
     {
+      title: "Assigned To",
+      render: (_: unknown, r: PartnerTaskListItem) =>
+        `${r.assigned_member_name || "N/A"} (${r.assigned_member_email || "-"})`,
+    },
+    {
       title: "Assigned By",
-      dataIndex: "created_by_name",
-      render: (v: string | null | undefined) => v || "—",
+      render: (_: unknown, r: PartnerTaskListItem) =>
+        `${r.created_by_name || "N/A"} (${r.created_by_email || "-"})`,
+    },
+    {
+      title: "Due Date",
+      dataIndex: "dueDate",
+      render: (v: string | null | undefined) => <DateTimeHighlight value={v} />,
     },
     {
       title: "Actions",
@@ -211,15 +196,12 @@ export default function MyTasks() {
             <Button type="text" size="small" icon={<EyeOutlined />} onClick={() => setViewTask(row)} />
           </Tooltip>
           {row.status === "IN_PROGRESS" && (
-            <Tooltip title="Submit task">
+            <Tooltip title="Mark as complete">
               <Button
                 type="text"
                 size="small"
-                icon={<SendOutlined />}
-                onClick={() => {
-                  setSubmitModalTask(row);
-                  setSubmitNote("");
-                }}
+                icon={<CheckCircleOutlined />}
+                onClick={() => { setCompleteModalTask(row); setCompleteNote(""); }}
               />
             </Tooltip>
           )}
@@ -257,12 +239,6 @@ export default function MyTasks() {
               <ClockCircleOutlined className="text-[10px]" /> In Progress
             </span>
             <p className={`text-2xl font-bold tabular-nums ${status === "IN_PROGRESS" ? "text-sky-600" : "text-slate-800"}`}>{stats.inProgress}</p>
-          </button>
-          <button type="button" onClick={() => { setStatus("SUBMITTED"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-400 ${status === "SUBMITTED" ? "bg-violet-50" : "bg-white hover:bg-slate-50"}`}>
-            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
-              <SendOutlined className="text-[10px]" /> Submitted
-            </span>
-            <p className={`text-2xl font-bold tabular-nums ${status === "SUBMITTED" ? "text-violet-600" : "text-slate-800"}`}>{stats.submitted}</p>
           </button>
           <button type="button" onClick={() => { setStatus("COMPLETED"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 ${status === "COMPLETED" ? "bg-emerald-50" : "bg-white hover:bg-slate-50"}`}>
             <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
@@ -311,18 +287,6 @@ export default function MyTasks() {
         </div>
       </section>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Input.Search
-          placeholder="Search task title/type/assignee"
-          allowClear
-          className="max-w-xs"
-          onSearch={(v) => {
-            setSearchTerm(v.trim());
-            setPage(1);
-          }}
-        />
-      </div>
-
       <div className="my-tasks-table-wrapper overflow-hidden rounded-[24px] border border-neutral-100 bg-white dark:border-gray-800 dark:bg-gray-900">
         <DataTable
           rowKey="id"
@@ -368,7 +332,14 @@ export default function MyTasks() {
             </div>
             <div>
               <p className="text-xs uppercase text-gray-500">Description</p>
-              <p className="mt-1 whitespace-pre-wrap text-sm text-gray-700">{taskDetail.task_description || "No description added."}</p>
+              {taskDetail.task_description ? (
+                <div
+                  className="mt-1 text-sm text-gray-700 prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: taskDetail.task_description }}
+                />
+              ) : (
+                <p className="mt-1 text-sm text-gray-400">No description added.</p>
+              )}
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div className="rounded-lg border border-slate-200 bg-white p-3">
@@ -381,24 +352,31 @@ export default function MyTasks() {
               </div>
               <div className="rounded-lg border border-slate-200 bg-white p-3">
                 <p className="text-[11px] uppercase text-slate-500">Due</p>
-                <p className="mt-1 text-sm font-medium text-slate-900">
-                  {taskDetail.due_date ? dayjs(taskDetail.due_date).format("YYYY-MM-DD") : "—"}{" "}
-                  {taskDetail.due_time || ""}
-                </p>
+                <DateTimeHighlight value={taskDetail.due_date} />
               </div>
             </div>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <div className="rounded-xl border border-purple-200 bg-purple-50 p-4">
                 <p className="text-xs font-medium uppercase tracking-wide text-purple-700">Submission Note</p>
-                <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-purple-900">
-                  {taskDetail.submissionNote || "No submission note provided."}
-                </p>
+                {taskDetail.submissionNote ? (
+                  <div
+                    className="mt-2 text-sm leading-relaxed text-purple-900 prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: taskDetail.submissionNote }}
+                  />
+                ) : (
+                  <p className="mt-2 text-sm text-purple-400">No submission note provided.</p>
+                )}
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                 <p className="text-xs font-medium uppercase tracking-wide text-slate-700">Review Note</p>
-                <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-900">
-                  {taskDetail.reviewNote || "No review note provided."}
-                </p>
+                {taskDetail.reviewNote ? (
+                  <div
+                    className="mt-2 text-sm leading-relaxed text-slate-900 prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: taskDetail.reviewNote }}
+                  />
+                ) : (
+                  <p className="mt-2 text-sm text-slate-400">No review note provided.</p>
+                )}
               </div>
             </div>
                       </div>
@@ -406,40 +384,38 @@ export default function MyTasks() {
       </Modal>
 
       <Modal
-        title="Submit task update"
-        open={!!submitModalTask}
-        onCancel={() => setSubmitModalTask(null)}
+        title="Mark task as complete"
+        open={!!completeModalTask}
+        onCancel={() => setCompleteModalTask(null)}
         onOk={async () => {
-          if (!submitModalTask) return;
-          try {
-            await updateTaskStatus({
-              id: submitModalTask.id,
-              status: "SUBMITTED",
-              note: submitNote || undefined,
-            }).unwrap();
-          } catch {
-            await updateTaskStatus({
-              id: submitModalTask.id,
-              status: "IN_PROGRESS",
-              note: submitNote || undefined,
-            }).unwrap();
-          }
-          setSubmitModalTask(null);
+          if (!completeModalTask) return;
+          await updateTaskStatus({
+            id: completeModalTask.id,
+            status: "COMPLETED",
+            note: completeNote || undefined,
+          }).unwrap();
+          setCompleteModalTask(null);
         }}
         confirmLoading={updatingStatus}
-        okText="Submit for Review"
+        okText="Mark Complete"
+        width={680}
+        destroyOnClose
       >
-        <Typography.Paragraph type="secondary">
-          Add a brief note about what you completed or any blocker.
+        <div className="mb-3 rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">Task</p>
+          <p className="mt-0.5 text-sm font-semibold text-emerald-900">{completeModalTask?.task_title}</p>
+        </div>
+        <Typography.Paragraph type="secondary" className="mb-2">
+          Add a completion note (optional) to summarize what was done.
         </Typography.Paragraph>
-        <Input.TextArea
-          rows={4}
-          placeholder="Submission note..."
-          value={submitNote}
-          onChange={(e) => setSubmitNote(e.target.value)}
+        <RichTextEditor
+          placeholder="Describe what was completed..."
+          value={completeNote}
+          onChange={(v: string) => setCompleteNote(v)}
+          height={220}
         />
       </Modal>
 
-          </div>
+      </div>
   );
 }

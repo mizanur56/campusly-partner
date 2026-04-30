@@ -4,7 +4,9 @@ export interface PartnerTaskListItem {
   id: string;
   task_title: string;
   assigned_member_name: string;
+  assigned_member_email?: string | null;
   created_by_name?: string | null;
+  created_by_email?: string | null;
   created_date_time: string;
   status: string;
   dueDate?: string | null;
