@@ -1,19 +1,19 @@
-import { useState, useEffect, useMemo } from "react";
-import { Button, Card, Spin, Upload } from "antd";
+import { CameraOutlined, CloseOutlined } from "@ant-design/icons";
 import type { UploadProps } from "antd";
+import { Card, Spin, Upload } from "antd";
 import dayjs from "dayjs";
-import { CameraOutlined } from "@ant-design/icons";
-import { FaPencilAlt, FaTimes } from "react-icons/fa";
+import { useEffect, useMemo, useState } from "react";
+import { FaEdit } from "react-icons/fa";
 import { toast } from "react-toastify";
-import { useUpdateStudentProfileMutation } from "../../../../redux/features/profile/studentProfileApi";
-import { useGetCountriesQuery } from "../../../../redux/features/countries/countriesApi";
-import { useGetStudyLevelsByCountryQuery } from "../../../../redux/features/studyLevels/studyLevelsApi";
-import { useCreateMediaMutation } from "../../../../redux/features/media/mediaApi";
 import PrimaryButton from "../../../../components/common/Button/PrimaryButton";
 import AntImage from "../../../../components/shared/AntImage";
+import { config } from "../../../../config";
+import { useGetCountriesQuery } from "../../../../redux/features/countries/countriesApi";
+import { useCreateMediaMutation } from "../../../../redux/features/media/mediaApi";
+import { useUpdateStudentProfileMutation } from "../../../../redux/features/profile/studentProfileApi";
+import { useGetStudyLevelsByCountryQuery } from "../../../../redux/features/studyLevels/studyLevelsApi";
 import { InfoField, PhoneField, QualificationSection } from "./SectionFields";
 import { genderOptions } from "./constant";
-import { config } from "../../../../config";
 
 type ProfileRecord = {
   firstName?: string;
@@ -68,7 +68,9 @@ type PersonalFormShape = {
   email: string;
 };
 
-function validateGeneralPersonalFields(data: PersonalFormShape): Record<string, string> {
+function validateGeneralPersonalFields(
+  data: PersonalFormShape,
+): Record<string, string> {
   const err: Record<string, string> = {};
   if (!data.firstName?.trim()) err.firstName = "First name is required";
   if (!data.lastName?.trim()) err.lastName = "Last name is required";
@@ -115,11 +117,17 @@ export default function GeneralInformationTab({
     image: "",
   });
   const [editProfileData, setEditProfileData] = useState(profileData);
-  const [personalFieldErrors, setPersonalFieldErrors] = useState<Record<string, string>>({});
+  const [personalFieldErrors, setPersonalFieldErrors] = useState<
+    Record<string, string>
+  >({});
 
   const [updateProfile] = useUpdateStudentProfileMutation();
-  const [createMedia, { isLoading: isUploadingImage }] = useCreateMediaMutation();
-  const { data: countriesData } = useGetCountriesQuery({ page: 1, limit: 1000 });
+  const [createMedia, { isLoading: isUploadingImage }] =
+    useCreateMediaMutation();
+  const { data: countriesData } = useGetCountriesQuery({
+    page: 1,
+    limit: 1000,
+  });
 
   const selectedCountryId = useMemo(() => {
     if (!profileData.country || !countriesData?.data) return null;
@@ -133,9 +141,12 @@ export default function GeneralInformationTab({
     return byName?.id ?? null;
   }, [profileData.country, countriesData?.data]);
 
-  const { data: studyLevelsData } = useGetStudyLevelsByCountryQuery(selectedCountryId ?? "", {
-    skip: !selectedCountryId,
-  });
+  const { data: studyLevelsData } = useGetStudyLevelsByCountryQuery(
+    selectedCountryId ?? "",
+    {
+      skip: !selectedCountryId,
+    },
+  );
 
   const countriesOptions = useMemo(
     () =>
@@ -143,20 +154,24 @@ export default function GeneralInformationTab({
         label: c.name,
         value: c.id,
       })),
-    [countriesData?.data]
+    [countriesData?.data],
   );
 
   const qualificationOptions = useMemo(() => {
-    const data = Array.isArray(studyLevelsData) ? studyLevelsData : (studyLevelsData as { data?: unknown[] })?.data ?? [];
+    const data = Array.isArray(studyLevelsData)
+      ? studyLevelsData
+      : ((studyLevelsData as { data?: unknown[] })?.data ?? []);
 
-    return (data as {
-      studyLevel?: { id?: string; name?: string; description?: string };
-      name?: string;
-      description?: string;
-      countryStudyLevelName?: string;
-      studyLevelId?: string;
-    }[]).map((item) => ({
-      label:item.countryStudyLevelName  ?? item.name ?? "",
+    return (
+      data as {
+        studyLevel?: { id?: string; name?: string; description?: string };
+        name?: string;
+        description?: string;
+        countryStudyLevelName?: string;
+        studyLevelId?: string;
+      }[]
+    ).map((item) => ({
+      label: item.countryStudyLevelName ?? item.name ?? "",
       value: item.studyLevel?.id ?? item.studyLevelId ?? "",
     }));
   }, [studyLevelsData]);
@@ -167,22 +182,35 @@ export default function GeneralInformationTab({
       firstName: profile.firstName ?? "",
       lastName: profile.lastName ?? "",
       gender: profile.gender ?? "",
-      dateOfBirth: profile.dateOfBirth ? dayjs(profile.dateOfBirth).format("DD-MM-YYYY") : "",
+      dateOfBirth: profile.dateOfBirth
+        ? dayjs(profile.dateOfBirth).format("DD-MM-YYYY")
+        : "",
       // Store country as id (Select value). UI renders label from countriesOptions.
       country: profile.country ?? "",
       passportNo: profile.passportNo ?? "",
-      passportExpiryDate: profile.passportExpDate ? dayjs(profile.passportExpDate).format("DD-MM-YYYY") : "",
-      contactNumber: profile.phone ? (profile.phone.startsWith("+") ? profile.phone : `+${profile.phone}`) : "",
-      email: profile.email ?? (profile.user?.email ?? ""),
+      passportExpiryDate: profile.passportExpDate
+        ? dayjs(profile.passportExpDate).format("DD-MM-YYYY")
+        : "",
+      contactNumber: profile.phone
+        ? profile.phone.startsWith("+")
+          ? profile.phone
+          : `+${profile.phone}`
+        : "",
+      email: profile.email ?? profile.user?.email ?? "",
       qualification: profile.lastEducationId ?? "",
-      passingYear: profile.lastEducationPassingYear ? dayjs(profile.lastEducationPassingYear).format("YYYY") : "",
+      passingYear: profile.lastEducationPassingYear
+        ? dayjs(profile.lastEducationPassingYear).format("YYYY")
+        : "",
       image: profile.image?.url ?? "",
     };
     setProfileData(formatted);
     setEditProfileData(formatted);
   }, [profile]);
 
-  const formatDateForApi = (dateValue: string, format: string): string | null => {
+  const formatDateForApi = (
+    dateValue: string,
+    format: string,
+  ): string | null => {
     if (!dateValue) return null;
     try {
       if (format === "YYYY") {
@@ -214,9 +242,12 @@ export default function GeneralInformationTab({
     setUpdatingField("saving");
     try {
       const payload: Record<string, unknown> = {};
-      if (editProfileData.firstName !== profileData.firstName) payload.firstName = editProfileData.firstName || null;
-      if (editProfileData.lastName !== profileData.lastName) payload.lastName = editProfileData.lastName || null;
-      if (editProfileData.gender !== profileData.gender) payload.gender = editProfileData.gender || null;
+      if (editProfileData.firstName !== profileData.firstName)
+        payload.firstName = editProfileData.firstName || null;
+      if (editProfileData.lastName !== profileData.lastName)
+        payload.lastName = editProfileData.lastName || null;
+      if (editProfileData.gender !== profileData.gender)
+        payload.gender = editProfileData.gender || null;
       if (editProfileData.dateOfBirth !== profileData.dateOfBirth) {
         const v = formatDateForApi(editProfileData.dateOfBirth, "DD-MM-YYYY");
         if (v) payload.dateOfBirth = v;
@@ -224,14 +255,25 @@ export default function GeneralInformationTab({
       if (editProfileData.country !== profileData.country) {
         payload.countryId = editProfileData.country || null;
       }
-      if (editProfileData.passportNo !== profileData.passportNo) payload.passportNo = editProfileData.passportNo || null;
-      if (editProfileData.passportExpiryDate !== profileData.passportExpiryDate) {
-        const v = formatDateForApi(editProfileData.passportExpiryDate, "DD-MM-YYYY");
+      if (editProfileData.passportNo !== profileData.passportNo)
+        payload.passportNo = editProfileData.passportNo || null;
+      if (
+        editProfileData.passportExpiryDate !== profileData.passportExpiryDate
+      ) {
+        const v = formatDateForApi(
+          editProfileData.passportExpiryDate,
+          "DD-MM-YYYY",
+        );
         if (v) payload.passportExpDate = v;
       }
-      if (editProfileData.contactNumber !== profileData.contactNumber) payload.phone = editProfileData.contactNumber ? editProfileData.contactNumber.replace(/^\+/, "") : null;
-      if (editProfileData.email !== profileData.email) payload.email = editProfileData.email || null;
-      if (editProfileData.qualification !== profileData.qualification) payload.lastEducationId = editProfileData.qualification || null;
+      if (editProfileData.contactNumber !== profileData.contactNumber)
+        payload.phone = editProfileData.contactNumber
+          ? editProfileData.contactNumber.replace(/^\+/, "")
+          : null;
+      if (editProfileData.email !== profileData.email)
+        payload.email = editProfileData.email || null;
+      if (editProfileData.qualification !== profileData.qualification)
+        payload.lastEducationId = editProfileData.qualification || null;
       if (editProfileData.passingYear !== profileData.passingYear) {
         const v = formatDateForApi(editProfileData.passingYear, "YYYY");
         payload.lastEducationPassingYear = v ?? null;
@@ -255,7 +297,10 @@ export default function GeneralInformationTab({
     }
   };
 
-  const handleSaveQualification = async (qualification: string, passingYear: string) => {
+  const handleSaveQualification = async (
+    qualification: string,
+    passingYear: string,
+  ) => {
     setUpdatingField("qualification");
     try {
       const payload: Record<string, unknown> = {
@@ -275,7 +320,8 @@ export default function GeneralInformationTab({
   };
 
   const handleImageChange: UploadProps["onChange"] = async (info) => {
-    const file = (info.file as { originFileObj?: File })?.originFileObj ?? info.file;
+    const file =
+      (info.file as { originFileObj?: File })?.originFileObj ?? info.file;
     if (!file) return;
     try {
       const formData = new FormData();
@@ -306,7 +352,6 @@ export default function GeneralInformationTab({
       ? rawImage
       : `${config.image_access_url || ""}${rawImage}`
     : "/user.png";
-
 
   return (
     <div className="space-y-4">
@@ -355,120 +400,132 @@ export default function GeneralInformationTab({
           }
           extra={
             canEdit ? (
-              <Button
-                type="text"
+              <button
+                type="button"
                 onClick={() => {
                   if (isPersonalEditing) {
                     setEditProfileData(profileData);
                     setPersonalFieldErrors({});
                   }
-                  setIsPersonalEditing(!isPersonalEditing);
+                  setIsPersonalEditing((prev) => !prev);
                 }}
-                className="p-0 group"
+                aria-label={isPersonalEditing ? "Cancel Edit" : "Edit Profile"}
+                title={isPersonalEditing ? "Cancel" : "Edit"}
+                className={`
+    flex items-center justify-center
+    w-9 h-9 rounded-lg border
+    transition-all duration-200 active:scale-95
+
+    ${
+      isPersonalEditing
+        ? "bg-red-50 border-red-500 text-red-500 hover:bg-red-100 hover:border-red-600"
+        : "bg-white border-gray-300 text-gray-500 hover:bg-gray-100 hover:border-primary hover:text-primary"
+    }
+  `}
               >
                 {isPersonalEditing ? (
-                  <FaTimes className="text-red-500 hover:text-red-600 transition-colors" style={{ fontSize: 20 }} aria-label="Close" />
+                  <CloseOutlined size={18} />
                 ) : (
-                  <FaPencilAlt className="text-[#237D3B] hover:opacity-80 transition-opacity" style={{ fontSize: 18 }} aria-label="Edit" />
+                  <FaEdit size={16} />
                 )}
-              </Button>
+              </button>
             ) : null
           }
           bordered={true}
-          className="rounded-lg shadow-none"
+          className="rounded-2xl! shadow-none"
           style={{ borderColor: "#C7CACF", boxShadow: "none" }}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <InfoField
-            label="First Name"
-            value={editProfileData.firstName}
+            <InfoField
+              label="First Name"
+              value={editProfileData.firstName}
+              isEditable={canEdit && isPersonalEditing}
+              required
+              error={personalFieldErrors.firstName}
+              onChange={(v) => handleFieldChange("firstName", v)}
+              isLoading={updatingField === "firstName"}
+            />
+            <InfoField
+              label="Last Name"
+              value={editProfileData.lastName}
+              isEditable={canEdit && isPersonalEditing}
+              required
+              error={personalFieldErrors.lastName}
+              onChange={(v) => handleFieldChange("lastName", v)}
+              isLoading={updatingField === "lastName"}
+            />
+            <InfoField
+              label="Gender"
+              value={editProfileData.gender}
+              type="select"
+              options={genderOptions}
+              isEditable={canEdit && isPersonalEditing}
+              required
+              error={personalFieldErrors.gender}
+              onChange={(v) => handleFieldChange("gender", v)}
+              isLoading={updatingField === "gender"}
+            />
+            <InfoField
+              label="Date of Birth"
+              value={editProfileData.dateOfBirth}
+              type="date"
+              isEditable={canEdit && isPersonalEditing}
+              required
+              error={personalFieldErrors.dateOfBirth}
+              onChange={(v) => handleFieldChange("dateOfBirth", v)}
+              isLoading={updatingField === "dateOfBirth"}
+            />
+            <InfoField
+              label="Country"
+              value={editProfileData.country}
+              type="select"
+              options={countriesOptions}
+              isEditable={canEdit && isPersonalEditing}
+              required
+              error={personalFieldErrors.country}
+              onChange={(v) => handleFieldChange("country", v)}
+              isLoading={updatingField === "country"}
+            />
+            <InfoField
+              label="Passport No"
+              value={editProfileData.passportNo}
+              isEditable={canEdit && isPersonalEditing}
+              required
+              error={personalFieldErrors.passportNo}
+              onChange={(v) => handleFieldChange("passportNo", v)}
+              isLoading={updatingField === "passportNo"}
+            />
+            <InfoField
+              label="Passport Expiry Date"
+              value={editProfileData.passportExpiryDate}
+              type="date"
+              isEditable={canEdit && isPersonalEditing}
+              required
+              error={personalFieldErrors.passportExpiryDate}
+              onChange={(v) => handleFieldChange("passportExpiryDate", v)}
+              isLoading={updatingField === "passportExpiryDate"}
+            />
+            <InfoField
+              label="Email"
+              value={editProfileData.email}
+              type="email"
+              isEditable={canEdit && isPersonalEditing}
+              required
+              error={personalFieldErrors.email}
+              onChange={(v) => handleFieldChange("email", v)}
+              isLoading={updatingField === "email"}
+            />
+          </div>
+          <PhoneField
+            label="Contact Number"
+            value={editProfileData.contactNumber}
             isEditable={canEdit && isPersonalEditing}
             required
-            error={personalFieldErrors.firstName}
-            onChange={(v) => handleFieldChange("firstName", v)}
-            isLoading={updatingField === "firstName"}
+            error={personalFieldErrors.contactNumber}
+            onChange={(v) => handleFieldChange("contactNumber", v)}
+            isLoading={updatingField === "contactNumber"}
           />
-          <InfoField
-            label="Last Name"
-            value={editProfileData.lastName}
-            isEditable={canEdit && isPersonalEditing}
-            required
-            error={personalFieldErrors.lastName}
-            onChange={(v) => handleFieldChange("lastName", v)}
-            isLoading={updatingField === "lastName"}
-          />
-          <InfoField
-            label="Gender"
-            value={editProfileData.gender}
-            type="select"
-            options={genderOptions}
-            isEditable={canEdit && isPersonalEditing}
-            required
-            error={personalFieldErrors.gender}
-            onChange={(v) => handleFieldChange("gender", v)}
-            isLoading={updatingField === "gender"}
-          />
-          <InfoField
-            label="Date of Birth"
-            value={editProfileData.dateOfBirth}
-            type="date"
-            isEditable={canEdit && isPersonalEditing}
-            required
-            error={personalFieldErrors.dateOfBirth}
-            onChange={(v) => handleFieldChange("dateOfBirth", v)}
-            isLoading={updatingField === "dateOfBirth"}
-          />
-          <InfoField
-            label="Country"
-            value={editProfileData.country}
-            type="select"
-            options={countriesOptions}
-            isEditable={canEdit && isPersonalEditing}
-            required
-            error={personalFieldErrors.country}
-            onChange={(v) => handleFieldChange("country", v)}
-            isLoading={updatingField === "country"}
-          />
-          <InfoField
-            label="Passport No"
-            value={editProfileData.passportNo}
-            isEditable={canEdit && isPersonalEditing}
-            required
-            error={personalFieldErrors.passportNo}
-            onChange={(v) => handleFieldChange("passportNo", v)}
-            isLoading={updatingField === "passportNo"}
-          />
-          <InfoField
-            label="Passport Expiry Date"
-            value={editProfileData.passportExpiryDate}
-            type="date"
-            isEditable={canEdit && isPersonalEditing}
-            required
-            error={personalFieldErrors.passportExpiryDate}
-            onChange={(v) => handleFieldChange("passportExpiryDate", v)}
-            isLoading={updatingField === "passportExpiryDate"}
-          />
-          <InfoField
-            label="Email"
-            value={editProfileData.email}
-            type="email"
-            isEditable={canEdit && isPersonalEditing}
-            required
-            error={personalFieldErrors.email}
-            onChange={(v) => handleFieldChange("email", v)}
-            isLoading={updatingField === "email"}
-          />
-        </div>
-        <PhoneField
-          label="Contact Number"
-          value={editProfileData.contactNumber}
-          isEditable={canEdit && isPersonalEditing}
-          required
-          error={personalFieldErrors.contactNumber}
-          onChange={(v) => handleFieldChange("contactNumber", v)}
-          isLoading={updatingField === "contactNumber"}
-        />
-        {canEdit && isPersonalEditing && (
+          {canEdit && isPersonalEditing && (
             <div className="mt-6">
               <PrimaryButton
                 text="Save Changes"
@@ -484,12 +541,12 @@ export default function GeneralInformationTab({
       {/* Qualification Section - same as student */}
       <div>
         <QualificationSection
-        qualification={getQualificationDisplayName(profileData.qualification)}
-        passingYear={profileData.passingYear}
-        qualificationOptions={qualificationOptions}
-        onSave={handleSaveQualification}
-        editable={canEdit}
-      />
+          qualification={getQualificationDisplayName(profileData.qualification)}
+          passingYear={profileData.passingYear}
+          qualificationOptions={qualificationOptions}
+          onSave={handleSaveQualification}
+          editable={canEdit}
+        />
       </div>
     </div>
   );

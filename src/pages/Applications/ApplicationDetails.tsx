@@ -5,7 +5,7 @@
 import { Image, Spin } from "antd";
 import React, { useEffect } from "react";
 import { FaCircleCheck } from "react-icons/fa6";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useGetApplicationByIdQuery } from "../../redux/features/application/applicationApi";
 
 
@@ -19,13 +19,27 @@ import { useRefetchApplicationNotesOnNoteNotification } from "../../hooks/useRef
 import { getApiImageUrl } from "../../utils/getApiImageUrl";
 import { RefreshCw } from "lucide-react";
 
+const VALID_TABS = ["requirements", "records", "notes"] as const;
+type TabKey = (typeof VALID_TABS)[number];
+
 const ApplicationDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const [isRedirecting, setIsRedirecting] = React.useState(true);
-  const [activeTab, setActiveTab] = React.useState<
-    "requirements" | "records" | "notes"
-  >("requirements");
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  const rawTab = searchParams.get("tab");
+  const isValidTab = rawTab !== null && VALID_TABS.includes(rawTab as TabKey);
+  const activeTab: TabKey = isValidTab ? (rawTab as TabKey) : "requirements";
+
+  useEffect(() => {
+    if (!isValidTab) {
+      navigate(`?tab=requirements`, { replace: true });
+    }
+  }, [isValidTab, navigate]);
+
+  const setActiveTab = (key: TabKey) => {
+    navigate(`?tab=${key}`, { replace: true });
+  };
   const { setStudent } = useStudentProfile();
   const { data, isLoading, error,refetch,isFetching } = useGetApplicationByIdQuery(id, {
     skip: !id,
