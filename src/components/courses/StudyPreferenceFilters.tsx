@@ -115,7 +115,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
   const isDraggingRef = useRef(false);
 
   // Debounce timer for filter changes to prevent infinite search loops while dragging range slider
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounced callback for filter changes - only trigger when NOT dragging
   useEffect(() => {
