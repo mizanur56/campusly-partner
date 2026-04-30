@@ -1,4 +1,4 @@
-import { Table, Select } from "antd";
+import { Button, Table, Select } from "antd";
 
 const Statistics = () => {
   const statisticsData = [
@@ -57,9 +57,7 @@ const Statistics = () => {
               { label: "2027", value: "2027" },
             ]}
           />
-          <button className="text-[#237D3B] hover:text-[#1e6b32] font-medium text-[18px] underline">
-          View All
-        </button>
+          <Button type="link">View All</Button>
         </div>
       </div>
       <Table

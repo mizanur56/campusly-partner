@@ -562,7 +562,7 @@
 //                           <button
 //                             onClick={() =>
 //                               navigate(`/applications/${record.id}`)}
-//                             className="flex cursor-pointer items-center justify-center w-8 h-8 rounded border border-gray-300 transition-all text-gray-600 hover:text-primary-500 hover:border-primary-500"
+//                             className="flex cursor-pointer items-center justify-center w-8 h-8 rounded-lg border border-[#C7CACF] transition-all text-gray-600 hover:text-primary-500 hover:border-primary-500"
 //                           >
 //                             <FiEye size={16} />
 //                           </button>
@@ -617,17 +617,21 @@
 //   );
 // }
 
-
 import { Alert, Input, Spin, Tooltip } from "antd";
 import dayjs from "dayjs";
 import { useEffect, useMemo, useState } from "react";
 import { FiEye } from "react-icons/fi";
 import { useSelector } from "react-redux";
-import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import PageMeta from "../../../components/common/Meta/PageMeta";
 import PageHeader from "../../../components/common/Navigation/PageHeader";
-import DataTable from "../../../components/common/Tables/DataTable";
 import "../../../components/common/Tables/AntTable.css";
+import DataTable from "../../../components/common/Tables/DataTable";
 import { config } from "../../../config";
 import { useStudentProfile } from "../../../context/StudentProfileContext";
 import { selectCurrentUser } from "../../../redux/features/auth/authSlice";
@@ -694,9 +698,11 @@ export default function StudentProfile() {
   const [searchParams, setSearchParams] = useSearchParams();
   const tabFromUrl = searchParams.get("tab") || "general";
   const [activeTab, setActiveTab] = useState<ProfileTabKey>(
-    ["general", "education", "background", "documents", "apply-now"].includes(tabFromUrl)
+    ["general", "education", "background", "documents", "apply-now"].includes(
+      tabFromUrl,
+    )
       ? (tabFromUrl as ProfileTabKey)
-      : "general"
+      : "general",
   );
   const [applicationsSearch, setApplicationsSearch] = useState("");
   const [applicationsPage, setApplicationsPage] = useState(1);
@@ -707,7 +713,11 @@ export default function StudentProfile() {
 
   useEffect(() => {
     const urlTab = searchParams.get("tab") || "general";
-    if (["general", "education", "background", "documents", "apply-now"].includes(urlTab)) {
+    if (
+      ["general", "education", "background", "documents", "apply-now"].includes(
+        urlTab,
+      )
+    ) {
       setActiveTab(urlTab as ProfileTabKey);
     }
   }, [searchParams]);
@@ -726,21 +736,19 @@ export default function StudentProfile() {
 
   const profile = profileData as StudentProfileData | null | undefined;
 
-  const {
-    data: applicationsResponse,
-    isLoading: applicationsLoading,
-  } = useGetStudentApplicationsQuery(
-    {
-      studentId: studentId!,
-      page: applicationsPage,
-      limit: applicationsLimit,
-      status: "",
-      search: applicationsSearch,
-    },
-    {
-      skip: !studentId || !isApplicationsSection,
-    }
-  );
+  const { data: applicationsResponse, isLoading: applicationsLoading } =
+    useGetStudentApplicationsQuery(
+      {
+        studentId: studentId!,
+        page: applicationsPage,
+        limit: applicationsLimit,
+        status: "",
+        search: applicationsSearch,
+      },
+      {
+        skip: !studentId || !isApplicationsSection,
+      },
+    );
 
   const applicationsPayload = applicationsResponse as
     | { data?: unknown[]; meta?: { total?: number } }
@@ -749,14 +757,16 @@ export default function StudentProfile() {
   const applicationsTotal = applicationsPayload?.meta?.total ?? 0;
 
   const applicationsTableData: ApplicationRecord[] = useMemo(() => {
-    return (applicationsList as {
-      id: string;
-      applicationId?: string;
-      course?: { course?: { name?: string }; university?: { name?: string } };
-      status?: string;
-      createdAt?: string;
-      student?: { user?: { name?: string } };
-    }[]).map((app, idx) => ({
+    return (
+      applicationsList as {
+        id: string;
+        applicationId?: string;
+        course?: { course?: { name?: string }; university?: { name?: string } };
+        status?: string;
+        createdAt?: string;
+        student?: { user?: { name?: string } };
+      }[]
+    ).map((app, idx) => ({
       key: app.id || `app-${idx}`,
       id: app.id,
       applicationId: app.applicationId ?? "—",
@@ -771,18 +781,22 @@ export default function StudentProfile() {
   }, [applicationsList]);
 
   const passedStudent = (
-    state as { student?: { id?: string; name?: string; email?: string; phone?: string } }
+    state as {
+      student?: { id?: string; name?: string; email?: string; phone?: string };
+    }
   )?.student;
 
   const displayName =
     profile?.firstName || profile?.lastName
       ? [profile.firstName, profile.lastName].filter(Boolean).join(" ")
-      : profile?.user?.name ?? passedStudent?.name ?? "Student";
+      : (profile?.user?.name ?? passedStudent?.name ?? "Student");
   const displayEmail =
     profile?.email ?? profile?.user?.email ?? passedStudent?.email ?? "";
   const displayPhone = profile?.phone
-    ? (profile.phone.startsWith("+") ? profile.phone : `+${profile.phone}`)
-    : passedStudent?.phone ?? "";
+    ? profile.phone.startsWith("+")
+      ? profile.phone
+      : `+${profile.phone}`
+    : (passedStudent?.phone ?? "");
 
   const contextAvatar = getApiImageUrl(profile?.image) || "/user.avif";
 
@@ -841,10 +855,10 @@ export default function StudentProfile() {
     // General tab counts complete only after "Last education" (qualification + passing year) is saved — same fields as GeneralInformationTab.
     const generalCompleted = Boolean(
       (p?.firstName || p?.user?.name) &&
-        (p?.email || p?.user?.email) &&
-        p?.phone &&
-        p?.lastEducationId &&
-        p?.lastEducationPassingYear,
+      (p?.email || p?.user?.email) &&
+      p?.phone &&
+      p?.lastEducationId &&
+      p?.lastEducationPassingYear,
     );
 
     const educationCompleted =
@@ -895,18 +909,24 @@ export default function StudentProfile() {
 
   const educations = useMemo(
     () => (profile as { educations?: unknown[] } | null)?.educations ?? [],
-    [profile]
+    [profile],
   );
   const visaRejections = useMemo(
-    () => (profile as { visaRejections?: unknown[] } | null)?.visaRejections ?? [],
-    [profile]
+    () =>
+      (profile as { visaRejections?: unknown[] } | null)?.visaRejections ?? [],
+    [profile],
   );
   const documents = useMemo(
     () =>
-      (profile as {
-        documents?: { documentRelation?: { name?: string; category?: { name?: string } }; document?: string }[];
-      } | null)?.documents ?? [],
-    [profile]
+      (
+        profile as {
+          documents?: {
+            documentRelation?: { name?: string; category?: { name?: string } };
+            document?: string;
+          }[];
+        } | null
+      )?.documents ?? [],
+    [profile],
   );
   const docByCategory = useMemo(() => {
     const map: Record<string, typeof documents> = {};
@@ -995,74 +1015,101 @@ export default function StudentProfile() {
 
               <div className="border-b border-gray-300 overflow-hidden">
                 <div className="flex gap-3 sm:gap-6 min-w-max sm:min-w-0">
-                  {profileTabs.map((tab) => (
+                  {profileTabs.map((tab) =>
                     (() => {
                       const locked = !isTabUnlocked(tab.key);
                       return (
-                    <button
-                      key={tab.key}
-                      type="button"
-                      disabled={locked}
-                      title={locked ? "Complete the previous tab first" : undefined}
-                      onClick={() => handleTabChange(tab.key)}
-                      className={`px-2 sm:px-0 py-2 sm:py-3 text-[15px] font-normal transition-colors duration-200 relative whitespace-nowrap ${
-                        activeTab === tab.key
-                          ? "text-[#237D3B] font-medium"
-                          : "text-[#4B5563] hover:text-gray-700"
-                      } ${locked ? "cursor-not-allowed opacity-50 hover:text-[#4B5563]" : "cursor-pointer"}`}
-                    >
-                      {tab.label}
-                      {activeTab === tab.key && (
-                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#237D3B]"></span>
-                      )}
-                    </button>
+                        <button
+                          key={tab.key}
+                          type="button"
+                          disabled={locked}
+                          title={
+                            locked
+                              ? "Complete the previous tab first"
+                              : undefined
+                          }
+                          onClick={() => handleTabChange(tab.key)}
+                          className={`px-2 sm:px-0 py-2 sm:py-3 text-[15px] font-normal transition-colors duration-200 relative whitespace-nowrap ${
+                            activeTab === tab.key
+                              ? "text-[#237D3B] font-medium"
+                              : "text-[#4B5563] hover:text-gray-700"
+                          } ${locked ? "cursor-not-allowed opacity-50 hover:text-[#4B5563]" : "cursor-pointer"}`}
+                        >
+                          {tab.label}
+                          {activeTab === tab.key && (
+                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#237D3B]"></span>
+                          )}
+                        </button>
                       );
-                    })()
-                  ))}
+                    })(),
+                  )}
                 </div>
               </div>
 
               <div className="mt-6">
-              {activeTab === "general" && (
-                <GeneralInformationTab
-                  studentId={studentId}
-                  profile={profile as Parameters<typeof GeneralInformationTab>[0]["profile"]}
-                  canEdit={!isTeamMember}
-                  onUpdated={() => refetchProfile()}
-                />
-              )}
+                {activeTab === "general" && (
+                  <GeneralInformationTab
+                    studentId={studentId}
+                    profile={
+                      profile as Parameters<
+                        typeof GeneralInformationTab
+                      >[0]["profile"]
+                    }
+                    canEdit={!isTeamMember}
+                    onUpdated={() => refetchProfile()}
+                  />
+                )}
 
-              {activeTab === "education" && (
-                <EducationHistoryTab
-                  studentId={studentId}
-                  profile={profile as Parameters<typeof EducationHistoryTab>[0]["profile"]}
-                  educations={educations as Parameters<typeof EducationHistoryTab>[0]["educations"]}
-                  canEdit={!isTeamMember}
-                  onUpdated={() => refetchProfile()}
-                />
-              )}
+                {activeTab === "education" && (
+                  <EducationHistoryTab
+                    studentId={studentId}
+                    profile={
+                      profile as Parameters<
+                        typeof EducationHistoryTab
+                      >[0]["profile"]
+                    }
+                    educations={
+                      educations as Parameters<
+                        typeof EducationHistoryTab
+                      >[0]["educations"]
+                    }
+                    canEdit={!isTeamMember}
+                    onUpdated={() => refetchProfile()}
+                  />
+                )}
 
-              {activeTab === "background" && (
-                <BackgroundTab
-                  studentId={studentId}
-                  visaRejections={visaRejections as Parameters<typeof BackgroundTab>[0]["visaRejections"]}
-                  cv={(profile as { cv?: string }).cv}
-                  statementOfPurpose={(profile as { statementOfPurpose?: string }).statementOfPurpose}
-                  canEdit={!isTeamMember}
-                  onUpdated={() => refetchProfile()}
-                />
-              )}
+                {activeTab === "background" && (
+                  <BackgroundTab
+                    studentId={studentId}
+                    visaRejections={
+                      visaRejections as Parameters<
+                        typeof BackgroundTab
+                      >[0]["visaRejections"]
+                    }
+                    cv={(profile as { cv?: string }).cv}
+                    statementOfPurpose={
+                      (profile as { statementOfPurpose?: string })
+                        .statementOfPurpose
+                    }
+                    canEdit={!isTeamMember}
+                    onUpdated={() => refetchProfile()}
+                  />
+                )}
 
-              {activeTab === "documents" && (
-                <UploadDocumentsTab
-                  studentId={studentId}
-                  profile={profile as Parameters<typeof UploadDocumentsTab>[0]["profile"]}
-                  canEdit={!isTeamMember}
-                  onUpdated={() => refetchProfile()}
-                />
-              )}
+                {activeTab === "documents" && (
+                  <UploadDocumentsTab
+                    studentId={studentId}
+                    profile={
+                      profile as Parameters<
+                        typeof UploadDocumentsTab
+                      >[0]["profile"]
+                    }
+                    canEdit={!isTeamMember}
+                    onUpdated={() => refetchProfile()}
+                  />
+                )}
 
-              {activeTab === "apply-now" && <ApplyNowTab />}
+                {activeTab === "apply-now" && <ApplyNowTab />}
               </div>
             </>
           )}
@@ -1090,105 +1137,114 @@ export default function StudentProfile() {
                 subtitle="Manage applications for this student."
               />
 
-           <div className="bg-[#FFFFFF] p-4 rounded-lg border border-[#C7CACF]">
-           <div className="mb-6 max-w-sm">
-                <Input
-                  placeholder="Search by ID, course, university or status"
-                  allowClear
-                  value={applicationsSearch}
-                  onChange={(e) => setApplicationsSearch(e.target.value)}
-                  size="large"
-                />
-              </div>
-
-              <Spin spinning={applicationsLoading}>
-                <div className="overflow-hidden rounded-[24px] border border-neutral-100 bg-white card-shadow dark:border-gray-800 dark:bg-gray-900">
-                  <DataTable
-                    data={applicationsTableData}
-                    columns={[
-                      {
-                        title: "Application ID",
-                        dataIndex: "applicationId",
-                        key: "applicationId",
-                        width: 140,
-                        render: (applicationId: string, record: ApplicationRecord) => (
-                          <span
-                            onClick={() => navigate(`/applications/${record.id}`)}
-                            className="hover:underline cursor-pointer hover:font-semibold"
-                          >
-                            {applicationId}
-                          </span>
-                        ),
-                      },
-                      {
-                        title: "University",
-                        dataIndex: "university",
-                        key: "university",
-                        width: 220,
-                      },
-                      {
-                        title: "Program",
-                        dataIndex: "course",
-                        key: "course",
-                        width: 180,
-                      },
-                      {
-                        title: "Status",
-                        dataIndex: "status",
-                        key: "status",
-                        width: 120,
-                        render: (status: string) => (
-                          <span
-                            className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-                              statusColors[status] ?? "bg-gray-100 text-gray-800"
-                            }`}
-                          >
-                            {status}
-                          </span>
-                        ),
-                      },
-                      {
-                        title: "Submitted",
-                        dataIndex: "submittedDate",
-                        key: "submittedDate",
-                        width: 120,
-                      },
-                      {
-                        title: "Actions",
-                        key: "actions",
-                        width: 100,
-                        align: "center" as const,
-                        render: (_: unknown, record: ApplicationRecord) => (
-                          <Tooltip title="View" placement="top">
-                            <button
-                              onClick={() => navigate(`/applications/${record.id}`)}
-                              className="flex cursor-pointer items-center justify-center w-8 h-8 rounded border border-gray-300 transition-all text-gray-600 hover:text-primary-500 hover:border-primary-500"
-                            >
-                              <FiEye size={16} />
-                            </button>
-                          </Tooltip>
-                        ),
-                      },
-                    ]}
-                    rowKey="key"
-                    loading={applicationsLoading}
-                    showHeader
-                    isPaginate
-                    noInnerBorder
-                    currentPage={applicationsPage}
-                    setCurrentPage={setApplicationsPage}
-                    limit={applicationsLimit}
-                    setLimit={setApplicationsLimit}
-                    showSizeChanger
-                    total={applicationsTotal}
-                    pagination={{
-                      pageSizeOptions: ["10", "20", "50"],
-                      showTotal: (total: number) => `Total ${total} applications`,
-                    }}
+              <div className="bg-[#FFFFFF] p-4 rounded-lg border border-[#C7CACF]">
+                <div className="mb-6 max-w-sm">
+                  <Input
+                    placeholder="Search by ID, course, university or status"
+                    allowClear
+                    value={applicationsSearch}
+                    onChange={(e) => setApplicationsSearch(e.target.value)}
+                    size="large"
                   />
                 </div>
-              </Spin>
-           </div>
+
+                <Spin spinning={applicationsLoading}>
+                  <div className="overflow-hidden rounded-[24px] border border-neutral-100 bg-white card-shadow dark:border-gray-800 dark:bg-gray-900">
+                    <DataTable
+                      data={applicationsTableData}
+                      columns={[
+                        {
+                          title: "Application ID",
+                          dataIndex: "applicationId",
+                          key: "applicationId",
+                          width: 140,
+                          render: (
+                            applicationId: string,
+                            record: ApplicationRecord,
+                          ) => (
+                            <span
+                              onClick={() =>
+                                navigate(`/applications/${record.id}`)
+                              }
+                              className="hover:underline cursor-pointer hover:font-semibold"
+                            >
+                              {applicationId}
+                            </span>
+                          ),
+                        },
+                        {
+                          title: "University",
+                          dataIndex: "university",
+                          key: "university",
+                          width: 220,
+                        },
+                        {
+                          title: "Program",
+                          dataIndex: "course",
+                          key: "course",
+                          width: 180,
+                        },
+                        {
+                          title: "Status",
+                          dataIndex: "status",
+                          key: "status",
+                          width: 120,
+                          render: (status: string) => (
+                            <span
+                              className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
+                                statusColors[status] ??
+                                "bg-gray-100 text-gray-800"
+                              }`}
+                            >
+                              {status}
+                            </span>
+                          ),
+                        },
+                        {
+                          title: "Submitted",
+                          dataIndex: "submittedDate",
+                          key: "submittedDate",
+                          width: 120,
+                        },
+                        {
+                          title: "Actions",
+                          key: "actions",
+                          width: 100,
+                          align: "center" as const,
+                          render: (_: unknown, record: ApplicationRecord) => (
+                            <Tooltip title="View" placement="top">
+                              <button
+                                onClick={() =>
+                                  navigate(`/applications/${record.id}`)
+                                }
+                                className="flex cursor-pointer items-center justify-center w-8 h-8 rounded-lg border border-[#C7CACF] transition-all text-gray-600 hover:text-primary-500 hover:border-primary-500"
+                              >
+                                <FiEye size={16} />
+                              </button>
+                            </Tooltip>
+                          ),
+                        },
+                      ]}
+                      rowKey="key"
+                      loading={applicationsLoading}
+                      showHeader
+                      isPaginate
+                      noInnerBorder
+                      currentPage={applicationsPage}
+                      setCurrentPage={setApplicationsPage}
+                      limit={applicationsLimit}
+                      setLimit={setApplicationsLimit}
+                      showSizeChanger
+                      total={applicationsTotal}
+                      pagination={{
+                        pageSizeOptions: ["10", "20", "50"],
+                        showTotal: (total: number) =>
+                          `Total ${total} applications`,
+                      }}
+                    />
+                  </div>
+                </Spin>
+              </div>
             </div>
           )}
 

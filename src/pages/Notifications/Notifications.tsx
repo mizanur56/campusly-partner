@@ -110,24 +110,24 @@ const Notifications = () => {
             { key: "all" as const, label: "All" },
             { key: "unread" as const, label: "Unread" },
           ].map((tab) => (
-            <button
+            <Button
               key={tab.key}
-              type="button"
+              type="text"
               onClick={() => {
                 setActiveTab(tab.key);
                 setCurrentPage(1);
               }}
-              className={`py-3 cursor-pointer text-[15px] transition-colors duration-200 relative whitespace-nowrap ${
+              className={`py-3 text-[15px] relative whitespace-nowrap ${
                 activeTab === tab.key
-                  ? "text-primary-700 font-medium"
-                  : "text-gray-600 hover:text-gray-800"
+                  ? "text-primary-700! font-medium!"
+                  : "text-gray-600! hover:text-gray-800!"
               }`}
             >
-              <span>{tab.label}</span>
+              {tab.label}
               {activeTab === tab.key && (
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600" />
               )}
-            </button>
+            </Button>
           ))}
         </div>
       </div>

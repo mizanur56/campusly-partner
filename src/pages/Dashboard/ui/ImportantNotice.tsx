@@ -1,3 +1,4 @@
+import { Button } from "antd";
 import { MdErrorOutline } from "react-icons/md";
 
 const ImportantNotice = () => {
@@ -17,9 +18,7 @@ const ImportantNotice = () => {
    <p className="text-[#FF9100] text-[24px] font-semibold">   <MdErrorOutline /></p>
    <h2 className="text-xl font-semibold text-gray-900">Important Notice</h2>
    </div>
-        <button className="text-[#237D3B] hover:text-[#1e6b32] font-medium text-[18px] underline">
-          View All
-        </button>
+        <Button type="link">View All</Button>
       </div>
       <div className="space-y-3">
         {notices.map((notice, index) => (

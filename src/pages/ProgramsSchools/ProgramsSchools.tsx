@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from "react";
+import { SearchOutlined } from "@ant-design/icons";
+import { Button } from "antd";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import StudyPreferenceFilters, {
-  FilterState,
-} from "../../components/courses/StudyPreferenceFilters";
-import StudentSelectBlock from "../../components/courses/StudentSelectBlock";
-import type { SelectedStudent } from "../../components/courses/SelectedStudentCard";
+import ApplyPreferenceModal from "../../components/common/Modals/Apply/ApplyPreferenceModal";
 import type { CourseForApply } from "../../components/courses/CoursesResultsView";
 import CoursesResultsView from "../../components/courses/CoursesResultsView";
 import InstitutionsResultsView from "../../components/courses/InstitutionsResultsView";
-import ApplyPreferenceModal from "../../components/common/Modals/Apply/ApplyPreferenceModal";
+import type { SelectedStudent } from "../../components/courses/SelectedStudentCard";
+import StudentSelectBlock from "../../components/courses/StudentSelectBlock";
+import StudyPreferenceFilters, {
+  FilterState,
+} from "../../components/courses/StudyPreferenceFilters";
 import { useAppSelector } from "../../redux/features/hooks";
 
 export default function ProgramsSchoolsPage() {
@@ -23,9 +25,11 @@ export default function ProgramsSchoolsPage() {
   const [searchQuery, setSearchQuery] = useState(qFromUrl);
   const [filters, setFilters] = useState<FilterState | undefined>(undefined);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState<SelectedStudent | null>(null);
+  const [selectedStudent, setSelectedStudent] =
+    useState<SelectedStudent | null>(null);
   const [applyModalOpen, setApplyModalOpen] = useState(false);
-  const [selectedCourseForApply, setSelectedCourseForApply] = useState<CourseForApply | null>(null);
+  const [selectedCourseForApply, setSelectedCourseForApply] =
+    useState<CourseForApply | null>(null);
 
   const metaData = useAppSelector((state) => state.searchMeta);
 
@@ -106,12 +110,13 @@ export default function ProgramsSchoolsPage() {
                   <StudyPreferenceFilters onFilterChange={handleFilterChange} />
                 </div>
                 <div className="p-4 border-t border-gray-100 bg-gray-50">
-                  <button
+                  <Button
                     onClick={() => setIsMobileFiltersOpen(false)}
-                    className="w-full py-2.5 text-sm font-medium bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+                    type="primary"
+                    icon={<SearchOutlined />}
                   >
                     Show Results
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -170,30 +175,19 @@ export default function ProgramsSchoolsPage() {
             </div>
 
             <div className="mb-4 sm:mb-5 flex flex-row gap-2 sm:gap-3">
-              <button
+              <Button
                 onClick={() => setActiveTab("courses")}
-                className={`px-3 sm:px-4 h-9 rounded-lg text-sm font-medium transition-colors flex items-center justify-center flex-1 sm:flex-initial ${
-                  activeTab === "courses"
-                    ? "bg-primary-500 text-white shadow-sm hover:bg-primary-600"
-                    : "bg-white text-primary-600 border border-primary-500 hover:bg-primary-50"
-                }`}
+                type={activeTab === "courses" ? "primary" : "default"}
               >
-                <span className="whitespace-nowrap">
-                  Courses <span className="opacity-90">({coursesCount})</span>
-                </span>
-              </button>
-              <button
+                Courses <span className="opacity-90">({coursesCount})</span>
+              </Button>
+              <Button
                 onClick={() => setActiveTab("institutions")}
-                className={`px-3 sm:px-4 h-9 rounded-lg text-sm font-medium transition-colors flex items-center justify-center flex-1 sm:flex-initial ${
-                  activeTab === "institutions"
-                    ? "bg-primary-500 text-white shadow-sm hover:bg-primary-600"
-                    : "bg-white text-primary-600 border border-primary-500 hover:bg-primary-50"
-                }`}
+                type={activeTab === "institutions" ? "primary" : "default"}
               >
-                <span className="whitespace-nowrap">
-                  Institutions <span className="opacity-90">({institutionsCount})</span>
-                </span>
-              </button>
+                Institutions{" "}
+                <span className="opacity-90">({institutionsCount})</span>
+              </Button>
             </div>
 
             {activeTab === "courses" && (
@@ -223,8 +217,12 @@ export default function ProgramsSchoolsPage() {
           studentId={selectedStudent?.id}
           data={{
             id: selectedCourseForApply.id,
-            startDates: selectedCourseForApply.startDates || selectedCourseForApply.intake,
-            campus: selectedCourseForApply.campus || selectedCourseForApply.institution?.location,
+            startDates:
+              selectedCourseForApply.startDates ||
+              selectedCourseForApply.intake,
+            campus:
+              selectedCourseForApply.campus ||
+              selectedCourseForApply.institution?.location,
             duration: selectedCourseForApply.duration,
             modeOfStudy: selectedCourseForApply.modeOfStudy,
           }}

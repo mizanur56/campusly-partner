@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useMemo } from "react";
-import { Form, Dropdown, Menu, Spin } from "antd";
+import { Button, Form, Dropdown, Menu, Spin } from "antd";
 import { DownOutlined, PlusOutlined } from "@ant-design/icons";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -407,9 +407,9 @@ const EducationHistory = ({
                 </Menu>
               }
             >
-              <button className="bg-[#237D3B] hover:bg-[#19592A] cursor-pointer text-[#E7E7E7] text-[15px] py-3 px-6 rounded-lg font-semibold flex items-center gap-2 transition-all">
-                <PlusOutlined /> Add Language Test <DownOutlined />
-              </button>
+              <Button type="primary" icon={<PlusOutlined />}>
+                Add Language Test <DownOutlined />
+              </Button>
             </Dropdown>
           </div>
           <Form form={form} layout="vertical">

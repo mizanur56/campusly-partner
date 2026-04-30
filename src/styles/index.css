@@ -3,6 +3,9 @@ layer(base);
 
 @import "tailwindcss";
 
+/* Import custom antd styles */
+@import "../styles/antd.css";
+
 /* Import custom scrollbar styles */
 @import "../styles/scrollbar.css";
 
@@ -475,9 +478,9 @@ button:disabled,
 
 /* Ant Design button — align with root */
 .ant-btn {
-  font-weight: 300 !important;
+  font-weight: 500 !important;
   font-size: 14px !important;
-  border-radius: 0.5rem !important;
+  border-radius: 12px !important;
 }
 .ant-btn-primary {
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;

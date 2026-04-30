@@ -104,7 +104,6 @@ export default function SessionRestoreProvider({
 
     const restore = async () => {
       try {
-        let sessionRestoredVia401Refresh = false;
         let bearer = (token ?? localStorage.getItem("token") ?? "").trim();
 
         // ── 1) /auth/me (cookie-only session uses empty Authorization) ──
@@ -134,7 +133,6 @@ export default function SessionRestoreProvider({
             goLoginOrStayOnPublicAuth();
             return;
           }
-          sessionRestoredVia401Refresh = true;
         } else if (!meRes.ok) {
           goLoginOrStayOnPublicAuth();
           return;
@@ -146,21 +144,6 @@ export default function SessionRestoreProvider({
         if (!rawUser) {
           goLoginOrStayOnPublicAuth();
           return;
-        }
-
-        // Access token can still validate /auth/me while the HttpOnly refresh cookie is gone.
-        // If we did not just obtain the session via 401→refresh, require refresh to succeed once.
-        if (!sessionRestoredVia401Refresh) {
-          const refreshProof = await callRefresh();
-          if (!refreshProof.ok) {
-            goLoginOrStayOnPublicAuth();
-            return;
-          }
-          const proofJson = await refreshProof.json().catch(() => null);
-          const rotated = extractAccessTokenFromRefreshJson(proofJson);
-          if (rotated?.trim()) {
-            bearer = rotated.trim();
-          }
         }
 
         const userData = buildUserData(rawUser as Record<string, unknown>);

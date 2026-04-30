@@ -1,23 +1,24 @@
-import React, { useMemo, useState } from "react";
-import { Input, Tag, Badge, Modal, Upload } from "antd";
-import type { ColumnsType } from "antd/es/table";
 import { InboxOutlined } from "@ant-design/icons";
+import { Button, Input, Modal, Tag, Upload } from "antd";
+import type { ColumnsType } from "antd/es/table";
 import { Search } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import PageCard from "../../components/common/Card/PageCard";
 import PageMeta from "../../components/common/Meta/PageMeta";
-import "../../components/common/Tables/AntTable.css";
-import "./Payments.css";
 import { DataTable } from "../../components/common/Tables";
+import "../../components/common/Tables/AntTable.css";
+import { config } from "../../config";
 import {
   useGetActiveBankAccountQuery,
-  useGetPurchaseStatsQuery,
-  useGetPurchaseApplicationsQuery,
-  useGetPurchaseTransactionsQuery,
-  useGetCommissionStatsQuery,
   useGetCommissionEarnedQuery,
+  useGetCommissionStatsQuery,
   useGetCommissionTransactionsQuery,
+  useGetPurchaseApplicationsQuery,
+  useGetPurchaseStatsQuery,
+  useGetPurchaseTransactionsQuery,
   usePaySelectedApplicationsMutation,
 } from "../../redux/features/payments/partnerPaymentsApi";
-import { config } from "../../config";
+import "./Payments.css";
 
 const { Dragger } = Upload;
 
@@ -296,8 +297,6 @@ export default function Payments() {
   };
 
   const purchaseApplicationsColumns: ColumnsType<PurchaseApplicationRecord> = [
-
-  
     {
       title: "Application ID",
       dataIndex: "applicationId",
@@ -407,7 +406,6 @@ export default function Payments() {
   ];
 
   const commissionEarnedColumns: ColumnsType<CommissionEarnedRecord> = [
-   
     {
       title: "Application ID",
       dataIndex: "applicationId",
@@ -452,7 +450,6 @@ export default function Payments() {
 
   const commissionTransactionsColumns: ColumnsType<CommissionTransactionRecord> =
     [
-     
       {
         title: "Transaction ID",
         dataIndex: "transactionId",
@@ -522,9 +519,8 @@ export default function Payments() {
         size="large"
       />
       <div className="payments-toolbar-actions">
-        <button
-          type="button"
-          className="payments-primary-button"
+        <Button
+          type="primary"
           disabled={
             selectedPurchaseRecords.length === 0 || selectedTotalPayable <= 0
           }
@@ -533,10 +529,10 @@ export default function Payments() {
           {selectedTotalPayable > 0
             ? `Pay Selected (€${selectedTotalPayable.toFixed(2)})`
             : "Pay Selected"}
-        </button>
-        <button type="button" className="payments-primary-button" disabled>
+        </Button>
+        <Button type="primary" disabled>
           Download Invoice
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -563,11 +559,11 @@ export default function Payments() {
         <div className="payments-kpi-grid payments-kpi-grid--1">
           <div className="payments-kpi-card">
             <div className="payments-kpi-row">
-            <img
-                    src="/hourglass.png"
-                    alt="Unpaid Commission"
-                    className="h-7 w-7 object-contain"
-                  />
+              <img
+                src="/hourglass.png"
+                alt="Unpaid Commission"
+                className="h-7 w-7 object-contain"
+              />
               <div>
                 <p className="payments-kpi-label">Unpaid</p>
                 <p className="payments-kpi-value">
@@ -658,57 +654,57 @@ export default function Payments() {
   const renderTableSection = () => {
     if (commissionTab === "unpaid") {
       return (
-        <>
-          <div className="bg-[#FFFFFF] p-6 rounded-lg border border-[#C7CACF] space-y-4">
+        <PageCard>
+          <div className="flex items-center justify-between gap-2 mb-4">
             {renderSimpleToolbar("Search application ID, name")}
-            <DataTable
-              data={commissionEarned}
-              columns={commissionEarnedColumns}
-              rowKey="key"
-              loading={isCommissionEarnedLoading}
-              currentPage={commissionPage}
-              setCurrentPage={setCommissionPage}
-              limit={commissionPageSize}
-              setLimit={setCommissionPageSize}
-              total={commissionEarnedData?.meta?.total ?? 0}
-              isPaginate
-              showHeader
-              showSizeChanger
-              noInnerBorder
-              pagination={{
-                showTotal: (total: number) => `Total ${total} records`,
-              }}
-            />
           </div>
-        </>
-      );
-    }
-
-    // commission / history
-    return (
-      <>
-        <div className="bg-[#FFFFFF] p-6 rounded-lg border border-[#C7CACF] space-y-4">
-          {renderSimpleToolbar("Search application ID, transaction ID")}
           <DataTable
-            data={commissionTransactions}
-            columns={commissionTransactionsColumns}
+            data={commissionEarned}
+            columns={commissionEarnedColumns}
             rowKey="key"
-            loading={isCommissionTxLoading}
-            currentPage={commissionHistoryPage}
-            setCurrentPage={setCommissionHistoryPage}
-            limit={commissionHistoryPageSize}
-            setLimit={setCommissionHistoryPageSize}
-            total={commissionTransactionsData?.meta?.total ?? 0}
+            loading={isCommissionEarnedLoading}
+            currentPage={commissionPage}
+            setCurrentPage={setCommissionPage}
+            limit={commissionPageSize}
+            setLimit={setCommissionPageSize}
+            total={commissionEarnedData?.meta?.total ?? 0}
             isPaginate
             showHeader
             showSizeChanger
             noInnerBorder
             pagination={{
-              showTotal: (total: number) => `Total ${total} transactions`,
+              showTotal: (total: number) => `Total ${total} records`,
             }}
           />
+        </PageCard>
+      );
+    }
+
+    // commission / history
+    return (
+      <PageCard>
+        <div className="flex items-center justify-between gap-2 mb-4">
+          {renderSimpleToolbar("Search application ID, transaction ID")}
         </div>
-      </>
+        <DataTable
+          data={commissionTransactions}
+          columns={commissionTransactionsColumns}
+          rowKey="key"
+          loading={isCommissionTxLoading}
+          currentPage={commissionHistoryPage}
+          setCurrentPage={setCommissionHistoryPage}
+          limit={commissionHistoryPageSize}
+          setLimit={setCommissionHistoryPageSize}
+          total={commissionTransactionsData?.meta?.total ?? 0}
+          isPaginate
+          showHeader
+          showSizeChanger
+          noInnerBorder
+          pagination={{
+            showTotal: (total: number) => `Total ${total} transactions`,
+          }}
+        />
+      </PageCard>
     );
   };
 
@@ -718,14 +714,13 @@ export default function Payments() {
         title="Commission - Payments | Campus Transfer Partner"
         description="View earned commissions and commission transaction history."
       />
-      
 
       <header className="payments-header">
         <div>
-          <h1 className="payments-title">
-          Payments
-          </h1>
-          <p className="payments-subtitle">Manage commission status and transaction history.</p>
+          <h1 className="payments-title">Payments</h1>
+          <p className="payments-subtitle">
+            Manage commission status and transaction history.
+          </p>
         </div>
       </header>
 
@@ -816,9 +811,9 @@ export default function Payments() {
               <p className="payments-dragger-title">
                 Drag &amp; drop your Payment Receipt
               </p>
-              <button type="button" className="payments-primary-button mt-2">
+              <Button type="default" style={{ marginTop: 8 }}>
                 Choose file
-              </button>
+              </Button>
               <p className="payments-dragger-hint">
                 Supported formats: PDF, JPG, PNG (max. 10MB)
               </p>
