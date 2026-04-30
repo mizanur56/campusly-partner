@@ -2,10 +2,10 @@ import { LoadingOutlined } from "@ant-design/icons";
 import { Button, Card, DatePicker, Input, Select, Spin } from "antd";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
-import PrimaryButton from "../../../../components/common/Button/PrimaryButton";
+import { FaPencilAlt, FaTimes } from "react-icons/fa";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
-import { FaPencilAlt, FaTimes } from "react-icons/fa";
+import PrimaryButton from "../../../../components/common/Button/PrimaryButton";
 
 const { Option } = Select;
 
@@ -82,9 +82,17 @@ export const QualificationSection: React.FC<QualificationSectionProps> = ({
             className="p-0 group"
           >
             {isEditing ? (
-              <FaTimes className="text-red-500 hover:text-red-600 transition-colors" style={{ fontSize: 20 }} aria-label="Close" />
+              <FaTimes
+                className="text-red-500 hover:text-red-600 transition-colors"
+                style={{ fontSize: 20 }}
+                aria-label="Close"
+              />
             ) : (
-              <FaPencilAlt className="text-[#237D3B] hover:opacity-80 transition-opacity" style={{ fontSize: 18 }} aria-label="Edit" />
+              <FaPencilAlt
+                className="text-[#237D3B] hover:opacity-80 transition-opacity"
+                style={{ fontSize: 18 }}
+                aria-label="Edit"
+              />
             )}
           </Button>
         ) : null
@@ -174,7 +182,7 @@ export const InfoField: React.FC<InfoFieldProps> = ({
         ? value
           ? dayjs(value, "YYYY")
           : null
-        : null
+        : null,
   );
 
   useEffect(() => {
@@ -216,7 +224,7 @@ export const InfoField: React.FC<InfoFieldProps> = ({
           className="w-full"
           status={error ? "error" : undefined}
           onBlur={isEditable && onSave ? handleSave : undefined}
-          size="large"
+          // size="large"
         >
           {options?.map((opt) => (
             <Option key={opt.value} value={opt.value}>
@@ -260,7 +268,10 @@ export const InfoField: React.FC<InfoFieldProps> = ({
         </p>
       ) : null}
       {isLoading && (
-        <Spin className="mt-1" indicator={<LoadingOutlined style={{ fontSize: 14 }} spin />} />
+        <Spin
+          className="mt-1"
+          indicator={<LoadingOutlined style={{ fontSize: 14 }} spin />}
+        />
       )}
     </div>
   );
@@ -329,7 +340,10 @@ export const PhoneField: React.FC<PhoneFieldProps> = ({
         </p>
       ) : null}
       {isLoading && (
-        <Spin className="mt-1" indicator={<LoadingOutlined style={{ fontSize: 14 }} spin />} />
+        <Spin
+          className="mt-1"
+          indicator={<LoadingOutlined style={{ fontSize: 14 }} spin />}
+        />
       )}
     </div>
   );
