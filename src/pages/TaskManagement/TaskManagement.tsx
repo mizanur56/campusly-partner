@@ -42,13 +42,12 @@ import {
   PartnerTaskListItem,
   useCreateTaskMutation,
   useDeleteTaskMutation,
+  useGetAssigneesQuery,
   useGetPartnerTasksQuery,
   useGetTaskByIdQuery,
   useUpdateTaskMutation,
   useUpdateTaskStatusMutation,
 } from "../../redux/features/tasks/partnerTasksApi";
-import { useGetPartnerProfileQuery } from "../../redux/features/profile/partnerProfileApi";
-import { useGetTeamMembersQuery } from "../../redux/features/teams/partnerTeamsApi";
 import { useAppSelector } from "../../redux/features/hooks";
 import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 import "../../components/common/Tables/AntTable.css";
@@ -107,13 +106,7 @@ export default function TaskManagement() {
   const [cancelTask, setCancelTask] = useState<PartnerTaskListItem | null>(null);
   const [form] = Form.useForm();
   const currentUser = useAppSelector(selectCurrentUser);
-
-  const { data: profile } = useGetPartnerProfileQuery();
-  const { data: teamMembersData } = useGetTeamMembersQuery({
-    page: 1,
-    limit: 100,
-    status: "ACTIVE",
-  });
+  const { data: assigneesData } = useGetAssigneesQuery();
 
   const { data: tasksData, isLoading, isFetching } = useGetPartnerTasksQuery({
     page,
@@ -136,44 +129,16 @@ export default function TaskManagement() {
   const [deleteTask, { isLoading: deleting }] = useDeleteTaskMutation();
 
   const assigneeOptions = useMemo(() => {
-    const options: { value: string; label: string }[] = [];
     const currentUserId = currentUser?.id;
-    const partnerUserId = profile?.userId;
-
-    // 1. Add current user as "Me"
-    if (currentUserId) {
-      const selfName = String(currentUser?.name || "Me").trim();
-      const selfEmail = String(currentUser?.email || "").trim();
-      options.push({
-        value: currentUserId,
-        label: selfEmail ? `${selfName} (Me - ${selfEmail})` : `${selfName} (Me)`,
-      });
-    }
-
-    // 2. Add Partner Owner if different from current user
-    if (partnerUserId && partnerUserId !== currentUserId) {
-      const partnerName = String(profile?.contactPersonName || profile?.businessName || "Partner Owner").trim();
-      const partnerEmail = String(profile?.businessEmail || "").trim();
-      options.push({
-        value: partnerUserId,
-        label: partnerEmail ? `${partnerName} (Owner - ${partnerEmail})` : `${partnerName} (Owner)`,
-      });
-    }
-
-    // 3. Add team members, skipping current user and partner owner to avoid duplicates
-    const members = teamMembersData?.data ?? [];
-    members
-      .filter((m) => m.status === "ACTIVE" && m.userId && m.userId !== currentUserId && m.userId !== partnerUserId)
-      .forEach((m) => {
-        const memberName = [m.firstName, m.lastName].filter(Boolean).join(" ").trim();
-        const memberEmail = String(m.email || "").trim();
-        const label = memberEmail
-          ? `${memberName || memberEmail} (${memberEmail})`
-          : memberName || "Unknown";
-        options.push({ value: m.userId!, label });
-      });
-    return options;
-  }, [currentUser?.id, currentUser?.name, currentUser?.email, profile, teamMembersData?.data]);
+    return (assigneesData ?? []).map((a) => ({
+      value: a.userId,
+      label: a.role === "OWNER"
+        ? `${a.name} (Owner - ${a.email})`
+        : a.userId === currentUserId
+          ? `${a.name} (Me - ${a.email})`
+          : `${a.name} (${a.email})`,
+    }));
+  }, [assigneesData, currentUser?.id]);
 
   const allRows = tasksData?.data ?? [];
   const rows = useMemo(() => {
@@ -337,6 +302,11 @@ export default function TaskManagement() {
       ),
     },
     { title: "Assigned To", dataIndex: "assigned_member_name" },
+    {
+      title: "Assigned By",
+      dataIndex: "created_by_name",
+      render: (v: string | null | undefined) => v || "—",
+    },
     {
       title: "Actions",
       width: 180,

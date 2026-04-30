@@ -4,6 +4,7 @@ export interface PartnerTaskListItem {
   id: string;
   task_title: string;
   assigned_member_name: string;
+  created_by_name?: string | null;
   created_date_time: string;
   status: string;
   dueDate?: string | null;
@@ -30,6 +31,13 @@ export interface PartnerTaskDetail {
   applicationId?: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface TaskAssignee {
+  userId: string;
+  name: string;
+  email: string;
+  role: 'OWNER' | 'MEMBER';
 }
 
 export interface StudentWithActiveTasks {
@@ -147,6 +155,16 @@ export const partnerTasksApi = baseApi.injectEndpoints({
       providesTags: (_result, _err, id) => [{ type: "partnerTasks", id }],
     }),
 
+    getAssignees: builder.query<TaskAssignee[], void>({
+      query: () => ({
+        url: "/partners/tasks/assignees",
+        method: "GET",
+      }),
+      transformResponse: (response: any) =>
+        Array.isArray(response?.data) ? response.data : [],
+      providesTags: ["partnerTasks"],
+    }),
+
     getStudentsWithActiveTasks: builder.query<
       StudentWithActiveTasks[],
       { assignedToMe?: boolean } | void
@@ -210,6 +228,7 @@ export const partnerTasksApi = baseApi.injectEndpoints({
 export const {
   useGetPartnerTasksQuery,
   useGetTaskByIdQuery,
+  useGetAssigneesQuery,
   useGetStudentsWithActiveTasksQuery,
   useCreateTaskMutation,
   useUpdateTaskMutation,

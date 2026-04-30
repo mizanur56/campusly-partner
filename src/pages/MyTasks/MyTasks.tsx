@@ -92,20 +92,8 @@ export default function MyTasks() {
     page,
     limit,
     assignedToMe: true,
-    createdByMe: false,
     status: status || undefined,
   });
-
-  // Debug: Log the query and response
-  console.log('MyTasks Debug - Current User ID:', currentUser?.id);
-  console.log('MyTasks Debug - Query Params:', {
-    page,
-    limit,
-    assignedToMe: true,
-    createdByMe: false,
-    status: status || undefined,
-  });
-  console.log('MyTasks Debug - Tasks Response:', tasksData);
 
   const { data: taskDetail, isLoading: detailLoading } = useGetTaskByIdQuery(viewTask?.id ?? "", {
     skip: !viewTask?.id,
@@ -209,7 +197,11 @@ export default function MyTasks() {
       dataIndex: "status",
       render: (s: PartnerTaskStatus) => <Tag color={statusColor[s]}>{s.replace(/_/g, " ")}</Tag>,
     },
-    { title: "Assigned To", dataIndex: "assigned_member_name" },
+    {
+      title: "Assigned By",
+      dataIndex: "created_by_name",
+      render: (v: string | null | undefined) => v || "—",
+    },
     {
       title: "Actions",
       width: 180,
