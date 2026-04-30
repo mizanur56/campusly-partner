@@ -46,27 +46,30 @@ export const EmbassySubmissionStep: React.FC<EmbassySubmissionStepProps> = ({
     return `${config.image_access_url}${raw}`;
   }, []);
 
-  const downloadDocument = React.useCallback(async (url: string, name?: string) => {
-    if (!url) return;
-    const resolved = resolveAssetUrl(url);
-    try {
-      const res = await fetch(resolved, { credentials: "include" });
-      if (!res.ok) throw new Error(`Download failed (${res.status})`);
-      const blob = await res.blob();
+  const downloadDocument = React.useCallback(
+    async (url: string, name?: string) => {
+      if (!url) return;
+      const resolved = resolveAssetUrl(url);
+      try {
+        const res = await fetch(resolved, { credentials: "include" });
+        if (!res.ok) throw new Error(`Download failed (${res.status})`);
+        const blob = await res.blob();
 
-      const objectUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = objectUrl;
-      a.download = name?.trim() ? name.trim() : "download";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(objectUrl);
-    } catch (err) {
-      console.error("Download failed:", err);
-      window.open(resolved, "_blank");
-    }
-  }, [resolveAssetUrl]);
+        const objectUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = objectUrl;
+        a.download = name?.trim() ? name.trim() : "download";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(objectUrl);
+      } catch (err) {
+        console.error("Download failed:", err);
+        window.open(resolved, "_blank");
+      }
+    },
+    [resolveAssetUrl],
+  );
 
   /* ================= Get File Size from URL ================= */
   const getFileSize = React.useCallback(
@@ -174,10 +177,8 @@ export const EmbassySubmissionStep: React.FC<EmbassySubmissionStepProps> = ({
       ? "cursor-not-allowed opacity-50"
       : "cursor-pointer";
 
-
-
   const stageLockedVisual = embedded && !stageUnlocked;
-  console.log(embedded,!stageUnlocked)
+
   const stageCardClass = stageLockedVisual
     ? "border border-[#D1D5DB] rounded-lg overflow-hidden bg-[#F4F6F5]"
     : "border border-[#C7CACF] rounded-lg overflow-hidden";
@@ -260,7 +261,7 @@ export const EmbassySubmissionStep: React.FC<EmbassySubmissionStepProps> = ({
                 isAllRequiredCompleted ? "text-primary" : "text-[#20242A]"
               }`}
             >
-             Stage: 5 Embassy Submission
+              Stage: 5 Embassy Submission
             </h3>
             <p
               className={`text-[14px] ${
@@ -268,7 +269,7 @@ export const EmbassySubmissionStep: React.FC<EmbassySubmissionStepProps> = ({
               }`}
             >
               Provide visa submission proof and the submission date.
-              </p>
+            </p>
           </div>
           <div
             title={
@@ -376,7 +377,10 @@ export const EmbassySubmissionStep: React.FC<EmbassySubmissionStepProps> = ({
                         </div>
                         <button
                           onClick={() =>
-                            downloadDocument(section.url ?? "", `${section.title}`)
+                            downloadDocument(
+                              section.url ?? "",
+                              `${section.title}`,
+                            )
                           }
                         >
                           <DownloadOutlined />
@@ -412,7 +416,9 @@ export const EmbassySubmissionStep: React.FC<EmbassySubmissionStepProps> = ({
 };
 
 const EmbassySubmission: React.FC = () => {
-  const { applicationApiData } = useOutletContext<{ applicationApiData: any }>();
+  const { applicationApiData } = useOutletContext<{
+    applicationApiData: any;
+  }>();
   return <EmbassySubmissionStep applicationApiData={applicationApiData} />;
 };
 
