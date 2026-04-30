@@ -264,6 +264,7 @@ export const baseApi = createApi({
     "announcements",
     "chatPartnerAdvisor",
     "Notification",
+    "feeRanges",
   ],
   endpoints: () => ({}),
 });

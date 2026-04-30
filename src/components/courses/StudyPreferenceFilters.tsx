@@ -1,17 +1,12 @@
 import React, {
-  useState,
   useCallback,
-  useRef,
   useEffect,
   useMemo,
+  useRef,
+  useState,
 } from "react";
-import { KeywordGroup } from "../common/Tabs";
 import { useGetFilterOptionsQuery } from "../../redux/features/search/searchApi";
-import {
-  extractCountryNames,
-  extractSubjectNames,
-  extractInstitutionNames,
-} from "../../utils/filterHelpers";
+import { KeywordGroup } from "../common/Tabs";
 
 interface StudyPreferenceFiltersProps {
   onFilterChange?: (filters: FilterState) => void;
@@ -81,7 +76,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
     const universities = filterOptionsResponse?.data?.universities || [];
     const selectedCountry = filters.studyDestination;
     if (!selectedCountry) return [];
-    
+
     return universities
       .filter((u) => u.countryName === selectedCountry)
       .map((u) => u.name)
@@ -91,9 +86,13 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
   // Extract study levels - Only show Postgraduate and Undergraduate
   const studyLevels = useMemo(() => {
     const levels = filterOptionsResponse?.data?.studyLevels || [];
-    
+
     return levels
-      .filter((level) => level.description === "Postgraduate" || level.description === "Undergraduate")
+      .filter(
+        (level) =>
+          level.description === "Postgraduate" ||
+          level.description === "Undergraduate",
+      )
       .map((level) => level.description)
       .sort((a, b) => a.localeCompare(b));
   }, [filterOptionsResponse?.data?.studyLevels]);
@@ -115,7 +114,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
   const isDraggingRef = useRef(false);
 
   // Debounce timer for filter changes to prevent infinite search loops while dragging range slider
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounced callback for filter changes - only trigger when NOT dragging
   useEffect(() => {
@@ -465,7 +464,9 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
                 Study level
               </label>
               {isLoadingFilterOptions ? (
-                <div className="text-sm text-gray-400">Loading study levels...</div>
+                <div className="text-sm text-gray-400">
+                  Loading study levels...
+                </div>
               ) : (
                 <KeywordGroup
                   options={studyLevels.map((level) => ({

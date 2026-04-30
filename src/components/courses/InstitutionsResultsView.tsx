@@ -70,6 +70,24 @@ export default function InstitutionsResultsView({
     limit: 100000,
   });
 
+  const flatCoursesResponse = useMemo(() => {
+    if (!coursesResponse?.data) return undefined;
+    const seen = new Map<string, string>();
+    coursesResponse.data.forEach((c) => {
+      if (!seen.has(c.course.id)) seen.set(c.course.id, c.course.name);
+    });
+    return { data: Array.from(seen, ([id, name]) => ({ id, name })) };
+  }, [coursesResponse]);
+
+  const flatUniversitiesResponse = useMemo(() => {
+    if (!coursesResponse?.data) return undefined;
+    const seen = new Map<string, string>();
+    coursesResponse.data.forEach((c) => {
+      if (!seen.has(c.university.id)) seen.set(c.university.id, c.university.name);
+    });
+    return { data: Array.from(seen, ([id, name]) => ({ id, name })) };
+  }, [coursesResponse]);
+
   const apiFilters = useMemo(() => {
     const filterFormData = transformToFilterFormData(filters);
     if (!filterFormData) return undefined;
@@ -78,16 +96,18 @@ export default function InstitutionsResultsView({
       searchQuery || "",
       countriesResponse,
       citiesResponse,
-      coursesResponse,
+      flatCoursesResponse,
       studyLevelsResponse,
+      flatUniversitiesResponse,
     );
   }, [
     filters,
     searchQuery,
     countriesResponse,
     citiesResponse,
-    coursesResponse,
+    flatCoursesResponse,
     studyLevelsResponse,
+    flatUniversitiesResponse,
   ]);
 
   const fetchUniversities = useCallback(

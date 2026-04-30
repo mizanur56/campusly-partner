@@ -85,6 +85,9 @@ export default function CoursesResultsView({
       coursesResponse: {
         data: filterData.courses || [],
       },
+      universitiesResponse: {
+        data: filterData.universities || [],
+      },
       studyLevelsResponse: {
         data: filterData.studyLevels || [],
       },
@@ -101,6 +104,7 @@ export default function CoursesResultsView({
       apiResponsesForTransform.citiesResponse,
       apiResponsesForTransform.coursesResponse,
       apiResponsesForTransform.studyLevelsResponse,
+      apiResponsesForTransform.universitiesResponse,
     );
   }, [
     filters,
