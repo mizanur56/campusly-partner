@@ -12,12 +12,7 @@ const applicationApi = baseApi.injectEndpoints({
     }),
     getMyAllApplications: builder.query({
       query: (params) => {
-        const {
-          page = 1,
-          limit = 20,
-          status = "",
-          search = "",
-        } = params || {};
+        const { page = 1, limit = 20, status = "", search = "" } = params || {};
         return {
           url: "/applications/partner",
           method: "GET",
@@ -75,6 +70,14 @@ const applicationApi = baseApi.injectEndpoints({
           params: params,
         };
       },
+      providesTags: ["applications", "invoices"],
+    }),
+
+    applicationRecord: builder.query({
+      query: (applicationId: string) => ({
+        url: `/applications/${applicationId}/records`,
+        method: "GET",
+      }),
       providesTags: ["applications", "invoices"],
     }),
 
@@ -169,6 +172,7 @@ export const {
   useReplyToApplicationNoteMutation,
   useUpdateApplicationNoteMutation,
   useDeleteApplicationNoteMutation,
+  useApplicationRecordQuery,
 } = applicationApi;
 
 export { applicationApi };
