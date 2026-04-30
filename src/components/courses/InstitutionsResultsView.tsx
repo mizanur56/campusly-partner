@@ -1,18 +1,19 @@
-import React, { useCallback, useMemo } from "react";
+import { Button } from "antd";
+import { useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useLazySearchUniversitiesQuery } from "../../redux/features/search/searchApi";
-import { useAppDispatch } from "../../redux/features/hooks";
-import { updateUniversitiesMeta } from "../../redux/features/search/searchMetaSlice";
-import { useInfiniteScrollPagination } from "../../hooks/useInfiniteScrollPagination";
-import { useGetCountriesQuery } from "../../redux/features/countries/countriesApi";
-import { useGetCitiesQuery } from "../../redux/features/cities/citiesApi";
-import { useGetUniversityCoursesQuery } from "../../redux/features/universityCourses/universityCoursesApi";
-import { useGetStudyLevelsQuery } from "../../redux/features/studyLevels/studyLevelsApi";
-import Spinner from "../common/Loading/Spinner";
-import SkeletonInstitutionCard from "./SkeletonInstitutionCard";
 import type { SearchUniversityItem } from "../../data/searchResultsTypes";
+import { useInfiniteScrollPagination } from "../../hooks/useInfiniteScrollPagination";
+import { useGetCitiesQuery } from "../../redux/features/cities/citiesApi";
+import { useGetCountriesQuery } from "../../redux/features/countries/countriesApi";
+import { useAppDispatch } from "../../redux/features/hooks";
+import { useLazySearchUniversitiesQuery } from "../../redux/features/search/searchApi";
+import { updateUniversitiesMeta } from "../../redux/features/search/searchMetaSlice";
+import { useGetStudyLevelsQuery } from "../../redux/features/studyLevels/studyLevelsApi";
+import { useGetUniversityCoursesQuery } from "../../redux/features/universityCourses/universityCoursesApi";
 import { transformSearchUniversity } from "../../utils/searchTransform";
 import { transformFiltersToApi } from "../../utils/transformFiltersToApi";
+import Spinner from "../common/Loading/Spinner";
+import SkeletonInstitutionCard from "./SkeletonInstitutionCard";
 import type { FilterState } from "./StudyPreferenceFilters";
 
 type InstitutionsResultsViewProps = {
@@ -266,18 +267,18 @@ export default function InstitutionsResultsView({
                 )}
               </div>
               <div className="flex flex-wrap gap-2">
-                <button
+                <Button
                   onClick={() => handleViewDetails(university.id)}
-                  className="h-9 px-3.5 rounded-lg text-sm font-medium bg-primary-500 text-white hover:bg-primary-600 transition-colors"
+                  type="primary"
                 >
                   View Details
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={() => handleViewCourses(university.id)}
-                  className="h-9 px-3.5 rounded-lg text-sm font-medium border border-primary-500 text-primary-600 hover:bg-primary-50 transition-colors"
+                  type="default"
                 >
                   View Courses
-                </button>
+                </Button>
               </div>
             </div>
           </div>

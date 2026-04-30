@@ -960,13 +960,16 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
       ? "cursor-not-allowed opacity-50"
       : "cursor-pointer";
 
+   
+
   const stageLockedVisual = embedded && !stageUnlocked;
+ 
   const stageCardClass = stageLockedVisual
     ? "border border-[#D1D5DB] rounded-lg overflow-hidden bg-[#F4F6F5]"
     : "border border-[#C7CACF] rounded-lg overflow-hidden";
   const stageHeaderClass = stageLockedVisual
     ? "bg-[#EEF2EF]"
-    : "bg-[#E9F2EB]";
+    : "bg-[#DFF2E6] border-[#237D3B] border rounded-lg";
 
   return (
     <>
@@ -977,10 +980,18 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
           className={`${stageHeaderClass} p-6 flex items-center justify-between`}
         >
           <div>
-            <h3 className="text-[20px] font-semibold text-[#20242A]">
+            <h3
+              className={`text-[20px] font-semibold ${
+                isAllRequiredCompleted ? "text-primary" : "text-[#20242A]"
+              }`}
+            >
              Stage: 1 Admission
             </h3>
-            <p className="text-[14px] text-[#4B5563]">
+            <p
+              className={`text-[14px] ${
+                isAllRequiredCompleted ? "text-primary" : "text-[#4B5563]"
+              }`}
+            >
               Kindly upload the documents as per the admission requirements.
             </p>
           </div>

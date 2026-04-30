@@ -1,7 +1,7 @@
 import { Dropdown, MenuProps, Table } from "antd";
+import { MoreVertical } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSidebar } from "../../../context/SidebarContext";
-import { MoreVertical } from "lucide-react";
 import "./AntTable.css";
 
 interface ActionItem {
@@ -49,7 +49,7 @@ export default function DataTable(props: any) {
   // Handle row selection change
   const handleRowSelectionChange = (
     selectedRowKeys: any,
-    selectedRows: any
+    selectedRows: any,
   ) => {
     setSelectedRowKeys(selectedRowKeys);
     if (onSelectRowsChange) {
@@ -100,7 +100,7 @@ export default function DataTable(props: any) {
               ),
               danger: action.danger,
               onClick: () => action.onClick(record),
-            })
+            }),
           );
 
           return (
@@ -113,7 +113,10 @@ export default function DataTable(props: any) {
                 className="flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100 transition-colors"
                 onClick={(e) => e.stopPropagation()}
               >
-                <MoreVertical size={18} className="text-gray-600 cursor-pointer" />
+                <MoreVertical
+                  size={18}
+                  className="text-gray-600 cursor-pointer"
+                />
               </button>
             </Dropdown>
           );
@@ -130,7 +133,7 @@ export default function DataTable(props: any) {
 
   // Calculate total data count
   const totalDataCount = total || data?.count || data?.length || 0;
-  
+
   // Determine if pagination should be shown
   // Show pagination if:
   // 1. isPaginate is true OR pagination prop is provided
@@ -141,12 +144,18 @@ export default function DataTable(props: any) {
   // For client-side pagination, slice the data based on current page and limit
   const pageSize = limit || paginationProp?.pageSize || 20;
   const currentPageNum = currentPage || 1;
-  const paginatedData = shouldShowPagination && !total
-    ? (data || []).slice((currentPageNum - 1) * pageSize, currentPageNum * pageSize)
-    : data || [];
+  const paginatedData =
+    shouldShowPagination && !total
+      ? (data || []).slice(
+          (currentPageNum - 1) * pageSize,
+          currentPageNum * pageSize,
+        )
+      : data || [];
 
   const tableClassName = noInnerBorder
-    ? (isExpanded ? "sidebar-expanded" : "sidebar-collapsed")
+    ? isExpanded
+      ? "sidebar-expanded"
+      : "sidebar-collapsed"
     : `border rounded-lg ${isExpanded ? "sidebar-expanded" : "sidebar-collapsed"}`;
 
   return (
@@ -171,7 +180,8 @@ export default function DataTable(props: any) {
                   setCurrentPage(page);
                 }
               },
-              showSizeChanger: showSizeChanger || paginationProp?.showSizeChanger || false,
+              showSizeChanger:
+                showSizeChanger || paginationProp?.showSizeChanger || false,
               pageSizeOptions: ["10", "25", "50", "100", "200", "500", "1000"],
               onShowSizeChange: (_current, newSize) => {
                 if (setLimit) {

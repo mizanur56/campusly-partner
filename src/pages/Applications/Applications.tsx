@@ -1,17 +1,22 @@
-import React, { useState } from "react";
-import { Tag, Input, Space, Dropdown, Select, Tooltip } from "antd";
+import { Button, Dropdown, Input, Select, Tag, Tooltip } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { useNavigate } from "react-router-dom";
-import { FiEye, FiTrash2 } from "react-icons/fi";
 import { Search } from "lucide-react";
+import { useState } from "react";
+import { FiEye, FiTrash2 } from "react-icons/fi";
 import { IoFilterSharp } from "react-icons/io5";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import PageCard from "../../components/common/Card/PageCard";
 import PageMeta from "../../components/common/Meta/PageMeta";
-import DataTable from "../../components/common/Tables/DataTable";
-import "./Applications.css";
-import DeleteModal from "../../components/shared/DeleteModal";
-import { useGetMyAllApplicationsQuery } from "../../redux/features/application/applicationApi";
-import { config } from "../../config";
 import PageHeader from "../../components/common/Navigation/PageHeader";
+import DataTable from "../../components/common/Tables/DataTable";
+import DeleteModal from "../../components/shared/DeleteModal";
+import { config } from "../../config";
+import {
+  useDeleteApplicationMutation,
+  useGetMyAllApplicationsQuery,
+} from "../../redux/features/application/applicationApi";
+import "./Applications.css";
 
 const { Option } = Select;
 
@@ -59,6 +64,8 @@ export default function Applications() {
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState<any>(null);
+  const [deleteApplication, { isLoading: isDeletingApplication }] =
+    useDeleteApplicationMutation();
 
   const { data, isLoading, isFetching } = useGetMyAllApplicationsQuery({
     page: currentPage,
@@ -156,7 +163,7 @@ export default function Applications() {
                 e.stopPropagation();
                 navigate(`/applications/${record.id}`);
               }}
-              className="flex cursor-pointer items-center justify-center w-8 h-8 rounded border border-gray-300 transition-all text-gray-600 hover:text-primary-500 hover:border-primary-500"
+              className="flex cursor-pointer items-center justify-center w-8 h-8 rounded-lg border border-[#C7CACF] transition-all text-gray-600 hover:text-primary-500 hover:border-primary-500"
             >
               <FiEye size={16} />
             </button>
@@ -168,7 +175,7 @@ export default function Applications() {
                 setSelectedApplication(record);
                 setDeleteModalOpen(true);
               }}
-              className="flex cursor-pointer items-center justify-center w-8 h-8 rounded border border-gray-300 transition-all text-gray-600 hover:text-primary-500 hover:border-primary-500"
+              className="flex cursor-pointer items-center justify-center w-8 h-8 rounded-lg border border-[#C7CACF] transition-all text-gray-600 hover:text-primary-500 hover:border-primary-500"
             >
               <FiTrash2 size={16} />
             </button>
@@ -185,73 +192,77 @@ export default function Applications() {
         description="View and manage student applications, status, and submissions in the Campus Transfer Partner panel."
       />
 
-      <PageHeader title="Applications" subtitle="Manage your applications"  extra={<button
-              type="button"
-              onClick={() => navigate("/programs-schools")}
-              className="inline-flex items-center justify-center rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-            >
-              Find More Programs
-            </button>} breadcrumbs={[{ title: "Dashboard", path: "/" }, { title: "Applications" }]}/>
-   
+      <PageHeader
+        title="Applications"
+        subtitle="Manage your applications"
+        extra={
+          <Button type="primary" onClick={() => navigate("/programs-schools")}>
+            Find More Programs
+          </Button>
+        }
+        breadcrumbs={[
+          { title: "Dashboard", path: "/" },
+          { title: "Applications" },
+        ]}
+      />
 
-    <div className="bg-[#FFFFFF] p-6 rounded-lg border border-[#C7CACF]">
-    <div className="mb-6 flex items-center justify-between">
-        <Input
-          placeholder="Search by ID, course, university or status"
-          prefix={<Search size={16} className="text-[#4B5563]" />}
-          value={searchText}
-          onChange={(e) => {
-            setSearchText(e.target.value);
-            setCurrentPage(1);
-          }}
-          allowClear
-          size="large"
-          // style={{ width: 400 }}
-          className="max-w-sm"
-        />
-        <Dropdown
-          open={isFilterDropdownOpen}
-          onOpenChange={setIsFilterDropdownOpen}
-          menu={{
-            items: [
-              {
-                key: "status_filter",
-                label: (
-                  <div
-                    className="px-2 py-1"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="text-xs text-gray-500 mb-1">Status</div>
-                    <Select
-                      placeholder="Select status"
-                      value={selectedStatus}
-                      onChange={handleStatusFilterChange}
-                      style={{ width: 200 }}
-                      allowClear
+      <PageCard>
+        <div className="mb-6 flex items-center justify-between">
+          <Input
+            placeholder="Search by ID, course, university or status"
+            prefix={<Search size={16} className="text-[#4B5563]" />}
+            value={searchText}
+            onChange={(e) => {
+              setSearchText(e.target.value);
+              setCurrentPage(1);
+            }}
+            allowClear
+            size="large"
+            // style={{ width: 400 }}
+            className="max-w-sm"
+          />
+          <Dropdown
+            open={isFilterDropdownOpen}
+            onOpenChange={setIsFilterDropdownOpen}
+            menu={{
+              items: [
+                {
+                  key: "status_filter",
+                  label: (
+                    <div
+                      className="px-2 py-1"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <Option value="REVIEW">Review</Option>
-                      <Option value="PENDING">Pending</Option>
-                      <Option value="SUCCESS">Success</Option>
-                      <Option value="REJECTED">Rejected</Option>
-                    </Select>
-                  </div>
-                ),
-              },
-            ],
-          }}
-          trigger={["click"]}
-        >
-          <button
-            type="button"
-            className="flex h-10 items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50"
+                      <div className="text-xs text-gray-500 mb-1">Status</div>
+                      <Select
+                        placeholder="Select status"
+                        value={selectedStatus}
+                        onChange={handleStatusFilterChange}
+                        style={{ width: 200 }}
+                        allowClear
+                      >
+                        <Option value="REVIEW">Review</Option>
+                        <Option value="PENDING">Pending</Option>
+                        <Option value="SUCCESS">Success</Option>
+                        <Option value="REJECTED">Rejected</Option>
+                      </Select>
+                    </div>
+                  ),
+                },
+              ],
+            }}
+            trigger={["click"]}
           >
-            <IoFilterSharp size={16} />
-            <span>Filter</span>
-          </button>
-        </Dropdown>
-      </div>
+            <button
+              type="button"
+              className="flex h-10 items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50"
+            >
+              <IoFilterSharp size={16} />
+              <span>Filter</span>
+            </button>
+          </Dropdown>
+        </div>
 
-      <div className="applications-table-wrapper overflow-hidden rounded-[24px] border border-neutral-100 bg-white dark:border-gray-800 dark:bg-gray-900">
         <DataTable
           data={tableData}
           columns={columns}
@@ -270,16 +281,27 @@ export default function Applications() {
             pageSizeOptions: ["10", "20", "50"],
           }}
         />
-      </div>
-    </div>
+      </PageCard>
 
       <DeleteModal
         open={deleteModalOpen}
         onCancel={() => setDeleteModalOpen(false)}
         onConfirm={async () => {
-          // TODO: hook up partner delete API when available
-          setDeleteModalOpen(false);
+          if (!selectedApplication?.id) {
+            toast.error("Application not selected");
+            return;
+          }
+
+          try {
+            await deleteApplication(selectedApplication.id).unwrap();
+            toast.success("Application deleted successfully");
+            setDeleteModalOpen(false);
+            setSelectedApplication(null);
+          } catch (error: any) {
+            toast.error(error?.data?.message || "Failed to delete application");
+          }
         }}
+        loading={isDeletingApplication}
         title="Delete Application"
         message="Are you sure you want to delete this application?"
       />

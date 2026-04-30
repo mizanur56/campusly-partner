@@ -119,23 +119,30 @@
 
 // export default CreateStudentModal;
 
-
-
-
-
+import {
+  Button,
+  Card,
+  DatePicker,
+  Form,
+  Input,
+  Modal,
+  Select,
+  Upload,
+} from "antd";
+import dayjs from "dayjs";
 import React from "react";
-import { Modal, Form, Input, Button, DatePicker, Select, Upload } from "antd";
-import { toast } from "react-toastify";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
-import dayjs from "dayjs";
-import { useCreateStudentMutation } from "../../../redux/features/profile/studentProfileApi";
-import type { CreateStudentPayload } from "../../../redux/features/profile/studentProfileApi";
-import { useUpdateStudentProfileMutation } from "../../../redux/features/profile/studentProfileApi";
-import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
-import { useGetCountriesQuery } from "../../../redux/features/countries/countriesApi";
-import { useGetStudyLevelsByCountryQuery } from "../../../redux/features/studyLevels/studyLevelsApi";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { useGetCountriesQuery } from "../../../redux/features/countries/countriesApi";
+import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
+import type { CreateStudentPayload } from "../../../redux/features/profile/studentProfileApi";
+import {
+  useCreateStudentMutation,
+  useUpdateStudentProfileMutation,
+} from "../../../redux/features/profile/studentProfileApi";
+import { useGetStudyLevelsByCountryQuery } from "../../../redux/features/studyLevels/studyLevelsApi";
 
 interface CreateStudentModalProps {
   open: boolean;
@@ -172,8 +179,13 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
   );
   const [passportUrl, setPassportUrl] = React.useState<string | null>(null);
 
-  const { data: countriesData } = useGetCountriesQuery({ page: 1, limit: 1000 });
-  const selectedCountryName = Form.useWatch("country", form) as string | undefined;
+  const { data: countriesData } = useGetCountriesQuery({
+    page: 1,
+    limit: 1000,
+  });
+  const selectedCountryName = Form.useWatch("country", form) as
+    | string
+    | undefined;
   const selectedQualificationId = Form.useWatch("qualifications", form) as
     | string
     | undefined;
@@ -206,14 +218,16 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
   const qualificationOptions = React.useMemo(() => {
     const data = Array.isArray(studyLevelsData)
       ? studyLevelsData
-      : (studyLevelsData as { data?: unknown[] } | undefined)?.data ?? [];
+      : ((studyLevelsData as { data?: unknown[] } | undefined)?.data ?? []);
 
-    return (data as {
-      studyLevel?: { id?: string; name?: string; description?: string };
-      name?: string;
-      countryStudyLevelName?: string;
-      studyLevelId?: string;
-    }[]).map((item) => ({
+    return (
+      data as {
+        studyLevel?: { id?: string; name?: string; description?: string };
+        name?: string;
+        countryStudyLevelName?: string;
+        studyLevelId?: string;
+      }[]
+    ).map((item) => ({
       label: item.countryStudyLevelName ?? item.name ?? "",
       value: item.studyLevel?.id ?? item.studyLevelId ?? "",
     }));
@@ -247,52 +261,50 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
       const derivedFullName = `${firstName} ${lastName}`.trim();
 
       // 1) Create auth user
-        const profilePayload: Record<string, unknown> = {
-          firstName: firstName || null,
-          lastName: lastName || null,
-          gender: String(values.gender ?? "").trim() || null,
-          country: String(values.country ?? "").trim() || null,
-          passportNo: String(values.passportNo ?? "").trim() || null,
-          phone: String(values.phone ?? "").trim() || null,
-          email: email || null,
-          lastEducationId: String(values.qualifications ?? "").trim() || null,
-          // Dates: always standard YYYY-MM-DD (except passing year: YYYY only)
-          lastEducationPassingYear: null,
-          dateOfBirth: null,
-          passportExpDate: null,
-          imageId: passportUrl || null,
-        };
+      const profilePayload: Record<string, unknown> = {
+        firstName: firstName || null,
+        lastName: lastName || null,
+        gender: String(values.gender ?? "").trim() || null,
+        country: String(values.country ?? "").trim() || null,
+        passportNo: String(values.passportNo ?? "").trim() || null,
+        phone: String(values.phone ?? "").trim() || null,
+        email: email || null,
+        lastEducationId: String(values.qualifications ?? "").trim() || null,
+        // Dates: always standard YYYY-MM-DD (except passing year: YYYY only)
+        lastEducationPassingYear: null,
+        dateOfBirth: null,
+        passportExpDate: null,
+        imageId: passportUrl || null,
+      };
 
-        // Passing year: YYYY only
-        try {
-          profilePayload.lastEducationPassingYear = values.passingYear
-            ? dayjs(values.passingYear).format("YYYY")
-            : null;
-        } catch {
-          profilePayload.lastEducationPassingYear = null;
-        }
+      // Passing year: YYYY only
+      try {
+        profilePayload.lastEducationPassingYear = values.passingYear
+          ? dayjs(values.passingYear).format("YYYY")
+          : null;
+      } catch {
+        profilePayload.lastEducationPassingYear = null;
+      }
 
-        // Date of birth: YYYY-MM-DD
-        try {
-          profilePayload.dateOfBirth = values.dateOfBirth
-            ? dayjs(values.dateOfBirth).format("YYYY-MM-DD")
-            : null;
-        } catch {
-          profilePayload.dateOfBirth = null;
-        }
+      // Date of birth: YYYY-MM-DD
+      try {
+        profilePayload.dateOfBirth = values.dateOfBirth
+          ? dayjs(values.dateOfBirth).format("YYYY-MM-DD")
+          : null;
+      } catch {
+        profilePayload.dateOfBirth = null;
+      }
 
-        // Passport expiry date: YYYY-MM-DD
-        try {
-          profilePayload.passportExpDate = values.passportExpiryDate
-            ? dayjs(values.passportExpiryDate).format("YYYY-MM-DD")
-            : null;
-        } catch {
-          profilePayload.passportExpDate = null;
-        }
+      // Passport expiry date: YYYY-MM-DD
+      try {
+        profilePayload.passportExpDate = values.passportExpiryDate
+          ? dayjs(values.passportExpiryDate).format("YYYY-MM-DD")
+          : null;
+      } catch {
+        profilePayload.passportExpDate = null;
+      }
 
-      
       const result = await createStudent(profilePayload as any).unwrap();
-      
 
       // 2) Update profile: countryId + qualificationId + other form fields
       const studentId = result?.studentId;
@@ -351,7 +363,9 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
       }
     } catch (err: any) {
       const msg =
-        err?.data?.message || err?.data?.errors?.[0]?.message || "Failed to create student.";
+        err?.data?.message ||
+        err?.data?.errors?.[0]?.message ||
+        "Failed to create student.";
       toast.error(msg);
     }
   };
@@ -369,7 +383,7 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
       open={open}
       onCancel={handleCancel}
       footer={null}
-      width={600}
+      width={800}
       destroyOnHidden
       closable
       className="create-student-modal"
@@ -423,7 +437,8 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
             </p>
             {passportFileName && (
               <p className="mt-3 text-[12px] text-[#20242A]">
-                Uploaded: <span className="font-medium">{passportFileName}</span>
+                Uploaded:{" "}
+                <span className="font-medium">{passportFileName}</span>
               </p>
             )}
           </div>
@@ -439,23 +454,20 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 mt-4">
             <Form.Item
               name="firstName"
-              label={<span className="text-[12px] text-[#20242A]">First Name</span>}
+              label="First Name"
               rules={[{ required: true, message: "First name is required" }]}
             >
-              <Input placeholder="" className="h-9" />
+              <Input placeholder="e.g. John" />
             </Form.Item>
             <Form.Item
+              label="Last Name"
               name="lastName"
-              label={<span className="text-[12px] text-[#20242A]">Last Name</span>}
               rules={[{ required: true, message: "Last name is required" }]}
             >
-              <Input placeholder="" className="h-9" />
+              <Input placeholder="e.g. Doe" />
             </Form.Item>
 
-            <Form.Item
-              name="gender"
-              label={<span className="text-[12px] text-[#20242A]">Gender</span>}
-            >
+            <Form.Item name="gender" label="Gender">
               <Select
                 placeholder="Select gender"
                 options={[
@@ -465,18 +477,11 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
                 ]}
               />
             </Form.Item>
-            <Form.Item
-              name="dateOfBirth"
-              label={<span className="text-[12px] text-[#20242A]">Date of Birth</span>}
-            >
+            <Form.Item name="dateOfBirth" label="Date of Birth">
               <DatePicker className="w-full" placeholder="dd/mm/yyyy" />
             </Form.Item>
 
-            <Form.Item
-              name="country"
-              label={<span className="text-[12px] text-[#20242A]">Country</span>}
-              className="md:col-span-2"
-            >
+            <Form.Item name="country" label="Country" className="md:col-span-2">
               <Select
                 placeholder="Select"
                 options={countriesOptions}
@@ -486,28 +491,19 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
               />
             </Form.Item>
 
-            <Form.Item
-              name="passportNo"
-              label={<span className="text-[12px] text-[#20242A]">Passport No</span>}
-            >
-              <Input placeholder="" className="h-9" />
+            <Form.Item name="passportNo" label="Passport No">
+              <Input placeholder="e.g. 1234567890" />
             </Form.Item>
-            <Form.Item
-              name="passportExpiryDate"
-              label={<span className="text-[12px] text-[#20242A]">Passport Expiry Date</span>}
-            >
+            <Form.Item name="passportExpiryDate" label="Passport Expiry Date">
               <DatePicker className="w-full" placeholder="dd/mm/yyyy" />
             </Form.Item>
 
-            <Form.Item
-              name="phone"
-              label={<span className="text-[12px] text-[#20242A]">Contact Number</span>}
-            >
+            <Form.Item name="phone" label="Contact Number">
               <PhoneInput
                 country={"bd"}
-                inputClass="!w-full !h-9"
-                buttonClass="!h-9"
-                containerClass="!w-full"
+                inputClass="!w-full !h-12 rounded-lg!"
+                buttonClass="!h-12 rounded-lg!"
+                containerClass="!w-full rounded-lg!"
                 dropdownClass="!z-[9999]"
                 value={form.getFieldValue("phone")}
                 onChange={(v) => form.setFieldValue("phone", `+${v}`)}
@@ -515,58 +511,48 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
             </Form.Item>
             <Form.Item
               name="email"
-              label={<span className="text-[12px] text-[#20242A]">Email</span>}
+              label="Email"
               rules={[
                 { required: true, message: "Please enter email" },
                 { type: "email", message: "Please enter a valid email" },
               ]}
             >
-              <Input placeholder="" type="email" className="h-9" />
+              <Input placeholder="e.g. john.doe@example.com" type="email" />
             </Form.Item>
           </div>
 
-          <div className="mt-2 rounded-lg border border-[#CFCACF] bg-[#FAFAFA] p-4">
-            <p className="text-[14px] font-semibold text-[#20242A] mb-3">
-              Last Qualifications
-            </p>
-            <div className="grid grid-cols-1 gap-x-4 border border-[#CFCACF] bg-[#FFFFFF] p-4 rounded-lg">
-              <Form.Item
-                name="qualifications"
-                label={<span className="text-[12px] text-[#20242A]">Select Qualifications</span>}
-              >
-                <Select
-                  placeholder="Select"
-                  options={qualificationOptions}
-                  className="w-full"
-                  showSearch
-                  optionFilterProp="label"
-                  disabled={!selectedCountryId}
-                />
-              </Form.Item>
-              <div />
-              <Form.Item
-                name="passingYear"
-                label={<span className="text-[12px] text-[#20242A]">Passing Year</span>}
-              >
-                <DatePicker
-                  picker="year"
-                  className="w-full"
-                  placeholder="dd/mm/yyyy"
-                  disabled={!hasSelectedQualification}
-                />
-              </Form.Item>
-            </div>
-          </div>
+          <Card
+            className="mt-2 rounded-lg border border-[#CFCACF] bg-[#FAFAFA] p-4"
+            title="Last Qualifications"
+          >
+            <Form.Item name="qualifications" label="Select Qualifications">
+              <Select
+                placeholder="Select"
+                options={qualificationOptions}
+                className="w-full"
+                showSearch
+                optionFilterProp="label"
+                disabled={!selectedCountryId}
+              />
+            </Form.Item>
+            <Form.Item name="passingYear" label="Passing Year">
+              <DatePicker
+                picker="year"
+                className="w-full"
+                placeholder="dd/mm/yyyy"
+                disabled={!hasSelectedQualification}
+              />
+            </Form.Item>
+          </Card>
 
           <div className="mt-5 flex items-center justify-end gap-3">
-            <Button onClick={handleCancel} className="h-9 px-6 border-[#237D3B] text-[#237D3B]">
+            <Button onClick={handleCancel} danger>
               Cancel
             </Button>
             <Button
               type="primary"
               onClick={() => form.submit()}
               loading={isLoading}
-              className="h-9 px-6 bg-[#237D3B] hover:!bg-[#1E6A33]"
             >
               Confirm
             </Button>

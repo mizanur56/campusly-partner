@@ -1,28 +1,60 @@
-/* Custom styles for table header */
+/* List tables — aligned with Amzadfood admin typography */
 .ant-table-wrapper .ant-table-thead > tr > th {
-  background-color: #edeeef;
+  background-color: #edeeef !important;
   color: #4b5563;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   white-space: nowrap;
-  /* text-transform: uppercase; */
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  padding: 20px 16px;
 }
+
 .ant-table-wrapper .ant-table-tbody > tr > td {
   background-color: #fff;
   color: #4b5563;
+  border-bottom: 1px solid #c7cacf;
+  font-family: Inter;
+  font-weight: 400;
+  font-style: Regular;
   font-size: 14px;
-  border-bottom: #c7cacf 1px solid;
+  line-height: 22px;
+  letter-spacing: 0%;
 }
-/* Custom styles for table row hover */
+
+.ant-table-wrapper .ant-table-tbody > tr.ant-table-row:hover > td,
 .ant-table-wrapper .ant-table-tbody .ant-table-row > .ant-table-cell-row-hover {
-  background: rgba(237, 237, 237, 0.753) !important;
-  cursor: pointer;
+  background: #edeeef81 !important;
 }
+
+/* .ant-table-wrapper .ant-table-tbody > tr:last-child > td {
+  border-bottom: none;
+} */
 
 .ant-table-wrapper {
   background-color: #fff;
   width: 100%;
   overflow-x: auto;
+}
+
+.ant-table-wrapper .ant-table {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.ant-table-wrapper.border {
+  border: 1px solid #c7cacf;
+  border-radius: 8px;
+}
+
+.ant-table-wrapper.rounded-lg {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ant-table-container {
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 @media (min-width: 1024px) {
@@ -33,4 +65,216 @@
   .ant-table-wrapper.sidebar-collapsed {
     max-width: calc(100vw - 125px);
   }
+}
+
+.fix-right-column {
+  right: -2px !important;
+}
+/* --- Pagination (DataTable) — card style: ~40px controls, green active, light gray borders (ref. design) --- */
+.ant-table-wrapper .ant-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 8px;
+  margin: 20px 0 0 0;
+}
+
+/* Page numbers — min 40px wide, can grow for 2–3 digits */
+.ant-table-wrapper .ant-pagination .ant-pagination-item {
+  min-width: 40px;
+  width: auto;
+  height: 40px;
+  line-height: 38px;
+  margin-inline: 0 !important;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  overflow: hidden;
+}
+.ant-table-wrapper
+  .ant-pagination
+  .ant-pagination-jump-next
+  .ant-pagination-item-container {
+  position: relative;
+  right: 6px !important;
+  transition: right 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ant-table-wrapper
+  .ant-pagination
+  .ant-pagination-jump-next:hover
+  .ant-pagination-item-container {
+  right: 0 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ant-table-wrapper
+    .ant-pagination
+    .ant-pagination-jump-next
+    .ant-pagination-item-container {
+    transition: none;
+  }
+}
+
+/* Prev / next / ellipsis — fixed 40×40 */
+.ant-table-wrapper .ant-pagination .ant-pagination-prev,
+.ant-table-wrapper .ant-pagination .ant-pagination-next,
+.ant-table-wrapper .ant-pagination .ant-pagination-jump-prev,
+.ant-table-wrapper .ant-pagination .ant-pagination-jump-next {
+  min-width: 40px;
+  width: 40px;
+  height: 40px;
+  line-height: 38px;
+  margin-inline: 0 !important;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  overflow: hidden;
+}
+
+.ant-table-wrapper
+  .ant-pagination
+  .ant-pagination-item
+  .ant-pagination-item-link,
+.ant-table-wrapper
+  .ant-pagination
+  .ant-pagination-prev
+  .ant-pagination-item-link,
+.ant-table-wrapper
+  .ant-pagination
+  .ant-pagination-next
+  .ant-pagination-item-link,
+.ant-table-wrapper
+  .ant-pagination
+  .ant-pagination-jump-prev
+  .ant-pagination-item-link,
+.ant-table-wrapper
+  .ant-pagination
+  .ant-pagination-jump-next
+  .ant-pagination-item-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  line-height: 1;
+  border: none !important;
+  background: transparent !important;
+  font-weight: 600;
+  color: #1f2937;
+  border-radius: 0;
+  padding: 0 6px;
+}
+
+.ant-table-wrapper
+  .ant-pagination
+  .ant-pagination-item
+  .ant-pagination-item-link,
+.ant-table-wrapper
+  .ant-pagination
+  .ant-pagination-item
+  a.ant-pagination-item-link {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+/* Active page — solid brand green, white label */
+.ant-table-wrapper .ant-pagination .ant-pagination-item-active {
+  background: #237d3b !important;
+  border-color: #237d3b !important;
+}
+
+.ant-table-wrapper .ant-pagination .ant-pagination-item-active a {
+  color: #ffffff;
+}
+
+.ant-table-wrapper
+  .ant-pagination
+  .ant-pagination-item-active
+  .ant-pagination-item-link,
+.ant-table-wrapper
+  .ant-pagination
+  .ant-pagination-item-active
+  a.ant-pagination-item-link {
+  color: #fff !important;
+  background: transparent !important;
+}
+
+/* Hover — inactive page numbers */
+.ant-table-wrapper
+  .ant-pagination
+  .ant-pagination-item:not(.ant-pagination-item-active):hover {
+  border-color: #9ca3af;
+  background: #fafafa;
+}
+
+/* Hover — enabled arrows */
+.ant-table-wrapper
+  .ant-pagination
+  .ant-pagination-prev:not(.ant-pagination-disabled):hover,
+.ant-table-wrapper
+  .ant-pagination
+  .ant-pagination-next:not(.ant-pagination-disabled):hover {
+  border-color: #9ca3af;
+  background: #fafafa;
+}
+
+/* Disabled arrows — muted bg + light icon (page 1 prev, last page next) */
+.ant-table-wrapper
+  .ant-pagination
+  li.ant-pagination-disabled.ant-pagination-prev,
+.ant-table-wrapper
+  .ant-pagination
+  li.ant-pagination-disabled.ant-pagination-next {
+  background: #f9fafb !important;
+  border-color: #e5e7eb !important;
+}
+
+.ant-table-wrapper
+  .ant-pagination
+  .ant-pagination-disabled
+  .ant-pagination-item-link {
+  color: #9ca3af !important;
+  background: transparent !important;
+}
+
+.ant-table-wrapper
+  .ant-pagination
+  .ant-pagination-disabled
+  .ant-pagination-item-link
+  .anticon {
+  color: #9ca3af;
+}
+
+/* Ellipsis */
+.ant-table-wrapper
+  .ant-pagination
+  .ant-pagination-jump-prev
+  .ant-pagination-item-link,
+.ant-table-wrapper
+  .ant-pagination
+  .ant-pagination-jump-next
+  .ant-pagination-item-link {
+  color: #6b7280 !important;
+}
+
+.ant-table-wrapper .ant-pagination .ant-pagination-item-ellipsis {
+  color: #6b7280;
+}
+
+/* Page size dropdown */
+.ant-table-wrapper .ant-pagination .ant-pagination-options {
+  margin-left: 8px;
+}
+
+.ant-table-wrapper
+  .ant-pagination
+  .ant-pagination-options
+  .ant-select-selector {
+  min-height: 40px !important;
+  border-radius: 10px !important;
+  border-color: #d1d5db !important;
+  align-items: center;
 }

@@ -4,8 +4,8 @@ import {
   ArrowDownOutlined,
   ArrowUpOutlined,
   CheckCircleOutlined,
-  CloseCircleOutlined,
   ClockCircleOutlined,
+  CloseCircleOutlined,
   ControlOutlined,
   DeleteOutlined,
   EditOutlined,
@@ -51,7 +51,6 @@ import "../MyTasks/MyTasks.css";
 type PartnerTaskStatus = "IN_PROGRESS" | "SUBMITTED" | "COMPLETED" | "CANCELLED";
 type PartnerTaskPriority = "LOW" | "MEDIUM" | "HIGH";
 
-const STATUS_OPTIONS: PartnerTaskStatus[] = ["IN_PROGRESS", "SUBMITTED", "COMPLETED", "CANCELLED"];
 const PRIORITY_OPTIONS: PartnerTaskPriority[] = ["LOW", "MEDIUM", "HIGH"];
 
 const priorityColor: Record<PartnerTaskPriority, string> = {
@@ -60,7 +59,7 @@ const priorityColor: Record<PartnerTaskPriority, string> = {
   HIGH: "orange",
 };
 
-const statusColor: Record<PartnerTaskStatus, string> = {
+const statusColor: Record<string, string> = {
   IN_PROGRESS: "processing",
   SUBMITTED: "purple",
   COMPLETED: "success",
@@ -110,7 +109,8 @@ export default function TaskManagement() {
     viewTask?.id ?? editingTask?.id ?? "",
     { skip: !viewTask?.id && !editingTask?.id },
   );
-const [createTask, { isLoading: creating }] = useCreateTaskMutation();
+
+  const [createTask, { isLoading: creating }] = useCreateTaskMutation();
   const [updateTask, { isLoading: updating }] = useUpdateTaskMutation();
   const [updateTaskStatus, { isLoading: updatingStatus }] = useUpdateTaskStatusMutation();
   const [deleteTask, { isLoading: deleting }] = useDeleteTaskMutation();
@@ -119,23 +119,29 @@ const [createTask, { isLoading: creating }] = useCreateTaskMutation();
     const currentUserId = currentUser?.id;
     return (assigneesData ?? []).map((a) => ({
       value: a.userId,
-      label: a.role === "OWNER"
-        ? `${a.name} (Owner - ${a.email})`
-        : a.userId === currentUserId
-          ? `${a.name} (Me - ${a.email})`
-          : `${a.name} (${a.email})`,
+      label:
+        a.role === "OWNER"
+          ? `${a.name} (Owner - ${a.email})`
+          : a.userId === currentUserId
+            ? `${a.name} (Me - ${a.email})`
+            : `${a.name} (${a.email})`,
     }));
   }, [assigneesData, currentUser?.id]);
 
   const allRows = tasksData?.data ?? [];
   const rows = useMemo(
-    () => allRows.filter((r) => !priority || r.priority === priority),
+    () =>
+      allRows.filter((r) => {
+        if (priority && (r.status === "COMPLETED" || r.status === "CANCELLED"))
+          return false;
+        return !priority || r.priority === priority;
+      }),
     [allRows, priority],
   );
 
   const stats = useMemo(() => {
     const apiStats = tasksData?.meta?.stats;
-    if (apiStats && typeof apiStats === 'object') {
+    if (apiStats && typeof apiStats === "object") {
       return {
         total: (apiStats as any).total || 0,
         inProgress: (apiStats as any).inProgress || 0,
@@ -151,32 +157,21 @@ const [createTask, { isLoading: creating }] = useCreateTaskMutation();
     }
     return allRows.reduce(
       (acc, r) => {
-          acc.total += 1;
-          if (r.status === "IN_PROGRESS") acc.inProgress += 1;
-          if (r.status === "SUBMITTED") acc.submitted += 1;
-          if (r.status === "COMPLETED") acc.completed += 1;
-          if (r.status === "SUBMITTED") acc.reviewOpen += 1;
-          if (r.status !== "COMPLETED" && r.status !== "CANCELLED") {
-            if (r.priority === "LOW") acc.low += 1;
-            if (r.priority === "MEDIUM") acc.medium += 1;
-            if (r.priority === "HIGH") acc.high += 1;
-          }
-          if (r.status === "CANCELLED") acc.cancelled += 1;
-          return acc;
-        },
-        {
-          total: 0,
-          inProgress: 0,
-          completed: 0,
-          submitted: 0,
-          reviewOpen: 0,
-          low: 0,
-          medium: 0,
-          high: 0,
-          cancelled: 0,
-          urgent: 0,
-        },
-      );
+        acc.total += 1;
+        if (r.status === "IN_PROGRESS") acc.inProgress += 1;
+        if (r.status === "SUBMITTED") acc.submitted += 1;
+        if (r.status === "COMPLETED") acc.completed += 1;
+        if (r.status === "SUBMITTED") acc.reviewOpen += 1;
+        if (r.status !== "COMPLETED" && r.status !== "CANCELLED") {
+          if (r.priority === "LOW") acc.low += 1;
+          if (r.priority === "MEDIUM") acc.medium += 1;
+          if (r.priority === "HIGH") acc.high += 1;
+        }
+        if (r.status === "CANCELLED") acc.cancelled += 1;
+        return acc;
+      },
+      { total: 0, inProgress: 0, completed: 0, submitted: 0, reviewOpen: 0, low: 0, medium: 0, high: 0, cancelled: 0, urgent: 0 },
+    );
   }, [allRows, tasksData?.meta?.stats]);
 
   const onOpenCreate = () => {
@@ -244,39 +239,19 @@ const [createTask, { isLoading: creating }] = useCreateTaskMutation();
     };
   };
 
-  const statCardClass = (
-    active: boolean,
-    idleBorder: string,
-    idleBg: string,
-    accent: "indigo" | "violet",
-  ) => {
-    const activeCls =
-      accent === "indigo"
-        ? "border-indigo-500 bg-indigo-50/90"
-        : "border-violet-600 bg-violet-50/90";
-    return `rounded-lg border px-3 py-2.5 text-left transition-colors duration-150 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 ${
-      accent === "indigo"
-        ? "focus-visible:ring-indigo-300"
-        : "focus-visible:ring-violet-300"
-    } ${
-      active
-        ? activeCls
-        : `${idleBorder} ${idleBg} hover:border-slate-300`
-    }`;
-  };
-
   const columns = [
     { title: "Title", dataIndex: "task_title", width: 240 },
     {
       title: "Priority",
       dataIndex: "priority",
-      render: (p: PartnerTaskPriority | null) => (p ? <Tag color={priorityColor[p]}>{p}</Tag> : "—"),
+      render: (p: PartnerTaskPriority | null) =>
+        p ? <Tag color={priorityColor[p]}>{p}</Tag> : "—",
     },
     {
       title: "Status",
       dataIndex: "status",
-      render: (s: PartnerTaskStatus) => (
-        <Tag color={statusColor[s]}>
+      render: (s: string) => (
+        <Tag color={statusColor[s] ?? "default"}>
           {s === "SUBMITTED" ? "IN REVIEW" : s.replace(/_/g, " ")}
         </Tag>
       ),
@@ -298,7 +273,7 @@ const [createTask, { isLoading: creating }] = useCreateTaskMutation();
     },
     {
       title: "Actions",
-      width: 180,
+      width: 200,
       render: (_: unknown, row: PartnerTaskListItem) => (
         <Space>
           {row.status === "IN_PROGRESS" && (
@@ -312,14 +287,22 @@ const [createTask, { isLoading: creating }] = useCreateTaskMutation();
             </Tooltip>
           )}
           <Tooltip title="Edit task">
-            <Button type="text" size="small" icon={<EditOutlined />} onClick={() => onOpenEdit(row)} />
+            <Button
+              type="default"
+              icon={<EditOutlined />}
+              onClick={() => onOpenEdit(row)}
+            />
           </Tooltip>
           <Tooltip title="View details">
-            <Button type="text" size="small" icon={<EyeOutlined />} onClick={() => setViewTask(row)} />
+            <Button
+              type="default"
+              icon={<EyeOutlined />}
+              onClick={() => setViewTask(row)}
+            />
           </Tooltip>
           <Popconfirm title="Delete this task?" onConfirm={() => deleteTask(row.id)}>
             <Tooltip title="Delete task">
-              <Button type="text" size="small" danger icon={<DeleteOutlined />} />
+              <Button type="default" danger icon={<DeleteOutlined />} />
             </Tooltip>
           </Popconfirm>
         </Space>
@@ -329,14 +312,14 @@ const [createTask, { isLoading: creating }] = useCreateTaskMutation();
 
   return (
     <div className="space-y-4 my-tasks-page">
-      <PageMeta title="Task Management - Campus Transfer Partner" description="Create, assign and review team tasks." />
+      <PageMeta
+        title="Task Management - Campus Transfer Partner"
+        description="Create, assign and review team tasks."
+      />
       <PageHeader
         title="Task Management"
         subtitle="See what you assigned, monitor progress and track pending reviews."
-        breadcrumbs={[
-          { title: "Dashboard", path: "/" },
-          { title: "Task Management" },
-        ]}
+        breadcrumbs={[{ title: "Dashboard", path: "/" }, { title: "Task Management" }]}
       />
 
       <section className="rounded-xl border border-slate-200 bg-white overflow-hidden">
@@ -433,10 +416,7 @@ const [createTask, { isLoading: creating }] = useCreateTaskMutation();
       <Modal
         title={editingTask ? "Update task" : "Create new task"}
         open={openFormModal}
-        onCancel={() => {
-          setOpenFormModal(false);
-          setEditingTask(null);
-        }}
+        onCancel={() => { setOpenFormModal(false); setEditingTask(null); }}
         onOk={handleSubmit}
         confirmLoading={creating || updating}
         width={860}
@@ -526,7 +506,7 @@ const [createTask, { isLoading: creating }] = useCreateTaskMutation();
                 </div>
                 <div className="flex items-center gap-2">
                   {taskDetail.priority ? <Tag color={priorityColor[taskDetail.priority as PartnerTaskPriority]}>{taskDetail.priority}</Tag> : null}
-                  <Tag color={statusColor[taskDetail.status as PartnerTaskStatus]}>
+                  <Tag color={statusColor[taskDetail.status] ?? "default"}>
                     {taskDetail.status === "SUBMITTED" ? "IN REVIEW" : taskDetail.status.replace(/_/g, " ")}
                   </Tag>
                 </div>
@@ -584,14 +564,14 @@ const [createTask, { isLoading: creating }] = useCreateTaskMutation();
                 )}
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-700">Review Note</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-700">Completion Note</p>
                 {taskDetail.reviewNote ? (
                   <div
                     className="mt-2 text-sm leading-relaxed text-slate-900 prose prose-sm max-w-none"
                     dangerouslySetInnerHTML={{ __html: taskDetail.reviewNote }}
                   />
                 ) : (
-                  <p className="mt-2 text-sm text-slate-400">No review note provided.</p>
+                  <p className="mt-2 text-sm text-slate-400">No completion note provided.</p>
                 )}
               </div>
             </div>
@@ -618,7 +598,7 @@ const [createTask, { isLoading: creating }] = useCreateTaskMutation();
         <Typography.Paragraph type="secondary">
           Are you sure you want to cancel this task? This action cannot be undone.
         </Typography.Paragraph>
-        <Typography.Text strong>Task: {cancelTask?.task_title || 'Unknown Task'}</Typography.Text>
+        <Typography.Text strong>Task: {cancelTask?.task_title || "Unknown Task"}</Typography.Text>
       </Modal>
 
       <Modal

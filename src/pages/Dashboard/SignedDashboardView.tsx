@@ -1,22 +1,24 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import CreateStudentModal from "../../components/common/Modals/CreateStudentModal";
 import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 import {
-  useGetPartnerDashboardQuery,
   PartnerDashboardDestination,
-  PartnerDashboardUniversity,
   PartnerDashboardSubject,
+  PartnerDashboardUniversity,
+  useGetPartnerDashboardQuery,
 } from "../../redux/features/profile/partnerProfileApi";
-import CreateStudentModal from "../../components/common/Modals/CreateStudentModal";
 
+import { PlusOutlined } from "@ant-design/icons";
+import { Button } from "antd";
+import DestinationCard from "./signed/components/DestinationCard";
 import KpiCards from "./signed/components/KpiCards";
+import RecentAnnouncementsCard from "./signed/components/RecentAnnouncementsCard";
 import SupportPanelCard from "./signed/components/SupportPanelCard";
 import TeamMembersCard from "./signed/components/TeamMembersCard";
-import DestinationCard from "./signed/components/DestinationCard";
-import UniversitiesCard from "./signed/components/UniversitiesCard";
 import TopSubjectsCard from "./signed/components/TopSubjectsCard";
-import RecentAnnouncementsCard from "./signed/components/RecentAnnouncementsCard";
+import UniversitiesCard from "./signed/components/UniversitiesCard";
 
 export default function SignedDashboardView() {
   const user = useSelector(selectCurrentUser);
@@ -32,7 +34,7 @@ export default function SignedDashboardView() {
   );
 
   const supportPanel = dashboard?.supportPanel ?? [];
-  
+
   const teamMembers = dashboard?.teamMembers ?? [];
   const topDestinations: PartnerDashboardDestination[] =
     dashboard?.topDestinations ?? [];
@@ -51,14 +53,13 @@ export default function SignedDashboardView() {
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white sm:text-3xl">
             Welcome, {userName} !
           </h1>
-          <button
-            type="button"
+          <Button
+            type="primary"
             onClick={() => setCreateStudentOpen(true)}
-            className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700"
+            icon={<PlusOutlined />}
           >
-            <span>+</span>
-            <span>Add Student</span>
-          </button>
+            Add Student
+          </Button>
         </div>
         <CreateStudentModal
           open={createStudentOpen}
@@ -79,16 +80,19 @@ export default function SignedDashboardView() {
         </div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-3">
-         
-          <DestinationCard destinations={topDestinations} isLoading={isLoading} />
-          <UniversitiesCard universities={topUniversities} isLoading={isLoading} />
+          <DestinationCard
+            destinations={topDestinations}
+            isLoading={isLoading}
+          />
+          <UniversitiesCard
+            universities={topUniversities}
+            isLoading={isLoading}
+          />
           <TopSubjectsCard subjects={topSubjects} isLoading={isLoading} />
         </div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-           
-          </div>
+          <div className="lg:col-span-2"></div>
         </div>
       </div>
     </div>

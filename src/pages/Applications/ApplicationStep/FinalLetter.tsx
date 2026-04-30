@@ -160,7 +160,7 @@ export const FinalLetterStep: React.FC<FinalLetterStepProps> = ({
     : "border border-[#C7CACF] rounded-lg overflow-hidden";
   const stageHeaderClass = stageLockedVisual
     ? "bg-[#EEF2EF]"
-    : "bg-[#E9F2EB]";
+    : "bg-[#DFF2E6] border-[#237D3B] border rounded-lg";
 
   return (
     <>
@@ -170,12 +170,21 @@ export const FinalLetterStep: React.FC<FinalLetterStepProps> = ({
           className={`${stageHeaderClass} p-6 flex items-center justify-between`}
         >
           <div>
-            <h3 className="text-[20px] font-semibold text-[#20242A]">
-              Stage: 4 Final Letter
+
+            <h3
+              className={`text-[20px] font-semibold ${
+                isAllRequiredCompleted ? "text-primary" : "text-[#20242A]"
+              }`}
+            >
+             Stage: 4 Final Letter
             </h3>
-            <p className="text-[14px] text-[#4B5563]">
+            <p
+              className={`text-[14px] ${
+                isAllRequiredCompleted ? "text-primary" : "text-[#4B5563]"
+              }`}
+            >
               Upload the acceptance letter and money receipt (if available).
-            </p>
+              </p>
           </div>
           <div
             title={

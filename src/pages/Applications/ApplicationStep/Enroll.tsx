@@ -167,7 +167,7 @@ export const EnrollStep: React.FC<EnrollStepProps> = ({
     : "border border-[#C7CACF] rounded-lg overflow-hidden";
   const stageHeaderClass = stageLockedVisual
     ? "bg-[#EEF2EF]"
-    : "bg-[#E9F2EB]";
+    : "bg-[#DFF2E6] border-[#237D3B] border rounded-lg";
 
   /** ================= Upload Handler ================= */
   const handleFileUpload = async (categoryKey: string, file: File) => {
@@ -215,12 +215,20 @@ export const EnrollStep: React.FC<EnrollStepProps> = ({
           className={`${stageHeaderClass} p-6 flex items-center justify-between`}
         >
           <div>
-            <h3 className="text-[20px] font-semibold text-[#20242A]">
+            <h3
+              className={`text-[20px] font-semibold ${
+                isAllRequiredCompleted ? "text-primary" : "text-[#20242A]"
+              }`}
+            >
               Stage: 7 Enroll
             </h3>
-            <p className="text-[14px] text-[#4B5563]">
+            <p
+              className={`text-[14px] ${
+                isAllRequiredCompleted ? "text-primary" : "text-[#4B5563]"
+              }`}
+            >
               Upload final enrollment documents (tuition receipt, air ticket, etc.).
-            </p>
+              </p>
           </div>
           <div
             title={

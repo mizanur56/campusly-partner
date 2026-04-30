@@ -1,12 +1,14 @@
+/* eslint-disable no-constant-binary-expression */
 import { useEffect, useRef, useState } from "react";
+import { AiOutlineFullscreen } from "react-icons/ai";
 import { Link, useLocation } from "react-router-dom";
 import { usePreviewMode } from "../../../context/PreviewModeContext";
 import { useSidebar } from "../../../context/SidebarContext";
-import UserDropdown from "../Dropdowns/UserDropdown";
-import AnnouncementDropdown from "../Dropdowns/AnnouncementDropdown";
-import NotificationDropdown from "../NotificationDropdown";
 import { useGetPartnerProfileQuery } from "../../../redux/features/profile/partnerProfileApi";
 import { getApiImageUrl } from "../../../utils/getApiImageUrl";
+import AnnouncementDropdown from "../Dropdowns/AnnouncementDropdown";
+import UserDropdown from "../Dropdowns/UserDropdown";
+import NotificationDropdown from "../NotificationDropdown";
 
 // Mock Data
 const mockCountries = [
@@ -70,7 +72,6 @@ const Header: React.FC = () => {
   const [isCoursesOpen, setIsCoursesOpen] = useState(false);
   const [isCountriesOpen, setIsCountriesOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
-  const [isPartnersOpen, setIsPartnersOpen] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const isDashboardOrOnboarding =
@@ -110,6 +111,13 @@ const Header: React.FC = () => {
       toggleSidebar();
     } else {
       toggleMobileSidebar();
+    }
+  };
+  const handleFullscreen = () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      document.documentElement.requestFullscreen();
     }
   };
 
@@ -436,18 +444,35 @@ const Header: React.FC = () => {
           {/* Signed mode: only announcements + notifications */}
           {isSignedMode && (
             <>
-              <AnnouncementDropdown />
-              <NotificationDropdown />
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={handleFullscreen}
+                  className="
+      relative group inline-flex items-center justify-center
+      w-10 h-10 rounded-xl
+      border border-gray-200
+      bg-white
+      text-gray-600
+      transition-all duration-300 ease-in-out
+      hover:border-primary-500
+      hover:text-primary-600
+      hover:shadow-md
+    "
+                >
+                  <AiOutlineFullscreen
+                    size={22}
+                    className="
+        transition-colors duration-300
+        group-hover:text-primary-600
+      "
+                  />
+                </button>
+                <AnnouncementDropdown />
+                <NotificationDropdown />
+                <UserDropdown />
+              </div>
             </>
           )}
-
-          {/* Notification — only when not signed */}
-          {!isSignedMode && <NotificationDropdown />}
-
-          {/* User icon — always at the very right */}
-          <div className="flex items-center">
-            <UserDropdown />
-          </div>
         </div>
       </div>
 

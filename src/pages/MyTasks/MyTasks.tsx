@@ -34,21 +34,20 @@ import {
 import "../../components/common/Tables/AntTable.css";
 import "./MyTasks.css";
 
-type PartnerTaskStatus = "IN_PROGRESS" | "SUBMITTED" | "COMPLETED";
+type PartnerTaskStatus = "IN_PROGRESS" | "SUBMITTED" | "COMPLETED" | "CANCELLED";
 type PartnerTaskPriority = "LOW" | "MEDIUM" | "HIGH";
 
-const STATUS_OPTIONS: PartnerTaskStatus[] = ["IN_PROGRESS", "SUBMITTED", "COMPLETED"];
-const PRIORITY_OPTIONS: PartnerTaskPriority[] = ["LOW", "MEDIUM", "HIGH"];
 const priorityColor: Record<PartnerTaskPriority, string> = {
   LOW: "default",
   MEDIUM: "blue",
   HIGH: "orange",
 };
 
-const statusColor: Record<PartnerTaskStatus, string> = {
+const statusColor: Record<string, string> = {
   IN_PROGRESS: "processing",
   SUBMITTED: "purple",
   COMPLETED: "success",
+  CANCELLED: "error",
 };
 
 function StatCardIcon({
@@ -84,23 +83,29 @@ export default function MyTasks() {
     status: status || undefined,
   });
 
-  const { data: taskDetail, isLoading: detailLoading } = useGetTaskByIdQuery(viewTask?.id ?? "", {
-    skip: !viewTask?.id,
-  });
+  const { data: taskDetail, isLoading: detailLoading } = useGetTaskByIdQuery(
+    viewTask?.id ?? "",
+    { skip: !viewTask?.id },
+  );
 
   const [updateTaskStatus, { isLoading: updatingStatus }] = useUpdateTaskStatusMutation();
 
   const allRows = tasksData?.data ?? [];
   const rows = useMemo(
-    () => allRows.filter((r) => !priority || r.priority === priority),
+    () =>
+      allRows.filter((r) => {
+        if (priority && (r.status === "COMPLETED" || r.status === "CANCELLED"))
+          return false;
+        return !priority || r.priority === priority;
+      }),
     [allRows, priority],
   );
 
   const stats = useMemo(() => {
     const apiStats = tasksData?.meta?.stats;
-    if (apiStats && typeof apiStats === 'object') {
+    if (apiStats && typeof apiStats === "object") {
       return {
-        total: apiStats.total || 0,
+        total: (apiStats as any).total || 0,
         inProgress: (apiStats as any).inProgress || 0,
         submitted: (apiStats as any).submitted || 0,
         completed: (apiStats as any).completed || 0,
@@ -113,64 +118,36 @@ export default function MyTasks() {
     }
     return allRows.reduce(
       (acc, r) => {
-          acc.total += 1;
-          if (r.status === "IN_PROGRESS") acc.inProgress += 1;
-          if (r.status === "SUBMITTED") acc.submitted += 1;
-          if (r.status === "COMPLETED") acc.completed += 1;
-          if (r.status !== "COMPLETED" && r.status !== "CANCELLED") {
-            if (r.priority === "LOW") acc.low += 1;
-            if (r.priority === "MEDIUM") acc.medium += 1;
-            if (r.priority === "HIGH") acc.high += 1;
-          }
-          if (r.status === "CANCELLED") acc.cancelled += 1;
-          return acc;
-        },
-        {
-          total: 0,
-          inProgress: 0,
-          submitted: 0,
-          completed: 0,
-          low: 0,
-          medium: 0,
-          high: 0,
-          cancelled: 0,
-          urgent: 0,
-        },
-      );
+        acc.total += 1;
+        if (r.status === "IN_PROGRESS") acc.inProgress += 1;
+        if (r.status === "SUBMITTED") acc.submitted += 1;
+        if (r.status === "COMPLETED") acc.completed += 1;
+        if (r.status !== "COMPLETED" && r.status !== "CANCELLED") {
+          if (r.priority === "LOW") acc.low += 1;
+          if (r.priority === "MEDIUM") acc.medium += 1;
+          if (r.priority === "HIGH") acc.high += 1;
+        }
+        if (r.status === "CANCELLED") acc.cancelled += 1;
+        return acc;
+      },
+      { total: 0, inProgress: 0, submitted: 0, completed: 0, low: 0, medium: 0, high: 0, cancelled: 0, urgent: 0 },
+    );
   }, [allRows, tasksData?.meta?.stats]);
-
-  const statCardClass = (
-    active: boolean,
-    idleBorder: string,
-    idleBg: string,
-    accent: "indigo" | "violet",
-  ) => {
-    const activeCls =
-      accent === "indigo"
-        ? "border-indigo-500 bg-indigo-50/90"
-        : "border-violet-600 bg-violet-50/90";
-    return `rounded-lg border px-3 py-2.5 text-left transition-colors duration-150 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 ${
-      accent === "indigo"
-        ? "focus-visible:ring-indigo-300"
-        : "focus-visible:ring-violet-300"
-    } ${
-      active
-        ? activeCls
-        : `${idleBorder} ${idleBg} hover:border-slate-300`
-    }`;
-  };
 
   const columns = [
     { title: "Title", dataIndex: "task_title", width: 240 },
     {
       title: "Priority",
       dataIndex: "priority",
-      render: (p: PartnerTaskPriority | null) => (p ? <Tag color={priorityColor[p]}>{p}</Tag> : "—"),
+      render: (p: PartnerTaskPriority | null) =>
+        p ? <Tag color={priorityColor[p]}>{p}</Tag> : "—",
     },
     {
       title: "Status",
       dataIndex: "status",
-      render: (s: PartnerTaskStatus) => <Tag color={statusColor[s]}>{s.replace(/_/g, " ")}</Tag>,
+      render: (s: string) => (
+        <Tag color={statusColor[s] ?? "default"}>{s.replace(/_/g, " ")}</Tag>
+      ),
     },
     {
       title: "Assigned To",
@@ -189,11 +166,15 @@ export default function MyTasks() {
     },
     {
       title: "Actions",
-      width: 180,
+      width: 160,
       render: (_: unknown, row: PartnerTaskListItem) => (
         <Space>
           <Tooltip title="View details">
-            <Button type="text" size="small" icon={<EyeOutlined />} onClick={() => setViewTask(row)} />
+            <Button
+              type="default"
+              icon={<EyeOutlined />}
+              onClick={() => setViewTask(row)}
+            />
           </Tooltip>
           {row.status === "IN_PROGRESS" && (
             <Tooltip title="Mark as complete">
@@ -210,17 +191,16 @@ export default function MyTasks() {
     },
   ];
 
-  
   return (
     <div className="space-y-4 my-tasks-page">
-      <PageMeta title="My Tasks - Campus Transfer Partner" description="Tasks assigned to me by team members and managers." />
+      <PageMeta
+        title="My Tasks - Campus Transfer Partner"
+        description="Tasks assigned to me by team members and managers."
+      />
       <PageHeader
         title="My Tasks"
         subtitle="Track tasks assigned to you and update progress."
-        breadcrumbs={[
-          { title: "Dashboard", path: "/" },
-          { title: "My Tasks" },
-        ]}
+        breadcrumbs={[{ title: "Dashboard", path: "/" }, { title: "My Tasks" }]}
       />
 
       <section className="rounded-xl border border-slate-200 bg-white overflow-hidden">
@@ -246,7 +226,7 @@ export default function MyTasks() {
             </span>
             <p className={`text-2xl font-bold tabular-nums ${status === "COMPLETED" ? "text-emerald-600" : "text-slate-800"}`}>{stats.completed}</p>
           </button>
-          <button type="button" onClick={() => { setStatus("CANCELLED" as PartnerTaskStatus); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-rose-400 ${status === "CANCELLED" ? "bg-rose-50" : "bg-white hover:bg-slate-50"}`}>
+          <button type="button" onClick={() => { setStatus("CANCELLED"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-rose-400 ${status === "CANCELLED" ? "bg-rose-50" : "bg-white hover:bg-slate-50"}`}>
             <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
               <CloseCircleOutlined className="text-[10px]" /> Cancelled
             </span>
@@ -323,10 +303,18 @@ export default function MyTasks() {
           <div className="space-y-4">
             <div className="rounded-xl border border-gray-200 bg-slate-50 p-4">
               <div className="flex items-start justify-between gap-3">
-                <h3 className="text-lg font-semibold text-gray-900">{taskDetail.task_title}</h3>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {taskDetail.task_title}
+                </h3>
                 <Space>
-                  {taskDetail.priority ? <Tag color={priorityColor[taskDetail.priority as PartnerTaskPriority]}>{taskDetail.priority}</Tag> : null}
-                  <Tag color={statusColor[taskDetail.status as PartnerTaskStatus]}>{taskDetail.status.replace(/_/g, " ")}</Tag>
+                  {taskDetail.priority ? (
+                    <Tag color={priorityColor[taskDetail.priority as PartnerTaskPriority]}>
+                      {taskDetail.priority}
+                    </Tag>
+                  ) : null}
+                  <Tag color={statusColor[taskDetail.status] ?? "default"}>
+                    {taskDetail.status.replace(/_/g, " ")}
+                  </Tag>
                 </Space>
               </div>
             </div>
@@ -342,15 +330,19 @@ export default function MyTasks() {
               )}
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div className="rounded-lg border border-slate-200 bg-white p-3">
+              <div className="rounded-xl border border-slate-200 bg-white p-3">
                 <p className="text-[11px] uppercase text-slate-500">Assigned to</p>
-                <p className="mt-1 text-sm font-medium text-slate-900">{taskDetail.assignedTo?.name || taskDetail.assignedTo?.email || "—"}</p>
+                <p className="mt-1 text-sm font-medium text-slate-900">
+                  {taskDetail.assignedTo?.name || taskDetail.assignedTo?.email || "—"}
+                </p>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-white p-3">
+              <div className="rounded-xl border border-slate-200 bg-white p-3">
                 <p className="text-[11px] uppercase text-slate-500">Created by</p>
-                <p className="mt-1 text-sm font-medium text-slate-900">{taskDetail.created_by || "—"}</p>
+                <p className="mt-1 text-sm font-medium text-slate-900">
+                  {taskDetail.created_by || "—"}
+                </p>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-white p-3">
+              <div className="rounded-xl border border-slate-200 bg-white p-3">
                 <p className="text-[11px] uppercase text-slate-500">Due</p>
                 <DateTimeHighlight value={taskDetail.due_date} />
               </div>
@@ -368,18 +360,18 @@ export default function MyTasks() {
                 )}
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-700">Review Note</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-700">Completion Note</p>
                 {taskDetail.reviewNote ? (
                   <div
                     className="mt-2 text-sm leading-relaxed text-slate-900 prose prose-sm max-w-none"
                     dangerouslySetInnerHTML={{ __html: taskDetail.reviewNote }}
                   />
                 ) : (
-                  <p className="mt-2 text-sm text-slate-400">No review note provided.</p>
+                  <p className="mt-2 text-sm text-slate-400">No completion note provided.</p>
                 )}
               </div>
             </div>
-                      </div>
+          </div>
         ) : null}
       </Modal>
 
@@ -415,7 +407,6 @@ export default function MyTasks() {
           height={220}
         />
       </Modal>
-
-      </div>
+    </div>
   );
 }
