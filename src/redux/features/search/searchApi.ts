@@ -5,6 +5,7 @@ import type {
   SearchUniversitiesApiResponse,
   SearchArticlesApiResponse,
 } from "../../../types/search";
+import type { FilterOptionsResponse } from "../../../types/filterOptions";
 import type { ApiSearchParams } from "../../../utils/transformFiltersToApi";
 import { buildSearchQueryString } from "../../../utils/transformFiltersToApi";
 
@@ -90,6 +91,12 @@ const searchApi = baseApi.injectEndpoints({
       },
       providesTags: ["search"],
     }),
+    getFilterOptions: builder.query<FilterOptionsResponse, void>({
+      query: () => ({
+        url: "/search/filter-options",
+      }),
+      providesTags: ["search"],
+    }),
   }),
 });
 
@@ -98,4 +105,5 @@ export const {
   useLazySearchCoursesQuery,
   useLazySearchUniversitiesQuery,
   useLazySearchArticlesQuery,
+  useGetFilterOptionsQuery,
 } = searchApi;

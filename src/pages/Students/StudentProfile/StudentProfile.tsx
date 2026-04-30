@@ -1047,67 +1047,44 @@ export default function StudentProfile() {
               </div>
 
               <div className="mt-6">
-                {activeTab === "general" && (
-                  <GeneralInformationTab
-                    studentId={studentId}
-                    profile={
-                      profile as Parameters<
-                        typeof GeneralInformationTab
-                      >[0]["profile"]
-                    }
-                    canEdit={!isTeamMember}
-                    onUpdated={() => refetchProfile()}
-                  />
-                )}
+              {activeTab === "general" && (
+                <GeneralInformationTab
+                  studentId={studentId}
+                  profile={profile as Parameters<typeof GeneralInformationTab>[0]["profile"]}
+                  canEdit={true}
+                  onUpdated={() => refetchProfile()}
+                />
+              )}
 
-                {activeTab === "education" && (
-                  <EducationHistoryTab
-                    studentId={studentId}
-                    profile={
-                      profile as Parameters<
-                        typeof EducationHistoryTab
-                      >[0]["profile"]
-                    }
-                    educations={
-                      educations as Parameters<
-                        typeof EducationHistoryTab
-                      >[0]["educations"]
-                    }
-                    canEdit={!isTeamMember}
-                    onUpdated={() => refetchProfile()}
-                  />
-                )}
+              {activeTab === "education" && (
+                <EducationHistoryTab
+                  studentId={studentId}
+                  profile={profile as Parameters<typeof EducationHistoryTab>[0]["profile"]}
+                  educations={educations as Parameters<typeof EducationHistoryTab>[0]["educations"]}
+                  canEdit={true}
+                  onUpdated={() => refetchProfile()}
+                />
+              )}
 
-                {activeTab === "background" && (
-                  <BackgroundTab
-                    studentId={studentId}
-                    visaRejections={
-                      visaRejections as Parameters<
-                        typeof BackgroundTab
-                      >[0]["visaRejections"]
-                    }
-                    cv={(profile as { cv?: string }).cv}
-                    statementOfPurpose={
-                      (profile as { statementOfPurpose?: string })
-                        .statementOfPurpose
-                    }
-                    canEdit={!isTeamMember}
-                    onUpdated={() => refetchProfile()}
-                  />
-                )}
+              {activeTab === "background" && (
+                <BackgroundTab
+                  studentId={studentId}
+                  visaRejections={visaRejections as Parameters<typeof BackgroundTab>[0]["visaRejections"]}
+                  cv={(profile as { cv?: string }).cv}
+                  statementOfPurpose={(profile as { statementOfPurpose?: string }).statementOfPurpose}
+                  canEdit={true}
+                  onUpdated={() => refetchProfile()}
+                />
+              )}
 
-                {activeTab === "documents" && (
-                  <UploadDocumentsTab
-                    studentId={studentId}
-                    profile={
-                      profile as Parameters<
-                        typeof UploadDocumentsTab
-                      >[0]["profile"]
-                    }
-                    canEdit={!isTeamMember}
-                    onUpdated={() => refetchProfile()}
-                  />
-                )}
+              {activeTab === "documents" && (
+                <UploadDocumentsTab
+                  studentId={studentId}
+                  profile={profile as Parameters<typeof UploadDocumentsTab>[0]["profile"]}
+                  canEdit={true}
+                  onUpdated={() => refetchProfile()}
+                />
+              )}
 
                 {activeTab === "apply-now" && <ApplyNowTab />}
               </div>

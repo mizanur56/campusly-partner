@@ -1,74 +1,53 @@
+import { useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import {
   AppstoreOutlined,
   ArrowDownOutlined,
   ArrowUpOutlined,
   CheckCircleOutlined,
-  ClockCircleOutlined,
   CloseCircleOutlined,
+  ClockCircleOutlined,
   ControlOutlined,
-  EditOutlined,
   EyeOutlined,
-  FireOutlined,
-  InboxOutlined,
   MinusOutlined,
-  SendOutlined,
-  ThunderboltOutlined,
 } from "@ant-design/icons";
 import {
   Button,
-  DatePicker,
-  Form,
-  Input,
   Modal,
-  Select,
   Space,
   Tag,
   Tooltip,
   Typography,
 } from "antd";
+import RichTextEditor from "../../components/common/Forms/RichTextEditor";
 import dayjs from "dayjs";
-import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
-import PageCard from "../../components/common/Card/PageCard";
 import PageMeta from "../../components/common/Meta/PageMeta";
-import PageHeader from "../../components/common/Navigation/PageHeader";
-import "../../components/common/Tables/AntTable.css";
 import DataTable from "../../components/common/Tables/DataTable";
-import { selectCurrentUser } from "../../redux/features/auth/authSlice";
-import { useAppSelector } from "../../redux/features/hooks";
-import { useGetPartnerProfileQuery } from "../../redux/features/profile/partnerProfileApi";
+import PageHeader from "../../components/common/Navigation/PageHeader";
+import DateTimeHighlight from "../../components/common/DateTimeHighlight";
 import {
   PartnerTaskListItem,
-  UpdateTaskBody,
   useGetPartnerTasksQuery,
   useGetTaskByIdQuery,
-  useUpdateTaskMutation,
   useUpdateTaskStatusMutation,
 } from "../../redux/features/tasks/partnerTasksApi";
-import { useGetTeamMembersQuery } from "../../redux/features/teams/partnerTeamsApi";
+import "../../components/common/Tables/AntTable.css";
 import "./MyTasks.css";
 
-type PartnerTaskStatus = "PENDING" | "IN_PROGRESS" | "SUBMITTED" | "COMPLETED";
+type PartnerTaskStatus = "IN_PROGRESS" | "SUBMITTED" | "COMPLETED" | "CANCELLED";
 type PartnerTaskPriority = "LOW" | "MEDIUM" | "HIGH";
 
-const STATUS_OPTIONS: PartnerTaskStatus[] = [
-  "PENDING",
-  "IN_PROGRESS",
-  "SUBMITTED",
-  "COMPLETED",
-];
-const PRIORITY_OPTIONS: PartnerTaskPriority[] = ["LOW", "MEDIUM", "HIGH"];
 const priorityColor: Record<PartnerTaskPriority, string> = {
   LOW: "default",
   MEDIUM: "blue",
   HIGH: "orange",
 };
 
-const statusColor: Record<PartnerTaskStatus, string> = {
-  PENDING: "default",
+const statusColor: Record<string, string> = {
   IN_PROGRESS: "processing",
   SUBMITTED: "purple",
   COMPLETED: "success",
+  CANCELLED: "error",
 };
 
 function StatCardIcon({
@@ -93,121 +72,67 @@ export default function MyTasks() {
   const [limit] = useState(10);
   const [status, setStatus] = useState<PartnerTaskStatus | "">("");
   const [priority, setPriority] = useState<PartnerTaskPriority | "">("");
-  const [searchTerm, setSearchTerm] = useState("");
-
   const [viewTask, setViewTask] = useState<PartnerTaskListItem | null>(null);
-  const [submitModalTask, setSubmitModalTask] =
-    useState<PartnerTaskListItem | null>(null);
-  const [submitNote, setSubmitNote] = useState("");
-  const [editingTask, setEditingTask] = useState<PartnerTaskListItem | null>(
-    null,
-  );
-  const [editForm] = Form.useForm();
-  const currentUser = useAppSelector(selectCurrentUser);
+  const [completeModalTask, setCompleteModalTask] = useState<PartnerTaskListItem | null>(null);
+  const [completeNote, setCompleteNote] = useState("");
 
-  const {
-    data: tasksData,
-    isLoading,
-    isFetching,
-  } = useGetPartnerTasksQuery({
+  const { data: tasksData, isLoading, isFetching } = useGetPartnerTasksQuery({
     page,
     limit,
     assignedToMe: true,
-    createdByMe: false,
     status: status || undefined,
   });
 
   const { data: taskDetail, isLoading: detailLoading } = useGetTaskByIdQuery(
     viewTask?.id ?? "",
-    {
-      skip: !viewTask?.id,
-    },
+    { skip: !viewTask?.id },
   );
 
-  const { data: profile } = useGetPartnerProfileQuery();
-  const { data: teamMembersData } = useGetTeamMembersQuery({
-    page: 1,
-    limit: 100,
-    status: "ACTIVE",
-  });
-
-  const [updateTaskStatus, { isLoading: updatingStatus }] =
-    useUpdateTaskStatusMutation();
-  const [updateTask, { isLoading: updatingTask }] = useUpdateTaskMutation();
+  const [updateTaskStatus, { isLoading: updatingStatus }] = useUpdateTaskStatusMutation();
 
   const allRows = tasksData?.data ?? [];
-  const rows = useMemo(() => {
-    const q = searchTerm.trim().toLowerCase();
-    return allRows.filter((r) => {
-      const passPriority = !priority || r.priority === priority;
-      const passSearch =
-        !q ||
-        r.task_title?.toLowerCase().includes(q) ||
-        r.assigned_member_name?.toLowerCase().includes(q) ||
-        r.taskType?.toLowerCase().includes(q);
-      return passPriority && passSearch;
-    });
-  }, [allRows, searchTerm, priority]);
+  const rows = useMemo(
+    () =>
+      allRows.filter((r) => {
+        if (priority && (r.status === "COMPLETED" || r.status === "CANCELLED"))
+          return false;
+        return !priority || r.priority === priority;
+      }),
+    [allRows, priority],
+  );
 
   const stats = useMemo(() => {
     const apiStats = tasksData?.meta?.stats;
-    if (apiStats) {
+    if (apiStats && typeof apiStats === "object") {
       return {
-        total: apiStats.total,
-        pending: apiStats.byStatus.PENDING,
-        inProgress: apiStats.byStatus.IN_PROGRESS,
-        submitted: apiStats.byStatus.SUBMITTED,
-        completed: apiStats.byStatus.COMPLETED,
-        low: apiStats.byPriority.LOW,
-        medium: apiStats.byPriority.MEDIUM,
-        high: apiStats.byPriority.HIGH,
-        cancelled: apiStats.byStatus.CANCELLED,
-        urgent: apiStats.byPriority.URGENT,
+        total: (apiStats as any).total || 0,
+        inProgress: (apiStats as any).inProgress || 0,
+        submitted: (apiStats as any).submitted || 0,
+        completed: (apiStats as any).completed || 0,
+        low: (apiStats as any).low || 0,
+        medium: (apiStats as any).medium || 0,
+        high: (apiStats as any).high || 0,
+        cancelled: (apiStats as any).cancelled || 0,
+        urgent: (apiStats as any).urgent || 0,
       };
     }
     return allRows.reduce(
       (acc, r) => {
         acc.total += 1;
-        if (r.status === "PENDING") acc.pending += 1;
         if (r.status === "IN_PROGRESS") acc.inProgress += 1;
         if (r.status === "SUBMITTED") acc.submitted += 1;
         if (r.status === "COMPLETED") acc.completed += 1;
-        if (r.priority === "LOW") acc.low += 1;
-        if (r.priority === "MEDIUM") acc.medium += 1;
-        if (r.priority === "HIGH") acc.high += 1;
+        if (r.status !== "COMPLETED" && r.status !== "CANCELLED") {
+          if (r.priority === "LOW") acc.low += 1;
+          if (r.priority === "MEDIUM") acc.medium += 1;
+          if (r.priority === "HIGH") acc.high += 1;
+        }
+        if (r.status === "CANCELLED") acc.cancelled += 1;
         return acc;
       },
-      {
-        total: 0,
-        pending: 0,
-        inProgress: 0,
-        submitted: 0,
-        completed: 0,
-        low: 0,
-        medium: 0,
-        high: 0,
-        cancelled: 0,
-        urgent: 0,
-      },
+      { total: 0, inProgress: 0, submitted: 0, completed: 0, low: 0, medium: 0, high: 0, cancelled: 0, urgent: 0 },
     );
   }, [allRows, tasksData?.meta?.stats]);
-
-  const statCardClass = (
-    active: boolean,
-    idleBorder: string,
-    idleBg: string,
-    accent: "indigo" | "violet",
-  ) => {
-    const activeCls =
-      accent === "indigo"
-        ? "border-indigo-500 bg-indigo-50/90"
-        : "border-violet-600 bg-violet-50/90";
-    return `rounded-xl border px-3 py-2.5 text-left transition-colors duration-150 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 ${
-      accent === "indigo"
-        ? "focus-visible:ring-indigo-300"
-        : "focus-visible:ring-violet-300"
-    } ${active ? activeCls : `${idleBorder} ${idleBg} hover:border-slate-300`}`;
-  };
 
   const columns = [
     { title: "Title", dataIndex: "task_title", width: 240 },
@@ -220,37 +145,30 @@ export default function MyTasks() {
     {
       title: "Status",
       dataIndex: "status",
-      render: (s: PartnerTaskStatus) => (
-        <Tag color={statusColor[s]}>{s.replace(/_/g, " ")}</Tag>
+      render: (s: string) => (
+        <Tag color={statusColor[s] ?? "default"}>{s.replace(/_/g, " ")}</Tag>
       ),
     },
     {
-      title: "Type",
-      dataIndex: "taskType",
-      render: (t: string | null) => (t ? t.replace(/_/g, " ") : "—"),
+      title: "Assigned To",
+      render: (_: unknown, r: PartnerTaskListItem) =>
+        `${r.assigned_member_name || "N/A"} (${r.assigned_member_email || "-"})`,
     },
-    { title: "Assigned To", dataIndex: "assigned_member_name" },
+    {
+      title: "Assigned By",
+      render: (_: unknown, r: PartnerTaskListItem) =>
+        `${r.created_by_name || "N/A"} (${r.created_by_email || "-"})`,
+    },
+    {
+      title: "Due Date",
+      dataIndex: "dueDate",
+      render: (v: string | null | undefined) => <DateTimeHighlight value={v} />,
+    },
     {
       title: "Actions",
-      width: 180,
+      width: 160,
       render: (_: unknown, row: PartnerTaskListItem) => (
         <Space>
-          <Tooltip title="Edit task">
-            <Button
-              type="default"
-              icon={<EditOutlined />}
-              onClick={() => {
-                setEditingTask(row);
-                editForm.setFieldsValue({
-                  title: row.task_title,
-                  priority: row.priority || undefined,
-                  taskType: row.taskType || undefined,
-                  dueDate: row.dueDate ? dayjs(row.dueDate) : undefined,
-                  dueTime: row.dueTime || undefined,
-                });
-              }}
-            />
-          </Tooltip>
           <Tooltip title="View details">
             <Button
               type="default"
@@ -258,15 +176,13 @@ export default function MyTasks() {
               onClick={() => setViewTask(row)}
             />
           </Tooltip>
-          {(row.status === "PENDING" || row.status === "IN_PROGRESS") && (
-            <Tooltip title="Submit task">
+          {row.status === "IN_PROGRESS" && (
+            <Tooltip title="Mark as complete">
               <Button
-                type="default"
-                icon={<SendOutlined />}
-                onClick={() => {
-                  setSubmitModalTask(row);
-                  setSubmitNote("");
-                }}
+                type="text"
+                size="small"
+                icon={<CheckCircleOutlined />}
+                onClick={() => { setCompleteModalTask(row); setCompleteNote(""); }}
               />
             </Tooltip>
           )}
@@ -274,33 +190,6 @@ export default function MyTasks() {
       ),
     },
   ];
-
-  const assigneeOptions = useMemo(() => {
-    const options: { value: string; label: string }[] = [];
-    if (profile?.userId) {
-      const selfName = String(currentUser?.name || "Me").trim();
-      const selfEmail = String(currentUser?.email || "").trim();
-      options.push({
-        value: profile.userId,
-        label: selfEmail ? `${selfName} (${selfEmail})` : selfName,
-      });
-    }
-    const members = teamMembersData?.data ?? [];
-    members
-      .filter((m) => m.status === "ACTIVE" && m.userId)
-      .forEach((m) => {
-        const memberName = [m.firstName, m.lastName]
-          .filter(Boolean)
-          .join(" ")
-          .trim();
-        const memberEmail = String(m.email || "").trim();
-        const label = memberEmail
-          ? `${memberName || memberEmail} (${memberEmail})`
-          : memberName || "Unknown";
-        options.push({ value: m.userId!, label });
-      });
-    return options;
-  }, [profile, currentUser?.name, currentUser?.email, teamMembersData?.data]);
 
   return (
     <div className="space-y-4 my-tasks-page">
@@ -314,311 +203,71 @@ export default function MyTasks() {
         breadcrumbs={[{ title: "Dashboard", path: "/" }, { title: "My Tasks" }]}
       />
 
-      <section className="rounded-xl border border-[#C7CACF] bg-white p-4">
-        <header className="mb-3 flex items-start gap-3 border-b border-slate-100 pb-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#C7CACF] bg-slate-50 text-lg text-slate-600">
-            <CheckCircleOutlined />
-          </span>
-          <div>
-            <Typography.Title level={5} className="!mb-0.5 !text-base">
-              Task status
-            </Typography.Title>
-            <Typography.Text type="secondary" className="text-xs">
-              Click a stage to filter the table. Numbers here are overall totals
-              for this view and do not change when you filter.
-            </Typography.Text>
-          </div>
+      <section className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+        <header className="px-4 pt-4 pb-3 flex items-center border-b border-slate-100">
+          <Typography.Title level={5} className="!mb-0 !text-gray-800 font-semibold">Task Status</Typography.Title>
         </header>
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
-          <button
-            type="button"
-            onClick={() => setStatus("")}
-            className={statCardClass(
-              !status,
-              "border-[#C7CACF]",
-              "bg-slate-50/90",
-              "indigo",
-            )}
-          >
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-slate-100 text-slate-600">
-                <AppstoreOutlined />
-              </StatCardIcon>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                  All statuses
-                </p>
-                <p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-slate-900">
-                  {stats.total}
-                </p>
-              </div>
-            </div>
+        <div className="flex divide-x divide-slate-200">
+          <button type="button" onClick={() => { setStatus(""); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-400 ${!status ? "bg-indigo-50" : "bg-white hover:bg-slate-50"}`}>
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <AppstoreOutlined className="text-[10px]" /> All
+            </span>
+            <p className={`text-2xl font-bold tabular-nums ${!status ? "text-indigo-600" : "text-slate-800"}`}>{stats.total}</p>
           </button>
-          <button
-            type="button"
-            onClick={() => setStatus("PENDING")}
-            className={statCardClass(
-              status === "PENDING",
-              "border-[#C7CACF]",
-              "bg-slate-50/90",
-              "indigo",
-            )}
-          >
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-slate-200/80 text-slate-700">
-                <InboxOutlined />
-              </StatCardIcon>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">
-                  To do
-                </p>
-                <p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-slate-900">
-                  {stats.pending}
-                </p>
-              </div>
-            </div>
+          <button type="button" onClick={() => { setStatus("IN_PROGRESS"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-400 ${status === "IN_PROGRESS" ? "bg-sky-50" : "bg-white hover:bg-slate-50"}`}>
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <ClockCircleOutlined className="text-[10px]" /> In Progress
+            </span>
+            <p className={`text-2xl font-bold tabular-nums ${status === "IN_PROGRESS" ? "text-sky-600" : "text-slate-800"}`}>{stats.inProgress}</p>
           </button>
-          <button
-            type="button"
-            onClick={() => setStatus("IN_PROGRESS")}
-            className={statCardClass(
-              status === "IN_PROGRESS",
-              "border-sky-200",
-              "bg-sky-50/80",
-              "indigo",
-            )}
-          >
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-sky-100 text-sky-700">
-                <ClockCircleOutlined />
-              </StatCardIcon>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-800">
-                  In progress
-                </p>
-                <p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-sky-950">
-                  {stats.inProgress}
-                </p>
-              </div>
-            </div>
+          <button type="button" onClick={() => { setStatus("COMPLETED"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 ${status === "COMPLETED" ? "bg-emerald-50" : "bg-white hover:bg-slate-50"}`}>
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <CheckCircleOutlined className="text-[10px]" /> Completed
+            </span>
+            <p className={`text-2xl font-bold tabular-nums ${status === "COMPLETED" ? "text-emerald-600" : "text-slate-800"}`}>{stats.completed}</p>
           </button>
-          <button
-            type="button"
-            onClick={() => setStatus("SUBMITTED")}
-            className={statCardClass(
-              status === "SUBMITTED",
-              "border-violet-200",
-              "bg-violet-50/80",
-              "indigo",
-            )}
-          >
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-violet-100 text-violet-700">
-                <SendOutlined />
-              </StatCardIcon>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-800">
-                  Submitted
-                </p>
-                <p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-violet-950">
-                  {stats.submitted}
-                </p>
-              </div>
-            </div>
-          </button>
-          <button
-            type="button"
-            onClick={() => setStatus("COMPLETED")}
-            className={statCardClass(
-              status === "COMPLETED",
-              "border-emerald-200",
-              "bg-emerald-50/80",
-              "indigo",
-            )}
-          >
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-emerald-100 text-emerald-700">
-                <CheckCircleOutlined />
-              </StatCardIcon>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-800">
-                  Completed
-                </p>
-                <p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-emerald-950">
-                  {stats.completed}
-                </p>
-              </div>
-            </div>
-          </button>
-          <button
-            type="button"
-            disabled
-            className="rounded-xl border border-rose-200 bg-rose-50/80 px-3 py-2.5 text-left opacity-70 cursor-not-allowed"
-          >
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-rose-100 text-rose-700">
-                <CloseCircleOutlined />
-              </StatCardIcon>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-rose-800">
-                  Cancelled
-                </p>
-                <p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-rose-950">
-                  {stats.cancelled}
-                </p>
-              </div>
-            </div>
+          <button type="button" onClick={() => { setStatus("CANCELLED"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-rose-400 ${status === "CANCELLED" ? "bg-rose-50" : "bg-white hover:bg-slate-50"}`}>
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <CloseCircleOutlined className="text-[10px]" /> Cancelled
+            </span>
+            <p className={`text-2xl font-bold tabular-nums ${status === "CANCELLED" ? "text-rose-600" : "text-slate-800"}`}>{stats.cancelled}</p>
           </button>
         </div>
       </section>
 
-      <section className="rounded-xl border border-[#C7CACF] bg-white p-4">
-        <header className="mb-3 flex items-start gap-3 border-b border-slate-100 pb-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#C7CACF] bg-slate-50 text-lg text-slate-600">
-            <FireOutlined />
-          </span>
-          <div>
-            <Typography.Title level={5} className="!mb-0.5 !text-base">
-              Priority
-            </Typography.Title>
-            <Typography.Text type="secondary" className="text-xs">
-              Click a level to filter by urgency. Counts stay as overall totals;
-              they do not change when status or priority filters are applied.
-            </Typography.Text>
-          </div>
+      <section className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+        <header className="px-4 pt-4 pb-3 flex items-center border-b border-slate-100">
+          <Typography.Title level={5} className="!mb-0 !text-gray-800 font-semibold">Priority</Typography.Title>
         </header>
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
-          <button
-            type="button"
-            onClick={() => setPriority("")}
-            className={statCardClass(
-              !priority,
-              "border-[#C7CACF]",
-              "bg-slate-50/90",
-              "violet",
-            )}
-          >
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-slate-100 text-slate-600">
-                <ControlOutlined />
-              </StatCardIcon>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                  All priorities
-                </p>
-                <p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-slate-900">
-                  {stats.total}
-                </p>
-              </div>
-            </div>
+        <div className="flex divide-x divide-slate-200">
+          <button type="button" onClick={() => { setPriority(""); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-400 ${!priority ? "bg-violet-50" : "bg-white hover:bg-slate-50"}`}>
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <ControlOutlined className="text-[10px]" /> All
+            </span>
+            <p className={`text-2xl font-bold tabular-nums ${!priority ? "text-violet-600" : "text-slate-800"}`}>{stats.low + stats.medium + stats.high}</p>
           </button>
-          <button
-            type="button"
-            onClick={() => setPriority("LOW")}
-            className={statCardClass(
-              priority === "LOW",
-              "border-[#C7CACF]",
-              "bg-slate-50/90",
-              "violet",
-            )}
-          >
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-slate-200/80 text-slate-600">
-                <ArrowDownOutlined />
-              </StatCardIcon>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">
-                  Low
-                </p>
-                <p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-slate-900">
-                  {stats.low}
-                </p>
-              </div>
-            </div>
+          <button type="button" onClick={() => { setPriority("LOW"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-400 ${priority === "LOW" ? "bg-slate-100" : "bg-white hover:bg-slate-50"}`}>
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <ArrowDownOutlined className="text-[10px]" /> Low
+            </span>
+            <p className={`text-2xl font-bold tabular-nums ${priority === "LOW" ? "text-slate-700" : "text-slate-800"}`}>{stats.low}</p>
           </button>
-          <button
-            type="button"
-            onClick={() => setPriority("MEDIUM")}
-            className={statCardClass(
-              priority === "MEDIUM",
-              "border-blue-200",
-              "bg-blue-50/80",
-              "violet",
-            )}
-          >
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-blue-100 text-blue-700">
-                <MinusOutlined />
-              </StatCardIcon>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-800">
-                  Medium
-                </p>
-                <p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-blue-950">
-                  {stats.medium}
-                </p>
-              </div>
-            </div>
+          <button type="button" onClick={() => { setPriority("MEDIUM"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400 ${priority === "MEDIUM" ? "bg-blue-50" : "bg-white hover:bg-slate-50"}`}>
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <MinusOutlined className="text-[10px]" /> Medium
+            </span>
+            <p className={`text-2xl font-bold tabular-nums ${priority === "MEDIUM" ? "text-blue-600" : "text-slate-800"}`}>{stats.medium}</p>
           </button>
-          <button
-            type="button"
-            onClick={() => setPriority("HIGH")}
-            className={statCardClass(
-              priority === "HIGH",
-              "border-amber-200",
-              "bg-amber-50/80",
-              "violet",
-            )}
-          >
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-amber-100 text-amber-800">
-                <ArrowUpOutlined />
-              </StatCardIcon>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-900">
-                  High
-                </p>
-                <p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-amber-950">
-                  {stats.high}
-                </p>
-              </div>
-            </div>
-          </button>
-          <button
-            type="button"
-            disabled
-            className="rounded-xl border border-red-200 bg-red-50/80 px-3 py-2.5 text-left opacity-70 cursor-not-allowed"
-          >
-            <div className="flex items-start gap-2.5">
-              <StatCardIcon className="bg-red-100 text-red-700">
-                <ThunderboltOutlined />
-              </StatCardIcon>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-red-800">
-                  Urgent
-                </p>
-                <p className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-red-950">
-                  {stats.urgent}
-                </p>
-              </div>
-            </div>
+          <button type="button" onClick={() => { setPriority("HIGH"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-400 ${priority === "HIGH" ? "bg-amber-50" : "bg-white hover:bg-slate-50"}`}>
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <ArrowUpOutlined className="text-[10px]" /> High
+            </span>
+            <p className={`text-2xl font-bold tabular-nums ${priority === "HIGH" ? "text-amber-600" : "text-slate-800"}`}>{stats.high}</p>
           </button>
         </div>
       </section>
 
-      <PageCard>
-        <div className="flex items-center justify-between gap-2 mb-4">
-          <Input
-            placeholder="Search task title/type/assignee"
-            allowClear
-            className="max-w-xs"
-            onChange={(e) => {
-              setSearchTerm(e.target.value.trim());
-              setPage(1);
-            }}
-          />
-        </div>
-
+      <div className="my-tasks-table-wrapper overflow-hidden rounded-[24px] border border-neutral-100 bg-white dark:border-gray-800 dark:bg-gray-900">
         <DataTable
           rowKey="id"
           data={rows}
@@ -639,7 +288,7 @@ export default function MyTasks() {
             showSizeChanger: false,
           }}
         />
-      </PageCard>
+      </div>
 
       <Modal
         title="Task details"
@@ -659,19 +308,11 @@ export default function MyTasks() {
                 </h3>
                 <Space>
                   {taskDetail.priority ? (
-                    <Tag
-                      color={
-                        priorityColor[
-                          taskDetail.priority as PartnerTaskPriority
-                        ]
-                      }
-                    >
+                    <Tag color={priorityColor[taskDetail.priority as PartnerTaskPriority]}>
                       {taskDetail.priority}
                     </Tag>
                   ) : null}
-                  <Tag
-                    color={statusColor[taskDetail.status as PartnerTaskStatus]}
-                  >
+                  <Tag color={statusColor[taskDetail.status] ?? "default"}>
                     {taskDetail.status.replace(/_/g, " ")}
                   </Tag>
                 </Space>
@@ -679,187 +320,92 @@ export default function MyTasks() {
             </div>
             <div>
               <p className="text-xs uppercase text-gray-500">Description</p>
-              <p className="mt-1 whitespace-pre-wrap text-sm text-gray-700">
-                {taskDetail.task_description || "No description added."}
-              </p>
+              {taskDetail.task_description ? (
+                <div
+                  className="mt-1 text-sm text-gray-700 prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: taskDetail.task_description }}
+                />
+              ) : (
+                <p className="mt-1 text-sm text-gray-400">No description added.</p>
+              )}
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div className="rounded-xl border border-[#C7CACF] bg-white p-3">
-                <p className="text-[11px] uppercase text-slate-500">
-                  Assigned to
-                </p>
+              <div className="rounded-xl border border-slate-200 bg-white p-3">
+                <p className="text-[11px] uppercase text-slate-500">Assigned to</p>
                 <p className="mt-1 text-sm font-medium text-slate-900">
-                  {taskDetail.assignedTo?.name ||
-                    taskDetail.assignedTo?.email ||
-                    "—"}
+                  {taskDetail.assignedTo?.name || taskDetail.assignedTo?.email || "—"}
                 </p>
               </div>
-              <div className="rounded-xl border border-[#C7CACF] bg-white p-3">
-                <p className="text-[11px] uppercase text-slate-500">
-                  Created by
-                </p>
+              <div className="rounded-xl border border-slate-200 bg-white p-3">
+                <p className="text-[11px] uppercase text-slate-500">Created by</p>
                 <p className="mt-1 text-sm font-medium text-slate-900">
                   {taskDetail.created_by || "—"}
                 </p>
               </div>
-              <div className="rounded-xl border border-[#C7CACF] bg-white p-3">
+              <div className="rounded-xl border border-slate-200 bg-white p-3">
                 <p className="text-[11px] uppercase text-slate-500">Due</p>
-                <p className="mt-1 text-sm font-medium text-slate-900">
-                  {taskDetail.due_date
-                    ? dayjs(taskDetail.due_date).format("YYYY-MM-DD")
-                    : "—"}{" "}
-                  {taskDetail.due_time || ""}
-                </p>
+                <DateTimeHighlight value={taskDetail.due_date} />
               </div>
             </div>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <div className="rounded-xl border border-purple-200 bg-purple-50 p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-purple-700">
-                  Submission Note
-                </p>
-                <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-purple-900">
-                  {taskDetail.submissionNote || "No submission note provided."}
-                </p>
+                <p className="text-xs font-medium uppercase tracking-wide text-purple-700">Submission Note</p>
+                {taskDetail.submissionNote ? (
+                  <div
+                    className="mt-2 text-sm leading-relaxed text-purple-900 prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: taskDetail.submissionNote }}
+                  />
+                ) : (
+                  <p className="mt-2 text-sm text-purple-400">No submission note provided.</p>
+                )}
               </div>
-              <div className="rounded-xl border border-[#C7CACF] bg-slate-50 p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-700">
-                  Review Note
-                </p>
-                <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-900">
-                  {taskDetail.reviewNote || "No review note provided."}
-                </p>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-700">Completion Note</p>
+                {taskDetail.reviewNote ? (
+                  <div
+                    className="mt-2 text-sm leading-relaxed text-slate-900 prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: taskDetail.reviewNote }}
+                  />
+                ) : (
+                  <p className="mt-2 text-sm text-slate-400">No completion note provided.</p>
+                )}
               </div>
-            </div>
-            <div className="pt-2">
-              <p className="mb-2 text-xs uppercase text-gray-500">
-                Update status
-              </p>
-              <Select
-                value={taskDetail.status}
-                onChange={(nextStatus) =>
-                  updateTaskStatus({
-                    id: taskDetail.id,
-                    status: nextStatus,
-                  }).unwrap()
-                }
-                options={STATUS_OPTIONS.map((s) => ({
-                  value: s,
-                  label: s.replace(/_/g, " "),
-                }))}
-                loading={updatingStatus}
-                style={{ minWidth: 180 }}
-              />
             </div>
           </div>
         ) : null}
       </Modal>
 
       <Modal
-        title="Submit task update"
-        open={!!submitModalTask}
-        onCancel={() => setSubmitModalTask(null)}
+        title="Mark task as complete"
+        open={!!completeModalTask}
+        onCancel={() => setCompleteModalTask(null)}
         onOk={async () => {
-          if (!submitModalTask) return;
-          try {
-            await updateTaskStatus({
-              id: submitModalTask.id,
-              status: "SUBMITTED",
-              note: submitNote || undefined,
-            }).unwrap();
-          } catch {
-            await updateTaskStatus({
-              id: submitModalTask.id,
-              status: "IN_PROGRESS",
-              note: submitNote || undefined,
-            }).unwrap();
-          }
-          setSubmitModalTask(null);
+          if (!completeModalTask) return;
+          await updateTaskStatus({
+            id: completeModalTask.id,
+            status: "COMPLETED",
+            note: completeNote || undefined,
+          }).unwrap();
+          setCompleteModalTask(null);
         }}
         confirmLoading={updatingStatus}
-        okText="Submit for Review"
+        okText="Mark Complete"
+        width={680}
+        destroyOnClose
       >
-        <Typography.Paragraph type="secondary">
-          Add a brief note about what you completed or any blocker.
+        <div className="mb-3 rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">Task</p>
+          <p className="mt-0.5 text-sm font-semibold text-emerald-900">{completeModalTask?.task_title}</p>
+        </div>
+        <Typography.Paragraph type="secondary" className="mb-2">
+          Add a completion note (optional) to summarize what was done.
         </Typography.Paragraph>
-        <Input.TextArea
-          rows={4}
-          placeholder="Submission note..."
-          value={submitNote}
-          onChange={(e) => setSubmitNote(e.target.value)}
+        <RichTextEditor
+          placeholder="Describe what was completed..."
+          value={completeNote}
+          onChange={(v: string) => setCompleteNote(v)}
+          height={220}
         />
-      </Modal>
-
-      <Modal
-        title="Edit task"
-        open={!!editingTask}
-        onCancel={() => {
-          setEditingTask(null);
-          editForm.resetFields();
-        }}
-        onOk={async () => {
-          if (!editingTask) return;
-          const values = await editForm.validateFields();
-          const payload: UpdateTaskBody = {
-            title: values.title,
-            priority: values.priority || undefined,
-            taskType: values.taskType || undefined,
-            dueDate: values.dueDate
-              ? dayjs(values.dueDate).format("YYYY-MM-DD")
-              : undefined,
-            dueTime: values.dueTime || undefined,
-            assignedToUserId: values.assignedToUserId || undefined,
-          };
-          await updateTask({ id: editingTask.id, body: payload }).unwrap();
-          setEditingTask(null);
-          editForm.resetFields();
-        }}
-        okText="Save"
-        confirmLoading={updatingTask}
-        destroyOnHidden
-      >
-        <Form form={editForm} layout="vertical">
-          <Form.Item
-            name="title"
-            label="Task title"
-            rules={[{ required: true, message: "Task title is required" }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item name="assignedToUserId" label="Assign to team member">
-            <Select
-              options={assigneeOptions}
-              showSearch
-              optionFilterProp="label"
-            />
-          </Form.Item>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Form.Item name="priority" label="Priority">
-              <Select
-                options={PRIORITY_OPTIONS.map((p) => ({ value: p, label: p }))}
-                allowClear
-              />
-            </Form.Item>
-            <Form.Item name="taskType" label="Task type">
-              <Select
-                options={[
-                  { value: "TO_DO", label: "To Do" },
-                  { value: "FOLLOW_UP", label: "Follow Up" },
-                  { value: "REMINDER", label: "Reminder" },
-                  { value: "INTERNAL_TASK", label: "Internal Task" },
-                ]}
-                allowClear
-              />
-            </Form.Item>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Form.Item name="dueDate" label="Due date">
-              <DatePicker className="w-full" />
-            </Form.Item>
-            <Form.Item name="dueTime" label="Due time">
-              <Input placeholder="e.g. 04:30 PM" />
-            </Form.Item>
-          </div>
-        </Form>
       </Modal>
     </div>
   );

@@ -16,6 +16,8 @@ import {
   Tag,
   Tooltip,
 } from "antd";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
 import type { ColumnsType } from "antd/es/table";
 import React, { useRef, useState } from "react";
 import { useSelector } from "react-redux";
@@ -81,15 +83,56 @@ export default function TeamMembers() {
   const members: PartnerTeamMember[] = data?.data || [];
   const meta = data?.meta;
 
+  // Helper function to parse phone number from react-phone-input-2
+  const parsePhoneNumber = (phoneValue: string): { countryCode: string; contactNumber: string } => {
+    if (!phoneValue) return { countryCode: "", contactNumber: "" };
+    
+    // Remove all non-digit characters except the leading +
+    const cleanPhone = phoneValue.replace(/\D/g, "");
+    
+    // Country codes are 1-3 digits, get first 1-3 digits as country code
+    // Most common: +1 (US/CA), +44 (UK), +880 (BD), +91 (India), etc.
+    let countryCode = "";
+    let contactNumber = "";
+    
+    if (phoneValue.startsWith("+880")) {
+      countryCode = "+880";
+      contactNumber = cleanPhone.substring(3);
+    } else if (phoneValue.startsWith("+1")) {
+      countryCode = "+1";
+      contactNumber = cleanPhone.substring(1);
+    } else if (phoneValue.startsWith("+44")) {
+      countryCode = "+44";
+      contactNumber = cleanPhone.substring(2);
+    } else if (phoneValue.startsWith("+91")) {
+      countryCode = "+91";
+      contactNumber = cleanPhone.substring(2);
+    } else {
+      // For other countries, assume 1-2 digit country code
+      // Standard country codes are 1-3 digits
+      if (cleanPhone.length > 10) {
+        countryCode = "+" + cleanPhone.substring(0, 3);
+        contactNumber = cleanPhone.substring(3);
+      } else {
+        countryCode = "+" + cleanPhone.substring(0, 1);
+        contactNumber = cleanPhone.substring(1);
+      }
+    }
+    
+    return { countryCode, contactNumber };
+  };
+
   const handleInviteSubmit = async () => {
     try {
       const values = await form.validateFields();
-      const createdRes = await inviteMember({
+      const { countryCode, contactNumber } = parsePhoneNumber(values.phone);
+      
+      await inviteMember({
         email: values.email,
         firstName: values.firstName,
         lastName: values.lastName ?? "",
-        contactNumber: values.contactNumber,
-        countryCode: values.countryCode,
+        contactNumber: contactNumber,
+        countryCode: countryCode,
         password: values.password,
         profilePhotoId: selectedPhoto?.id,
       }).unwrap();
@@ -100,18 +143,6 @@ export default function TeamMembers() {
       setPage(1);
       setStatusFilter("");
       setSearch("");
-      const createdMember = (createdRes?.data ||
-        createdRes) as PartnerTeamMember;
-      if (createdMember?.id) {
-        setEditingMember(createdMember);
-      }
-      editForm.setFieldsValue({
-        firstName: createdMember?.firstName ?? values.firstName,
-        lastName: createdMember?.lastName ?? values.lastName ?? "",
-        contactNumber:
-          createdMember?.contactNumber ?? values.contactNumber ?? "",
-        countryCode: createdMember?.countryCode ?? values.countryCode ?? "",
-      });
     } catch (err: any) {
       const apiMessage =
         err?.data?.message || err?.error?.message || err?.message || "";
@@ -160,8 +191,7 @@ export default function TeamMembers() {
     editForm.setFieldsValue({
       firstName: record.firstName ?? "",
       lastName: record.lastName ?? "",
-      contactNumber: record.contactNumber ?? "",
-      countryCode: record.countryCode ?? "",
+      phone: record.countryCode ? `${record.countryCode}${record.contactNumber}` : "",
     });
   };
 
@@ -169,13 +199,15 @@ export default function TeamMembers() {
     if (!editingMember) return;
     try {
       const values = await editForm.validateFields();
+      const { countryCode, contactNumber } = parsePhoneNumber(values.phone);
+      
       await updateMember({
         id: editingMember.id,
         data: {
           firstName: values.firstName,
           lastName: values.lastName,
-          contactNumber: values.contactNumber || undefined,
-          countryCode: values.countryCode || undefined,
+          contactNumber: contactNumber || undefined,
+          countryCode: countryCode || undefined,
         },
       }).unwrap();
       message.success("Team member updated successfully.");
@@ -503,11 +535,34 @@ export default function TeamMembers() {
           >
             <Input.Password placeholder="Confirm password" />
           </Form.Item>
-          <Form.Item label="Country Code" name="countryCode">
-            <Input placeholder="+880" />
-          </Form.Item>
-          <Form.Item label="Contact Number" name="contactNumber">
-            <Input placeholder="Phone number" />
+          <Form.Item
+            label="Phone Number"
+            name="phone"
+            rules={[
+              { required: true, message: "Phone number is required" },
+              {
+                pattern: /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/,
+                message: "Please enter a valid phone number",
+              },
+            ]}
+          >
+            <PhoneInput
+              country="bd"
+              preferredCountries={["bd", "us", "gb", "in", "au"]}
+              inputStyle={{ 
+                width: "100%", 
+                height: 32,
+                fontSize: 14,
+                paddingLeft: 48,
+              }}
+              buttonStyle={{
+                borderRadius: "2px 0 0 2px",
+                borderRight: "1px solid #d9d9d9",
+              }}
+              inputProps={{
+                required: true,
+              }}
+            />
           </Form.Item>
         </Form>
       </Modal>
@@ -601,11 +656,34 @@ export default function TeamMembers() {
           >
             <Input />
           </Form.Item>
-          <Form.Item label="Country Code" name="countryCode">
-            <Input placeholder="+880" />
-          </Form.Item>
-          <Form.Item label="Contact Number" name="contactNumber">
-            <Input />
+          <Form.Item
+            label="Phone Number"
+            name="phone"
+            rules={[
+              { required: true, message: "Phone number is required" },
+              {
+                pattern: /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/,
+                message: "Please enter a valid phone number",
+              },
+            ]}
+          >
+            <PhoneInput
+              country="bd"
+              preferredCountries={["bd", "us", "gb", "in", "au"]}
+              inputStyle={{ 
+                width: "100%", 
+                height: 32,
+                fontSize: 14,
+                paddingLeft: 48,
+              }}
+              buttonStyle={{
+                borderRadius: "2px 0 0 2px",
+                borderRight: "1px solid #d9d9d9",
+              }}
+              inputProps={{
+                required: true,
+              }}
+            />
           </Form.Item>
         </Form>
       </Modal>
