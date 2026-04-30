@@ -22,7 +22,7 @@ type UniversitiesResponse = {
 };
 
 type StudyLevelsResponse = {
-  data?: Array<{ id: string; name: string; isActive?: boolean }>;
+  data?: Array<{ id: string; name: string; description?: string; isActive?: boolean }>;
 };
 
 export interface ApiSearchParams {

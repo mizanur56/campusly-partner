@@ -1,5 +1,3 @@
-
-
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Image, Spin } from "antd";
@@ -7,7 +5,6 @@ import React, { useEffect } from "react";
 import { FaCircleCheck } from "react-icons/fa6";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useGetApplicationByIdQuery } from "../../redux/features/application/applicationApi";
-
 
 import { config } from "../../config";
 import { useStudentProfile } from "../../context/StudentProfileContext";
@@ -41,9 +38,10 @@ const ApplicationDetails = () => {
     navigate(`?tab=${key}`, { replace: true });
   };
   const { setStudent } = useStudentProfile();
-  const { data, isLoading, error,refetch,isFetching } = useGetApplicationByIdQuery(id, {
-    skip: !id,
-  });
+  const { data, isLoading, error, refetch, isFetching } =
+    useGetApplicationByIdQuery(id, {
+      skip: !id,
+    });
   const applicationApiData = data?.data;
 
   /** Partner profile API uses student record id (see Admission.tsx), not auth userId. */
@@ -197,8 +195,6 @@ const ApplicationDetails = () => {
     status: applicationApiData?.status,
   };
 
- 
-
   const steps = React.useMemo(
     () => [
       {
@@ -218,13 +214,13 @@ const ApplicationDetails = () => {
         id: "apply",
         name: "Apply",
         isCompleted:
-        applicationApiData?.isReviewed &&
-        applicationApiData?.isCollageSubmitted &&
-        !!applicationApiData?.conditionalOfferLetter &&
-        applicationApiData?.invoices?.length > 0 &&
-        applicationApiData?.invoices?.every(
-          (inv: any) => inv.status === "PAID" || inv.amount === 0,
-        ),
+          applicationApiData?.isReviewed &&
+          applicationApiData?.isCollageSubmitted &&
+          !!applicationApiData?.conditionalOfferLetter &&
+          applicationApiData?.invoices?.length > 0 &&
+          applicationApiData?.invoices?.every(
+            (inv: any) => inv.status === "PAID" || inv.amount === 0,
+          ),
       },
       {
         id: "checklist",
@@ -304,56 +300,52 @@ const ApplicationDetails = () => {
     return <div>Error loading application.</div>;
   }
 
-
   return (
     <div>
       {/* Program Overview */}
       <div className="mb-8 space-y-4">
         <div className="flex items-center justify-between">
-
-        <div className="flex items-start gap-4">
-          {applicationApiData?.course?.university?.UniversityLogo?.url ? (
-            <Image
-              src={`${config.image_access_url}${applicationApiData.course.university.UniversityLogo.url}`}
-              alt={applicationData.college.name}
-              width={64}
-              height={64}
-              preview={false}
-              className="rounded-full object-cover"
-            />
-          ) : (
-            <div className="w-16 h-16 rounded-full bg-[#237D3B] flex items-center justify-center shrink-0">
-              <span className="text-white font-bold text-xl">
-                {applicationData.college.initials}
-              </span>
+          <div className="flex items-start gap-4">
+            {applicationApiData?.course?.university?.UniversityLogo?.url ? (
+              <Image
+                src={`${config.image_access_url}${applicationApiData.course.university.UniversityLogo.url}`}
+                alt={applicationData.college.name}
+                width={64}
+                height={64}
+                preview={false}
+                className="rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-[#237D3B] flex items-center justify-center shrink-0">
+                <span className="text-white font-bold text-xl">
+                  {applicationData.college.initials}
+                </span>
+              </div>
+            )}
+            <div className="flex-1">
+              <h2 className="text-[18px] text-[#4B5563] mb-1">
+                {applicationData.college.name}
+              </h2>
+              <h3 className="text-[20px] font-semibold text-[#20242A] mb-4">
+                {applicationData.program}
+              </h3>
             </div>
-          )}
-          <div className="flex-1">
-            <h2 className="text-[18px] text-[#4B5563] mb-1">
-              {applicationData.college.name}
-            </h2>
-            <h3 className="text-[20px] font-semibold text-[#20242A] mb-4">
-              {applicationData.program}
-            </h3>
+          </div>
+
+          <div className="">
+            <button
+              onClick={refetch}
+              className="px-4 py-3 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center gap-2 transition-all disabled:opacity-70"
+              disabled={isFetching}
+            >
+              <RefreshCw
+                size={18}
+                className={`${isFetching ? "animate-spin" : ""}`}
+              />
+              Refresh
+            </button>
           </div>
         </div>
-
-        <div className="">
-        <button
-  onClick={refetch}
-  className="px-4 py-3 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center gap-2 transition-all disabled:opacity-70"
-  disabled={isFetching}
->
-  <RefreshCw 
-    size={18} 
-    className={`${isFetching ? "animate-spin" : ""}`} 
-  />
-  Refresh
-</button>
-    </div>
-
-        </div>
-      
 
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 text-[14px]">
           <div className="flex flex-col gap-2">
@@ -434,18 +426,14 @@ const ApplicationDetails = () => {
         {/* Left content changes with tabs */}
         <div className="lg:col-span-2">
           {activeTab === "requirements" ? (
-              <ApplicationRequirementsTab
-                applicationApiData={applicationApiData}
-                steps={steps}
-                
-              />
+            <ApplicationRequirementsTab
+              applicationApiData={applicationApiData}
+              steps={steps}
+            />
           ) : activeTab === "records" ? (
-              <StudentRecordsTab
-                profileData={profileData}
-                applicationApiData={applicationApiData}
-              />
+            <StudentRecordsTab applicationApiData={applicationApiData} />
           ) : (
-              <NotesTab applicationId={id!} />
+            <NotesTab applicationId={id!} />
           )}
         </div>
 
@@ -462,10 +450,14 @@ const ApplicationDetails = () => {
               <div className="space-y-10">
                 {steps.map((step, index) => {
                   // Step routing removed; highlight the first incomplete step instead.
-                  const firstIncompleteIndex = steps.findIndex((s) => !s.isCompleted);
+                  const firstIncompleteIndex = steps.findIndex(
+                    (s) => !s.isCompleted,
+                  );
                   const isActive =
-                    (firstIncompleteIndex === -1 && index === steps.length - 1) ||
-                    index === (firstIncompleteIndex === -1 ? 0 : firstIncompleteIndex);
+                    (firstIncompleteIndex === -1 &&
+                      index === steps.length - 1) ||
+                    index ===
+                      (firstIncompleteIndex === -1 ? 0 : firstIncompleteIndex);
 
                   return (
                     <div
@@ -490,9 +482,7 @@ const ApplicationDetails = () => {
                           </div>
                         )}
                       </div>
-                      <span
-                        className="text-[14px] text-[#4B5563] dark:text-gray-300"
-                      >
+                      <span className="text-[14px] text-[#4B5563] dark:text-gray-300">
                         {step.name}
                       </span>
                     </div>
