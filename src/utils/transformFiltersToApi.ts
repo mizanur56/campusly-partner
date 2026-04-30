@@ -8,24 +8,17 @@ type CitiesResponse = {
   data?: Array<{
     id: string;
     name: string;
-    isActive: boolean;
+    isActive?: boolean;
     country: { name: string };
   }>;
 };
 
-type UniversityCoursesResponse = {
-  data?: Array<{
-    course: { id: string; name: string };
-    university: {
-      id: string;
-      name: string;
-      country: { name: string };
-      city: { name: string };
-    };
-    courseRequirementEducations?: Array<{
-      studyLevel: { id: string; name: string };
-    }>;
-  }>;
+type CoursesResponse = {
+  data?: Array<{ id: string; name: string }>;
+};
+
+type UniversitiesResponse = {
+  data?: Array<{ id: string; name: string }>;
 };
 
 type StudyLevelsResponse = {
@@ -91,8 +84,9 @@ export function transformFiltersToApi(
   searchTerm: string,
   countriesResponse?: CountriesResponse,
   citiesResponse?: CitiesResponse,
-  coursesResponse?: UniversityCoursesResponse,
+  coursesResponse?: CoursesResponse,
   studyLevelsResponse?: StudyLevelsResponse,
+  universitiesResponse?: UniversitiesResponse,
   page: number = 1,
   limit: number = 20,
 ): ApiSearchParams {
@@ -127,13 +121,10 @@ export function transformFiltersToApi(
     if (cityIds.length > 0) params.cityIds = cityIds;
   }
 
-  if (filterData.institution?.length > 0 && coursesResponse?.data) {
-    const universityMap = new Map<string, string>();
-    coursesResponse.data.forEach((course) => {
-      if (!universityMap.has(course.university.name)) {
-        universityMap.set(course.university.name, course.university.id);
-      }
-    });
+  if (filterData.institution?.length > 0 && universitiesResponse?.data) {
+    const universityMap = new Map(
+      universitiesResponse.data.map((u) => [u.name, u.id]),
+    );
     const universityIds = filterData.institution
       .map((name) => universityMap.get(name))
       .filter((id): id is string => !!id);
@@ -141,12 +132,9 @@ export function transformFiltersToApi(
   }
 
   if (filterData.subject?.length > 0 && coursesResponse?.data) {
-    const courseMap = new Map<string, string>();
-    coursesResponse.data.forEach((course) => {
-      if (!courseMap.has(course.course.name)) {
-        courseMap.set(course.course.name, course.course.id);
-      }
-    });
+    const courseMap = new Map(
+      coursesResponse.data.map((c) => [c.name, c.id]),
+    );
     const courseIds = filterData.subject
       .map((name) => courseMap.get(name))
       .filter((id): id is string => !!id);
@@ -161,7 +149,7 @@ export function transformFiltersToApi(
       studyLevelsResponse.data
         .filter((sl) => sl.isActive)
         .forEach((sl) => {
-          studyLevelMap.set(sl.description?.toLowerCase() || "", sl.id);
+          studyLevelMap.set(sl.name?.toLowerCase() || "", sl.id);
         });
 
       const studyLevelIds = filteredLevels
