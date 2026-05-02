@@ -46,7 +46,7 @@ export default function OnboardingFormLayout({
                 </header>
               )}
               {/* Card body — constrained width for form readability */}
-              <div className=" py-6  sm:py-7 [&_.ant-input]:h-10 [&_.ant-input]:rounded-lg [&_.ant-input]:border-gray-200 [&_.ant-input-affix-wrapper]:rounded-lg [&_.ant-input-affix-wrapper]:border-gray-200 dark:[&_.ant-input]:border-gray-600 dark:[&_.ant-input-affix-wrapper]:border-gray-600">
+              <div className=" py-6  sm:py-7 [&_.ant-input]:h-10 [&_.ant-input]:rounded-lg [&_.ant-input]:border-primary-border [&_.ant-input-affix-wrapper]:rounded-lg [&_.ant-input-affix-wrapper]:border-primary-border dark:[&_.ant-input]:border-gray-600 dark:[&_.ant-input-affix-wrapper]:border-gray-600">
                 <div className="max-w-2xl">{children}</div>
               </div>
             </div>

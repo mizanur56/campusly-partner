@@ -205,7 +205,7 @@ export const VisaOutcomeStep: React.FC<VisaOutcomeStepProps> = ({
 
   const stageLockedVisual = embedded && !stageUnlocked;
   const stageCardClass = stageLockedVisual
-    ? "border border-[#D1D5DB] rounded-lg overflow-hidden bg-[#F4F6F5]"
+    ? "border border-primary-border rounded-lg overflow-hidden bg-[#F4F6F5]"
     : "border border-primary-border rounded-lg overflow-hidden";
   const stageHeaderClass = isAllRequiredCompleted
     ? "bg-[#DFF2E6] border-[#237D3B] border rounded-lg"
@@ -299,7 +299,7 @@ export const VisaOutcomeStep: React.FC<VisaOutcomeStepProps> = ({
             {sections.map((section) => (
               <div
                 key={section.id}
-                className="bg-white border border-[#D1D5DB] rounded-xl p-6"
+                className="bg-white border border-primary-border rounded-xl p-6"
               >
                 <div className="flex items-center gap-2 mb-4">
                   {section.isCompleted ? (
@@ -338,7 +338,7 @@ export const VisaOutcomeStep: React.FC<VisaOutcomeStepProps> = ({
                         } ${
                           isSelected
                             ? "border-[#16A34A] bg-[#F0FDF4]"
-                            : "border-[#D1D5DB]"
+                            : "border-primary-border"
                         }`}
                       >
                         <div className="flex items-center gap-3">
@@ -371,7 +371,7 @@ export const VisaOutcomeStep: React.FC<VisaOutcomeStepProps> = ({
 
                 {/* Document Upload & Display Section */}
                 {selectedData && (
-                  <div className="mt-6 border border-[#D1D5DB] rounded-xl p-6 w-full">
+                  <div className="mt-6 border border-primary-border rounded-xl p-6 w-full">
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <p className="text-[16px] font-semibold text-[#20242A]">
@@ -407,7 +407,7 @@ export const VisaOutcomeStep: React.FC<VisaOutcomeStepProps> = ({
                         <p className="text-[16px] font-semibold text-[#111827] mb-3">
                           Attached Documents:
                         </p>
-                        <div className="flex items-center justify-between border border-[#D1D5DB] rounded-lg p-4 w-full md:w-1/3 min-w-70">
+                        <div className="flex items-center justify-between border border-primary-border rounded-lg p-4 w-full md:w-1/3 min-w-70">
                           <div className="flex items-center gap-3">
                             <BsFileEarmarkBarGraph className="text-[20px]" />
                             <div>
@@ -448,7 +448,7 @@ export const VisaOutcomeStep: React.FC<VisaOutcomeStepProps> = ({
         <div className="flex justify-end gap-3 pt-4">
           <button
             onClick={() => navigate(`/applications/${id}/embassy`)}
-            className="px-6 py-2 cursor-pointer border border-[#D1D5DB] rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50 transition"
+            className="px-6 py-2 cursor-pointer border border-primary-border rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50 transition"
           >
             Previous
           </button>

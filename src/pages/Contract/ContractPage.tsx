@@ -502,7 +502,7 @@ export default function ContractPage() {
                           type="button"
                           disabled={!canGoPrev}
                           onClick={() => setPdfPage((p) => Math.max(1, p - 1))}
-                          className={`inline-flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 bg-white text-[#20242A] dark:border-gray-700 dark:bg-gray-900 ${
+                          className={`inline-flex h-7 w-7 items-center justify-center rounded-full border border-primary-border bg-white text-[#20242A] dark:border-gray-700 dark:bg-gray-900 ${
                             !canGoPrev
                               ? "cursor-not-allowed opacity-50"
                               : "hover:opacity-80"
@@ -669,7 +669,7 @@ export default function ContractPage() {
                               {upcomingMeetingSummary.time}
                             </p>
                             {upcomingMeeting.note && (
-                              <div className="rounded-xl border border-gray-200 bg-white/70 p-3 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300">
+                              <div className="rounded-xl border border-primary-border bg-white/70 p-3 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300">
                                 <p className="font-semibold text-gray-800 dark:text-gray-100">
                                   Meeting details
                                 </p>
@@ -827,7 +827,7 @@ export default function ContractPage() {
                             <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
                               Signature:
                             </p>
-                            <div className="mt-3 rounded-2xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900">
+                            <div className="mt-3 rounded-2xl border border-primary-border bg-white p-3 dark:border-gray-700 dark:bg-gray-900">
                               <div className="flex items-center justify-center rounded-xl bg-gray-50 py-6 dark:bg-gray-950/30">
                                 {signatureImageDataUrl && (
                                   <img

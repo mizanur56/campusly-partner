@@ -518,7 +518,7 @@ const Step1Modal: React.FC<Step1ModalProps> = ({
                           key={`${tpl.dayOfWeek}-${tpl.startTime}-${idx}`}
                           className="flex flex-wrap items-center gap-2 text-xs"
                         >
-                          <span className="inline-flex items-center rounded-md border border-[#D1D5DB] bg-white px-2 py-1 font-semibold tabular-nums text-[#20242A]">
+                          <span className="inline-flex items-center rounded-md border border-primary-border bg-white px-2 py-1 font-semibold tabular-nums text-[#20242A]">
                             {start.format("h:mm A")} – {end.format("h:mm A")}
                           </span>
                           <span className="rounded-md bg-[#E9F2EB] px-2 py-0.5 text-[11px] font-medium text-[#1B5E2A]">
@@ -569,7 +569,7 @@ const Step1Modal: React.FC<Step1ModalProps> = ({
                             ? "cursor-not-allowed border-amber-200/90 bg-linear-to-b from-amber-50/90 to-amber-50/50"
                             : selectedSlotIso === iso
                               ? "border-[#237D3B] bg-[#237D3B] text-white shadow-md ring-2 ring-[#237D3B]/25"
-                              : "cursor-pointer border-[#D1D5DB] bg-white text-[#20242A] hover:border-[#237D3B]/40 hover:bg-[#F8FCF9] hover:shadow-sm"
+                              : "cursor-pointer border-primary-border bg-white text-[#20242A] hover:border-[#237D3B]/40 hover:bg-[#F8FCF9] hover:shadow-sm"
                         }`}
                       >
                         <span

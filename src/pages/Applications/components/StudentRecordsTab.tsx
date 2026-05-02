@@ -75,7 +75,7 @@
 //                   ) : null}
 
 //                   {r.id === "proof" ? (
-//                     <div className="mt-4 max-w-xl rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+//                     <div className="mt-4 max-w-xl rounded-xl border border-primary-border bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
 //                       <p className="text-sm font-semibold text-gray-900 dark:text-white">
 //                         {r.title}
 //                       </p>

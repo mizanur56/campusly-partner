@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Image, Spin } from "antd";
 import React, { useEffect } from "react";
@@ -6,15 +5,14 @@ import { FaCircleCheck } from "react-icons/fa6";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useGetApplicationByIdQuery } from "../../redux/features/application/applicationApi";
 
+import { RefreshCw } from "lucide-react";
 import { config } from "../../config";
 import { useStudentProfile } from "../../context/StudentProfileContext";
 import { useGetStudentProfileQuery } from "../../redux/features/profile/studentProfileApi";
+import { getApiImageUrl } from "../../utils/getApiImageUrl";
 import ApplicationRequirementsTab from "./components/ApplicationRequirementsTab";
 import NotesTab from "./components/NotesTab";
 import StudentRecordsTab from "./components/StudentRecordsTab";
-import { useRefetchApplicationNotesOnNoteNotification } from "../../hooks/useRefetchApplicationNotesOnNoteNotification";
-import { getApiImageUrl } from "../../utils/getApiImageUrl";
-import { RefreshCw } from "lucide-react";
 
 const VALID_TABS = ["requirements", "records", "notes"] as const;
 type TabKey = (typeof VALID_TABS)[number];
@@ -335,7 +333,7 @@ const ApplicationDetails = () => {
           <div className="">
             <button
               onClick={refetch}
-              className="px-4 py-3 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center gap-2 transition-all disabled:opacity-70"
+              className="px-4 py-3 text-sm bg-primary-600 text-white rounded-xl hover:bg-primary-700 flex items-center gap-2 transition-all disabled:opacity-70"
               disabled={isFetching}
             >
               <RefreshCw
@@ -384,7 +382,7 @@ const ApplicationDetails = () => {
       </div>
 
       {/* Tabs */}
-      <div className="mb-6 border-b border-[#CFCACF] dark:border-gray-800">
+      <div className="mb-6 border-b border-primary-border dark:border-gray-800">
         <div className="flex items-center gap-8">
           <button
             type="button"
@@ -439,7 +437,7 @@ const ApplicationDetails = () => {
 
         {/* Right sidebar stays the same */}
         <aside className="lg:col-span-1 ">
-          <div className=" rounded-lg border border-[#CFCACF] bg-white p-6 sticky top-20 card-shadow dark:border-gray-800 dark:bg-gray-900">
+          <div className=" rounded-3xl border border-primary-border bg-white p-6 sticky top-20 card-shadow dark:border-gray-800 dark:bg-gray-900">
             <h3 className="text-[18px] font-semibold text-[#20242A] dark:text-white">
               Application journey
             </h3>

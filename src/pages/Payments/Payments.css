@@ -93,7 +93,10 @@
   color: var(--neutral-700, #353646);
   cursor: pointer;
   border-radius: 0.6rem;
-  transition: background-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease,
+    color 0.15s ease;
 }
 
 .payments-inner-tab:hover {
@@ -130,12 +133,14 @@
 }
 
 .payments-kpi-card {
-  border-radius: 8px;
-  border: 1px solid #C7CACF;
-  background-color: #FFFFFF;
+  border-radius: 18px;
+  border: 1px solid #c7cacf;
+  background-color: #ffffff;
   padding: 1rem 1.25rem;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .payments-kpi-row {
@@ -156,7 +161,7 @@
 
 .payments-kpi-label {
   font-size: 14px;
-  color: #4B5563;
+  color: #4b5563;
   line-height: 1.3;
 }
 
@@ -208,18 +213,21 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1.1rem;
-  border-radius: 8px;
-  border: 1px solid #C7CACF;
+  border-radius: 18px;
+  border: 1px solid #c7cacf;
   background-color: #fff;
   font-size: 0.8125rem;
   font-weight: 500;
-  color: #20242A;
+  color: #20242a;
   cursor: pointer;
-  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .payments-filter-button:hover {
-  border-color: #C7CACF;
+  border-color: #c7cacf;
   background-color: #fff;
   color: #111827;
 }
@@ -273,7 +281,7 @@
   align-items: center;
   justify-content: center;
   padding: 0.5rem 1.1rem;
-  border-radius: 8px;
+  border-radius: 18px;
   border: none;
   background-color: var(--primary, #237d3b);
   color: #fff;
@@ -281,7 +289,10 @@
   font-weight: 500;
   cursor: pointer;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
-  transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.1s ease;
 }
 
 .payments-primary-button:hover {
@@ -303,14 +314,17 @@
   align-items: center;
   justify-content: center;
   padding: 0.5rem 1.1rem;
-  border-radius: 8px;
+  border-radius: 18px;
   border: 1px solid var(--primary, #237d3b);
   background-color: #fff;
   color: var(--primary, #237d3b);
   font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .payments-outline-button:hover {
@@ -419,7 +433,9 @@
   border-color: var(--neutral-200, #dee2e6) !important;
   padding: 1.75rem !important;
   background-color: var(--neutral-50, #f8f9fa) !important;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
 }
 
 .payments-dragger:hover {
@@ -522,7 +538,7 @@
 .payments-page .ant-modal-footer .ant-btn-primary {
   background: var(--primary, #237d3b);
   border-color: var(--primary, #237d3b);
-  border-radius: 8px;
+  border-radius: 18px;
 }
 
 .payments-page .ant-modal-footer .ant-btn-primary:hover {
@@ -531,7 +547,7 @@
 }
 
 .payments-page .ant-modal-footer .ant-btn-default {
-  border-radius: 8px;
+  border-radius: 18px;
   border-color: var(--neutral-200, #dee2e6);
   color: var(--neutral-600, #444d5d);
 }
@@ -557,9 +573,14 @@
 }
 
 .payments-table .ant-pagination .ant-pagination-item:hover,
-.payments-table .ant-pagination .ant-pagination-prev:hover .ant-pagination-item-link,
-.payments-table .ant-pagination .ant-pagination-next:hover .ant-pagination-item-link {
+.payments-table
+  .ant-pagination
+  .ant-pagination-prev:hover
+  .ant-pagination-item-link,
+.payments-table
+  .ant-pagination
+  .ant-pagination-next:hover
+  .ant-pagination-item-link {
   border-color: var(--primary-300, #6ca37c);
   color: var(--primary, #237d3b);
 }
-

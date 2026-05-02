@@ -224,7 +224,7 @@ export default function StudentSelectBlock({
         onClick={() => {
           if (!isLoading && !isError) setIsOpen(!isOpen);
         }}
-        className="w-full rounded-xl border border-dashed border-[#D1D5DB] bg-white p-3.5 text-left hover:border-primary-300 hover:bg-primary-50/40 transition-colors"
+        className="w-full rounded-xl border border-dashed border-primary-border bg-white p-3.5 text-left hover:border-primary-300 hover:bg-primary-50/40 transition-colors"
         disabled={isLoading || isError}
       >
         <div className="flex items-center gap-2.5">
@@ -272,14 +272,14 @@ export default function StudentSelectBlock({
       </button>
 
       {isOpen && (
-        <div className="absolute z-20 mt-1.5 w-full rounded-lg border border-gray-200 bg-white py-1 max-h-52 overflow-y-auto no-scrollbar">
+        <div className="absolute z-20 mt-1.5 w-full rounded-lg border border-primary-border bg-white py-1 max-h-52 overflow-y-auto no-scrollbar">
           <div className="px-2 pb-1">
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by name, email or ID"
-              className="w-full rounded-md border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+              className="w-full rounded-md border border-primary-border px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
             />
           </div>
           {profilesResolving ? (

@@ -753,7 +753,7 @@
 //               </div>
 //             </div>
 
-//             <div className="rounded-2xl border border-gray-200/60 bg-white p-5 dark:border-gray-700 dark:bg-gray-900/40">
+//             <div className="rounded-2xl border border-primary-border/60 bg-white p-5 dark:border-gray-700 dark:bg-gray-900/40">
 //               <div className="flex items-center justify-between">
 //                 <div className="h-4 w-32 rounded bg-gray-200 dark:bg-gray-700" />
 //                 <div className="h-4 w-16 rounded bg-gray-200 dark:bg-gray-700" />
@@ -811,7 +811,7 @@
 //                 <button
 //                   type="button"
 //                   onClick={() => navigate(`/students/${studentId}/profile`)}
-//                   className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-[#E9F2EB] text-[#237D3B] hover:bg-[#E9F2EB] hover:text-[#237D3B] transition-colors dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300 dark:hover:bg-gray-800"
+//                   className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary-border bg-[#E9F2EB] text-[#237D3B] hover:bg-[#E9F2EB] hover:text-[#237D3B] transition-colors dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300 dark:hover:bg-gray-800"
 //                   aria-label="Edit profile"
 //                 >
 //                   <i className="fa-solid fa-pen-to-square text-sm" />
@@ -838,7 +838,7 @@
 //                       ta.remove();
 //                     }
 //                   }}
-//                   className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-[#E9F2EB] text-[#237D3B] hover:bg-[#E9F2EB] hover:text-[#237D3B] transition-colors dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300 dark:hover:bg-gray-800"
+//                   className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary-border bg-[#E9F2EB] text-[#237D3B] hover:bg-[#E9F2EB] hover:text-[#237D3B] transition-colors dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300 dark:hover:bg-gray-800"
 //                   aria-label="Copy email"
 //                 >
 //                   <MdOutlineContentPaste className="text-sm" />
@@ -850,7 +850,7 @@
 //           {/* Application details cards (only in Application Details context) */}
 //           {isApplicationDetailContext && student?.applicationSidebar && (
 //             <div className="mt-3 space-y-2 mx-4">
-//               <div className="rounded-2xl border border-gray-200/60 bg-white p-5 dark:border-gray-700 dark:bg-gray-900/40">
+//               <div className="rounded-2xl border border-primary-border/60 bg-white p-5 dark:border-gray-700 dark:bg-gray-900/40">
 //                 <div className="flex items-center justify-between">
 //                   <div className="h-4 w-32 rounded bg-gray-200 dark:bg-gray-700" />
 //                   <div className="h-4 w-20 rounded bg-gray-200 dark:bg-gray-700" />
@@ -863,7 +863,7 @@
 //                 </div>
 //               </div>
 
-//               <div className="rounded-2xl border border-gray-200/60 bg-white p-5 dark:border-gray-700 dark:bg-gray-900/40">
+//               <div className="rounded-2xl border border-primary-border/60 bg-white p-5 dark:border-gray-700 dark:bg-gray-900/40">
 //                 <div className="flex items-center justify-between">
 //                   <div className="h-4 w-32 rounded bg-gray-200 dark:bg-gray-700" />
 //                   <div className="h-4 w-16 rounded bg-gray-200 dark:bg-gray-700" />
@@ -916,7 +916,7 @@
 //                   <button
 //                     type="button"
 //                     onClick={() => navigate(`/students/${studentId}/profile`)}
-//                     className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-[#E9F2EB] text-[#237D3B] hover:bg-[#E9F2EB] hover:text-[#237D3B] transition-colors dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300 dark:hover:bg-gray-800"
+//                     className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary-border bg-[#E9F2EB] text-[#237D3B] hover:bg-[#E9F2EB] hover:text-[#237D3B] transition-colors dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300 dark:hover:bg-gray-800"
 //                     aria-label="Edit profile"
 //                   >
 //                     <i className="fa-solid fa-pen-to-square text-sm" />
@@ -943,7 +943,7 @@
 //                         ta.remove();
 //                       }
 //                     }}
-//                     className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-[#E9F2EB] text-[#237D3B] hover:bg-[#E9F2EB] hover:text-[#237D3B] transition-colors dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300 dark:hover:bg-gray-800"
+//                     className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary-border bg-[#E9F2EB] text-[#237D3B] hover:bg-[#E9F2EB] hover:text-[#237D3B] transition-colors dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300 dark:hover:bg-gray-800"
 //                     aria-label="Copy email"
 //                   >
 //                     <MdOutlineContentPaste className="text-sm" />
@@ -955,7 +955,7 @@
 //             {/* Application details cards (only in Application Details context) */}
 //             {isApplicationDetailContext && student?.applicationSidebar && (
 //               <div className="mt-3 space-y-2 mx-4">
-//                 <div className="rounded-2xl border border-[#CFCACF] bg-[#FFFFFF] p-5 dark:border-gray-700 dark:bg-gray-900/40">
+//                 <div className="rounded-2xl border border-primary-border bg-[#FFFFFF] p-5 dark:border-gray-700 dark:bg-gray-900/40">
 //                   <div className="flex items-center justify-between">
 //                     <p className="text-[14px] font-semibold text-[#20242A] dark:text-gray-100">
 //                       Application ID
@@ -1020,7 +1020,7 @@
 //                 </div>
 
 //                 {student.applicationSidebar.applicationFee && (
-//                   <div className="rounded-2xl border border-[#CFCACF] bg-[#FFFFFF] p-5 dark:border-gray-700 dark:bg-gray-900/40">
+//                   <div className="rounded-2xl border border-primary-border bg-[#FFFFFF] p-5 dark:border-gray-700 dark:bg-gray-900/40">
 //                     <div className="flex items-center justify-between">
 //                       <p className="text-[14px] font-semibold text-[#20242A] dark:text-gray-100">
 //                         Application fee
@@ -1931,7 +1931,7 @@ const Sidebar: React.FC = () => {
             </div>
 
             <div className="mt-3 space-y-2 mx-4">
-              <div className="rounded-2xl border border-gray-200/60 bg-white p-5 dark:border-gray-700 dark:bg-gray-900/40">
+              <div className="rounded-2xl border border-primary-border/60 bg-white p-5 dark:border-gray-700 dark:bg-gray-900/40">
                 <div className="flex items-center justify-between">
                   <div className="h-4 w-32 rounded bg-gray-200 dark:bg-gray-700" />
                   <div className="h-4 w-20 rounded bg-gray-200 dark:bg-gray-700" />
@@ -1944,7 +1944,7 @@ const Sidebar: React.FC = () => {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-gray-200/60 bg-white p-5 dark:border-gray-700 dark:bg-gray-900/40">
+              <div className="rounded-2xl border border-primary-border/60 bg-white p-5 dark:border-gray-700 dark:bg-gray-900/40">
                 <div className="flex items-center justify-between">
                   <div className="h-4 w-32 rounded bg-gray-200 dark:bg-gray-700" />
                   <div className="h-4 w-16 rounded bg-gray-200 dark:bg-gray-700" />
@@ -2002,7 +2002,7 @@ const Sidebar: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => navigate(`/students/${studentId}/profile`)}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-[#E9F2EB] text-[#237D3B] hover:bg-[#E9F2EB] hover:text-[#237D3B] transition-colors dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300 dark:hover:bg-gray-800"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary-border bg-[#E9F2EB] text-[#237D3B] hover:bg-[#E9F2EB] hover:text-[#237D3B] transition-colors dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300 dark:hover:bg-gray-800"
                     aria-label="Edit profile"
                   >
                     <i className="fa-solid fa-pen-to-square text-sm" />
@@ -2029,7 +2029,7 @@ const Sidebar: React.FC = () => {
                         ta.remove();
                       }
                     }}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-[#E9F2EB] text-[#237D3B] hover:bg-[#E9F2EB] hover:text-[#237D3B] transition-colors dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300 dark:hover:bg-gray-800"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary-border bg-[#E9F2EB] text-[#237D3B] hover:bg-[#E9F2EB] hover:text-[#237D3B] transition-colors dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300 dark:hover:bg-gray-800"
                     aria-label="Copy email"
                   >
                     <MdOutlineContentPaste className="text-sm" />
@@ -2041,7 +2041,7 @@ const Sidebar: React.FC = () => {
             {/* Application details cards (only in Application Details context) */}
             {isApplicationDetailContext && student?.applicationSidebar && (
               <div className="mt-3 space-y-2 mx-4">
-                <div className="rounded-2xl border border-[#CFCACF] bg-[#FFFFFF] p-5 dark:border-gray-700 dark:bg-gray-900/40">
+                <div className="rounded-2xl border border-primary-border bg-[#FFFFFF] p-5 dark:border-gray-700 dark:bg-gray-900/40">
                   <div className="flex items-center justify-between">
                     <p className="text-[14px] font-semibold text-[#20242A] dark:text-gray-100">
                       Application ID
@@ -2106,7 +2106,7 @@ const Sidebar: React.FC = () => {
                 </div>
 
                 {student.applicationSidebar.applicationFee && (
-                  <div className="rounded-2xl border border-[#CFCACF] bg-[#FFFFFF] p-5 dark:border-gray-700 dark:bg-gray-900/40">
+                  <div className="rounded-2xl border border-primary-border bg-[#FFFFFF] p-5 dark:border-gray-700 dark:bg-gray-900/40">
                     <div className="flex items-center justify-between">
                       <p className="text-[14px] font-semibold text-[#20242A] dark:text-gray-100">
                         Application fee

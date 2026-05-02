@@ -32,7 +32,7 @@
 //     else if (doc.url) window.open(doc.url, "_blank");
 //   };
 //   return (
-//     <div className="flex items-center justify-between border border-[#D1D5DB] rounded-lg p-4">
+//     <div className="flex items-center justify-between border border-primary-border rounded-lg p-4">
 //       <div className="flex items-center gap-3">
 //         <BsFileEarmarkBarGraph className="text-[20px]" />
 //         <div>
@@ -210,7 +210,7 @@
 //               const hasDocuments = section.document || (section.documents && section.documents.length > 0);
 
 //               return (
-//                 <div key={section.id} className="bg-white border border-[#D1D5DB] rounded-xl p-6">
+//                 <div key={section.id} className="bg-white border border-primary-border rounded-xl p-6">
 //                   <div className="flex items-center justify-between mb-4">
 //                     <div className="flex items-center gap-2">
 //                       {section.isCompleted ? <IoCheckmarkCircleSharp size={24} className="text-[#16A34A]" /> : <FaRegCircle size={22} className="text-gray-300" />}
@@ -255,7 +255,7 @@
 //       </div>
 
 //       <div className="flex justify-end gap-3 pt-4">
-//         <button onClick={() => navigate(`/applications/${id}/admission`)} className="px-6 py-2 cursor-pointer border border-[#D1D5DB] rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50 transition">
+//         <button onClick={() => navigate(`/applications/${id}/admission`)} className="px-6 py-2 cursor-pointer border border-primary-border rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50 transition">
 //           Previous
 //         </button>
 //         <div className={!isAllRequiredCompleted ? "cursor-not-allowed" : ""}>
@@ -342,7 +342,7 @@ const DocumentCard: React.FC<{
     }
   };
   return (
-    <div className="flex items-center justify-between border border-[#D1D5DB] rounded-lg p-4">
+    <div className="flex items-center justify-between border border-primary-border rounded-lg p-4">
       <div className="flex items-center gap-3">
         <BsFileEarmarkBarGraph className="text-[20px]" />
         <div>
@@ -633,7 +633,7 @@ export const ApplyStep: React.FC<ApplyStepProps> = ({
 
   const stageLockedVisual = embedded && !stageUnlocked;
   const stageCardClass = stageLockedVisual
-    ? "border border-[#D1D5DB] rounded-lg overflow-hidden bg-[#F4F6F5]"
+    ? "border border-primary-border rounded-lg overflow-hidden bg-[#F4F6F5]"
     : "border border-primary-border rounded-lg overflow-hidden";
   const stageHeaderClass = stageLockedVisual
     ? "bg-[#EEF2EF]"
@@ -729,7 +729,7 @@ export const ApplyStep: React.FC<ApplyStepProps> = ({
               return (
                 <div
                   key={section.id}
-                  className="bg-white border border-[#D1D5DB] rounded-xl p-6"
+                  className="bg-white border border-primary-border rounded-xl p-6"
                 >
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
@@ -811,7 +811,7 @@ export const ApplyStep: React.FC<ApplyStepProps> = ({
         <div className="flex justify-end gap-3 pt-4">
           <button
             onClick={() => navigate(`/applications/${id}/admission`)}
-            className="px-6 cursor-pointer py-2 border border-[#D1D5DB] rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50"
+            className="px-6 cursor-pointer py-2 border border-primary-border rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50"
           >
             Previous
           </button>

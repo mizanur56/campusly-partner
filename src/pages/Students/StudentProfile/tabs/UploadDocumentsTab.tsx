@@ -815,7 +815,7 @@ const UploadDocuments = ({
       {sections.map((section) => (
         <div
           key={section.id}
-          className="bg-[#FFFFFF] p-4 rounded-lg border border-[#CFCACF] "
+          className="bg-[#FFFFFF] p-4 rounded-lg border border-primary-border "
         >
           <div className="border-b pb-4 flex flex-col gap-2 mb-4">
             <h3 className="font-semibold text-[18px] text-[#20242A] ">
@@ -850,7 +850,7 @@ const UploadDocuments = ({
                       {item.status === "submitted" ? (
                         <div className="flex items-center gap-2">
                           {/* ভিউ/এডিট আইকন */}
-                          <div className=" border border-[#CFCACF]  cursor-pointer p-1 flex items-center hover:border-primary hover:text-primary rounded-lg ">
+                          <div className=" border border-primary-border  cursor-pointer p-1 flex items-center hover:border-primary hover:text-primary rounded-lg ">
                             <FiEdit
                               className="text-primary text-xl"
                               onClick={() => {

@@ -104,7 +104,7 @@ const Notifications = () => {
         ) : null}
       </div>
 
-      <div className="border-b border-gray-200">
+      <div className="border-b border-primary-border">
         <div className="flex gap-6">
           {[
             { key: "all" as const, label: "All" },
@@ -138,7 +138,7 @@ const Notifications = () => {
             <Spin size="large" />
           </div>
         ) : filteredNotifications.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-200 p-8">
+          <div className="bg-white rounded-2xl border border-primary-border p-8">
             <Empty
               image={Empty.PRESENTED_IMAGE_SIMPLE}
               description={
@@ -155,7 +155,7 @@ const Notifications = () => {
               className={`bg-white rounded-2xl border p-4 cursor-pointer transition-all hover:shadow-md hover:border-primary-300 ${
                 !notification.isRead
                   ? "bg-blue-50 border-blue-200"
-                  : "border-gray-200"
+                  : "border-primary-border"
               }`}
               onClick={() => handleNotificationClick(notification)}
             >

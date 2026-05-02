@@ -234,8 +234,8 @@ const WorkExperienceForm = ({
                 <div
                   className={`w-full rounded-2xl border border-dashed p-10 text-center transition-colors ${
                     !canEdit || !isEditing
-                      ? "border-gray-200 bg-gray-50/30 opacity-70"
-                      : "border-gray-200 bg-white hover:border-[#237D3B]/40 hover:bg-[#F4FBF6]"
+                      ? "border-primary-border bg-gray-50/30 opacity-70"
+                      : "border-primary-border bg-white hover:border-[#237D3B]/40 hover:bg-[#F4FBF6]"
                   }`}
                 >
                   <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#EAF7EE]">

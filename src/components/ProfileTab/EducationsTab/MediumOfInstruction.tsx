@@ -150,7 +150,7 @@ const MediumOfInstruction = ({ studentId }: { studentId: string }) => {
 
       {mediumOfInstructionFile && !isUploadingMediumOfInstruction && (
         <div className="mt-4">
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 group">
+          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-primary-border group">
             <div className="flex items-center gap-3">
               <FaFileAlt className="w-6 h-6 text-[#4B5563]" />
               <p className="text-[16px] font-medium text-[#111827]">

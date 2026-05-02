@@ -317,7 +317,7 @@
 //             {documentCategories.map((category) => {
 //               const isCategoryExpanded = expandedCategories[category.id] ?? true;
 //               return (
-//                 <div key={category.id} className="bg-white border border-[#D1D5DB] rounded-xl p-6">
+//                 <div key={category.id} className="bg-white border border-primary-border rounded-xl p-6">
 //                   <div className="flex items-center justify-between mb-3">
 //                     <div className="flex items-center gap-2">
 //                       {category.isCompleted ? (
@@ -353,7 +353,7 @@
 //                       <p className="text-[16px] font-semibold text-[#111827] mb-3">Attached Documents:</p>
 //                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
 //                         {category.documents.map((doc) => (
-//                           <div key={doc.id} className="flex items-center justify-between border border-[#D1D5DB] rounded-lg p-4">
+//                           <div key={doc.id} className="flex items-center justify-between border border-primary-border rounded-lg p-4">
 //                             <div className="flex items-center gap-2 flex-1 cursor-pointer" onClick={() => doc.url && window.open(doc.url, "_blank")}>
 //                               <BsFileEarmarkBarGraph />
 //                               <div>
@@ -379,7 +379,7 @@
 //       </div>
 
 //       <div className="flex justify-end gap-3 pt-4">
-//         <button onClick={() => navigate("/applications")} className="px-6 py-2 cursor-pointer border border-[#D1D5DB] rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50">
+//         <button onClick={() => navigate("/applications")} className="px-6 py-2 cursor-pointer border border-primary-border rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50">
 //           Back
 //         </button>
 //         <div className={!isAllRequiredCompleted ? "cursor-not-allowed" : ""}>
@@ -973,11 +973,11 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
   const stageLockedVisual = embedded && !stageUnlocked;
 
   const stageCardClass = stageLockedVisual
-    ? "border border-[#D1D5DB] rounded-lg overflow-hidden bg-[#F4F6F5]"
-    : "border border-primary-border rounded-lg overflow-hidden";
+    ? "border border-primary-border rounded-2xl overflow-hidden bg-[#F4F6F5]"
+    : "border border-primary-border rounded-2xl overflow-hidden";
   const stageHeaderClass = stageLockedVisual
     ? "bg-[#EEF2EF]"
-    : "bg-[#DFF2E6] border-[#237D3B] border rounded-lg";
+    : "bg-[#DFF2E6] border-[#237D3B] border rounded-2xl";
 
   return (
     <>
@@ -986,6 +986,11 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
         {/* ===== Header ===== */}
         <div
           className={`${stageHeaderClass} p-6 flex items-center justify-between`}
+          onClick={() => {
+            if (embedded && !stageUnlocked && !isExpanded) return;
+            setUserToggledExpand(true);
+            setIsExpanded((prev) => !prev);
+          }}
         >
           <div>
             <h3
@@ -1010,11 +1015,6 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
                 ? "Complete the previous stage first"
                 : undefined
             }
-            onClick={() => {
-              if (embedded && !stageUnlocked && !isExpanded) return;
-              setUserToggledExpand(true);
-              setIsExpanded((prev) => !prev);
-            }}
             className={expandToggleClass}
           >
             {isExpanded ? (
@@ -1035,7 +1035,7 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
               return (
                 <div
                   key={category.id}
-                  className="bg-white border border-[#D1D5DB] rounded-xl p-6"
+                  className="bg-white border border-primary-border rounded-xl p-6"
                 >
                   {/* ===== Category Header ===== */}
                   <div className="flex items-center justify-between mb-3">
@@ -1116,7 +1116,7 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
                               {category.documents.map((doc) => (
                                 <div
                                   key={doc.id}
-                                  className="flex items-center justify-between border border-[#D1D5DB] rounded-lg p-4"
+                                  className="flex items-center justify-between border border-primary-border rounded-lg p-4"
                                 >
                                   <div
                                     className="flex items-center gap-2 flex-1 cursor-pointer"
@@ -1174,7 +1174,7 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
         <div className="flex justify-end gap-3 pt-4">
           <button
             onClick={() => navigate(`/applications`)}
-            className="px-6 py-2 cursor-pointer border border-[#D1D5DB] rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50"
+            className="px-6 py-2 cursor-pointer border border-primary-border rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50"
           >
             Back
           </button>
@@ -1267,7 +1267,7 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
                       {group.items.map((item) => (
                         <div
                           key={item.id}
-                          className="p-3 border flex justify-between items-center rounded-md hover:bg-gray-50 transition-colors border-[#CFCACF]"
+                          className="p-3 border flex justify-between items-center rounded-md hover:bg-gray-50 transition-colors border-primary-border"
                         >
                           <div className="flex flex-col">
                             <span className="text-gray-700 font-medium">
@@ -1283,7 +1283,7 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
                             <div className="flex items-center gap-2">
                               <button
                                 type="button"
-                                className="border border-[#CFCACF] cursor-pointer p-1 flex items-center hover:border-[#237D3B] hover:text-[#237D3B] rounded-lg text-[#237D3B]"
+                                className="border border-primary-border cursor-pointer p-1 flex items-center hover:border-[#237D3B] hover:text-[#237D3B] rounded-lg text-[#237D3B]"
                                 onClick={() =>
                                   setActiveQualificationField(
                                     item.category as

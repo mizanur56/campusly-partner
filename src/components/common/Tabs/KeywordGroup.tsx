@@ -68,7 +68,7 @@ const KeywordGroup: React.FC<KeywordGroupProps> = ({
             } ${
               active
                 ? "bg-primary-100 text-primary-700 border-primary-200"
-                : "bg-white text-gray-600 border-gray-200 hover:bg-primary-50 hover:text-primary-600 hover:border-primary-200"
+                : "bg-white text-gray-600 border-primary-border hover:bg-primary-50 hover:text-primary-600 hover:border-primary-200"
             }`}
           >
             {option.label}

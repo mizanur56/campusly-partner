@@ -1,13 +1,12 @@
-
 // Mock components for onboarding steps
-import { Form, Button as AntButton, theme, Avatar } from "antd";
+import { BellOutlined, UserOutlined } from "@ant-design/icons";
+import { Button as AntButton, Avatar, Form, theme } from "antd";
+import { Check, Download } from "lucide-react";
 import { useState } from "react";
-import { UserOutlined, BellOutlined } from "@ant-design/icons";
-import BaseFormInput from "../../components/common/Forms/FormInput";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { useNavigate } from "react-router-dom";
-import { Check, Download } from "lucide-react";
+import BaseFormInput from "../../components/common/Forms/FormInput";
 
 // Wrapper to make FormInput transparent
 const FormInput = (props: any) => (
@@ -204,7 +203,7 @@ const RegularCompliance = () => {
       {documents.map((doc, index) => (
         <div
           key={index}
-          className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-white hover:border-green-500 transition-all cursor-pointer group"
+          className="flex items-center justify-between p-4 border border-primary-border rounded-lg bg-white hover:border-green-500 transition-all cursor-pointer group"
         >
           <span className="text-gray-900 font-medium text-[15px]">
             {doc.label}
@@ -229,7 +228,9 @@ const StyledCheckbox = ({ checked, value, onChange, children }: any) => {
               ${isChecked ? "bg-green-600 border-green-600" : "bg-white border-gray-300 group-hover:border-green-500"}
             `}
       >
-        {isChecked && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
+        {isChecked && (
+          <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+        )}
       </div>
       <span className="text-gray-600 text-[14px] font-medium leading-relaxed select-none">
         {children}
@@ -264,14 +265,16 @@ const Declaration = () => {
           rules={[
             {
               validator: (_, value) =>
-                value ? Promise.resolve() : Promise.reject(new Error("Required")),
+                value
+                  ? Promise.resolve()
+                  : Promise.reject(new Error("Required")),
             },
           ]}
           className="!mb-0"
         >
           <StyledCheckbox>
-            I verify that all the information provided is accurate and legitimate.{" "}
-            <span className="text-red-500">*</span>
+            I verify that all the information provided is accurate and
+            legitimate. <span className="text-red-500">*</span>
           </StyledCheckbox>
         </Form.Item>
 
@@ -281,7 +284,9 @@ const Declaration = () => {
           rules={[
             {
               validator: (_, value) =>
-                value ? Promise.resolve() : Promise.reject(new Error("Required")),
+                value
+                  ? Promise.resolve()
+                  : Promise.reject(new Error("Required")),
             },
           ]}
           className="!mb-0"
@@ -299,7 +304,9 @@ const Declaration = () => {
           rules={[
             {
               validator: (_, value) =>
-                value ? Promise.resolve() : Promise.reject(new Error("Required")),
+                value
+                  ? Promise.resolve()
+                  : Promise.reject(new Error("Required")),
             },
           ]}
           className="mb-0"
@@ -399,7 +406,7 @@ const Onboarding = () => {
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex gap-8 border-b border-gray-200">
+        <div className="flex gap-8 border-b border-primary-border">
           {headerTabs.map((tab, index) => (
             <div
               key={index}
@@ -421,7 +428,7 @@ const Onboarding = () => {
       {activeTab === "Onboarding Form" ? (
         <div className="flex flex-col lg:flex-row gap-6 py-6">
           {/* Left Side: Steps (Custom Vertical Stepper Design matching image) */}
-          <div className="w-full lg:w-[300px] bg-white p-6 rounded-xl border border-gray-200 h-fit">
+          <div className="w-full lg:w-[300px] bg-white p-6 rounded-xl border border-primary-border h-fit">
             <h2 className="text-[19px] md:text-[20px] font-[600] text-neutral-900 mb-6">
               Onboarding Steps
             </h2>

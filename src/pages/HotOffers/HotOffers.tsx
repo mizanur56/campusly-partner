@@ -109,7 +109,7 @@ export default function HotOffers() {
                   <Link
                     key={inst.id}
                     to="/programs-schools"
-                    className="group flex flex-col rounded-[24px] border border-neutral-100 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)] overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
+                    className="group flex flex-col rounded-[24px] border border-primary-border bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)] overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
                   >
                     <div className="relative aspect-[3/2] w-full overflow-hidden bg-neutral-100 flex items-center justify-center">
                       {inst.logoUrl ? (
@@ -172,9 +172,9 @@ export default function HotOffers() {
                   <Link
                     key={u.id}
                     to="/programs-schools"
-                    className="group flex items-center gap-4 rounded-lg border border-neutral-100 bg-white p-4 md:p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
+                    className="group flex items-center gap-4 rounded-lg border border-primary-border bg-white p-4 md:p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
                   >
-                    <div className="relative flex h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-neutral-100 bg-neutral-50">
+                    <div className="relative flex h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-primary-border bg-neutral-50">
                       {u.logoUrl ? (
                         <img
                           src={getImageUrl(u.logoUrl)}
@@ -208,7 +208,7 @@ export default function HotOffers() {
               {programSpotlight.map((spot) => (
                 <div
                   key={spot.id}
-                  className="rounded-[24px] border border-neutral-100 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)] overflow-hidden mb-4 last:mb-0"
+                  className="rounded-[24px] border border-primary-border bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)] overflow-hidden mb-4 last:mb-0"
                 >
                   <div className="p-5 md:p-6">
                     <div className="flex items-start gap-3 mb-4">
@@ -427,7 +427,7 @@ export default function HotOffers() {
             !programSpotlight.length &&
             !servicesSection?.items?.length &&
             !banner && (
-              <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center text-gray-500">
+              <div className="rounded-lg border border-primary-border bg-gray-50 p-8 text-center text-gray-500">
                 No hot offers configured yet. Check back later.
               </div>
             )}

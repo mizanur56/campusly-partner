@@ -4,7 +4,7 @@ const SocialLoginButtons = () => {
       <div className="flex justify-center gap-3 sm:gap-4">
         <button
           type="button"
-          className="w-11 h-11 cursor-pointer rounded-full bg-white border border-neutral-100 shadow-[0_1px_2px_rgba(0,0,0,0.02)] flex items-center justify-center hover:bg-neutral-50 transition-colors"
+          className="w-11 h-11 cursor-pointer rounded-full bg-white border border-primary-border shadow-[0_1px_2px_rgba(0,0,0,0.02)] flex items-center justify-center hover:bg-neutral-50 transition-colors"
           aria-label="Login with Google"
         >
           <img
@@ -17,7 +17,7 @@ const SocialLoginButtons = () => {
         </button>
         <button
           type="button"
-          className="w-11 h-11 cursor-pointer rounded-full bg-white border border-neutral-100 shadow-[0_1px_2px_rgba(0,0,0,0.02)] flex items-center justify-center hover:bg-neutral-50 transition-colors"
+          className="w-11 h-11 cursor-pointer rounded-full bg-white border border-primary-border shadow-[0_1px_2px_rgba(0,0,0,0.02)] flex items-center justify-center hover:bg-neutral-50 transition-colors"
           aria-label="Login with Facebook"
         >
           <img

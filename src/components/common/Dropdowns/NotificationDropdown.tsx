@@ -234,7 +234,7 @@ const NotificationDropdown = () => {
           className="
             relative flex items-center justify-center
             w-10 h-10 rounded-xl
-            border border-gray-200
+            border border-primary-border
             bg-white
             text-gray-600
 

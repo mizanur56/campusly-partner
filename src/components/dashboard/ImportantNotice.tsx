@@ -19,7 +19,7 @@ const ImportantNotice: React.FC<ImportantNoticeProps> = ({ data = [] }) => {
       <List
         dataSource={data}
         renderItem={(item) => (
-          <List.Item className="px-0 py-3 border-b border-gray-100 last:border-0">
+          <List.Item className="px-0 py-3 border-b border-primary-border last:border-0">
             <span className="text-gray-700">{item}</span>
           </List.Item>
         )}

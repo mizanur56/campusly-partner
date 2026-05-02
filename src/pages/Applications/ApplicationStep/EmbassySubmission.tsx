@@ -180,7 +180,7 @@ export const EmbassySubmissionStep: React.FC<EmbassySubmissionStepProps> = ({
   const stageLockedVisual = embedded && !stageUnlocked;
 
   const stageCardClass = stageLockedVisual
-    ? "border border-[#D1D5DB] rounded-lg overflow-hidden bg-[#F4F6F5]"
+    ? "border border-primary-border rounded-lg overflow-hidden bg-[#F4F6F5]"
     : "border border-primary-border rounded-lg overflow-hidden";
   const stageHeaderClass = stageLockedVisual
     ? "bg-[#EEF2EF]"
@@ -295,7 +295,7 @@ export const EmbassySubmissionStep: React.FC<EmbassySubmissionStepProps> = ({
               return (
                 <div
                   key={section.id}
-                  className="bg-white border border-[#D1D5DB] rounded-xl p-6"
+                  className="bg-white border border-primary-border rounded-xl p-6"
                 >
                   {/* Header */}
                   <div className="flex items-center justify-between mb-4">

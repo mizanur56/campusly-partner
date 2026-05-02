@@ -165,7 +165,7 @@ export const EnrollStep: React.FC<EnrollStepProps> = ({
 
   const stageLockedVisual = embedded && !stageUnlocked;
   const stageCardClass = stageLockedVisual
-    ? "border border-[#D1D5DB] rounded-lg overflow-hidden bg-[#F4F6F5]"
+    ? "border border-primary-border rounded-lg overflow-hidden bg-[#F4F6F5]"
     : "border border-primary-border rounded-lg overflow-hidden";
   const stageHeaderClass = stageLockedVisual
     ? "bg-[#EEF2EF]"
@@ -316,7 +316,7 @@ export const EnrollStep: React.FC<EnrollStepProps> = ({
                       <p className="text-[16px] font-semibold text-[#111827] mb-3">
                         Attached Documents:
                       </p>
-                      <div className="flex items-center justify-between border border-[#D1D5DB] rounded-lg p-4 w-fit min-w-70">
+                      <div className="flex items-center justify-between border border-primary-border rounded-lg p-4 w-fit min-w-70">
                         <div className="flex items-center gap-3">
                           <BsFileEarmarkBarGraph className="text-[20px]" />
                           <div>
@@ -348,7 +348,7 @@ export const EnrollStep: React.FC<EnrollStepProps> = ({
         <div className="flex justify-end gap-3 pt-4">
           <button
             onClick={() => navigate(`/applications/${id}/visa`)}
-            className="px-6 py-2 border border-[#D1D5DB] rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50 transition"
+            className="px-6 py-2 border border-primary-border rounded-lg text-[#237D3B] font-semibold hover:bg-gray-50 transition"
           >
             Previous
           </button>

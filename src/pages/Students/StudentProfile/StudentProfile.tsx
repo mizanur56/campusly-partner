@@ -499,7 +499,7 @@
 //               </div>
 
 //               <Spin spinning={applicationsLoading}>
-//                 <div className="overflow-hidden rounded-[24px] border border-neutral-100 bg-white card-shadow dark:border-gray-800 dark:bg-gray-900">
+//                 <div className="overflow-hidden rounded-[24px] border border-primary-border bg-white card-shadow dark:border-gray-800 dark:bg-gray-900">
 //                   <Table<ApplicationRecord>
 //                     className="student-applications-table"
 //                     dataSource={applicationsTableData}
@@ -1149,7 +1149,7 @@ export default function StudentProfile() {
                 </div>
 
                 <Spin spinning={applicationsLoading}>
-                  <div className="overflow-hidden rounded-[24px] border border-neutral-100 bg-white card-shadow dark:border-gray-800 dark:bg-gray-900">
+                  <div className="overflow-hidden rounded-[24px] border border-primary-border bg-white card-shadow dark:border-gray-800 dark:bg-gray-900">
                     <DataTable
                       data={applicationsTableData}
                       columns={[

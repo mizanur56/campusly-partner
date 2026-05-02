@@ -24,9 +24,9 @@ const PurchaseOrdersChart: React.FC<PurchaseOrdersChartProps> = ({ data }) => {
         new Date(item.month).toLocaleDateString("en-US", {
           month: "short",
           year: "numeric",
-        })
+        }),
       ),
-    [data]
+    [data],
   );
 
   // Tooltip data reference (needed in custom tooltip)
@@ -103,8 +103,14 @@ const PurchaseOrdersChart: React.FC<PurchaseOrdersChartProps> = ({ data }) => {
           year: "numeric",
         });
 
-        const paidPercentage = ((item.totalPaid / item.totalAmount) * 100).toFixed(1);
-        const duePercentage = ((item.totalDue / item.totalAmount) * 100).toFixed(1);
+        const paidPercentage = (
+          (item.totalPaid / item.totalAmount) *
+          100
+        ).toFixed(1);
+        const duePercentage = (
+          (item.totalDue / item.totalAmount) *
+          100
+        ).toFixed(1);
 
         return `
   <div style="
@@ -191,7 +197,7 @@ const PurchaseOrdersChart: React.FC<PurchaseOrdersChartProps> = ({ data }) => {
       color: #6b7280;
     ">
       Average per order: <strong style="color: #111827;">${formatAmount(
-        item.totalAmount / item.totalPurchases
+        item.totalAmount / item.totalPurchases,
       )} ৳</strong>
     </div>
   </div>
@@ -208,7 +214,7 @@ const PurchaseOrdersChart: React.FC<PurchaseOrdersChartProps> = ({ data }) => {
   ];
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+    <div className="bg-white rounded-xl border border-primary-border p-6 shadow-sm">
       <div className="flex justify-between mb-6">
         <div>
           <h3 className="text-xl font-bold">Purchase Analytics</h3>
