@@ -156,6 +156,7 @@ layer(base);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-border: #c7cacf; /* Added primary border color */
   /* Primary color variants for text-primary-500, bg-primary-500, etc. */
   --color-primary-50: var(--primary-50);
   --color-primary-100: var(--primary-100);

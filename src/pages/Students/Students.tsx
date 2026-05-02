@@ -193,7 +193,7 @@
 //               />
 //             )}
 
-//    <div className="bg-[#FFFFFF] p-6 rounded-lg border border-[#C7CACF]">
+//    <div className="bg-[#FFFFFF] p-6 rounded-lg border border-primary-border">
 
 //    <div className="mb-6 max-w-sm">
 //         <Input
@@ -478,7 +478,7 @@ export default function Students() {
         />
       )}
 
-      <div className="bg-[#FFFFFF] p-6 rounded-lg border border-[#C7CACF]">
+      <div className="bg-[#FFFFFF] p-6 rounded-lg border border-primary-border">
         <div className="mb-6 max-w-sm">
           <Input
             placeholder="Search by name, email, status or phone"

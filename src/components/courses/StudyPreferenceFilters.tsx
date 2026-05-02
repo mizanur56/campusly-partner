@@ -339,7 +339,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Study Preference Card */}
-      <div className="bg-white border border-neutral-100 rounded-[24px] p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+      <div className="bg-white border border-primary-border rounded-2xl p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
         {/* Header with toggle */}
         <div
           className="flex items-center justify-between mb-4 sm:mb-5 cursor-pointer"

@@ -1,15 +1,15 @@
-import React from "react";
 import { DownloadOutlined, DownOutlined, UpOutlined } from "@ant-design/icons";
-import { IoCheckmarkCircleSharp } from "react-icons/io5";
-import { useNavigate, useOutletContext, useParams } from "react-router-dom";
-import PrimaryButton from "../../../components/common/Button/PrimaryButton";
-import { FaRegCircle } from "react-icons/fa";
+import React from "react";
 import { BiExport } from "react-icons/bi";
 import { BsFileEarmarkBarGraph } from "react-icons/bs";
+import { FaRegCircle } from "react-icons/fa";
+import { IoCheckmarkCircleSharp } from "react-icons/io5";
+import { useNavigate, useOutletContext, useParams } from "react-router-dom";
+import { toast } from "react-toastify";
+import PrimaryButton from "../../../components/common/Button/PrimaryButton";
+import { config } from "../../../config";
 import { useApplicationDocumentUploadMutation } from "../../../redux/features/application/applicationApi";
 import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
-import { config } from "../../../config";
-import { toast } from "react-toastify";
 
 export type EnrollStepProps = {
   applicationApiData: any;
@@ -28,8 +28,6 @@ export const EnrollStep: React.FC<EnrollStepProps> = ({
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = React.useState(true);
   const [uploadingId, setUploadingId] = React.useState<string | null>(null);
-
-
 
   // Get Tuition Fee Invoice
   const tuitionFeeInvoice = applicationApiData?.invoices?.find(
@@ -122,7 +120,9 @@ export const EnrollStep: React.FC<EnrollStepProps> = ({
         hasUploaded: true,
         description:
           "Sponsor's bank statement for the last 3 months, along with a recent bank certificate, is attached. The ending balance should be converted into Euros.",
-        url: applicationApiData?.airticket && `${config.image_access_url}${applicationApiData?.airticket}`,
+        url:
+          applicationApiData?.airticket &&
+          `${config.image_access_url}${applicationApiData?.airticket}`,
         isCompleted: !!applicationApiData?.airticket,
       },
       {
@@ -132,7 +132,9 @@ export const EnrollStep: React.FC<EnrollStepProps> = ({
         hasUploaded: false,
         description:
           "Sponsor's bank statement for the last 3 months, along with a recent bank certificate, is attached. The ending balance should be converted into Euros.",
-        url: applicationApiData?.travelLetter && `${config.image_access_url}${applicationApiData?.travelLetter}`,
+        url:
+          applicationApiData?.travelLetter &&
+          `${config.image_access_url}${applicationApiData?.travelLetter}`,
         isCompleted: !!applicationApiData?.travelLetter,
       },
     ],
@@ -164,7 +166,7 @@ export const EnrollStep: React.FC<EnrollStepProps> = ({
   const stageLockedVisual = embedded && !stageUnlocked;
   const stageCardClass = stageLockedVisual
     ? "border border-[#D1D5DB] rounded-lg overflow-hidden bg-[#F4F6F5]"
-    : "border border-[#C7CACF] rounded-lg overflow-hidden";
+    : "border border-primary-border rounded-lg overflow-hidden";
   const stageHeaderClass = stageLockedVisual
     ? "bg-[#EEF2EF]"
     : "bg-[#DFF2E6] border-[#237D3B] border rounded-lg";
@@ -227,8 +229,9 @@ export const EnrollStep: React.FC<EnrollStepProps> = ({
                 isAllRequiredCompleted ? "text-primary" : "text-[#4B5563]"
               }`}
             >
-              Upload final enrollment documents (tuition receipt, air ticket, etc.).
-              </p>
+              Upload final enrollment documents (tuition receipt, air ticket,
+              etc.).
+            </p>
           </div>
           <div
             title={
@@ -258,7 +261,7 @@ export const EnrollStep: React.FC<EnrollStepProps> = ({
               return (
                 <div
                   key={section.id}
-                  className="bg-white border border-[#C7CACF] rounded-xl p-6"
+                  className="bg-white border border-primary-border rounded-xl p-6"
                 >
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
@@ -373,7 +376,9 @@ export const EnrollStep: React.FC<EnrollStepProps> = ({
 };
 
 const Enroll: React.FC = () => {
-  const { applicationApiData } = useOutletContext<{ applicationApiData: any }>();
+  const { applicationApiData } = useOutletContext<{
+    applicationApiData: any;
+  }>();
   return <EnrollStep applicationApiData={applicationApiData} />;
 };
 

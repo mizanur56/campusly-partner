@@ -1,6 +1,5 @@
-import React from "react";
-import Chart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
+import Chart from "react-apexcharts";
 
 const TaskByStatus = () => {
   const series = [45, 20, 65]; // Completed (bigger), Incomplete (smaller), Pending (a bit bigger)
@@ -35,7 +34,7 @@ const TaskByStatus = () => {
   };
 
   return (
-    <div className="bg-[#FFFFFF] rounded-lg border border-[#C7CACF] p-6">
+    <div className="bg-[#FFFFFF] rounded-lg border border-primary-border p-6">
       <h2 className="text-xl font-semibold text-gray-900 mb-4">
         Task By Status
       </h2>

@@ -1,17 +1,17 @@
-import React from "react";
 import { DownOutlined, DownloadOutlined, UpOutlined } from "@ant-design/icons";
+import { DatePicker } from "antd";
+import dayjs from "dayjs";
+import React from "react";
+import { BiExport } from "react-icons/bi";
+import { BsFileEarmarkBarGraph } from "react-icons/bs";
+import { FaRegCircle } from "react-icons/fa";
 import { IoCheckmarkCircleSharp } from "react-icons/io5";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
-import PrimaryButton from "../../../components/common/Button/PrimaryButton";
-import { BsFileEarmarkBarGraph } from "react-icons/bs";
-import { BiExport } from "react-icons/bi";
-import { FaRegCircle } from "react-icons/fa";
-import { DatePicker } from "antd";
-import { config } from "../../../config";
 import { toast } from "react-toastify";
-import dayjs from "dayjs";
-import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
+import PrimaryButton from "../../../components/common/Button/PrimaryButton";
+import { config } from "../../../config";
 import { useApplicationDocumentUploadMutation } from "../../../redux/features/application/applicationApi";
+import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
 
 export type EmbassySubmissionStepProps = {
   applicationApiData: any;
@@ -181,7 +181,7 @@ export const EmbassySubmissionStep: React.FC<EmbassySubmissionStepProps> = ({
 
   const stageCardClass = stageLockedVisual
     ? "border border-[#D1D5DB] rounded-lg overflow-hidden bg-[#F4F6F5]"
-    : "border border-[#C7CACF] rounded-lg overflow-hidden";
+    : "border border-primary-border rounded-lg overflow-hidden";
   const stageHeaderClass = stageLockedVisual
     ? "bg-[#EEF2EF]"
     : "bg-[#DFF2E6] border-[#237D3B] border rounded-lg";

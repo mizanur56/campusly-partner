@@ -152,8 +152,8 @@ const Header: React.FC = () => {
           : "lg:left-[80px] lg:w-[calc(100vw-80px)]"
       } ${
         hasScrolled
-          ? "border-[#C7CACF] bg-[#FFFFFF]/95 backdrop-blur-md dark:border-[#353646] dark:bg-[#20242A]/95"
-          : "border-[#C7CACF] bg-[#FFFFFF] dark:border-[#353646] dark:bg-[#20242A]"
+          ? "border-primary-border bg-[#FFFFFF]/95 backdrop-blur-md dark:border-[#353646] dark:bg-[#20242A]/95"
+          : "border-primary-border bg-[#FFFFFF] dark:border-[#353646] dark:bg-[#20242A]"
       }`}
     >
       <div className="flex w-full min-w-0 max-w-full items-center justify-between gap-2 px-4 sm:px-6 lg:px-8 py-4 sm:py-5">

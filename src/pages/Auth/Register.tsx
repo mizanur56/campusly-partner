@@ -1,20 +1,20 @@
 import { MailOutlined, UserOutlined } from "@ant-design/icons";
 import { Button, Checkbox, Form, Input, Select, Typography } from "antd";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import React, { useState, useEffect } from "react";
-import PageMeta from "../../components/common/Meta/PageMeta";
 import AuthIllustration from "../../components/auth/AuthIllustration";
+import PageMeta from "../../components/common/Meta/PageMeta";
 import { persistAuthLocalStorage } from "../../lib/authLocalStorage";
-import { useRegisterMutation } from "../../redux/features/auth/authApi";
-import { setUser } from "../../redux/features/auth/authSlice";
-import { useAppDispatch } from "../../redux/features/hooks";
 import {
   getPortalRoleMismatchMessage,
   isPartnerPortalSession,
 } from "../../lib/portalRouting";
 import { setPostRegistrationWelcomeSession } from "../../lib/registrationWelcomeSession";
+import { useRegisterMutation } from "../../redux/features/auth/authApi";
+import { setUser } from "../../redux/features/auth/authSlice";
 import { useGetCountriesQuery } from "../../redux/features/countries/countriesApi";
+import { useAppDispatch } from "../../redux/features/hooks";
 
 const { Link: AntLink } = Typography;
 
@@ -74,7 +74,10 @@ const howDidYouHearOptions = [
 ];
 
 const Register = () => {
-  const { data: countriesData } = useGetCountriesQuery({ page: 1, limit: 1000 });
+  const { data: countriesData } = useGetCountriesQuery({
+    page: 1,
+    limit: 1000,
+  });
   const [form] = Form.useForm<Step1Values & Step2Values>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -99,7 +102,6 @@ const Register = () => {
 
   const onStep2Finish = async (values: Step2Values) => {
     const step1 = step1Values!;
-
 
     try {
       const res = await registerPartner({
@@ -138,7 +140,7 @@ const Register = () => {
       toast.error(
         err?.data?.errors ||
           err?.data?.message ||
-          "Registration failed. Please try again."
+          "Registration failed. Please try again.",
       );
     }
   };
@@ -192,7 +194,9 @@ const Register = () => {
           >
             <div
               className={`flex flex-col p-6 ${
-                step === 1 ? "rounded-3xl bg-[#FFFFFF] border border-[#C7CACF]" : ""
+                step === 1
+                  ? "rounded-3xl bg-[#FFFFFF] border border-primary-border"
+                  : ""
               }`}
             >
               {step === 1 ? (
@@ -207,12 +211,12 @@ const Register = () => {
               ) : (
                 <div className="mb-6 text-left">
                   <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-[26px]">
-                    Hi {step1Values?.contactPersonName?.trim() || "there"}, please
-                    set your password
+                    Hi {step1Values?.contactPersonName?.trim() || "there"},
+                    please set your password
                   </h1>
                   <p className="mt-4 text-sm leading-relaxed text-neutral-600">
-                    Create a secure password for your Campus Transfer account. Your
-                    secure password should meet the following criteria:
+                    Create a secure password for your Campus Transfer account.
+                    Your secure password should meet the following criteria:
                   </p>
                   <ul className="mt-4 list-disc space-y-1.5 pl-5 text-[14px] font-medium leading-normal text-[#20242A]">
                     <li>Minimum of 8 characters</li>
@@ -251,7 +255,10 @@ const Register = () => {
                     }
                     name="businessName"
                     rules={[
-                      { required: true, message: "Please enter your business name!" },
+                      {
+                        required: true,
+                        message: "Please enter your business name!",
+                      },
                     ]}
                   >
                     <Input
@@ -290,7 +297,10 @@ const Register = () => {
                     }
                     name="businessEmail"
                     rules={[
-                      { required: true, message: "Please enter business email!" },
+                      {
+                        required: true,
+                        message: "Please enter business email!",
+                      },
                       { type: "email", message: "Please enter a valid email!" },
                     ]}
                   >
@@ -323,7 +333,10 @@ const Register = () => {
                     }
                     name="country"
                     rules={[
-                      { required: true, message: "Please select your country!" },
+                      {
+                        required: true,
+                        message: "Please select your country!",
+                      },
                     ]}
                   >
                     <Select
@@ -444,13 +457,18 @@ const Register = () => {
                     name="confirmPassword"
                     dependencies={["password"]}
                     rules={[
-                      { required: true, message: "Please confirm your password!" },
+                      {
+                        required: true,
+                        message: "Please confirm your password!",
+                      },
                       ({ getFieldValue }) => ({
                         validator(_, value) {
                           if (!value || getFieldValue("password") === value) {
                             return Promise.resolve();
                           }
-                          return Promise.reject(new Error("Passwords do not match!"));
+                          return Promise.reject(
+                            new Error("Passwords do not match!"),
+                          );
                         },
                       }),
                     ]}

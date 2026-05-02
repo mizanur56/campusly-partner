@@ -1,19 +1,16 @@
-
 import React, { useEffect, useState } from "react";
-import {
-  FaRegEdit,
-  FaFileAlt,
-  FaPlusSquare,
-  FaRegTrashAlt,
-} from "react-icons/fa"; // FaRegTrashAlt add kora hoyeche
+import { FaFileAlt, FaPlusSquare, FaRegTrashAlt } from "react-icons/fa"; // FaRegTrashAlt add kora hoyeche
 import { FiEye } from "react-icons/fi"; // View icon er jonno
-import { config } from "../../../config";
 import { toast } from "react-toastify";
+import { config } from "../../../config";
 
-import { Modal, Spin, Tooltip } from "antd";
 import { ExclamationCircleFilled } from "@ant-design/icons";
-import { useGetStudentProfileQuery, useUpdateStudentProfileMutation } from "../../../redux/features/profile/studentProfileApi";
+import { Modal, Spin, Tooltip } from "antd";
 import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
+import {
+  useGetStudentProfileQuery,
+  useUpdateStudentProfileMutation,
+} from "../../../redux/features/profile/studentProfileApi";
 
 interface PartnerStudentProfileMedium {
   mediumOfInstruction?: string | null;
@@ -24,7 +21,10 @@ const MediumOfInstruction = ({ studentId }: { studentId: string }) => {
     studentId,
     { skip: !studentId },
   );
-  const profileData = profileDataRaw as PartnerStudentProfileMedium | null | undefined;
+  const profileData = profileDataRaw as
+    | PartnerStudentProfileMedium
+    | null
+    | undefined;
 
   const mediumOfInstruction = profileData?.mediumOfInstruction ?? null;
 
@@ -51,7 +51,10 @@ const MediumOfInstruction = ({ studentId }: { studentId: string }) => {
 
       if (response?.success && response?.data) {
         const imagePath = response.data.url;
-        await updateProfile({ studentId, body: { mediumOfInstruction: imagePath } }).unwrap();
+        await updateProfile({
+          studentId,
+          body: { mediumOfInstruction: imagePath },
+        }).unwrap();
         setMediumOfInstructionFile(imagePath);
         toast.success(
           "Medium of instruction certificate uploaded successfully!",
@@ -85,7 +88,10 @@ const MediumOfInstruction = ({ studentId }: { studentId: string }) => {
       onOk: async () => {
         try {
           // Backend jodi null reject kore, tobe "" (empty string) pathaben
-          await updateProfile({ studentId, body: { mediumOfInstruction: "" } }).unwrap();
+          await updateProfile({
+            studentId,
+            body: { mediumOfInstruction: "" },
+          }).unwrap();
           setMediumOfInstructionFile(null);
           toast.success("File removed successfully!");
           refetch();
@@ -105,7 +111,7 @@ const MediumOfInstruction = ({ studentId }: { studentId: string }) => {
   };
 
   return (
-    <div className="bg-[#FFFFFF] border border-[#C7CACF] rounded-lg p-6 overflow-hidden">
+    <div className="bg-[#FFFFFF] border border-primary-border rounded-lg p-6 overflow-hidden">
       <div className="flex items-center justify-between">
         <h1 className="text-[18px] font-semibold text-[#20242A]">
           Medium of instruction

@@ -1,17 +1,16 @@
+import type { MenuProps } from "antd";
+import { Dropdown, Empty, Input, Spin } from "antd";
+import { Calendar, Filter, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Calendar, Filter, Search } from "lucide-react";
-import { Dropdown, Empty, Input, Spin } from "antd";
-import type { MenuProps } from "antd";
 import { toast } from "react-toastify";
 import PageMeta from "../../components/common/Meta/PageMeta";
-import PageHeader from "../../components/common/Navigation/PageHeader";
-import { useGetAnnouncementsQuery } from "../../redux/features/announcements/announcementsApi";
-import { getApiImageUrl } from "../../utils/getApiImageUrl";
 import {
   getStoredAnnouncementReadIds,
   persistAnnouncementReadIds,
 } from "../../lib/partnerAnnouncementReadIds";
+import { useGetAnnouncementsQuery } from "../../redux/features/announcements/announcementsApi";
+import { getApiImageUrl } from "../../utils/getApiImageUrl";
 
 type PartnerAnnouncement = {
   id: string;
@@ -157,8 +156,7 @@ export default function AnnouncementsDetailsPage() {
   useEffect(() => {
     if (!list.length) return;
     const inFull =
-      Boolean(selectedFromUrl) &&
-      list.some((a) => a.id === selectedFromUrl);
+      Boolean(selectedFromUrl) && list.some((a) => a.id === selectedFromUrl);
     if (!selectedFromUrl || !inFull) {
       setSearchParams({ id: list[0].id }, { replace: true });
       return;
@@ -211,11 +209,10 @@ export default function AnnouncementsDetailsPage() {
         title="Announcements - Campus Transfer Partner"
         description="Read partner announcements and institution updates."
       />
-    
 
       <div className="flex min-h-[calc(100vh-12rem)] flex-col overflow-hidden  lg:flex-row">
         {/* Left — list */}
-        <aside className="flex w-full shrink-0 flex-col border-b border-[#C7CACF] dark:border-gray-700 lg:w-[min(100%,380px)] lg:border-b-0 lg:border-r px-2">
+        <aside className="flex w-full shrink-0 flex-col border-b border-primary-border dark:border-gray-700 lg:w-[min(100%,380px)] lg:border-b-0 lg:border-r px-2">
           <div className="flex gap-2 pb-4">
             <Input
               size="large"
@@ -233,7 +230,7 @@ export default function AnnouncementsDetailsPage() {
             >
               <button
                 type="button"
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#C7CACF] bg-white text-gray-600 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-[#252830] dark:text-gray-300 dark:hover:bg-gray-800 ${
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary-border bg-white text-gray-600 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-[#252830] dark:text-gray-300 dark:hover:bg-gray-800 ${
                   categoryFilter ? "border-[#237D3B] text-[#237D3B]" : ""
                 }`}
                 aria-label="Filter by category"
@@ -322,7 +319,9 @@ export default function AnnouncementsDetailsPage() {
             <>
               <div className="flex-1 space-y-6 overflow-y-auto px-2">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                  {getApiImageUrl(selected.university?.UniversityLogo ?? null) ? (
+                  {getApiImageUrl(
+                    selected.university?.UniversityLogo ?? null,
+                  ) ? (
                     <img
                       src={getApiImageUrl(
                         selected.university?.UniversityLogo ?? null,
@@ -353,8 +352,8 @@ export default function AnnouncementsDetailsPage() {
                   </div>
                 </div>
 
-                {(hasIntakeYearValue(selected) || hasCategoryOrType(selected)) ? (
-                  <div className="grid grid-cols-1 gap-4 rounded-xl border border-[#C7CACF] bg-white p-5 dark:border-gray-700 dark:bg-[#1f232b] sm:grid-cols-2">
+                {hasIntakeYearValue(selected) || hasCategoryOrType(selected) ? (
+                  <div className="grid grid-cols-1 gap-4 rounded-xl border border-primary-border bg-white p-5 dark:border-gray-700 dark:bg-[#1f232b] sm:grid-cols-2">
                     {hasIntakeYearValue(selected) ? (
                       <div>
                         <p className="text-sm text-gray-500 dark:text-gray-400">

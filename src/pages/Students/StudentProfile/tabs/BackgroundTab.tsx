@@ -1,23 +1,22 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Button, Form, Modal, Switch, Tooltip } from "antd";
+import { Form, Switch, Tooltip } from "antd";
 import dayjs from "dayjs";
-import { RiDeleteBin6Line } from "react-icons/ri";
+import { useEffect, useMemo, useState } from "react";
 import { FaRegEdit } from "react-icons/fa";
-import { toast } from "react-toastify";
+import { RiDeleteBin6Line } from "react-icons/ri";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import { toast } from "react-toastify";
 
+import PrimaryButton from "../../../../components/common/Button/PrimaryButton";
+import { FormDatePicker, FormInput } from "../../../../components/common/Forms";
+import WorkExperienceForm from "../../../../components/ProfileTab/WorkExperienceForm";
+import DeleteModal from "../../../../components/shared/DeleteModal";
 import {
   useCreateVisaRejectionMutation,
-  useUpdateVisaRejectionMutation,
   useDeleteVisaRejectionMutation,
-  useUpdateStudentProfileMutation,
   useGetDocumentsByCategoryQuery,
+  useUpdateVisaRejectionMutation,
 } from "../../../../redux/features/profile/studentProfileApi";
-import { FormDatePicker, FormInput } from "../../../../components/common/Forms";
-import PrimaryButton from "../../../../components/common/Button/PrimaryButton";
-import DeleteModal from "../../../../components/shared/DeleteModal";
-import WorkExperienceForm from "../../../../components/ProfileTab/WorkExperienceForm";
 
 type VisaRejectionItem = {
   id: string;
@@ -46,24 +45,39 @@ export default function BackgroundTab({
   );
   const [visaForm] = Form.useForm();
   const [isEditingVisa, setIsEditingVisa] = useState(false);
-  const [rejections, setRejections] = useState<{ id: string; isNew: boolean }[]>([]);
+  const [rejections, setRejections] = useState<
+    { id: string; isNew: boolean }[]
+  >([]);
   const [deleteVisaId, setDeleteVisaId] = useState<string | null>(null);
   const [visaSectionEnabled, setVisaSectionEnabled] = useState(false);
 
-  const { data: backgroundData, isLoading: isLoadingBackground } = useGetDocumentsByCategoryQuery(
-    { studentId, slug: "background-information" },
-    { skip: !studentId }
-  );
+  const { data: backgroundData, isLoading: isLoadingBackground } =
+    useGetDocumentsByCategoryQuery(
+      { studentId, slug: "background-information" },
+      { skip: !studentId },
+    );
 
   const workExperienceDoc = useMemo(() => {
-    const raw = Array.isArray(backgroundData) ? backgroundData : (backgroundData as { data?: unknown[] })?.data ?? [];
-    const list = raw as { id: string; name?: string; fields?: { id: string; name: string; type?: string }[] }[];
-    return list.find((d) => d.name?.toLowerCase().includes("work experience")) ?? null;
+    const raw = Array.isArray(backgroundData)
+      ? backgroundData
+      : ((backgroundData as { data?: unknown[] })?.data ?? []);
+    const list = raw as {
+      id: string;
+      name?: string;
+      fields?: { id: string; name: string; type?: string }[];
+    }[];
+    return (
+      list.find((d) => d.name?.toLowerCase().includes("work experience")) ??
+      null
+    );
   }, [backgroundData]);
 
-  const [createVisa, { isLoading: isCreatingVisa }] = useCreateVisaRejectionMutation();
-  const [updateVisa, { isLoading: isUpdatingVisa }] = useUpdateVisaRejectionMutation();
-  const [deleteVisa, { isLoading: isDeletingVisa }] = useDeleteVisaRejectionMutation();
+  const [createVisa, { isLoading: isCreatingVisa }] =
+    useCreateVisaRejectionMutation();
+  const [updateVisa, { isLoading: isUpdatingVisa }] =
+    useUpdateVisaRejectionMutation();
+  const [deleteVisa, { isLoading: isDeletingVisa }] =
+    useDeleteVisaRejectionMutation();
 
   // Persistent toggle (default OFF). Per-student; reload preserves last choice.
   useEffect(() => {
@@ -98,7 +112,9 @@ export default function BackgroundTab({
       const values: Record<string, unknown> = {};
       existingData.forEach((r) => {
         values[`country_${r.id}`] = r.country;
-        values[`date_${r.id}`] = r.rejectionDate ? dayjs(r.rejectionDate) : null;
+        values[`date_${r.id}`] = r.rejectionDate
+          ? dayjs(r.rejectionDate)
+          : null;
       });
       visaForm.setFieldsValue(values);
     } else {
@@ -115,12 +131,18 @@ export default function BackgroundTab({
         rejections.map((r) => {
           const payload = {
             country: values[`country_${r.id}`],
-            rejectionDate: values[`date_${r.id}`] ? dayjs(values[`date_${r.id}`]).toISOString() : null,
+            rejectionDate: values[`date_${r.id}`]
+              ? dayjs(values[`date_${r.id}`]).toISOString()
+              : null,
           };
           return r.isNew
             ? createVisa({ studentId, body: payload }).unwrap()
-            : updateVisa({ studentId, visaRejectionId: r.id, body: payload }).unwrap();
-        })
+            : updateVisa({
+                studentId,
+                visaRejectionId: r.id,
+                body: payload,
+              }).unwrap();
+        }),
       );
       toast.success("Records saved successfully");
       setIsEditingVisa(false);
@@ -132,7 +154,10 @@ export default function BackgroundTab({
   };
 
   const addAnotherRejection = () => {
-    setRejections((prev) => [...prev, { id: `new_${Date.now()}`, isNew: true }]);
+    setRejections((prev) => [
+      ...prev,
+      { id: `new_${Date.now()}`, isNew: true },
+    ]);
   };
 
   const removeRejection = (r: { id: string; isNew: boolean }) => {
@@ -159,7 +184,7 @@ export default function BackgroundTab({
   if (isLoadingBackground) {
     return (
       <div className="space-y-4">
-        <div className="bg-white border border-[#C7CACF] rounded-lg p-4 relative">
+        <div className="bg-white border border-primary-border rounded-lg p-4 relative">
           <div className="absolute top-4 right-4">
             <Skeleton height={24} width={24} circle />
           </div>
@@ -172,7 +197,7 @@ export default function BackgroundTab({
             <Skeleton height={40} />
           </div>
         </div>
-        <div className="bg-white border border-[#C7CACF] rounded-lg p-4 relative">
+        <div className="bg-white border border-primary-border rounded-lg p-4 relative">
           <div className="absolute top-4 right-4">
             <Skeleton height={24} width={24} circle />
           </div>
@@ -208,10 +233,9 @@ export default function BackgroundTab({
       )}
 
       {/* Visa Rejections - same card and form as student VisaRejectionForm */}
-      <div className="bg-[#FFFFFF] border border-[#C7CACF] rounded-lg p-4 relative">
+      <div className="bg-[#FFFFFF] border border-primary-border rounded-lg p-4 relative">
         <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
           <div className="flex items-center gap-2">
-           
             <Switch
               checked={visaSectionEnabled}
               onChange={handleVisaSectionToggle}
@@ -224,79 +248,94 @@ export default function BackgroundTab({
                 onClick={() => setIsEditingVisa(!isEditingVisa)}
                 className={`p-2 cursor-pointer rounded-full transition-all ${isEditingVisa ? "text-red-500 hover:text-white" : "text-[#237D3B]"}`}
               >
-                <FaRegEdit style={{ fontSize: "20px", color: "#237D3B", cursor: "pointer" }} />
+                <FaRegEdit
+                  style={{
+                    fontSize: "20px",
+                    color: "#237D3B",
+                    cursor: "pointer",
+                  }}
+                />
               </button>
             </Tooltip>
           )}
         </div>
 
         <div className="mb-6">
-          <h3 className="text-lg font-semibold text-[#20242A]">Visa Rejections</h3>
-          <p className="text-sm text-gray-500">Mention details if your visa was ever rejected</p>
+          <h3 className="text-lg font-semibold text-[#20242A]">
+            Visa Rejections
+          </h3>
+          <p className="text-sm text-gray-500">
+            Mention details if your visa was ever rejected
+          </p>
         </div>
 
         {visaSectionEnabled && (
-        <Form form={visaForm} layout="vertical" disabled={!isEditingVisa}>
-          <div className="space-y-4">
-            {rejections.map((r) => (
-              <div key={r.id} className="border p-4 rounded-xl relative bg-gray-50/30">
-                {canEdit && isEditingVisa && (
-                  <div className="flex items-center justify-end">
+          <Form form={visaForm} layout="vertical" disabled={!isEditingVisa}>
+            <div className="space-y-4">
+              {rejections.map((r) => (
+                <div
+                  key={r.id}
+                  className="border p-4 rounded-xl relative bg-gray-50/30"
+                >
+                  {canEdit && isEditingVisa && (
+                    <div className="flex items-center justify-end">
+                      <button
+                        type="button"
+                        onClick={() => removeRejection(r)}
+                        className="text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg p-2 transition-all duration-200 flex items-center justify-center"
+                      >
+                        <RiDeleteBin6Line
+                          style={{ fontSize: "20px", cursor: "pointer" }}
+                        />
+                      </button>
+                    </div>
+                  )}
+                  <div className="grid md:grid-cols-2 gap-x-4">
+                    <FormInput
+                      name={`country_${r.id}`}
+                      label="Country"
+                      placeholder="Enter country"
+                      rules={[{ required: true, message: "Missing country" }]}
+                    />
+                    <FormDatePicker
+                      name={`date_${r.id}`}
+                      label="Date of Rejection"
+                      format="DD/MM/YYYY"
+                      rules={[{ required: true, message: "Missing date" }]}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {canEdit && isEditingVisa && (
+              <div className="flex justify-between items-center mt-6">
+                <button
+                  type="button"
+                  onClick={addAnotherRejection}
+                  className="text-[#237D3B] font-semibold hover:underline cursor-pointer"
+                >
+                  + Add another rejection
+                </button>
+                <div className="flex gap-3">
+                  {existingData.length > 0 && (
                     <button
                       type="button"
-                      onClick={() => removeRejection(r)}
-                      className="text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg p-2 transition-all duration-200 flex items-center justify-center"
+                      onClick={() => setIsEditingVisa(false)}
+                      className="px-6 py-2 border rounded-md cursor-pointer hover:bg-gray-100"
                     >
-                      <RiDeleteBin6Line style={{ fontSize: "20px", cursor: "pointer" }} />
+                      Discard
                     </button>
-                  </div>
-                )}
-                <div className="grid md:grid-cols-2 gap-x-4">
-                  <FormInput
-                    name={`country_${r.id}`}
-                    label="Country"
-                    placeholder="Enter country"
-                    rules={[{ required: true, message: "Missing country" }]}
-                  />
-                  <FormDatePicker
-                    name={`date_${r.id}`}
-                    label="Date of Rejection"
-                    format="DD/MM/YYYY"
-                    rules={[{ required: true, message: "Missing date" }]}
+                  )}
+                  <PrimaryButton
+                    text="Save"
+                    onClick={handleVisaSave}
+                    loading={isCreatingVisa || isUpdatingVisa}
                   />
                 </div>
               </div>
-            ))}
-          </div>
-
-          {canEdit && isEditingVisa && (
-            <div className="flex justify-between items-center mt-6">
-              <button
-                type="button"
-                onClick={addAnotherRejection}
-                className="text-[#237D3B] font-semibold hover:underline cursor-pointer"
-              >
-                + Add another rejection
-              </button>
-              <div className="flex gap-3">
-                {existingData.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setIsEditingVisa(false)}
-                    className="px-6 py-2 border rounded-md cursor-pointer hover:bg-gray-100"
-                  >
-                    Discard
-                  </button>
-                )}
-                <PrimaryButton
-                  text="Save"
-                  onClick={handleVisaSave}
-                  loading={isCreatingVisa || isUpdatingVisa}
-                />
-              </div>
-            </div>
-          )}
-        </Form>
+            )}
+          </Form>
         )}
       </div>
 

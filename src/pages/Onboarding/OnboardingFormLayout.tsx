@@ -32,7 +32,7 @@ export default function OnboardingFormLayout({
           <main className="min-w-0 flex-1">
             <div className="overflow-hidden">
               {(title.trim() || subtitle?.trim()) && (
-                <header className="border-b border-[#C7CACF] pb-4 dark:border-gray-800 dark:bg-gray-900 ">
+                <header className="border-b border-primary-border pb-4 dark:border-gray-800 dark:bg-gray-900 ">
                   {title.trim() ? (
                     <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white sm:text-2xl">
                       {title}

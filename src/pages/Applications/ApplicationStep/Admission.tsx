@@ -301,7 +301,7 @@
 
 //   return (
 //     <>
-//       <div className="border border-[#C7CACF] rounded-lg overflow-hidden">
+//       <div className="border border-primary-border rounded-lg overflow-hidden">
 //         <div className="bg-[#E9F2EB] p-6 flex items-center justify-between">
 //           <div>
 //             <h3 className="text-[20px] font-semibold text-[#20242A]">Admission</h3>
@@ -460,31 +460,31 @@
 // export default Admission;
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { DownloadOutlined, DownOutlined, UpOutlined } from "@ant-design/icons";
 import React from "react";
-import { DownOutlined, UpOutlined, DownloadOutlined } from "@ant-design/icons";
-import { IoCheckmarkCircleSharp } from "react-icons/io5";
 import { BiExport } from "react-icons/bi";
-import { useNavigate, useOutletContext, useParams } from "react-router-dom";
-import PrimaryButton from "../../../components/common/Button/PrimaryButton";
 import { BsFileEarmarkBarGraph } from "react-icons/bs";
 import { FaRegCircle } from "react-icons/fa";
+import { IoCheckmarkCircleSharp } from "react-icons/io5";
+import { useNavigate, useOutletContext, useParams } from "react-router-dom";
+import PrimaryButton from "../../../components/common/Button/PrimaryButton";
 
+import { CloseOutlined } from "@ant-design/icons";
+import { Modal, Select } from "antd";
 import { config } from "../../../config";
 import { useApplicationDocumentUploadMutation } from "../../../redux/features/application/applicationApi";
-import { Modal, Select } from "antd";
-import { CloseOutlined } from "@ant-design/icons";
 
 import { FaPlusSquare } from "react-icons/fa";
 import { FaCircleCheck } from "react-icons/fa6";
 import { FiEdit } from "react-icons/fi";
 import ModalContent from "../../../components/applicationStep/ModalContent";
+import { useGetCountriesQuery } from "../../../redux/features/countries/countriesApi";
+import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
 import {
   useGetEligibleStudyLevelsByCountryQuery,
   useGetStudentProfileQuery,
   useUpdateEducationMutation,
 } from "../../../redux/features/profile/studentProfileApi";
-import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
-import { useGetCountriesQuery } from "../../../redux/features/countries/countriesApi";
 
 /* ================= Types ================= */
 interface Document {
@@ -544,7 +544,9 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
   const studentProfile = profileApiData as any;
   const educationData = studentProfile?.educations;
   const hasQualificationDocs = Array.isArray(educationData)
-    ? educationData.some((edu: any) => Boolean(edu?.marksheet || edu?.certificate))
+    ? educationData.some((edu: any) =>
+        Boolean(edu?.marksheet || edu?.certificate),
+      )
     : false;
 
   const { data: countries } = useGetCountriesQuery({ page: 1, limit: 1000 });
@@ -591,30 +593,33 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
     React.useState<"marksheet" | "certificate" | null>(null);
   const [fileSizes, setFileSizes] = React.useState<Record<string, string>>({});
 
-  const downloadDocument = React.useCallback(async (url: string, name?: string) => {
-    try {
-      const res = await fetch(url, { credentials: "include" });
-      if (!res.ok) throw new Error(`Download failed (${res.status})`);
-      const blob = await res.blob();
-
-      const objectUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = objectUrl;
-      a.download = name?.trim() ? name.trim() : "download";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(objectUrl);
-    } catch (err) {
-      console.error("Download failed:", err);
-      // Fallback: open in a new tab if browser blocks download
+  const downloadDocument = React.useCallback(
+    async (url: string, name?: string) => {
       try {
-        window.open(url, "_blank");
-      } catch {
-        // ignore
+        const res = await fetch(url, { credentials: "include" });
+        if (!res.ok) throw new Error(`Download failed (${res.status})`);
+        const blob = await res.blob();
+
+        const objectUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = objectUrl;
+        a.download = name?.trim() ? name.trim() : "download";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(objectUrl);
+      } catch (err) {
+        console.error("Download failed:", err);
+        // Fallback: open in a new tab if browser blocks download
+        try {
+          window.open(url, "_blank");
+        } catch {
+          // ignore
+        }
       }
-    }
-  }, []);
+    },
+    [],
+  );
 
   const getFileSize = React.useCallback(
     async (url: string): Promise<string> => {
@@ -881,7 +886,12 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
           : [],
       },
     ],
-    [qualificationDocuments, applicationApiData, fileSizes, hasQualificationDocs],
+    [
+      qualificationDocuments,
+      applicationApiData,
+      fileSizes,
+      hasQualificationDocs,
+    ],
   );
 
   /** ================= Upload Handler ================= */
@@ -960,13 +970,11 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
       ? "cursor-not-allowed opacity-50"
       : "cursor-pointer";
 
-   
-
   const stageLockedVisual = embedded && !stageUnlocked;
- 
+
   const stageCardClass = stageLockedVisual
     ? "border border-[#D1D5DB] rounded-lg overflow-hidden bg-[#F4F6F5]"
-    : "border border-[#C7CACF] rounded-lg overflow-hidden";
+    : "border border-primary-border rounded-lg overflow-hidden";
   const stageHeaderClass = stageLockedVisual
     ? "bg-[#EEF2EF]"
     : "bg-[#DFF2E6] border-[#237D3B] border rounded-lg";
@@ -985,7 +993,7 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
                 isAllRequiredCompleted ? "text-primary" : "text-[#20242A]"
               }`}
             >
-             Stage: 1 Admission
+              Stage: 1 Admission
             </h3>
             <p
               className={`text-[14px] ${
@@ -1134,7 +1142,10 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        downloadDocument(doc.url ?? "", doc.name);
+                                        downloadDocument(
+                                          doc.url ?? "",
+                                          doc.name,
+                                        );
                                       }}
                                       className="text-[#4B5563] cursor-pointer hover:text-[#237D3B]"
                                     >
@@ -1344,7 +1355,9 @@ const Admission: React.FC = () => {
     applicationApiData: any;
     steps: any[];
   }>();
-  return <AdmissionStep applicationApiData={applicationApiData} steps={steps} />;
+  return (
+    <AdmissionStep applicationApiData={applicationApiData} steps={steps} />
+  );
 };
 
 export default Admission;

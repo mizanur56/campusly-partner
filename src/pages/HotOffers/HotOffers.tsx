@@ -1,11 +1,11 @@
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import PageMeta from "../../components/common/Meta/PageMeta";
 import PageHeader from "../../components/common/Navigation/PageHeader";
 import { useGetHotOffersQuery } from "../../redux/features/hotOffers/hotOffersApi";
-import HotOffersSkeleton from "./HotOffersSkeleton";
 import { getApiImageUrl } from "../../utils/getApiImageUrl";
 import "./HotOffers.css";
+import HotOffersSkeleton from "./HotOffersSkeleton";
 
 function getImageUrl(url: string | null | undefined): string {
   if (!url) return "";
@@ -17,10 +17,15 @@ const HOT_OFFERS_HERO_FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&crop=faces&w=1400&q=85";
 
 export default function HotOffers() {
-  const [selectedCountryId, setSelectedCountryId] = useState<string | undefined>(undefined);
-  const [selectedIntakeId, setSelectedIntakeId] = useState<string | undefined>(undefined);
+  const [selectedCountryId, setSelectedCountryId] = useState<
+    string | undefined
+  >(undefined);
+  const [selectedIntakeId, setSelectedIntakeId] = useState<string | undefined>(
+    undefined,
+  );
 
-  const { data, isLoading, isFetching } = useGetHotOffersQuery(selectedCountryId);
+  const { data, isLoading, isFetching } =
+    useGetHotOffersQuery(selectedCountryId);
   const isPageLoading = isLoading || isFetching;
 
   const countryTabs = data?.countryTabs ?? [];
@@ -28,7 +33,10 @@ export default function HotOffers() {
   const upcomingIntakes = data?.upcomingIntakes;
   const intakes = upcomingIntakes?.intakes ?? [];
   const intakeUniversities = useMemo(() => {
-    if (selectedIntakeId && upcomingIntakes?.selectedIntakeId === selectedIntakeId) {
+    if (
+      selectedIntakeId &&
+      upcomingIntakes?.selectedIntakeId === selectedIntakeId
+    ) {
       return upcomingIntakes.universities ?? [];
     }
     return upcomingIntakes?.universities ?? [];
@@ -37,8 +45,10 @@ export default function HotOffers() {
   const servicesSection = data?.servicesSection;
   const banner = data?.banner;
 
-  const effectiveCountryId = selectedCountryId ?? data?.selectedCountryId ?? null;
-  const effectiveIntakeId = selectedIntakeId ?? upcomingIntakes?.selectedIntakeId ?? intakes[0]?.id;
+  const effectiveCountryId =
+    selectedCountryId ?? data?.selectedCountryId ?? null;
+  const effectiveIntakeId =
+    selectedIntakeId ?? upcomingIntakes?.selectedIntakeId ?? intakes[0]?.id;
 
   return (
     <>
@@ -49,10 +59,7 @@ export default function HotOffers() {
       <PageHeader
         title="Hot Offers"
         subtitle="Exclusive offers and opportunities for your students."
-        breadcrumbs={[
-          { title: "Home", path: "/" },
-          { title: "Hot Offers" },
-        ]}
+        breadcrumbs={[{ title: "Home", path: "/" }, { title: "Hot Offers" }]}
       />
 
       {isPageLoading ? (
@@ -91,7 +98,9 @@ export default function HotOffers() {
           {/* Focus Institutions */}
           {focusInstitutions.length > 0 && (
             <section>
-              <h2 className="text-lg font-semibold text-gray-900 mb-1">Focus Institution</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-1">
+                Focus Institution
+              </h2>
               <p className="text-sm text-gray-500 mb-4">
                 Relevant options that meet your students&apos; needs.
               </p>
@@ -120,9 +129,12 @@ export default function HotOffers() {
                         {inst.name}
                       </h3>
                       <p className="text-sm text-[#237D3B] bg-[#E9F2EB] my-3 rounded-lg px-2 py-1 w-fit">
-                        {inst.totalCourses} {inst.totalCourses === 1 ? "Course" : "Courses"}
+                        {inst.totalCourses}{" "}
+                        {inst.totalCourses === 1 ? "Course" : "Courses"}
                       </p>
-                      <p className="text-sm text-neutral-500">{inst.countryName}</p>
+                      <p className="text-sm text-neutral-500">
+                        {inst.countryName}
+                      </p>
                     </div>
                   </Link>
                 ))}
@@ -137,7 +149,8 @@ export default function HotOffers() {
                 Open for Upcoming Intakes
               </h2>
               <p className="text-sm text-gray-500 mb-4">
-                These universities and colleges are currently accepting applications.
+                These universities and colleges are currently accepting
+                applications.
               </p>
               <div className="flex gap-2 mb-6">
                 {intakes.map((tab) => (
@@ -225,25 +238,33 @@ export default function HotOffers() {
                       {spot.tuitionFee != null && (
                         <div>
                           <p className="text-xs text-gray-500">Tuition Fee</p>
-                          <p className="font-semibold text-gray-900">{spot.tuitionFee}</p>
+                          <p className="font-semibold text-gray-900">
+                            {spot.tuitionFee}
+                          </p>
                         </div>
                       )}
                       {spot.startDate && (
                         <div>
                           <p className="text-xs text-gray-500">Start date</p>
-                          <p className="font-semibold text-gray-900">{spot.startDate}</p>
+                          <p className="font-semibold text-gray-900">
+                            {spot.startDate}
+                          </p>
                         </div>
                       )}
                       {spot.duration && (
                         <div>
                           <p className="text-xs text-gray-500">Duration</p>
-                          <p className="font-semibold text-gray-900">{spot.duration}</p>
+                          <p className="font-semibold text-gray-900">
+                            {spot.duration}
+                          </p>
                         </div>
                       )}
                       {spot.modeOfStudy && (
                         <div>
                           <p className="text-xs text-gray-500">Mode of study</p>
-                          <p className="font-semibold text-gray-900">{spot.modeOfStudy}</p>
+                          <p className="font-semibold text-gray-900">
+                            {spot.modeOfStudy}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -251,13 +272,19 @@ export default function HotOffers() {
                       {spot.campusAddress && (
                         <p className="text-sm">
                           <span className="text-gray-500">Campus: </span>
-                          <span className="text-gray-900">{spot.campusAddress}</span>
+                          <span className="text-gray-900">
+                            {spot.campusAddress}
+                          </span>
                         </p>
                       )}
                       {spot.englishRequirement && (
                         <p className="text-sm">
-                          <span className="text-gray-500">English Requirement: </span>
-                          <span className="text-gray-900">{spot.englishRequirement}</span>
+                          <span className="text-gray-500">
+                            English Requirement:{" "}
+                          </span>
+                          <span className="text-gray-900">
+                            {spot.englishRequirement}
+                          </span>
                         </p>
                       )}
                     </div>
@@ -279,12 +306,14 @@ export default function HotOffers() {
               <h2 className="text-lg font-semibold text-gray-900 mb-1">
                 {servicesSection.sectionTitle}
               </h2>
-              <p className="text-sm text-gray-500 mb-4">{servicesSection.sectionDescription}</p>
+              <p className="text-sm text-gray-500 mb-4">
+                {servicesSection.sectionDescription}
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                 {servicesSection.items.map((item) => (
                   <div
                     key={item.id}
-                    className="group flex flex-col rounded-[24px] border border-[#C7CACF] bg-[#FFFFFF] shadow-[0_1px_2px_rgba(0,0,0,0.02)] overflow-hidden transition-all duration-200  hover:border-primary-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
+                    className="group flex flex-col rounded-[24px] border border-primary-border bg-[#FFFFFF] shadow-[0_1px_2px_rgba(0,0,0,0.02)] overflow-hidden transition-all duration-200  hover:border-primary-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
                   >
                     <div className="relative aspect-[3/2] w-full overflow-hidden bg-neutral-100">
                       {item.imageUrl ? (
@@ -305,7 +334,9 @@ export default function HotOffers() {
                           : ""}
                       </p>
                       {item.intro && (
-                        <p className="text-sm text-gray-600 mt-2 line-clamp-2">{item.intro}</p>
+                        <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                          {item.intro}
+                        </p>
                       )}
                       <Link
                         to={item.slug ? `/academy/${item.slug}` : "/academy"}
@@ -389,11 +420,17 @@ export default function HotOffers() {
             </section>
           )}
 
-          {!isPageLoading && !data?.countryTabs?.length && !focusInstitutions.length && !intakes.length && !programSpotlight.length && !servicesSection?.items?.length && !banner && (
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center text-gray-500">
-              No hot offers configured yet. Check back later.
-            </div>
-          )}
+          {!isPageLoading &&
+            !data?.countryTabs?.length &&
+            !focusInstitutions.length &&
+            !intakes.length &&
+            !programSpotlight.length &&
+            !servicesSection?.items?.length &&
+            !banner && (
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center text-gray-500">
+                No hot offers configured yet. Check back later.
+              </div>
+            )}
         </div>
       )}
     </>

@@ -1,4 +1,4 @@
-import { Button, Table, Select } from "antd";
+import { Button, Select, Table } from "antd";
 
 const Statistics = () => {
   const statisticsData = [
@@ -43,7 +43,7 @@ const Statistics = () => {
   ];
 
   return (
-    <div className="bg-[#FFFFFF] rounded-lg border border-[#C7CACF] p-6">
+    <div className="bg-[#FFFFFF] rounded-lg border border-primary-border p-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-gray-900">Statistics</h2>
         <div className="flex items-center gap-2">

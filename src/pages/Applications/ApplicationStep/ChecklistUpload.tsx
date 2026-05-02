@@ -1,18 +1,15 @@
-import React from "react";
 import { DownOutlined, DownloadOutlined, UpOutlined } from "@ant-design/icons";
-import { IoCheckmarkCircleSharp } from "react-icons/io5";
-import { useNavigate, useOutletContext, useParams } from "react-router-dom";
-import PrimaryButton from "../../../components/common/Button/PrimaryButton";
-import { FaRegCircle } from "react-icons/fa";
+import React from "react";
 import { BiExport } from "react-icons/bi";
 import { BsFileEarmarkBarGraph } from "react-icons/bs";
+import { FaRegCircle } from "react-icons/fa";
+import { IoCheckmarkCircleSharp } from "react-icons/io5";
+import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import PrimaryButton from "../../../components/common/Button/PrimaryButton";
 import { config } from "../../../config";
 import { useApplicationDocumentUploadMutation } from "../../../redux/features/application/applicationApi";
 import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
-
-
-
 
 export type ChecklistUploadStepProps = {
   applicationApiData: any;
@@ -41,26 +38,29 @@ export const ChecklistUploadStep: React.FC<ChecklistUploadStepProps> = ({
   const [uploadDocument] = useApplicationDocumentUploadMutation();
   const [fileSizes, setFileSizes] = React.useState<Record<string, string>>({});
 
-  const downloadDocument = React.useCallback(async (url: string, name?: string) => {
-    if (!url) return;
-    try {
-      const res = await fetch(url, { credentials: "include" });
-      if (!res.ok) throw new Error(`Download failed (${res.status})`);
-      const blob = await res.blob();
+  const downloadDocument = React.useCallback(
+    async (url: string, name?: string) => {
+      if (!url) return;
+      try {
+        const res = await fetch(url, { credentials: "include" });
+        if (!res.ok) throw new Error(`Download failed (${res.status})`);
+        const blob = await res.blob();
 
-      const objectUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = objectUrl;
-      a.download = name?.trim() ? name.trim() : "download";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(objectUrl);
-    } catch (err) {
-      console.error("Download failed:", err);
-      window.open(url, "_blank");
-    }
-  }, []);
+        const objectUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = objectUrl;
+        a.download = name?.trim() ? name.trim() : "download";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(objectUrl);
+      } catch (err) {
+        console.error("Download failed:", err);
+        window.open(url, "_blank");
+      }
+    },
+    [],
+  );
 
   const toggleDocuments = (id: string) => {
     setExpandedDocuments((prev) => ({
@@ -286,7 +286,7 @@ export const ChecklistUploadStep: React.FC<ChecklistUploadStepProps> = ({
   const stageLockedVisual = embedded && !stageUnlocked;
   const stageCardClass = stageLockedVisual
     ? "border border-[#D1D5DB] rounded-lg overflow-hidden bg-[#F4F6F5]"
-    : "border border-[#C7CACF] rounded-lg overflow-hidden";
+    : "border border-primary-border rounded-lg overflow-hidden";
   const stageHeaderClass = stageLockedVisual
     ? "bg-[#EEF2EF]"
     : "bg-[#DFF2E6] border-[#237D3B] border rounded-lg";
@@ -298,13 +298,12 @@ export const ChecklistUploadStep: React.FC<ChecklistUploadStepProps> = ({
           className={`${stageHeaderClass} p-6 flex items-center justify-between`}
         >
           <div>
-         
             <h3
               className={`text-[20px] font-semibold ${
                 isAllRequiredCompleted ? "text-primary" : "text-[#20242A]"
               }`}
             >
-             Stage: 3 Checklist Upload
+              Stage: 3 Checklist Upload
             </h3>
             <p
               className={`text-[14px] ${
@@ -312,7 +311,7 @@ export const ChecklistUploadStep: React.FC<ChecklistUploadStepProps> = ({
               }`}
             >
               Upload all checklist documents to move to the next stage.
-              </p>
+            </p>
           </div>
           <div
             title={
@@ -410,7 +409,12 @@ export const ChecklistUploadStep: React.FC<ChecklistUploadStepProps> = ({
                               </div>
                             </div>
                             <button
-                              onClick={() => downloadDocument(section?.url ?? "", section?.title)}
+                              onClick={() =>
+                                downloadDocument(
+                                  section?.url ?? "",
+                                  section?.title,
+                                )
+                              }
                               className="text-[#4B5563] hover:text-[#237D3B] cursor-pointer"
                             >
                               <DownloadOutlined style={{ fontSize: 18 }} />
@@ -451,7 +455,9 @@ export const ChecklistUploadStep: React.FC<ChecklistUploadStepProps> = ({
 };
 
 const ChecklistUpload: React.FC = () => {
-  const { applicationApiData } = useOutletContext<{ applicationApiData: any }>();
+  const { applicationApiData } = useOutletContext<{
+    applicationApiData: any;
+  }>();
   return <ChecklistUploadStep applicationApiData={applicationApiData} />;
 };
 

@@ -1,16 +1,16 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Modal, Button, Calendar, Skeleton } from "antd";
-import { IoClose } from "react-icons/io5";
 import {
   CalendarOutlined,
   ClockCircleOutlined,
   LeftOutlined,
   RightOutlined,
 } from "@ant-design/icons";
+import { Button, Calendar, Modal, Skeleton } from "antd";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
-import { Button as PrimaryButton } from "../../../ui/button";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { IoClose } from "react-icons/io5";
 import { useGetMyMeetingsQuery } from "../../../../redux/features/onboardingForm/onboardingFormApi";
+import { Button as PrimaryButton } from "../../../ui/button";
 
 type SlotItem = { slot: string; date: string };
 type AvailabilityTemplate = {
@@ -286,7 +286,7 @@ const Step1Modal: React.FC<Step1ModalProps> = ({
               </h3>
             </div>
             <div
-              className="mx-auto w-full rounded-xl border border-[#C7CACF] bg-[#FFFFFF] p-4 shadow-sm lg:mx-0 lg:w-[440px]"
+              className="mx-auto w-full rounded-xl border border-primary-border bg-[#FFFFFF] p-4 shadow-sm lg:mx-0 lg:w-[440px]"
               style={{ minHeight: "376px" }}
             >
               <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-[#237D3B]/15 bg-[#F3FAF5] px-3 py-2.5">
@@ -302,8 +302,8 @@ const Step1Modal: React.FC<Step1ModalProps> = ({
               </div>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <p className="text-xs leading-snug text-[#4B5563]">
-                  Grey numbers = not bookable. Bold/dark dates with a green dot =
-                  openings (only those days are clickable).
+                  Grey numbers = not bookable. Bold/dark dates with a green dot
+                  = openings (only those days are clickable).
                 </p>
                 <button
                   type="button"
@@ -409,9 +409,7 @@ const Step1Modal: React.FC<Step1ModalProps> = ({
                   const hasSlots =
                     availableSlotsByDate.has(key) && !isPast && !loadingBlock;
                   const isDisabled =
-                    isPast ||
-                    loadingBlock ||
-                    !availableSlotsByDate.has(key);
+                    isPast || loadingBlock || !availableSlotsByDate.has(key);
                   const isSelected = current.isSame(selectedDate, "day");
                   return (
                     <div
@@ -423,11 +421,7 @@ const Step1Modal: React.FC<Step1ModalProps> = ({
                             : "font-semibold text-[#1F2937]"
                       }`}
                     >
-                      <span
-                        className={
-                          isDisabled ? "opacity-45" : undefined
-                        }
-                      >
+                      <span className={isDisabled ? "opacity-45" : undefined}>
                         {current.date()}
                       </span>
                       {hasSlots && !isSelected ? (
@@ -489,7 +483,7 @@ const Step1Modal: React.FC<Step1ModalProps> = ({
                 Select Time
               </h3>
             </div>
-            <div className="mx-auto flex h-[376px] w-full flex-col overflow-hidden rounded-xl border border-[#C7CACF] bg-[#FFFFFF] p-4 shadow-sm lg:mx-0 lg:w-[350px]">
+            <div className="mx-auto flex h-[376px] w-full flex-col overflow-hidden rounded-xl border border-primary-border bg-[#FFFFFF] p-4 shadow-sm lg:mx-0 lg:w-[350px]">
               <div className="mb-3 shrink-0 border-b border-[#F0F2F5] pb-3">
                 <p className="text-[16px] font-semibold text-[#20242A]">
                   Available time slots
@@ -544,7 +538,7 @@ const Step1Modal: React.FC<Step1ModalProps> = ({
                   Array.from({ length: 8 }).map((_, idx) => (
                     <div
                       key={`slot-skeleton-${idx}`}
-                      className="rounded-lg border border-[#C7CACF] px-3 py-2"
+                      className="rounded-lg border border-primary-border px-3 py-2"
                     >
                       <Skeleton.Input active size="small" block />
                     </div>
@@ -555,7 +549,8 @@ const Step1Modal: React.FC<Step1ModalProps> = ({
                       No openings this day
                     </p>
                     <p className="mt-1 text-xs text-[#94A3B8]">
-                      Pick another date in the calendar or use the week row above.
+                      Pick another date in the calendar or use the week row
+                      above.
                     </p>
                   </div>
                 ) : (

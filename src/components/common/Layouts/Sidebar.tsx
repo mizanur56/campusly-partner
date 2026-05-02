@@ -558,7 +558,7 @@
 //   return (
 //     <aside
 //       className={`fixed top-0 left-0 z-50 mt-16 flex h-screen flex-col transition-all duration-300 ease-in-out lg:mt-0
-//         border-r-[1px] border-[#C7CACF] bg-[#FFFFFF] dark:border-[#353646] dark:bg-[#20242A]
+//         border-r-[1px] border-primary-border bg-[#FFFFFF] dark:border-[#353646] dark:bg-[#20242A]
 //         ${isExpanded || isMobileOpen ? "w-[280px]" : "w-[80px]"}
 //         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
 //         lg:translate-x-0`}
@@ -1173,9 +1173,7 @@
 //   );
 // };
 
-
 // export default Sidebar;
-
 
 import { Tooltip } from "antd";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -1737,7 +1735,7 @@ const Sidebar: React.FC = () => {
   return (
     <aside
       className={`fixed top-0 left-0 z-50 mt-16 flex h-screen flex-col transition-all duration-300 ease-in-out lg:mt-0
-        border-r-[1px] border-[#C7CACF] bg-[#FFFFFF] dark:border-[#353646] dark:bg-[#20242A]
+        border-r-[1px] border-primary-border bg-[#FFFFFF] dark:border-[#353646] dark:bg-[#20242A]
         ${isExpanded || isMobileOpen ? "w-[280px]" : "w-[80px]"}
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0`}
@@ -1991,13 +1989,13 @@ const Sidebar: React.FC = () => {
                   {student?.email}
                 </p>
                 <p className="mt-0.5 text-[14px] text-gray-600 dark:text-gray-300">
-           Status:{" "}
-               <strong>
-                   {student?.applicationSidebar?.applicationStatus ??
-                    student?.status ??
-                    "Active"}
-                </strong>
-              </p>
+                  Status:{" "}
+                  <strong>
+                    {student?.applicationSidebar?.applicationStatus ??
+                      student?.status ??
+                      "Active"}
+                  </strong>
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 <Tooltip title="Edit profile" placement="bottom">

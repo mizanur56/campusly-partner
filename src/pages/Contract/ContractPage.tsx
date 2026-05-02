@@ -1,38 +1,36 @@
+import { Modal, message } from "antd";
 import { useEffect, useMemo, useState } from "react";
-import { Modal, Skeleton, message } from "antd";
-import { useNavigate } from "react-router-dom";
 import { FaRegFileAlt } from "react-icons/fa";
 import { FaRegUser } from "react-icons/fa6";
-import { LuNotebookPen } from "react-icons/lu";
-import { LuPenTool } from "react-icons/lu";
+import { LuNotebookPen, LuPenTool } from "react-icons/lu";
+import { useNavigate } from "react-router-dom";
 
 import {
+  FiCalendar,
+  FiCheck,
   FiChevronLeft,
   FiChevronRight,
-  FiCheck,
-  FiCalendar,
   FiDownload,
-  FiEdit2,
   FiZoomIn,
   FiZoomOut,
 } from "react-icons/fi";
-import { config } from "../../config";
-import { Button } from "../../components/ui/button";
-import { SignaturePad } from "../../components/contract/SignaturePad";
-import {
-  useBookMeetingMutation,
-  useGetContractQuery,
-  useCancelMeetingMutation,
-  useGetOnboardingStatusQuery,
-  useLazyGetOnboardingStatusQuery,
-  useGetMyMeetingsQuery,
-  useSignContractMutation,
-} from "../../redux/features/onboardingForm/onboardingFormApi";
-import { useCreateMediaMutation } from "../../redux/features/media/mediaApi";
-import { useGetPartnerProfileQuery } from "../../redux/features/profile/partnerProfileApi";
 import Step1MeetingModal from "../../components/common/Modals/Meeting/Step1Modal";
 import Step2MeetingModal from "../../components/common/Modals/Meeting/Step2Modal";
 import Step3MeetingModal from "../../components/common/Modals/Meeting/Step3Modal";
+import { SignaturePad } from "../../components/contract/SignaturePad";
+import { Button } from "../../components/ui/button";
+import { config } from "../../config";
+import { useCreateMediaMutation } from "../../redux/features/media/mediaApi";
+import {
+  useBookMeetingMutation,
+  useCancelMeetingMutation,
+  useGetContractQuery,
+  useGetMyMeetingsQuery,
+  useGetOnboardingStatusQuery,
+  useLazyGetOnboardingStatusQuery,
+  useSignContractMutation,
+} from "../../redux/features/onboardingForm/onboardingFormApi";
+import { useGetPartnerProfileQuery } from "../../redux/features/profile/partnerProfileApi";
 
 export default function ContractPage() {
   const navigate = useNavigate();
@@ -57,17 +55,14 @@ export default function ContractPage() {
 
   // Fetch partner profile for advisor info
   const { data: partnerProfile } = useGetPartnerProfileQuery();
-  const onboardingAdvisor = (onboardingStatus?.advisor ??
-    null) as
-    | {
-        id?: string;
-        name?: string | null;
-        email?: string | null;
-        phone?: string | null;
-        meetingLink?: string | null;
-        profile?: { id?: string; url?: string | null } | null;
-      }
-    | null;
+  const onboardingAdvisor = (onboardingStatus?.advisor ?? null) as {
+    id?: string;
+    name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    meetingLink?: string | null;
+    profile?: { id?: string; url?: string | null } | null;
+  } | null;
   const advisor = onboardingAdvisor ?? partnerProfile?.advisor ?? null;
   const advisorPhotoUrl = advisor?.profile?.url
     ? advisor.profile.url.startsWith("http")
@@ -262,7 +257,11 @@ export default function ContractPage() {
   };
 
   const slotsForBooking = useMemo(
-    () => (availableSlots || []).map((slot) => ({ slot: slot.slot, date: slot.date })),
+    () =>
+      (availableSlots || []).map((slot) => ({
+        slot: slot.slot,
+        date: slot.date,
+      })),
     [availableSlots],
   );
 
@@ -299,24 +298,21 @@ export default function ContractPage() {
 
   const meetingManager = useMemo(() => {
     if (!upcomingMeeting) return null;
-    const meetingAdvisor = (upcomingMeeting.advisor ?? null) as
-      | {
-          id?: string;
-          name?: string | null;
-          email?: string | null;
-          phone?: string | null;
-          meetingLink?: string | null;
-          profile?: { id?: string; url?: string | null } | null;
-        }
-      | null;
+    const meetingAdvisor = (upcomingMeeting.advisor ?? null) as {
+      id?: string;
+      name?: string | null;
+      email?: string | null;
+      phone?: string | null;
+      meetingLink?: string | null;
+      profile?: { id?: string; url?: string | null } | null;
+    } | null;
     const meetingAdvisorPhotoUrl = meetingAdvisor?.profile?.url
       ? meetingAdvisor.profile.url.startsWith("http")
         ? meetingAdvisor.profile.url
         : `${config.image_access_url}${meetingAdvisor.profile.url}`
       : null;
     return {
-      name:
-        meetingAdvisor?.name || advisor?.name || "Onboarding Manager",
+      name: meetingAdvisor?.name || advisor?.name || "Onboarding Manager",
       email:
         meetingAdvisor?.email || advisor?.email || "support@campustransfer.com",
       phone: meetingAdvisor?.phone || advisor?.phone || null,
@@ -359,7 +355,7 @@ export default function ContractPage() {
       <div className="mx-auto flex max-w-5xl flex-col gap-8 lg:flex-row lg:gap-10">
         {/* Left: Contract progress card */}
         <aside className="w-full shrink-0 lg:w-56 xl:w-64">
-          <div className="lg:sticky lg:top-24 rounded-[16px] border border-[#C7CACF] bg-[#FFFFFF] p-5 card-shadow dark:border-gray-800 dark:bg-gray-900">
+          <div className="lg:sticky lg:top-24 rounded-[16px] border border-primary-border bg-[#FFFFFF] p-5 card-shadow dark:border-gray-800 dark:bg-gray-900">
             <h2 className="text-[18px] font-semibold text-[#20242A] dark:text-gray-200">
               Contract
             </h2>
@@ -413,7 +409,7 @@ export default function ContractPage() {
         <main className="min-w-0 flex-1">
           <div className="">
             {/* Header */}
-            <header className="border-b border-[#C7CACF] dark:border-gray-800 pb-5">
+            <header className="border-b border-primary-border dark:border-gray-800 pb-5">
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
                 Partnership Contract
               </h1>
@@ -454,8 +450,8 @@ export default function ContractPage() {
 
             <div className="space-y-8  mt-5  divide-y divide-gray-100 dark:divide-gray-800">
               {/* Contract signature viewer */}
-              <section className="rounded-[16px] border border-[#C7CACF] bg-[#FFFFFF] dark:border-gray-800 dark:bg-gray-900">
-                <div className="flex items-center justify-between gap-3 border-b border-[#C7CACF] px-4 py-3 dark:border-gray-800 sm:px-5">
+              <section className="rounded-[16px] border border-primary-border bg-[#FFFFFF] dark:border-gray-800 dark:bg-gray-900">
+                <div className="flex items-center justify-between gap-3 border-b border-primary-border px-4 py-3 dark:border-gray-800 sm:px-5">
                   <div className="flex min-w-0 items-center gap-2">
                     <span className="flex h-5 w-5 items-center justify-center rounded-md bg-gray-100 text-[#20242A] dark:bg-gray-800 dark:text-gray-200">
                       <FaRegFileAlt aria-hidden className="h-5 w-5" />
@@ -564,7 +560,7 @@ export default function ContractPage() {
                       </div>
                     </div>
                   ) : contractPdfUrl ? (
-                    <div className="mx-auto h-[500px] max-w-full overflow-hidden rounded-xl border border-[#C7CACF] bg-white  dark:border-gray-700 dark:bg-gray-900">
+                    <div className="mx-auto h-[500px] max-w-full overflow-hidden rounded-xl border border-primary-border bg-white  dark:border-gray-700 dark:bg-gray-900">
                       {isContractPdf ? (
                         <iframe
                           key={`${contractPdfUrl}-${pdfPage}-${pdfZoom}`}
@@ -604,8 +600,8 @@ export default function ContractPage() {
               </section>
 
               {/* Onboarding manager / meeting card */}
-              <section className=" rounded-[16px] border border-[#C7CACF] bg-[#FFFFFF] dark:border-gray-800 dark:bg-gray-900">
-                <div className="border-b border-[#C7CACF] px-4 py-5 dark:border-gray-800 sm:px-5">
+              <section className=" rounded-[16px] border border-primary-border bg-[#FFFFFF] dark:border-gray-800 dark:bg-gray-900">
+                <div className="border-b border-primary-border px-4 py-5 dark:border-gray-800 sm:px-5">
                   <h2 className="flex items-center gap-2 text-[18px] font-semibold text-[#20242A] dark:text-gray-100">
                     <FaRegUser aria-hidden className="h-5 w-5 text-[#20242A]" />
                     {upcomingMeeting
@@ -764,8 +760,8 @@ export default function ContractPage() {
               </section>
 
               {/* Digital signature card */}
-              <section className="rounded-[16px] border border-[#C7CACF] bg-[#FFFFFF] dark:border-gray-800 dark:bg-gray-900">
-                <div className="flex items-center justify-between border-b border-[#C7CACF] px-4 py-5 dark:border-gray-800 sm:px-5">
+              <section className="rounded-[16px] border border-primary-border bg-[#FFFFFF] dark:border-gray-800 dark:bg-gray-900">
+                <div className="flex items-center justify-between border-b border-primary-border px-4 py-5 dark:border-gray-800 sm:px-5">
                   <h2 className="flex items-center gap-2 text-[18px] font-semibold text-[#20242A] dark:text-gray-100">
                     <span className="inline-flex h-6 w-6 items-center justify-center text-[#20242A] dark:text-gray-200">
                       <LuNotebookPen

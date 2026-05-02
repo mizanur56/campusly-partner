@@ -1,11 +1,10 @@
-
-import React from "react";
 import { DownOutlined, DownloadOutlined, UpOutlined } from "@ant-design/icons";
+import React from "react";
+import { BsFileEarmarkBarGraph } from "react-icons/bs";
+import { FaRegCircle } from "react-icons/fa";
 import { IoCheckmarkCircleSharp } from "react-icons/io5";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import PrimaryButton from "../../../components/common/Button/PrimaryButton";
-import { FaRegCircle } from "react-icons/fa";
-import { BsFileEarmarkBarGraph } from "react-icons/bs";
 import { config } from "../../../config";
 
 export type FinalLetterStepProps = {
@@ -37,52 +36,58 @@ export const FinalLetterStep: React.FC<FinalLetterStepProps> = ({
     return `${config.image_access_url}${raw}`;
   }, []);
 
-  const downloadDocument = React.useCallback(async (url: string, name?: string) => {
-    if (!url) return;
-    const resolved = resolveAssetUrl(url);
-    try {
-      const res = await fetch(resolved, { credentials: "include" });
-      if (!res.ok) throw new Error(`Download failed (${res.status})`);
-      const blob = await res.blob();
+  const downloadDocument = React.useCallback(
+    async (url: string, name?: string) => {
+      if (!url) return;
+      const resolved = resolveAssetUrl(url);
+      try {
+        const res = await fetch(resolved, { credentials: "include" });
+        if (!res.ok) throw new Error(`Download failed (${res.status})`);
+        const blob = await res.blob();
 
-      const objectUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = objectUrl;
-      a.download = name?.trim() ? name.trim() : "download";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(objectUrl);
-    } catch (err) {
-      console.error("Download failed:", err);
-      window.open(resolved, "_blank");
-    }
-  }, [resolveAssetUrl]);
+        const objectUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = objectUrl;
+        a.download = name?.trim() ? name.trim() : "download";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(objectUrl);
+      } catch (err) {
+        console.error("Download failed:", err);
+        window.open(resolved, "_blank");
+      }
+    },
+    [resolveAssetUrl],
+  );
 
   /* ================= Get File Size from URL ================= */
-  const getFileSize = React.useCallback(async (url: string): Promise<string> => {
-    try {
-      const resolved = resolveAssetUrl(url);
-      const response = await fetch(resolved, {
-        method: "HEAD",
-        credentials: "include",
-      });
-      const contentLength = response.headers.get("content-length");
-      
-      if (contentLength) {
-        const bytes = parseInt(contentLength, 10);
-        return formatFileSize(bytes);
+  const getFileSize = React.useCallback(
+    async (url: string): Promise<string> => {
+      try {
+        const resolved = resolveAssetUrl(url);
+        const response = await fetch(resolved, {
+          method: "HEAD",
+          credentials: "include",
+        });
+        const contentLength = response.headers.get("content-length");
+
+        if (contentLength) {
+          const bytes = parseInt(contentLength, 10);
+          return formatFileSize(bytes);
+        }
+
+        // Fallback: fetch the file to get size
+        const blobResponse = await fetch(resolved, { credentials: "include" });
+        const blob = await blobResponse.blob();
+        return formatFileSize(blob.size);
+      } catch (error) {
+        console.error("Error getting file size:", error);
+        return "—";
       }
-      
-      // Fallback: fetch the file to get size
-      const blobResponse = await fetch(resolved, { credentials: "include" });
-      const blob = await blobResponse.blob();
-      return formatFileSize(blob.size);
-    } catch (error) {
-      console.error("Error getting file size:", error);
-      return "—";
-    }
-  }, [resolveAssetUrl]);
+    },
+    [resolveAssetUrl],
+  );
 
   /* ================= Format File Size ================= */
   const formatFileSize = (bytes: number): string => {
@@ -113,26 +118,29 @@ export const FinalLetterStep: React.FC<FinalLetterStepProps> = ({
     }
   }, [applicationApiData, loaUrl, moneyReceiptUrl, getFileSize]);
 
-  const sections = React.useMemo(() => [
-    {
-      id: "loa",
-      title: "Letter of Acceptance (LOA)",
-      description:
-        "Your documents has been submitted, you documents under review, we will send it to the college.",
-      isCompleted: !!loaUrl,
-      url: loaUrl ? resolveAssetUrl(loaUrl) : null,
-      documentName: "Letter of Acceptance (LOA)",
-    },
-    {
-      id: "money_receipt",
-      title: "Money Receipt",
-      description:
-        "Your documents has been submitted, you documents under review, we will send it to the college.",
-      isCompleted: !!moneyReceiptUrl,
-      url: moneyReceiptUrl ? resolveAssetUrl(moneyReceiptUrl) : null,
-      documentName: "Money Receipt",
-    },
-  ], [loaUrl, moneyReceiptUrl, resolveAssetUrl]);
+  const sections = React.useMemo(
+    () => [
+      {
+        id: "loa",
+        title: "Letter of Acceptance (LOA)",
+        description:
+          "Your documents has been submitted, you documents under review, we will send it to the college.",
+        isCompleted: !!loaUrl,
+        url: loaUrl ? resolveAssetUrl(loaUrl) : null,
+        documentName: "Letter of Acceptance (LOA)",
+      },
+      {
+        id: "money_receipt",
+        title: "Money Receipt",
+        description:
+          "Your documents has been submitted, you documents under review, we will send it to the college.",
+        isCompleted: !!moneyReceiptUrl,
+        url: moneyReceiptUrl ? resolveAssetUrl(moneyReceiptUrl) : null,
+        documentName: "Money Receipt",
+      },
+    ],
+    [loaUrl, moneyReceiptUrl, resolveAssetUrl],
+  );
 
   const isAllRequiredCompleted = sections.every((section) => !!section.url);
 
@@ -157,7 +165,7 @@ export const FinalLetterStep: React.FC<FinalLetterStepProps> = ({
   const stageLockedVisual = embedded && !stageUnlocked;
   const stageCardClass = stageLockedVisual
     ? "border border-[#D1D5DB] rounded-lg overflow-hidden bg-[#F4F6F5]"
-    : "border border-[#C7CACF] rounded-lg overflow-hidden";
+    : "border border-primary-border rounded-lg overflow-hidden";
   const stageHeaderClass = stageLockedVisual
     ? "bg-[#EEF2EF]"
     : "bg-[#DFF2E6] border-[#237D3B] border rounded-lg";
@@ -170,13 +178,12 @@ export const FinalLetterStep: React.FC<FinalLetterStepProps> = ({
           className={`${stageHeaderClass} p-6 flex items-center justify-between`}
         >
           <div>
-
             <h3
               className={`text-[20px] font-semibold ${
                 isAllRequiredCompleted ? "text-primary" : "text-[#20242A]"
               }`}
             >
-             Stage: 4 Final Letter
+              Stage: 4 Final Letter
             </h3>
             <p
               className={`text-[14px] ${
@@ -184,7 +191,7 @@ export const FinalLetterStep: React.FC<FinalLetterStepProps> = ({
               }`}
             >
               Upload the acceptance letter and money receipt (if available).
-              </p>
+            </p>
           </div>
           <div
             title={
@@ -249,15 +256,18 @@ export const FinalLetterStep: React.FC<FinalLetterStepProps> = ({
                             {section.documentName}.pdf
                           </p>
                           <p className="text-[12px] text-[#6B7280]">
-                            {section.id === "loa" 
-                              ? (fileSizes.acceptanceLetter || "—")
-                              : (fileSizes.moneyReceipt || "—")}
+                            {section.id === "loa"
+                              ? fileSizes.acceptanceLetter || "—"
+                              : fileSizes.moneyReceipt || "—"}
                           </p>
                         </div>
                       </div>
                       <button
                         onClick={() =>
-                          downloadDocument(section.url ?? "", `${section.documentName}.pdf`)
+                          downloadDocument(
+                            section.url ?? "",
+                            `${section.documentName}.pdf`,
+                          )
                         }
                         className="text-[#4B5563] hover:text-[#237D3B] cursor-pointer"
                       >
@@ -296,7 +306,9 @@ export const FinalLetterStep: React.FC<FinalLetterStepProps> = ({
 };
 
 const FinalLetter: React.FC = () => {
-  const { applicationApiData } = useOutletContext<{ applicationApiData: any }>();
+  const { applicationApiData } = useOutletContext<{
+    applicationApiData: any;
+  }>();
   return <FinalLetterStep applicationApiData={applicationApiData} />;
 };
 

@@ -1,15 +1,15 @@
-import React from "react";
 import { DownOutlined, DownloadOutlined, UpOutlined } from "@ant-design/icons";
-import { useNavigate, useOutletContext, useParams } from "react-router-dom";
-import PrimaryButton from "../../../components/common/Button/PrimaryButton";
-import { IoCheckmarkCircleSharp } from "react-icons/io5";
-import { FaRegCircle } from "react-icons/fa";
+import React from "react";
 import { BiExport } from "react-icons/bi";
 import { BsFileEarmarkBarGraph } from "react-icons/bs";
-import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
-import { useApplicationDocumentUploadMutation } from "../../../redux/features/application/applicationApi";
-import { config } from "../../../config";
+import { FaRegCircle } from "react-icons/fa";
+import { IoCheckmarkCircleSharp } from "react-icons/io5";
+import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import PrimaryButton from "../../../components/common/Button/PrimaryButton";
+import { config } from "../../../config";
+import { useApplicationDocumentUploadMutation } from "../../../redux/features/application/applicationApi";
+import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
 
 export type VisaOutcomeStepProps = {
   applicationApiData: any;
@@ -156,10 +156,9 @@ export const VisaOutcomeStep: React.FC<VisaOutcomeStepProps> = ({
             docDesc: "Upload your approved visa copy issued by the embassy.",
             disabled: hasVisaRejectedSlip,
 
-            url:
-              applicationApiData?.visaCopy
-                ? resolveAssetUrl(applicationApiData.visaCopy)
-                : null,
+            url: applicationApiData?.visaCopy
+              ? resolveAssetUrl(applicationApiData.visaCopy)
+              : null,
           },
           {
             id: "visa_rejected",
@@ -172,10 +171,9 @@ export const VisaOutcomeStep: React.FC<VisaOutcomeStepProps> = ({
             docDesc:
               "Upload the rejection letter or slip provided by the embassy.",
             disabled: hasVisaCopy,
-            url:
-              applicationApiData?.visaRejectedSlip
-                ? resolveAssetUrl(applicationApiData.visaRejectedSlip)
-                : null,
+            url: applicationApiData?.visaRejectedSlip
+              ? resolveAssetUrl(applicationApiData.visaRejectedSlip)
+              : null,
           },
         ],
       },
@@ -208,7 +206,7 @@ export const VisaOutcomeStep: React.FC<VisaOutcomeStepProps> = ({
   const stageLockedVisual = embedded && !stageUnlocked;
   const stageCardClass = stageLockedVisual
     ? "border border-[#D1D5DB] rounded-lg overflow-hidden bg-[#F4F6F5]"
-    : "border border-[#C7CACF] rounded-lg overflow-hidden";
+    : "border border-primary-border rounded-lg overflow-hidden";
   const stageHeaderClass = isAllRequiredCompleted
     ? "bg-[#DFF2E6] border-[#237D3B] border rounded-lg"
     : "bg-[#EEF2EF]";
@@ -229,10 +227,8 @@ export const VisaOutcomeStep: React.FC<VisaOutcomeStepProps> = ({
         id: applicationApiData.id,
         [categoryKey]: documentUrl,
       };
-      
 
       const res = await uploadDocument(payload).unwrap();
-      
     } catch (err) {
       console.error("Upload failed:", err);
       toast.error("Upload failed");
@@ -267,13 +263,12 @@ export const VisaOutcomeStep: React.FC<VisaOutcomeStepProps> = ({
           className={`${stageHeaderClass} p-6 flex items-center justify-between`}
         >
           <div>
-   
             <h3
               className={`text-[20px] font-semibold ${
                 isAllRequiredCompleted ? "text-primary" : "text-[#20242A]"
               }`}
             >
-             Stage: 6 Visa Outcome
+              Stage: 6 Visa Outcome
             </h3>
             <p
               className={`text-[14px] ${
@@ -281,7 +276,7 @@ export const VisaOutcomeStep: React.FC<VisaOutcomeStepProps> = ({
               }`}
             >
               Upload the approved visa copy or rejection slip once received.
-              </p>
+            </p>
           </div>
           <div
             title={
@@ -337,7 +332,9 @@ export const VisaOutcomeStep: React.FC<VisaOutcomeStepProps> = ({
                           setSelectedSub(sub.id);
                         }}
                         className={`border rounded-lg p-4 transition ${
-                          isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                          isDisabled
+                            ? "opacity-50 cursor-not-allowed"
+                            : "cursor-pointer"
                         } ${
                           isSelected
                             ? "border-[#16A34A] bg-[#F0FDF4]"
@@ -386,7 +383,10 @@ export const VisaOutcomeStep: React.FC<VisaOutcomeStepProps> = ({
                       </div>
 
                       <button
-                        disabled={!!uploadingId || Boolean((selectedData as any).disabled)}
+                        disabled={
+                          !!uploadingId ||
+                          Boolean((selectedData as any).disabled)
+                        }
                         onClick={() => triggerFileInput(selectedData.category)}
                         className="border border-[#237D3B] text-[#237D3B] rounded-md cursor-pointer p-2 hover:bg-[#F0FDF4] transition disabled:opacity-50"
                       >
@@ -475,7 +475,9 @@ export const VisaOutcomeStep: React.FC<VisaOutcomeStepProps> = ({
 };
 
 const VisaOutcome: React.FC = () => {
-  const { applicationApiData } = useOutletContext<{ applicationApiData: any }>();
+  const { applicationApiData } = useOutletContext<{
+    applicationApiData: any;
+  }>();
   return <VisaOutcomeStep applicationApiData={applicationApiData} />;
 };
 

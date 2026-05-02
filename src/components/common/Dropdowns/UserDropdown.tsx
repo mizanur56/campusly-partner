@@ -76,7 +76,7 @@ export default function UserDropdown() {
       <Dropdown
         isOpen={isOpen}
         onClose={closeDropdown}
-        className="absolute right-0 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-[#C7CACF] bg-white"
+        className="absolute right-0 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-primary-border bg-white"
       >
         <div className="mb-3 flex items-center gap-3">
           <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800">

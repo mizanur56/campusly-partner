@@ -192,7 +192,7 @@
 
 //   return (
 //     <>
-//       <div className="border border-[#C7CACF] rounded-lg overflow-hidden">
+//       <div className="border border-primary-border rounded-lg overflow-hidden">
 //         <div className="bg-[#E9F2EB] p-6 flex items-center justify-between">
 //           <div>
 //             <h3 className="text-[20px] font-semibold text-[#20242A]">Apply</h3>
@@ -277,22 +277,21 @@
 
 // export default Apply;
 
-
-
-
-import React, { useState, useCallback, useEffect, useMemo } from "react";
-import { DownOutlined, UpOutlined, DownloadOutlined } from "@ant-design/icons";
-import { IoCheckmarkCircleSharp } from "react-icons/io5";
-import { FaRegCircle } from "react-icons/fa";
-import { BsFileEarmarkBarGraph } from "react-icons/bs";
+import { DownloadOutlined, DownOutlined, UpOutlined } from "@ant-design/icons";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { BiExport } from "react-icons/bi";
+import { BsFileEarmarkBarGraph } from "react-icons/bs";
+import { FaRegCircle } from "react-icons/fa";
+import { IoCheckmarkCircleSharp } from "react-icons/io5";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import PrimaryButton from "../../../components/common/Button/PrimaryButton";
 
-
 import { config } from "../../../config";
+import {
+  useGetAllInvoicePaymentsQuery,
+  useSubmitPaymentReceiptMutation,
+} from "../../../redux/features/application/applicationApi";
 import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
-import { useGetAllInvoicePaymentsQuery, useSubmitPaymentReceiptMutation } from "../../../redux/features/application/applicationApi";
 
 /* ================= Types ================= */
 interface Document {
@@ -319,7 +318,7 @@ const DocumentCard: React.FC<{
   // সরাসরি ডাউনলোড করার ফাংশন
   const handleDownload = async () => {
     if (!doc?.url) return;
-  
+
     // filename ঠিক করে দাও (important)
     const fileName = doc.name || doc.url.split("/").pop() || "download";
 
@@ -613,7 +612,6 @@ export const ApplyStep: React.FC<ApplyStepProps> = ({
   );
 
   const isAllRequiredCompleted = sections.every((sec) => sec.isCompleted);
- 
 
   const didInitExpand = React.useRef(false);
   React.useEffect(() => {
@@ -633,17 +631,14 @@ export const ApplyStep: React.FC<ApplyStepProps> = ({
       ? "cursor-not-allowed opacity-50"
       : "cursor-pointer";
 
-    
-
   const stageLockedVisual = embedded && !stageUnlocked;
   const stageCardClass = stageLockedVisual
     ? "border border-[#D1D5DB] rounded-lg overflow-hidden bg-[#F4F6F5]"
-    : "border border-[#C7CACF] rounded-lg overflow-hidden";
+    : "border border-primary-border rounded-lg overflow-hidden";
   const stageHeaderClass = stageLockedVisual
     ? "bg-[#EEF2EF]"
     : "bg-[#DFF2E6] border-[#237D3B] border rounded-lg";
 
-    
   const handleFileUpload = async (categoryId: string, file: File) => {
     setUploadingCategoryId(categoryId);
     try {
@@ -692,13 +687,12 @@ export const ApplyStep: React.FC<ApplyStepProps> = ({
           className={`${stageHeaderClass} p-6 flex items-center justify-between`}
         >
           <div>
- 
             <h3
               className={`text-[20px] font-semibold ${
                 isAllRequiredCompleted ? "text-primary" : "text-[#20242A]"
               }`}
             >
-                Stage: 2 Apply
+              Stage: 2 Apply
             </h3>
             <p
               className={`text-[14px] ${
@@ -706,7 +700,7 @@ export const ApplyStep: React.FC<ApplyStepProps> = ({
               }`}
             >
               Review your application package and upload any required receipts.
-              </p>
+            </p>
           </div>
           <div
             title={
