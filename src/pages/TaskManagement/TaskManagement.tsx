@@ -11,7 +11,6 @@ import {
   EditOutlined,
   EyeOutlined,
   MinusOutlined,
-  StopOutlined,
 } from "@ant-design/icons";
 import {
   Button,
@@ -88,11 +87,13 @@ export default function TaskManagement() {
   const [limit] = useState(10);
   const [status, setStatus] = useState<PartnerTaskStatus | "">("");
   const [priority, setPriority] = useState<PartnerTaskPriority | "">("");
+  const [lastActiveSection, setLastActiveSection] = useState<"status" | "priority">("priority");
   const [searchTerm, setSearchTerm] = useState("");
   const [openFormModal, setOpenFormModal] = useState(false);
   const [editingTask, setEditingTask] = useState<PartnerTaskListItem | null>(null);
   const [viewTask, setViewTask] = useState<PartnerTaskListItem | null>(null);
   const [cancelTask, setCancelTask] = useState<PartnerTaskListItem | null>(null);
+  const [cancelNote, setCancelNote] = useState("");
   const [completeModalTask, setCompleteModalTask] = useState<PartnerTaskListItem | null>(null);
   const [completeNote, setCompleteNote] = useState("");
   const [form] = Form.useForm();
@@ -102,8 +103,9 @@ export default function TaskManagement() {
   const { data: tasksData, isLoading, isFetching } = useGetPartnerTasksQuery({
     page,
     limit,
-    status: status || undefined,
+    status: lastActiveSection === "priority" ? "IN_PROGRESS" : (status || undefined),
     createdByMe: true,
+    searchTerm: searchTerm || undefined,
   });
 
   const { data: taskDetail, isLoading: detailLoading } = useGetTaskByIdQuery(
@@ -133,11 +135,10 @@ export default function TaskManagement() {
   const rows = useMemo(
     () =>
       allRows.filter((r) => {
-        if (priority && (r.status === "COMPLETED" || r.status === "CANCELLED"))
-          return false;
+        if (lastActiveSection === "priority" && r.status !== "IN_PROGRESS") return false;
         return !priority || r.priority === priority;
       }),
-    [allRows, priority],
+    [allRows, priority, lastActiveSection],
   );
 
   const stats = useMemo(() => {
@@ -146,24 +147,19 @@ export default function TaskManagement() {
       return {
         total: (apiStats as any).total || 0,
         inProgress: (apiStats as any).inProgress || 0,
-        submitted: (apiStats as any).submitted || 0,
         completed: (apiStats as any).completed || 0,
-        reviewOpen: (apiStats as any).submitted || 0,
         low: (apiStats as any).low || 0,
         medium: (apiStats as any).medium || 0,
         high: (apiStats as any).high || 0,
         cancelled: (apiStats as any).cancelled || 0,
-        urgent: (apiStats as any).urgent || 0,
       };
     }
     return allRows.reduce(
       (acc, r) => {
         acc.total += 1;
         if (r.status === "IN_PROGRESS") acc.inProgress += 1;
-        if (r.status === "SUBMITTED") acc.submitted += 1;
         if (r.status === "COMPLETED") acc.completed += 1;
-        if (r.status === "SUBMITTED") acc.reviewOpen += 1;
-        if (r.status !== "COMPLETED" && r.status !== "CANCELLED") {
+        if (r.status === "IN_PROGRESS") {
           if (r.priority === "LOW") acc.low += 1;
           if (r.priority === "MEDIUM") acc.medium += 1;
           if (r.priority === "HIGH") acc.high += 1;
@@ -171,7 +167,7 @@ export default function TaskManagement() {
         if (r.status === "CANCELLED") acc.cancelled += 1;
         return acc;
       },
-      { total: 0, inProgress: 0, completed: 0, submitted: 0, reviewOpen: 0, low: 0, medium: 0, high: 0, cancelled: 0, urgent: 0 },
+      { total: 0, inProgress: 0, completed: 0, low: 0, medium: 0, high: 0, cancelled: 0 },
     );
   }, [allRows, tasksData?.meta?.stats]);
 
@@ -252,9 +248,7 @@ export default function TaskManagement() {
       title: "Status",
       dataIndex: "status",
       render: (s: string) => (
-        <Tag color={statusColor[s] ?? "default"}>
-          {s === "SUBMITTED" ? "IN REVIEW" : s.replace(/_/g, " ")}
-        </Tag>
+        <Tag color={statusColor[s] ?? "default"}>{s.replace(/_/g, " ")}</Tag>
       ),
     },
     {
@@ -277,16 +271,6 @@ export default function TaskManagement() {
       width: 200,
       render: (_: unknown, row: PartnerTaskListItem) => (
         <Space>
-          {row.status === "IN_PROGRESS" && (
-            <Tooltip title="Cancel task">
-              <Button
-                type="text"
-                size="small"
-                icon={<StopOutlined />}
-                onClick={() => setCancelTask(row)}
-              />
-            </Tooltip>
-          )}
           <Tooltip title="Edit task">
             <Button
               type="default"
@@ -301,6 +285,26 @@ export default function TaskManagement() {
               onClick={() => setViewTask(row)}
             />
           </Tooltip>
+          {row.status === "IN_PROGRESS" && (
+            <Tooltip title="Mark as completed">
+              <Button
+                type="default"
+                icon={<CheckCircleOutlined />}
+                style={{ borderColor: "#10b981", color: "#10b981" }}
+                onClick={() => { setCompleteModalTask(row); setCompleteNote(""); }}
+              />
+            </Tooltip>
+          )}
+          {row.status === "IN_PROGRESS" && (
+            <Tooltip title="Cancel task">
+              <Button
+                type="default"
+                danger
+                icon={<CloseCircleOutlined />}
+                onClick={() => setCancelTask(row)}
+              />
+            </Tooltip>
+          )}
           <Popconfirm title="Delete this task?" onConfirm={() => deleteTask(row.id)}>
             <Tooltip title="Delete task">
               <Button type="default" danger icon={<DeleteOutlined />} />
@@ -328,25 +332,25 @@ export default function TaskManagement() {
           <Typography.Title level={4} className="!mb-0 !text-gray-800 font-semibold">Task Status</Typography.Title>
         </header>
         <div className="flex divide-x divide-slate-200">
-          <button type="button" onClick={() => { setStatus(""); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-400 ${!status ? "bg-indigo-50" : "bg-white hover:bg-slate-50"}`}>
+          <button type="button" onClick={() => { setPriority(""); setLastActiveSection("status"); setStatus(""); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-400 ${lastActiveSection === "status" && !status ? "bg-indigo-50" : "bg-white hover:bg-slate-50"}`}>
             <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
               <AppstoreOutlined className="text-[10px]" /> All
             </span>
-            <p className={`text-2xl font-bold tabular-nums ${!status ? "text-indigo-600" : "text-slate-800"}`}>{stats.total}</p>
+            <p className={`text-2xl font-bold tabular-nums ${lastActiveSection === "status" && !status ? "text-indigo-600" : "text-slate-800"}`}>{stats.total}</p>
           </button>
-          <button type="button" onClick={() => { setStatus("IN_PROGRESS"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-400 ${status === "IN_PROGRESS" ? "bg-sky-50" : "bg-white hover:bg-slate-50"}`}>
+          <button type="button" onClick={() => { setPriority(""); setLastActiveSection("status"); setStatus("IN_PROGRESS"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-400 ${status === "IN_PROGRESS" ? "bg-sky-50" : "bg-white hover:bg-slate-50"}`}>
             <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
               <ClockCircleOutlined className="text-[10px]" /> In Progress
             </span>
             <p className={`text-2xl font-bold tabular-nums ${status === "IN_PROGRESS" ? "text-sky-600" : "text-slate-800"}`}>{stats.inProgress}</p>
           </button>
-          <button type="button" onClick={() => { setStatus("COMPLETED"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 ${status === "COMPLETED" ? "bg-emerald-50" : "bg-white hover:bg-slate-50"}`}>
+          <button type="button" onClick={() => { setPriority(""); setLastActiveSection("status"); setStatus("COMPLETED"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 ${status === "COMPLETED" ? "bg-emerald-50" : "bg-white hover:bg-slate-50"}`}>
             <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
               <CheckCircleOutlined className="text-[10px]" /> Completed
             </span>
             <p className={`text-2xl font-bold tabular-nums ${status === "COMPLETED" ? "text-emerald-600" : "text-slate-800"}`}>{stats.completed}</p>
           </button>
-          <button type="button" onClick={() => { setStatus("CANCELLED"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-rose-400 ${status === "CANCELLED" ? "bg-rose-50" : "bg-white hover:bg-slate-50"}`}>
+          <button type="button" onClick={() => { setPriority(""); setLastActiveSection("status"); setStatus("CANCELLED"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-rose-400 ${status === "CANCELLED" ? "bg-rose-50" : "bg-white hover:bg-slate-50"}`}>
             <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
               <CloseCircleOutlined className="text-[10px]" /> Cancelled
             </span>
@@ -360,25 +364,25 @@ export default function TaskManagement() {
           <Typography.Title level={4} className="!mb-0 !text-gray-800 font-semibold">Priority</Typography.Title>
         </header>
         <div className="flex divide-x divide-slate-200">
-          <button type="button" onClick={() => { setPriority(""); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-400 ${!priority ? "bg-violet-50" : "bg-white hover:bg-slate-50"}`}>
+          <button type="button" onClick={() => { setStatus(""); setLastActiveSection("priority"); setPriority(""); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-400 ${lastActiveSection === "priority" && !priority ? "bg-violet-50" : "bg-white hover:bg-slate-50"}`}>
             <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
               <ControlOutlined className="text-[10px]" /> All
             </span>
-            <p className={`text-2xl font-bold tabular-nums ${!priority ? "text-violet-600" : "text-slate-800"}`}>{stats.low + stats.medium + stats.high}</p>
+            <p className={`text-2xl font-bold tabular-nums ${lastActiveSection === "priority" && !priority ? "text-violet-600" : "text-slate-800"}`}>{stats.inProgress}</p>
           </button>
-          <button type="button" onClick={() => { setPriority("LOW"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-400 ${priority === "LOW" ? "bg-slate-100" : "bg-white hover:bg-slate-50"}`}>
+          <button type="button" onClick={() => { setStatus(""); setLastActiveSection("priority"); setPriority("LOW"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-400 ${priority === "LOW" ? "bg-slate-100" : "bg-white hover:bg-slate-50"}`}>
             <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
               <ArrowDownOutlined className="text-[10px]" /> Low
             </span>
             <p className={`text-2xl font-bold tabular-nums ${priority === "LOW" ? "text-slate-700" : "text-slate-800"}`}>{stats.low}</p>
           </button>
-          <button type="button" onClick={() => { setPriority("MEDIUM"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400 ${priority === "MEDIUM" ? "bg-blue-50" : "bg-white hover:bg-slate-50"}`}>
+          <button type="button" onClick={() => { setStatus(""); setLastActiveSection("priority"); setPriority("MEDIUM"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400 ${priority === "MEDIUM" ? "bg-blue-50" : "bg-white hover:bg-slate-50"}`}>
             <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
               <MinusOutlined className="text-[10px]" /> Medium
             </span>
             <p className={`text-2xl font-bold tabular-nums ${priority === "MEDIUM" ? "text-blue-600" : "text-slate-800"}`}>{stats.medium}</p>
           </button>
-          <button type="button" onClick={() => { setPriority("HIGH"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-400 ${priority === "HIGH" ? "bg-amber-50" : "bg-white hover:bg-slate-50"}`}>
+          <button type="button" onClick={() => { setStatus(""); setLastActiveSection("priority"); setPriority("HIGH"); setPage(1); }} className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-400 ${priority === "HIGH" ? "bg-amber-50" : "bg-white hover:bg-slate-50"}`}>
             <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
               <ArrowUpOutlined className="text-[10px]" /> High
             </span>
@@ -388,12 +392,12 @@ export default function TaskManagement() {
       </section>
 
       <div className="flex items-center justify-between gap-3">
-        <Input
+        <Input.Search
           placeholder="Search tasks by title or description..."
           allowClear
-          onPressEnter={(e) => { setSearchTerm((e.target as HTMLInputElement).value); setPage(1); }}
-          onChange={(e) => { const value = e.target.value; setSearchTerm(value); if (!value) setPage(1); }}
-          style={{ maxWidth: 380, height: '38px' }}
+          onSearch={(value) => { setSearchTerm(value); setPage(1); }}
+          onChange={(e) => { if (!e.target.value) { setSearchTerm(""); setPage(1); } }}
+          style={{ maxWidth: 380 }}
         />
         <Button type="primary" onClick={onOpenCreate}>Create Task</Button>
       </div>
@@ -474,7 +478,17 @@ export default function TaskManagement() {
               />
             </Form.Item>
           </div>
-          <Form.Item name="description" label="Task description">
+          <Form.Item
+            name="description"
+            label="Task description"
+            rules={[{
+              validator: async (_, value) => {
+                const text = value ? value.replace(/<[^>]*>/g, "").trim() : "";
+                if (!text) return Promise.reject(new Error("Task description is required"));
+                return Promise.resolve();
+              },
+            }]}
+          >
             <RichTextEditor placeholder="Write detailed task instruction..." height={240} />
           </Form.Item>
         </Form>
@@ -485,19 +499,6 @@ export default function TaskManagement() {
         open={!!viewTask}
         onCancel={() => setViewTask(null)}
         footer={[
-          taskDetail?.status === "IN_PROGRESS" ? (
-            <Button
-              key="complete"
-              type="primary"
-              style={{ backgroundColor: "#10b981", borderColor: "#10b981" }}
-              onClick={() => {
-                setCompleteModalTask(viewTask);
-                setViewTask(null);
-              }}
-            >
-              Mark as Complete
-            </Button>
-          ) : null,
           <Button key="close" onClick={() => setViewTask(null)}>Close</Button>,
         ]}
         width={880}
@@ -590,23 +591,35 @@ export default function TaskManagement() {
       <Modal
         title="Cancel task"
         open={!!cancelTask}
-        onCancel={() => setCancelTask(null)}
+        onCancel={() => { setCancelTask(null); setCancelNote(""); }}
         onOk={async () => {
           if (!cancelTask) return;
           await updateTaskStatus({
             id: cancelTask.id,
             status: "CANCELLED",
-            note: "Task cancelled by creator",
+            note: cancelNote || undefined,
           }).unwrap();
           setCancelTask(null);
+          setCancelNote("");
         }}
         okText="Cancel Task"
         okButtonProps={{ danger: true }}
+        confirmLoading={updatingStatus}
+        destroyOnClose
       >
-        <Typography.Paragraph type="secondary">
-          Are you sure you want to cancel this task? This action cannot be undone.
+        <div className="mb-3 rounded-lg border border-red-100 bg-red-50 px-4 py-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-red-700">Task</p>
+          <p className="mt-0.5 text-sm font-semibold text-red-900">{cancelTask?.task_title || "Unknown Task"}</p>
+        </div>
+        <Typography.Paragraph type="secondary" className="mb-2">
+          Add a note explaining why this task is being cancelled. The assignee will be notified.
         </Typography.Paragraph>
-        <Typography.Text strong>Task: {cancelTask?.task_title || "Unknown Task"}</Typography.Text>
+        <Input.TextArea
+          rows={4}
+          placeholder="Cancellation reason..."
+          value={cancelNote}
+          onChange={(e) => setCancelNote(e.target.value)}
+        />
       </Modal>
 
       <Modal

@@ -84,6 +84,7 @@ type TaskListParams = {
   status?: string;
   dueDateFrom?: string;
   dueDateTo?: string;
+  searchTerm?: string;
 };
 
 export type CreateTaskBody = {
@@ -106,13 +107,14 @@ export const partnerTasksApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getPartnerTasks: builder.query<PaginatedResponse<PartnerTaskListItem>, TaskListParams>({
       query: (params = {}) => {
-        const { page = 1, limit = 10, assignedToMe, createdByMe, status, dueDateFrom, dueDateTo } = params;
+        const { page = 1, limit = 10, assignedToMe, createdByMe, status, dueDateFrom, dueDateTo, searchTerm } = params;
         const queryParams: Record<string, number | boolean | string> = { page, limit };
         if (assignedToMe != null) queryParams.assignedToMe = assignedToMe;
         if (createdByMe != null) queryParams.createdByMe = createdByMe;
         if (status && status.trim()) queryParams.status = status.trim();
         if (dueDateFrom) queryParams.dueDateFrom = dueDateFrom;
         if (dueDateTo) queryParams.dueDateTo = dueDateTo;
+        if (searchTerm && searchTerm.trim()) queryParams.searchTerm = searchTerm.trim();
         return {
           url: "/partners/tasks",
           method: "GET",
