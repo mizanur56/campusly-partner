@@ -63,20 +63,7 @@ export type AdmissionStepProps = {
   stageUnlocked?: boolean;
 };
 
-/* ================= Animated Collapse ================= */
-const Collapsible: React.FC<{
-  open: boolean;
-  children: React.ReactNode;
-  className?: string;
-}> = ({ open, children, className = "" }) => (
-  <div
-    className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${
-      open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
-    } ${className}`}
-  >
-    <div className="overflow-hidden">{children}</div>
-  </div>
-);
+import Collapsible from "../../../components/common/Shared/Collapsible";
 
 /* ================= Component ================= */
 export const AdmissionStep: React.FC<AdmissionStepProps> = ({
@@ -467,7 +454,8 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
       <div className={stageCardClass}>
         {/* ===== Header ===== */}
         <div
-          className={`${stageHeaderClass} p-6 flex items-center justify-between cursor-pointer select-none`}
+          title={stageLockedVisual ? "Complete the previous stage first" : undefined}
+          className={`${stageHeaderClass} p-6 flex items-center justify-between select-none ${stageLockedVisual ? "cursor-not-allowed" : "cursor-pointer"}`}
           onClick={() => {
             if (stageLockedVisual && !isExpanded) return;
             setUserToggledExpand(true);
@@ -491,10 +479,7 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
             </p>
           </div>
 
-          <div
-            title={stageLockedVisual ? "Complete the previous stage first" : undefined}
-            className={expandToggleClass}
-          >
+          <div className={stageLockedVisual ? "opacity-50" : ""}>
             <UpOutlined
               className={`text-[#4B5563] transition-transform duration-300 ${
                 isExpanded ? "rotate-0" : "rotate-180"

@@ -430,9 +430,6 @@ layer(base);
 
 @utility menu-dropdown-item-active {
   @apply bg-primary-50 text-primary-500 font-medium;
-  border-left: 3px solid var(--primary);
-  margin-left: 2px;
-  padding-left: calc(0.75rem - 2px);
 }
 
 @utility menu-dropdown-item-inactive {

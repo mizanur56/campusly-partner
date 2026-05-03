@@ -354,167 +354,147 @@ export default function TaskManagement() {
         ]}
       />
 
-      <section className="rounded-2xl border border-primary-border bg-white overflow-hidden">
-        <header className="px-4 pt-4 pb-3 flex items-center border-b border-slate-100">
-          <Typography.Title
-            level={4}
-            className="!mb-0 !text-gray-800 font-semibold"
-          >
-            Task Status
-          </Typography.Title>
-        </header>
-        <div className="flex divide-x divide-slate-200">
+      {/* ── Task Status ── */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          {
+            label: "All Tasks",
+            value: stats.total,
+            icon: <AppstoreOutlined />,
+            isActive: !status,
+            activeColor: "border-[#237D3B] bg-[#DFF2E6]",
+            activeText: "text-[#237D3B]",
+            activeIcon: "bg-[#237D3B]/10 text-[#237D3B]",
+            onClick: () => { setStatus(""); setPage(1); },
+          },
+          {
+            label: "In Progress",
+            value: stats.inProgress,
+            icon: <ClockCircleOutlined />,
+            isActive: status === "IN_PROGRESS",
+            activeColor: "border-sky-500 bg-sky-50",
+            activeText: "text-sky-600",
+            activeIcon: "bg-sky-100 text-sky-600",
+            onClick: () => { setStatus("IN_PROGRESS"); setPage(1); },
+          },
+          {
+            label: "Completed",
+            value: stats.completed,
+            icon: <CheckCircleOutlined />,
+            isActive: status === "COMPLETED",
+            activeColor: "border-emerald-500 bg-emerald-50",
+            activeText: "text-emerald-600",
+            activeIcon: "bg-emerald-100 text-emerald-600",
+            onClick: () => { setStatus("COMPLETED"); setPage(1); },
+          },
+          {
+            label: "Cancelled",
+            value: stats.cancelled,
+            icon: <CloseCircleOutlined />,
+            isActive: status === "CANCELLED",
+            activeColor: "border-rose-500 bg-rose-50",
+            activeText: "text-rose-600",
+            activeIcon: "bg-rose-100 text-rose-600",
+            onClick: () => { setStatus("CANCELLED"); setPage(1); },
+          },
+        ].map((item) => (
           <button
+            key={item.label}
             type="button"
-            onClick={() => {
-              setStatus("");
-              setPage(1);
-            }}
-            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-400 ${!status ? "bg-indigo-50" : "bg-white hover:bg-slate-50"}`}
+            onClick={item.onClick}
+            className={`rounded-2xl border-2 p-5 text-left transition-all duration-150 cursor-pointer focus:outline-none ${
+              item.isActive ? item.activeColor : "border-primary-border bg-white hover:bg-gray-50"
+            }`}
           >
-            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
-              <AppstoreOutlined className="text-[10px]" /> All
-            </span>
-            <p
-              className={`text-2xl font-bold tabular-nums ${!status ? "text-indigo-600" : "text-slate-800"}`}
-            >
-              {stats.total}
+            <div className="flex items-center justify-between mb-4">
+              <span className={`inline-flex h-10 w-10 items-center justify-center rounded-xl text-[18px] transition-colors ${
+                item.isActive ? item.activeIcon : "bg-gray-100 text-gray-500"
+              }`}>
+                {item.icon}
+              </span>
+              <span className={`text-[12px] font-semibold ${item.isActive ? item.activeText : "text-gray-400"}`}>
+                {item.label}
+              </span>
+            </div>
+            <p className={`text-[32px] font-bold tabular-nums leading-none ${
+              item.isActive ? item.activeText : "text-[#20242A]"
+            }`}>
+              {item.value}
             </p>
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              setStatus("IN_PROGRESS");
-              setPage(1);
-            }}
-            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-400 ${status === "IN_PROGRESS" ? "bg-sky-50" : "bg-white hover:bg-slate-50"}`}
-          >
-            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
-              <ClockCircleOutlined className="text-[10px]" /> In Progress
-            </span>
-            <p
-              className={`text-2xl font-bold tabular-nums ${status === "IN_PROGRESS" ? "text-sky-600" : "text-slate-800"}`}
-            >
-              {stats.inProgress}
-            </p>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setStatus("COMPLETED");
-              setPage(1);
-            }}
-            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 ${status === "COMPLETED" ? "bg-emerald-50" : "bg-white hover:bg-slate-50"}`}
-          >
-            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
-              <CheckCircleOutlined className="text-[10px]" /> Completed
-            </span>
-            <p
-              className={`text-2xl font-bold tabular-nums ${status === "COMPLETED" ? "text-emerald-600" : "text-slate-800"}`}
-            >
-              {stats.completed}
-            </p>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setStatus("CANCELLED");
-              setPage(1);
-            }}
-            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-rose-400 ${status === "CANCELLED" ? "bg-rose-50" : "bg-white hover:bg-slate-50"}`}
-          >
-            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
-              <CloseCircleOutlined className="text-[10px]" /> Cancelled
-            </span>
-            <p
-              className={`text-2xl font-bold tabular-nums ${status === "CANCELLED" ? "text-rose-600" : "text-slate-800"}`}
-            >
-              {stats.cancelled}
-            </p>
-          </button>
-        </div>
-      </section>
+        ))}
+      </div>
 
-      <section className="rounded-2xl border border-primary-border bg-white overflow-hidden">
-        <header className="px-4 pt-4 pb-3 flex items-center border-b border-slate-100">
-          <Typography.Title
-            level={4}
-            className="!mb-0 !text-gray-800 font-semibold"
-          >
-            Priority
-          </Typography.Title>
-        </header>
-        <div className="flex divide-x divide-slate-200">
+      {/* ── Priority ── */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          {
+            label: "All Priority",
+            value: stats.low + stats.medium + stats.high,
+            icon: <ControlOutlined />,
+            isActive: !priority,
+            activeColor: "border-violet-500 bg-violet-50",
+            activeText: "text-violet-600",
+            activeIcon: "bg-violet-100 text-violet-600",
+            onClick: () => { setPriority(""); setPage(1); },
+          },
+          {
+            label: "Low",
+            value: stats.low,
+            icon: <ArrowDownOutlined />,
+            isActive: priority === "LOW",
+            activeColor: "border-slate-400 bg-slate-50",
+            activeText: "text-slate-600",
+            activeIcon: "bg-slate-200 text-slate-600",
+            onClick: () => { setPriority("LOW"); setPage(1); },
+          },
+          {
+            label: "Medium",
+            value: stats.medium,
+            icon: <MinusOutlined />,
+            isActive: priority === "MEDIUM",
+            activeColor: "border-blue-500 bg-blue-50",
+            activeText: "text-blue-600",
+            activeIcon: "bg-blue-100 text-blue-600",
+            onClick: () => { setPriority("MEDIUM"); setPage(1); },
+          },
+          {
+            label: "High",
+            value: stats.high,
+            icon: <ArrowUpOutlined />,
+            isActive: priority === "HIGH",
+            activeColor: "border-amber-500 bg-amber-50",
+            activeText: "text-amber-600",
+            activeIcon: "bg-amber-100 text-amber-600",
+            onClick: () => { setPriority("HIGH"); setPage(1); },
+          },
+        ].map((item) => (
           <button
+            key={item.label}
             type="button"
-            onClick={() => {
-              setPriority("");
-              setPage(1);
-            }}
-            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-400 ${!priority ? "bg-violet-50" : "bg-white hover:bg-slate-50"}`}
+            onClick={item.onClick}
+            className={`rounded-2xl border-2 p-5 text-left transition-all duration-150 cursor-pointer focus:outline-none ${
+              item.isActive ? item.activeColor : "border-primary-border bg-white hover:bg-gray-50"
+            }`}
           >
-            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
-              <ControlOutlined className="text-[10px]" /> All
-            </span>
-            <p
-              className={`text-2xl font-bold tabular-nums ${!priority ? "text-violet-600" : "text-slate-800"}`}
-            >
-              {stats.low + stats.medium + stats.high}
+            <div className="flex items-center justify-between mb-4">
+              <span className={`inline-flex h-10 w-10 items-center justify-center rounded-xl text-[18px] transition-colors ${
+                item.isActive ? item.activeIcon : "bg-gray-100 text-gray-500"
+              }`}>
+                {item.icon}
+              </span>
+              <span className={`text-[12px] font-semibold ${item.isActive ? item.activeText : "text-gray-400"}`}>
+                {item.label}
+              </span>
+            </div>
+            <p className={`text-[32px] font-bold tabular-nums leading-none ${
+              item.isActive ? item.activeText : "text-[#20242A]"
+            }`}>
+              {item.value}
             </p>
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              setPriority("LOW");
-              setPage(1);
-            }}
-            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-400 ${priority === "LOW" ? "bg-slate-100" : "bg-white hover:bg-slate-50"}`}
-          >
-            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
-              <ArrowDownOutlined className="text-[10px]" /> Low
-            </span>
-            <p
-              className={`text-2xl font-bold tabular-nums ${priority === "LOW" ? "text-slate-700" : "text-slate-800"}`}
-            >
-              {stats.low}
-            </p>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setPriority("MEDIUM");
-              setPage(1);
-            }}
-            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400 ${priority === "MEDIUM" ? "bg-blue-50" : "bg-white hover:bg-slate-50"}`}
-          >
-            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
-              <MinusOutlined className="text-[10px]" /> Medium
-            </span>
-            <p
-              className={`text-2xl font-bold tabular-nums ${priority === "MEDIUM" ? "text-blue-600" : "text-slate-800"}`}
-            >
-              {stats.medium}
-            </p>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setPriority("HIGH");
-              setPage(1);
-            }}
-            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-400 ${priority === "HIGH" ? "bg-amber-50" : "bg-white hover:bg-slate-50"}`}
-          >
-            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
-              <ArrowUpOutlined className="text-[10px]" /> High
-            </span>
-            <p
-              className={`text-2xl font-bold tabular-nums ${priority === "HIGH" ? "text-amber-600" : "text-slate-800"}`}
-            >
-              {stats.high}
-            </p>
-          </button>
-        </div>
-      </section>
+        ))}
+      </div>
 
       <PageCard>
         <div className="flex justify-end mb-4">

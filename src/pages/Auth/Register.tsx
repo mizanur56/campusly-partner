@@ -311,20 +311,6 @@ const Register = () => {
                     />
                   </Form.Item>
 
-                  {/* <Form.Item
-            name="primaryContactNumber"
-            label="Primary Contact Number"
-            rules={[{ required: true, message: "Required" }]}
-            getValueFromEvent={phoneInputGetValueFromEvent}
-          >
-            <PhoneInput
-              country="bd"
-              disableCountryGuess
-              inputStyle={phoneInputStyle}
-              buttonStyle={phoneButtonStyle}
-            />
-          </Form.Item> */}
-
                   <Form.Item
                     label={
                       <span className="text-sm font-medium text-neutral-700">

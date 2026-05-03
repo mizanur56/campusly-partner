@@ -1175,7 +1175,9 @@
 
 // export default Sidebar;
 
-import { Tooltip } from "antd";
+import type { MenuProps } from "antd";
+import { Dropdown, Tooltip } from "antd";
+import { LogOutIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MdOutlineContentPaste } from "react-icons/md";
 import { useSelector } from "react-redux";
@@ -1304,6 +1306,12 @@ const STUDENT_NAV = [
     label: "Applications",
     icon: "fa-solid fa-file-lines",
     path: "applications",
+  },
+  {
+    key: "tasks",
+    label: "Tasks",
+    icon: "fa-solid fa-list-check",
+    path: "tasks",
   },
 ];
 
@@ -1734,33 +1742,58 @@ const Sidebar: React.FC = () => {
 
   return (
     <aside
-      className={`fixed top-0 left-0 z-50 mt-16 flex h-screen flex-col transition-all duration-300 ease-in-out lg:mt-0
+      className={`fixed top-0 left-0 z-50 mt-16 flex h-[calc(100vh-4rem)] lg:h-screen flex-col transition-all duration-300 ease-in-out lg:mt-0
         border-r-[1px] border-primary-border bg-[#FFFFFF] dark:border-[#353646] dark:bg-[#20242A]
-        ${isExpanded || isMobileOpen ? "w-[280px]" : "w-[80px]"}
-        ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
-        lg:translate-x-0`}
+        w-[280px] ${isExpanded ? "lg:w-[280px]" : "lg:w-[80px]"}
+        ${isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
     >
-      {/* Logo */}
-      <div
-        className={`flex px-5 pb-0 ${
-          !isExpanded && !isMobileOpen ? "lg:justify-center" : ""
-        }`}
-      >
-        <Link to="/" className="flex items-center gap-3">
-          <img
-            src="/images/logo/Frame1044.svg"
-            alt="Campus Transfer"
-            className={
-              isExpanded || isMobileOpen
-                ? "h-20 w-auto max-w-[300px]"
-                : "h-14 w-14 object-contain"
-            }
-          />
-        </Link>
-      </div>
+      {/* Logo / Back+Actions header */}
+      {(isExpanded || isMobileOpen) && showStudentSidebar && studentId ? (
+        <div className="hidden lg:flex py-[30.4px] items-center justify-between px-4 border-b border-primary-border dark:border-gray-700">
+          <Link
+            to={isApplicationDetailContext ? "/applications" : "/students"}
+            className="flex items-center gap-1.5 text-[13px] font-semibold text-[#237D3B] hover:opacity-75 transition-opacity dark:text-green-400"
+          >
+            <i className="fa-solid fa-arrow-left text-xs" />
+            Back
+          </Link>
+          <Dropdown
+            trigger={["click"]}
+            menu={{
+              items: [] as MenuProps["items"],
+            }}
+          >
+            <button
+              type="button"
+              className="flex items-center gap-1 text-[13px] font-semibold text-[#237D3B] hover:opacity-75 transition-opacity dark:text-green-400 cursor-pointer"
+            >
+              Actions
+              <i className="fa-solid fa-chevron-down text-xs" />
+            </button>
+          </Dropdown>
+        </div>
+      ) : (
+        <div
+          className={`flex px-5 pb-0 ${
+            !isExpanded && !isMobileOpen ? "lg:justify-center" : ""
+          }`}
+        >
+          <Link to="/" className="flex items-center gap-3">
+            <img
+              src="/images/logo/Frame1044.svg"
+              alt="Campus Transfer"
+              className={
+                isExpanded || isMobileOpen
+                  ? "h-20 w-auto max-w-[300px]"
+                  : "h-14 w-14 object-contain"
+              }
+            />
+          </Link>
+        </div>
+      )}
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto no-scrollbar">
+      <div className="flex-1 overflow-y-auto no-scrollbar overscroll-contain">
         {/* Sidebar preview: UNSIGNED (onboarding) partner view – "Managed by" card */}
         {(isExpanded || isMobileOpen) && isOnboardingContext && (
           <div className="mx-3 mt-0 rounded-xl bg-gray-50/80 p-3 dark:bg-gray-800/40">
@@ -1970,39 +2003,40 @@ const Sidebar: React.FC = () => {
 
         {/* Sidebar preview: STUDENT / APPLICATION DETAIL – student profile card + Activity/Profile/Applications/Tasks */}
         {(isExpanded || isMobileOpen) && showStudentSidebar && studentId && (
-          <div className="mt-3">
-            <div className="flex flex-col items-center gap-2.5">
-              <div className="shrink-0">
-                <img
-                  src={
-                    student?.avatar ?? `https://i.pravatar.cc/80?u=${studentId}`
-                  }
-                  alt=""
-                  className="h-20 w-20 rounded-full object-cover"
-                />
-              </div>
-              <div className="min-w-0 flex-1 text-center space-y-2">
-                <p className="truncate text-[18px] font-semibold text-gray-800 dark:text-gray-100">
+          <div className="mt-2">
+            {/* ── Profile card ── */}
+            <div className="flex flex-col items-center gap-2 px-4 pb-4">
+              <img
+                src={
+                  student?.avatar ?? `https://i.pravatar.cc/80?u=${studentId}`
+                }
+                alt=""
+                className="h-16 w-16 rounded-full object-cover"
+              />
+
+              <div className="text-center">
+                <p className="text-[15px] font-bold text-[#20242A] dark:text-gray-100">
                   {student?.name ?? "Student"}
                 </p>
-                <p className="text-[14px] text-gray-500 dark:text-gray-400 leading-snug break-words">
+                <p className="text-[12px] text-gray-500 dark:text-gray-400 mt-0.5 leading-snug">
                   {student?.email}
                 </p>
-                <p className="mt-0.5 text-[14px] text-gray-600 dark:text-gray-300">
+                <p className="text-[13px] font-semibold text-[#237D3B] dark:text-green-400 mt-1.5">
                   Status:{" "}
-                  <strong>
+                  <span>
                     {student?.applicationSidebar?.applicationStatus ??
                       student?.status ??
                       "Active"}
-                  </strong>
+                  </span>
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+
+              <div className="flex items-center gap-2 mt-1">
                 <Tooltip title="Edit profile" placement="bottom">
                   <button
                     type="button"
                     onClick={() => navigate(`/students/${studentId}/profile`)}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary-border bg-[#E9F2EB] text-[#237D3B] hover:bg-[#E9F2EB] hover:text-[#237D3B] transition-colors dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300 dark:hover:bg-gray-800"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary-border bg-[#E9F2EB] text-[#237D3B] hover:bg-[#DFF2E6] transition-colors dark:border-gray-700 dark:bg-gray-900/40 dark:text-green-400 cursor-pointer"
                     aria-label="Edit profile"
                   >
                     <i className="fa-solid fa-pen-to-square text-sm" />
@@ -2018,7 +2052,6 @@ const Sidebar: React.FC = () => {
                       try {
                         await navigator.clipboard.writeText(text);
                       } catch {
-                        // Fallback for older browsers
                         const ta = document.createElement("textarea");
                         ta.value = text;
                         ta.style.position = "fixed";
@@ -2029,7 +2062,7 @@ const Sidebar: React.FC = () => {
                         ta.remove();
                       }
                     }}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary-border bg-[#E9F2EB] text-[#237D3B] hover:bg-[#E9F2EB] hover:text-[#237D3B] transition-colors dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300 dark:hover:bg-gray-800"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary-border bg-[#E9F2EB] text-[#237D3B] hover:bg-[#DFF2E6] transition-colors dark:border-gray-700 dark:bg-gray-900/40 dark:text-green-400 cursor-pointer"
                     aria-label="Copy email"
                   >
                     <MdOutlineContentPaste className="text-sm" />
@@ -2037,6 +2070,9 @@ const Sidebar: React.FC = () => {
                 </Tooltip>
               </div>
             </div>
+
+            {/* ── Divider ── */}
+            <div className="h-px bg-primary-border dark:bg-gray-700 mx-3 mb-2" />
 
             {/* Application details cards (only in Application Details context) */}
             {isApplicationDetailContext && student?.applicationSidebar && (
@@ -2169,7 +2205,7 @@ const Sidebar: React.FC = () => {
               </div>
             )}
 
-            <nav className="mt-3 space-y-0.5">
+            <nav className="mt-3 px-3 flex flex-col gap-1">
               {studentNavItems.map((item) => {
                 const path = `/students/${studentId}/${item.path}`;
                 const isActiveNav = location.pathname === path;
@@ -2177,14 +2213,20 @@ const Sidebar: React.FC = () => {
                   <Link
                     key={item.key}
                     to={path}
-                    className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-[0.9375rem] font-medium transition-colors ${
+                    className={`menu-item group ${
                       isActiveNav
-                        ? "bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400"
-                        : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700/50"
+                        ? "menu-item-active pl-5 transition-all duration-300"
+                        : "menu-item-inactive"
                     }`}
                   >
-                    <i className={`${item.icon} w-4 text-center`} />
-                    <span>{item.label}</span>
+                    <span
+                      className={`menu-item-icon-size ${isActiveNav ? "menu-item-icon-active" : "menu-item-icon-inactive"}`}
+                    >
+                      <i className={`${item.icon} text-[18px]`} />
+                    </span>
+                    {(isExpanded || isMobileOpen) && (
+                      <span className="text-sm font-medium">{item.label}</span>
+                    )}
                   </Link>
                 );
               })}
@@ -2213,47 +2255,50 @@ const Sidebar: React.FC = () => {
               </nav>
             </div>
           )}
+        </div>
+      </div>
 
-          {/* Sidebar preview: STUDENT / APPLICATION – back link below student sidebar */}
-          {showStudentSidebar && studentId && (
-            <div className="px-3 py-4">
-              <Link
-                to={isApplicationDetailContext ? "/applications" : "/students"}
-                className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[0.9375rem] font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:hover:bg-gray-700/50 dark:hover:text-gray-100 transition-colors"
-              >
-                <i className="fa-solid fa-arrow-left w-4 text-center" />
-                <span>
-                  {isApplicationDetailContext
-                    ? "Back to Applications"
-                    : "Back to Students"}
-                </span>
-              </Link>
-            </div>
-          )}
-
-          <div className="px-3 py-3">
+      {/* Back+Actions — mobile only, fixed at bottom when in student sidebar */}
+      {isMobileOpen && showStudentSidebar && studentId && (
+        <div className="lg:hidden flex items-center justify-between px-4 py-3 border-t border-primary-border dark:border-gray-700">
+          <Link
+            to={isApplicationDetailContext ? "/applications" : "/students"}
+            className="flex items-center gap-1.5 text-[13px] font-semibold text-[#237D3B] hover:opacity-75 transition-opacity dark:text-green-400"
+          >
+            <i className="fa-solid fa-arrow-left text-xs" />
+            Back
+          </Link>
+          <Dropdown
+            trigger={["click"]}
+            menu={{ items: [] as MenuProps["items"] }}
+          >
             <button
               type="button"
-              onClick={handleLogout}
-              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-normal text-gray-600 transition-colors hover:bg-red-50 hover:text-red-600 dark:text-gray-400 dark:hover:bg-red-900/20 dark:hover:text-red-400 ${
-                !isExpanded && !isMobileOpen ? "justify-center" : ""
-              }`}
+              className="flex items-center gap-1 text-[13px] font-semibold text-[#237D3B] hover:opacity-75 transition-opacity dark:text-green-400 cursor-pointer"
             >
-              <span className="text-lg">
-                {!isExpanded && !isMobileOpen ? (
-                  <Tooltip title="Logout" placement="right">
-                    <span>
-                      <i className="fa-solid fa-sign-out-alt"></i>
-                    </span>
-                  </Tooltip>
-                ) : (
-                  <i className="fa-solid fa-sign-out-alt"></i>
-                )}
-              </span>
-              {(isExpanded || isMobileOpen) && <span>Logout</span>}
+              Actions
+              <i className="fa-solid fa-chevron-down text-xs" />
             </button>
-          </div>
+          </Dropdown>
         </div>
+      )}
+
+      {/* Logout — fixed at bottom */}
+      <div className="px-6 pb-2 border-t border-primary-border dark:border-gray-700 pt-2">
+        <button
+          type="button"
+          onClick={handleLogout}
+          className={`relative flex items-center w-full gap-2 lg:gap-3 px-3 py-2 rounded-md bg-primary text-white hover:bg-primary/90 transition-colors group ${
+            !isExpanded && !isMobileOpen ? "justify-center" : ""
+          }`}
+        >
+          <span className="text-white flex items-center">
+            <LogOutIcon size={16} />
+          </span>
+          {(isExpanded || isMobileOpen) && (
+            <span className="text-xs lg:text-sm font-medium">Logout</span>
+          )}
+        </button>
       </div>
     </aside>
   );

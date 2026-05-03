@@ -159,8 +159,8 @@ const Header: React.FC = () => {
       <div className="flex w-full min-w-0 max-w-full items-center justify-between gap-2 px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
         {/* Dashboard / Onboarding: Partner branding */}
         {isDashboardOrOnboarding ? (
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-xs font-semibold text-gray-600 dark:text-gray-200">
+          <div className="flex items-center gap-3 ml-12 lg:ml-0">
+            <div className="hidden lg:flex h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800 items-center justify-center text-xs font-semibold text-gray-600 dark:text-gray-200">
               {brandLogoUrl ? (
                 <img
                   src={brandLogoUrl}
@@ -448,7 +448,7 @@ const Header: React.FC = () => {
                 <button
                   onClick={handleFullscreen}
                   className="
-      relative group inline-flex items-center justify-center
+      hidden lg:inline-flex relative group items-center justify-center
       w-10 h-10 rounded-xl
       border border-primary-border
       bg-white
@@ -467,7 +467,9 @@ const Header: React.FC = () => {
       "
                   />
                 </button>
-                <AnnouncementDropdown />
+                <div className="hidden lg:block">
+                  <AnnouncementDropdown />
+                </div>
                 <NotificationDropdown />
                 <UserDropdown />
               </div>
@@ -478,7 +480,7 @@ const Header: React.FC = () => {
 
       {/* Mobile Menu Toggle Button */}
       <button
-        className="lg:hidden absolute left-4 top-1/2 -translate-y-1/2 p-2 text-gray-600 z-[100]"
+        className="lg:hidden absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-gray-600 hover:text-primary-500 border border-primary-border hover:border-primary-500 rounded-lg transition-colors z-[100]"
         onClick={handleToggle}
         aria-label="Toggle Sidebar"
       >

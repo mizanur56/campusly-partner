@@ -1,4 +1,4 @@
-import { DownOutlined, DownloadOutlined, UpOutlined } from "@ant-design/icons";
+import { DownloadOutlined, UpOutlined } from "@ant-design/icons";
 import React from "react";
 import { BiExport } from "react-icons/bi";
 import { BsFileEarmarkBarGraph } from "react-icons/bs";
@@ -7,6 +7,7 @@ import { IoCheckmarkCircleSharp } from "react-icons/io5";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import PrimaryButton from "../../../components/common/Button/PrimaryButton";
+import Collapsible from "../../../components/common/Shared/Collapsible";
 import { config } from "../../../config";
 import { useApplicationDocumentUploadMutation } from "../../../redux/features/application/applicationApi";
 import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
@@ -26,171 +27,122 @@ export const ChecklistUploadStep: React.FC<ChecklistUploadStepProps> = ({
 }) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [isExpanded, setIsExpanded] = React.useState(true);
 
-  // স্পেসিফিক লোডিং স্টেট
+  const [isExpanded, setIsExpanded] = React.useState(true);
+  const [userToggledExpand, setUserToggledExpand] = React.useState(false);
   const [uploadingId, setUploadingId] = React.useState<string | null>(null);
-  const [expandedDocuments, setExpandedDocuments] = React.useState<
-    Record<string, boolean>
-  >({});
+  const [expandedDocuments, setExpandedDocuments] = React.useState<Record<string, boolean>>({});
+  const [fileSizes, setFileSizes] = React.useState<Record<string, string>>({});
+  const [localUploads, setLocalUploads] = React.useState<Record<string, string>>({});
 
   const [createMedia] = useCreateMediaMutation();
   const [uploadDocument] = useApplicationDocumentUploadMutation();
-  const [fileSizes, setFileSizes] = React.useState<Record<string, string>>({});
 
-  const downloadDocument = React.useCallback(
-    async (url: string, name?: string) => {
-      if (!url) return;
-      try {
-        const res = await fetch(url, { credentials: "include" });
-        if (!res.ok) throw new Error(`Download failed (${res.status})`);
-        const blob = await res.blob();
+  const downloadDocument = React.useCallback(async (url: string, name?: string) => {
+    if (!url) return;
+    try {
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) throw new Error(`${res.status}`);
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = name?.trim() || "download";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      window.open(url, "_blank");
+    }
+  }, []);
 
-        const objectUrl = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = objectUrl;
-        a.download = name?.trim() ? name.trim() : "download";
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(objectUrl);
-      } catch (err) {
-        console.error("Download failed:", err);
-        window.open(url, "_blank");
-      }
-    },
-    [],
-  );
-
-  const toggleDocuments = (id: string) => {
-    setExpandedDocuments((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
+  const toggleDocuments = (sectionId: string) => {
+    setExpandedDocuments((prev) => ({ ...prev, [sectionId]: !prev[sectionId] }));
   };
 
-  /* ================= Get File Size from URL ================= */
-  const getFileSize = React.useCallback(
-    async (url: string): Promise<string> => {
-      try {
-        const resolved =
-          url && String(url).startsWith("http")
-            ? url
-            : `${config.image_access_url}${String(url || "")}`;
-
-        const response = await fetch(resolved, {
-          method: "HEAD",
-          credentials: "include",
-        });
-        const contentLength = response.headers.get("content-length");
-
-        if (contentLength) {
-          const bytes = parseInt(contentLength, 10);
-          return formatFileSize(bytes);
-        }
-
-        // Fallback: fetch the file to get size
-        const blobResponse = await fetch(resolved, { credentials: "include" });
-        const blob = await blobResponse.blob();
-        return formatFileSize(blob.size);
-      } catch (error) {
-        console.error("Error getting file size:", error);
-        return "—";
-      }
-    },
-    [],
-  );
-
-  /* ================= Format File Size ================= */
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const units = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
+    return `${Math.round((bytes / Math.pow(k, i)) * 100) / 100} ${units[i]}`;
   };
 
-  /* ================= Fetch File Sizes ================= */
+  const getFileSize = React.useCallback(async (url: string): Promise<string> => {
+    try {
+      const resolved = url.startsWith("http") ? url : `${config.image_access_url}${url}`;
+      const response = await fetch(resolved, { method: "HEAD", credentials: "include" });
+      const contentLength = response.headers.get("content-length");
+      if (contentLength) return formatFileSize(parseInt(contentLength, 10));
+      const blob = await (await fetch(resolved, { credentials: "include" })).blob();
+      return formatFileSize(blob.size);
+    } catch {
+      return "—";
+    }
+  }, []);
+
   React.useEffect(() => {
+    if (!applicationApiData) return;
     const fetchSizes = async () => {
       const sizes: Record<string, string> = {};
-
-      // Fetch sizes for all document URLs
-      if (applicationApiData?.vfsAppointmentLetter) {
-        sizes.vfsAppointmentLetter = await getFileSize(
-          `${config.image_access_url}${applicationApiData.vfsAppointmentLetter}`,
-        );
+      const fields = [
+        "vfsAppointmentLetter",
+        "bankStatement",
+        "affidavit",
+        "sponsor",
+        "internationalBankCard",
+      ] as const;
+      for (const field of fields) {
+        if (applicationApiData[field])
+          sizes[field] = await getFileSize(
+            `${config.image_access_url}${applicationApiData[field]}`,
+          );
       }
-      if (applicationApiData?.bankStatement) {
-        sizes.bankStatement = await getFileSize(
-          `${config.image_access_url}${applicationApiData.bankStatement}`,
-        );
-      }
-      if (applicationApiData?.affidavit) {
-        sizes.affidavit = await getFileSize(
-          `${config.image_access_url}${applicationApiData.affidavit}`,
-        );
-      }
-      if (applicationApiData?.sponsor) {
-        sizes.sponsor = await getFileSize(
-          `${config.image_access_url}${applicationApiData.sponsor}`,
-        );
-      }
-      if (applicationApiData?.internationalBankCard) {
-        sizes.internationalBankCard = await getFileSize(
-          `${config.image_access_url}${applicationApiData.internationalBankCard}`,
-        );
-      }
-
-      setFileSizes(sizes);
+      setFileSizes((prev) => ({ ...prev, ...sizes }));
     };
-
-    if (applicationApiData) {
-      fetchSizes();
-    }
+    fetchSizes();
   }, [applicationApiData, getFileSize]);
+
   const sections = React.useMemo(
     () => [
       {
         id: "vfs_appointment",
         title: "VFS Appointment",
         category: "vfsAppointmentLetter",
-        description:
-          "Upload your VFS appointment confirmation letter (PDF/image).",
-        // যদি লেটার থাকে তবেই URL জেনারেট হবে, নাহলে null
-        url: applicationApiData?.vfsAppointmentLetter
-          ? `${config.image_access_url}${applicationApiData.vfsAppointmentLetter}`
-          : null,
-        // Strict Check: null না হওয়া এবং খালি স্ট্রিং না হওয়া নিশ্চিত করে
+        description: "Upload your VFS appointment confirmation letter (PDF/image).",
+        url:
+          localUploads.vfsAppointmentLetter ||
+          (applicationApiData?.vfsAppointmentLetter
+            ? `${config.image_access_url}${applicationApiData.vfsAppointmentLetter}`
+            : null),
         isCompleted:
-          Boolean(applicationApiData?.vfsAppointmentLetter) &&
-          applicationApiData?.vfsAppointmentLetter !== "",
+          !!(localUploads.vfsAppointmentLetter || applicationApiData?.vfsAppointmentLetter),
       },
       {
         id: "bank_statement",
         title: "Bank Statement",
         category: "bankStatement",
         description:
-          "Sponsor’s bank statement for the last 3 months, along with a recent bank certificate. The ending balance should be converted into Euros.",
+          "Sponsor's bank statement for the last 3 months, along with a recent bank certificate. The ending balance should be converted into Euros.",
         url:
-          applicationApiData?.bankStatement &&
-          `${config.image_access_url}${applicationApiData.bankStatement}`,
-        isCompleted:
-          Boolean(applicationApiData?.bankStatement) &&
-          applicationApiData?.bankStatement !== "",
+          localUploads.bankStatement ||
+          (applicationApiData?.bankStatement
+            ? `${config.image_access_url}${applicationApiData.bankStatement}`
+            : null),
+        isCompleted: !!(localUploads.bankStatement || applicationApiData?.bankStatement),
       },
       {
         id: "affidavit",
         title: "Affidavit",
         category: "affidavit",
-        description:
-          "Upload the signed sponsor affidavit / declaration letter (if applicable).",
+        description: "Upload the signed sponsor affidavit / declaration letter (if applicable).",
         url:
-          applicationApiData?.affidavit &&
-          `${config.image_access_url}${applicationApiData.affidavit}`,
-        isCompleted:
-          Boolean(applicationApiData?.affidavit) &&
-          applicationApiData?.affidavit !== "",
+          localUploads.affidavit ||
+          (applicationApiData?.affidavit
+            ? `${config.image_access_url}${applicationApiData.affidavit}`
+            : null),
+        isCompleted: !!(localUploads.affidavit || applicationApiData?.affidavit),
       },
       {
         id: "sponsor_identification",
@@ -199,11 +151,11 @@ export const ChecklistUploadStep: React.FC<ChecklistUploadStepProps> = ({
         description:
           "Copy of identification of sponsor (front and back). If it is not English you have to upload it.",
         url:
-          applicationApiData?.sponsor &&
-          `${config.image_access_url}${applicationApiData.sponsor}`,
-        isCompleted:
-          Boolean(applicationApiData?.sponsor) &&
-          applicationApiData?.sponsor !== "",
+          localUploads.sponsor ||
+          (applicationApiData?.sponsor
+            ? `${config.image_access_url}${applicationApiData.sponsor}`
+            : null),
+        isCompleted: !!(localUploads.sponsor || applicationApiData?.sponsor),
       },
       {
         id: "international_bank_card",
@@ -212,36 +164,55 @@ export const ChecklistUploadStep: React.FC<ChecklistUploadStepProps> = ({
         description:
           "Upload the international bank card linked to the submitted bank statement (front and back).",
         url:
-          applicationApiData?.internationalBankCard &&
-          `${config.image_access_url}${applicationApiData.internationalBankCard}`,
-        isCompleted:
-          Boolean(applicationApiData?.internationalBankCard) &&
-          applicationApiData?.internationalBankCard !== "",
+          localUploads.internationalBankCard ||
+          (applicationApiData?.internationalBankCard
+            ? `${config.image_access_url}${applicationApiData.internationalBankCard}`
+            : null),
+        isCompleted: !!(
+          localUploads.internationalBankCard || applicationApiData?.internationalBankCard
+        ),
       },
     ],
-    [applicationApiData],
+    [applicationApiData, localUploads],
   );
-  /** ================= Upload Handler ================= */
+
+  const isAllRequiredCompleted = sections.every((s) => !!s.url);
+
+  React.useEffect(() => {
+    if (!embedded || userToggledExpand) return;
+    setIsExpanded(Boolean(autoOpen));
+  }, [autoOpen, embedded, userToggledExpand]);
+
+  React.useEffect(() => {
+    if (!embedded || stageUnlocked) return;
+    setIsExpanded(false);
+  }, [embedded, stageUnlocked]);
+
+  const stageLockedVisual = embedded && !stageUnlocked;
+  const expandToggleClass = stageLockedVisual ? "cursor-not-allowed opacity-50" : "cursor-pointer";
+  const stageCardClass = stageLockedVisual
+    ? "border border-primary-border rounded-2xl overflow-hidden bg-[#F4F6F5]"
+    : "border border-primary-border rounded-2xl overflow-hidden";
+  const stageHeaderClass = stageLockedVisual
+    ? "bg-[#EEF2EF]"
+    : "bg-[#DFF2E6] border-[#237D3B] border rounded-2xl";
+
   const handleFileUpload = async (categoryKey: string, file: File) => {
+    if (!applicationApiData?.id) return;
     setUploadingId(categoryKey);
     try {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("category", "document");
-
       const response = await createMedia(formData).unwrap();
-      // const documentUrl = `${config.image_access_url}${response.data.url}`;
       const documentUrl = response.data.url;
+      await uploadDocument({ id: applicationApiData.id, [categoryKey]: documentUrl }).unwrap();
 
-      const payload = {
-        id: applicationApiData.id,
-        [categoryKey]: documentUrl,
-      };
-
-      const res = await uploadDocument(payload).unwrap();
-      // if (res.success || res) {
-      //   toast.success(`${categoryKey.toUpperCase()} uploaded successfully`);
-      // }
+      // Immediate UI update
+      setLocalUploads((prev) => ({ ...prev, [categoryKey]: `${config.image_access_url}${documentUrl}` }));
+      setFileSizes((prev) => ({ ...prev, [categoryKey]: formatFileSize(file.size) }));
+      const section = sections.find((s) => s.category === categoryKey);
+      if (section) setExpandedDocuments((prev) => ({ ...prev, [section.id]: true }));
     } catch (err) {
       console.error("Upload failed:", err);
       toast.error("Upload failed");
@@ -255,47 +226,22 @@ export const ChecklistUploadStep: React.FC<ChecklistUploadStepProps> = ({
     input.type = "file";
     input.accept = ".pdf,.doc,.docx,.jpg,.png";
     input.onchange = () => {
-      if (input.files && input.files.length > 0) {
-        handleFileUpload(categoryKey, input.files[0]);
-      }
+      if (input.files?.[0]) handleFileUpload(categoryKey, input.files[0]);
     };
     input.click();
   };
-
-  // const isAllRequiredCompleted = sections.every((cat) => cat.isCompleted);
-  const isAllRequiredCompleted = sections.every((section) => !!section.url);
-
-  const didInitExpand = React.useRef(false);
-  React.useEffect(() => {
-    if (!embedded) return;
-    if (didInitExpand.current) return;
-    setIsExpanded(Boolean(autoOpen) && !isAllRequiredCompleted);
-    didInitExpand.current = true;
-  }, [autoOpen, embedded, isAllRequiredCompleted]);
-
-  React.useEffect(() => {
-    if (!embedded || stageUnlocked) return;
-    setIsExpanded(false);
-  }, [embedded, stageUnlocked]);
-
-  const expandToggleClass =
-    embedded && !stageUnlocked
-      ? "cursor-not-allowed opacity-50"
-      : "cursor-pointer";
-
-  const stageLockedVisual = embedded && !stageUnlocked;
-  const stageCardClass = stageLockedVisual
-    ? "border border-primary-border rounded-lg overflow-hidden bg-[#F4F6F5]"
-    : "border border-primary-border rounded-lg overflow-hidden";
-  const stageHeaderClass = stageLockedVisual
-    ? "bg-[#EEF2EF]"
-    : "bg-[#DFF2E6] border-[#237D3B] border rounded-lg";
 
   return (
     <>
       <div className={stageCardClass}>
         <div
-          className={`${stageHeaderClass} p-6 flex items-center justify-between`}
+          title={stageLockedVisual ? "Complete the previous stage first" : undefined}
+          className={`${stageHeaderClass} p-6 flex items-center justify-between select-none ${stageLockedVisual ? "cursor-not-allowed" : "cursor-pointer"}`}
+          onClick={() => {
+            if (stageLockedVisual && !isExpanded) return;
+            setUserToggledExpand(true);
+            setIsExpanded((prev) => !prev);
+          }}
         >
           <div>
             <h3
@@ -313,27 +259,20 @@ export const ChecklistUploadStep: React.FC<ChecklistUploadStepProps> = ({
               Upload all checklist documents to move to the next stage.
             </p>
           </div>
-          <div
-            title={
-              embedded && !stageUnlocked
-                ? "Complete the previous stage first"
-                : undefined
-            }
-            onClick={() => {
-              if (embedded && !stageUnlocked && !isExpanded) return;
-              setIsExpanded((prev) => !prev);
-            }}
-            className={expandToggleClass}
-          >
-            {isExpanded ? <UpOutlined /> : <DownOutlined />}
+          <div className={stageLockedVisual ? "opacity-50" : ""}>
+            <UpOutlined
+              className={`text-[#4B5563] transition-transform duration-300 ${
+                isExpanded ? "rotate-0" : "rotate-180"
+              }`}
+            />
           </div>
         </div>
 
-        {isExpanded && (
+        <Collapsible open={isExpanded}>
           <div className="space-y-4 p-4">
             {sections.map((section) => {
-              const isCompleted = !!section.url;
               const isSectionUploading = uploadingId === section.category;
+              const isDocExpanded = expandedDocuments[section.id] ?? false;
 
               return (
                 <div
@@ -342,11 +281,8 @@ export const ChecklistUploadStep: React.FC<ChecklistUploadStepProps> = ({
                 >
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                      {isCompleted ? (
-                        <IoCheckmarkCircleSharp
-                          size={24}
-                          className="text-[#16A34A]"
-                        />
+                      {section.isCompleted ? (
+                        <IoCheckmarkCircleSharp size={24} className="text-[#16A34A]" />
                       ) : (
                         <FaRegCircle size={22} className="text-gray-300" />
                       )}
@@ -357,11 +293,14 @@ export const ChecklistUploadStep: React.FC<ChecklistUploadStepProps> = ({
 
                     <button
                       disabled={!!uploadingId}
-                      onClick={() => triggerFileInput(section.category)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        triggerFileInput(section.category);
+                      }}
                       className="border border-[#237D3B] text-[#237D3B] rounded-md cursor-pointer p-2 hover:bg-[#F0FDF4] transition disabled:opacity-50"
                     >
                       {isSectionUploading ? (
-                        <div className="animate-spin h-5 w-5 border-2 border-[#237D3B] border-t-transparent rounded-full"></div>
+                        <div className="animate-spin h-5 w-5 border-2 border-[#237D3B] border-t-transparent rounded-full" />
                       ) : (
                         <BiExport size={18} />
                       )}
@@ -372,27 +311,27 @@ export const ChecklistUploadStep: React.FC<ChecklistUploadStepProps> = ({
                     {section.description}
                   </p>
 
-                  {/* ফাইল আপলোড করা থাকলে তবেই Read More দেখাবে */}
-                  {isCompleted && (
+                  {section.isCompleted && (
                     <>
                       <div className="flex justify-end mb-3">
                         <button
-                          onClick={() => toggleDocuments(section.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleDocuments(section.id);
+                          }}
                           className="flex items-center gap-1 cursor-pointer text-[#237D3B] font-medium text-[14px]"
                         >
-                          {expandedDocuments[section.id]
-                            ? "Read less"
-                            : "Read more"}
-                          {expandedDocuments[section.id] ? (
-                            <UpOutlined />
-                          ) : (
-                            <DownOutlined />
-                          )}
+                          {isDocExpanded ? "Read less" : "Read more"}
+                          <UpOutlined
+                            className={`transition-transform duration-300 ${
+                              isDocExpanded ? "rotate-0" : "rotate-180"
+                            }`}
+                          />
                         </button>
                       </div>
 
-                      {expandedDocuments[section.id] && (
-                        <div className="">
+                      <Collapsible open={isDocExpanded}>
+                        <div>
                           <p className="text-[16px] font-semibold text-[#111827] mb-3">
                             Attached Documents:
                           </p>
@@ -400,7 +339,7 @@ export const ChecklistUploadStep: React.FC<ChecklistUploadStepProps> = ({
                             <div className="flex items-center gap-3">
                               <BsFileEarmarkBarGraph className="text-[20px]" />
                               <div>
-                                <p className="text-[14px] font-medium text-[#20242A] truncate max-w-37.5">
+                                <p className="text-[14px] font-medium text-[#20242A] truncate max-w-50">
                                   {section.title}
                                 </p>
                                 <p className="text-[12px] text-[#6B7280]">
@@ -409,26 +348,21 @@ export const ChecklistUploadStep: React.FC<ChecklistUploadStepProps> = ({
                               </div>
                             </div>
                             <button
-                              onClick={() =>
-                                downloadDocument(
-                                  section?.url ?? "",
-                                  section?.title,
-                                )
-                              }
+                              onClick={() => downloadDocument(section?.url ?? "", section?.title)}
                               className="text-[#4B5563] hover:text-[#237D3B] cursor-pointer"
                             >
                               <DownloadOutlined style={{ fontSize: 18 }} />
                             </button>
                           </div>
                         </div>
-                      )}
+                      </Collapsible>
                     </>
                   )}
                 </div>
               );
             })}
           </div>
-        )}
+        </Collapsible>
       </div>
 
       {!embedded && (
@@ -439,15 +373,12 @@ export const ChecklistUploadStep: React.FC<ChecklistUploadStepProps> = ({
           >
             Previous
           </button>
-
-          <div className={!isAllRequiredCompleted ? "cursor-not-allowed" : ""}>
-            <PrimaryButton
-              text="Next"
-              disabled={!isAllRequiredCompleted}
-              className={`${!isAllRequiredCompleted ? "opacity-50 pointer-events-none" : ""}`}
-              onClick={() => navigate(`/applications/${id}/final-letter`)}
-            />
-          </div>
+          <PrimaryButton
+            text="Next"
+            disabled={!isAllRequiredCompleted}
+            className={!isAllRequiredCompleted ? "opacity-50 pointer-events-none" : ""}
+            onClick={() => id && navigate(`/applications/${id}/final-letter`)}
+          />
         </div>
       )}
     </>
@@ -455,9 +386,7 @@ export const ChecklistUploadStep: React.FC<ChecklistUploadStepProps> = ({
 };
 
 const ChecklistUpload: React.FC = () => {
-  const { applicationApiData } = useOutletContext<{
-    applicationApiData: any;
-  }>();
+  const { applicationApiData } = useOutletContext<{ applicationApiData: any }>();
   return <ChecklistUploadStep applicationApiData={applicationApiData} />;
 };
 

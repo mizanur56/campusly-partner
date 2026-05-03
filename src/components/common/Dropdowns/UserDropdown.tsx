@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { RiGlobalLine, RiUserLine } from "react-icons/ri";
+import { RiGlobalLine, RiMegaphoneLine, RiUserLine } from "react-icons/ri";
 import { useDispatch, useSelector } from "react-redux";
 import { config } from "../../../config";
 import { clearAuthLocalStorage } from "../../../lib/authLocalStorage";
@@ -115,6 +115,15 @@ export default function UserDropdown() {
               <span>Profile</span>
             </DropdownItem>
           )}
+          <DropdownItem
+            onItemClick={closeDropdown}
+            tag="a"
+            to="/announcements"
+            className="flex items-center gap-3 px-4 py-3 font-medium text-gray-700 text-[16px] group hover:bg-primary-50/50 hover:text-primary-600 border-b border-[#C7CACF80] lg:hidden"
+          >
+            <RiMegaphoneLine />
+            <span>Announcements</span>
+          </DropdownItem>
           <DropdownItem
             onItemClick={closeDropdown}
             tag="a"
