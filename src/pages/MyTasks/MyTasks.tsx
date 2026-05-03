@@ -72,6 +72,7 @@ export default function MyTasks() {
   const [limit] = useState(10);
   const [status, setStatus] = useState<PartnerTaskStatus | "">("");
   const [priority, setPriority] = useState<PartnerTaskPriority | "">("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [viewTask, setViewTask] = useState<PartnerTaskListItem | null>(null);
   const [completeModalTask, setCompleteModalTask] = useState<PartnerTaskListItem | null>(null);
   const [completeNote, setCompleteNote] = useState("");
@@ -266,6 +267,14 @@ export default function MyTasks() {
           </button>
         </div>
       </section>
+
+      <Input
+        placeholder="Search tasks by title or description..."
+        allowClear
+        onPressEnter={(e) => { setSearchTerm((e.target as HTMLInputElement).value); setPage(1); }}
+        onChange={(e) => { const value = e.target.value; setSearchTerm(value); if (!value) setPage(1); }}
+        style={{ maxWidth: 380, height: '38px' }}
+      />
 
       <div className="my-tasks-table-wrapper overflow-hidden rounded-[24px] border border-neutral-100 bg-white dark:border-gray-800 dark:bg-gray-900">
         <DataTable

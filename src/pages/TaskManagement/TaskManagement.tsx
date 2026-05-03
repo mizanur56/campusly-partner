@@ -88,6 +88,7 @@ export default function TaskManagement() {
   const [limit] = useState(10);
   const [status, setStatus] = useState<PartnerTaskStatus | "">("");
   const [priority, setPriority] = useState<PartnerTaskPriority | "">("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [openFormModal, setOpenFormModal] = useState(false);
   const [editingTask, setEditingTask] = useState<PartnerTaskListItem | null>(null);
   const [viewTask, setViewTask] = useState<PartnerTaskListItem | null>(null);
@@ -386,7 +387,14 @@ export default function TaskManagement() {
         </div>
       </section>
 
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between gap-3">
+        <Input
+          placeholder="Search tasks by title or description..."
+          allowClear
+          onPressEnter={(e) => { setSearchTerm((e.target as HTMLInputElement).value); setPage(1); }}
+          onChange={(e) => { const value = e.target.value; setSearchTerm(value); if (!value) setPage(1); }}
+          style={{ maxWidth: 380, height: '38px' }}
+        />
         <Button type="primary" onClick={onOpenCreate}>Create Task</Button>
       </div>
 
