@@ -1,5 +1,5 @@
 import type { MenuProps } from "antd";
-import { Dropdown, Empty, Input, Spin } from "antd";
+import { Dropdown, Empty, Spin } from "antd";
 import { Calendar, Filter, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -204,25 +204,27 @@ export default function AnnouncementsDetailsPage() {
   const loading = isLoading || isFetching;
 
   return (
-    <div className="announcements-details-page min-h-0">
+    <div className="announcements-details-page -mx-4 md:-mx-6 lg:-mx-8 -mt-4 md:-mt-6 lg:-mt-8">
       <PageMeta
         title="Announcements - Campus Transfer Partner"
         description="Read partner announcements and institution updates."
       />
 
-      <div className="flex min-h-[calc(100vh-12rem)] flex-col overflow-hidden  lg:flex-row">
+      <div className="flex h-[calc(100vh-4rem)] flex-col overflow-hidden lg:flex-row">
         {/* Left — list */}
-        <aside className="flex w-full shrink-0 flex-col border-b border-primary-border dark:border-gray-700 lg:w-[min(100%,380px)] lg:border-b-0 lg:border-r px-2">
-          <div className="flex gap-2 pb-4">
-            <Input
-              size="large"
-              placeholder="Search announcements..."
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              allowClear
-              className="flex-1 rounded-xl"
-              prefix={<Search className="h-4 w-4 text-gray-400" />}
-            />
+        <aside className="flex w-full shrink-0 flex-col border-b border-primary-border dark:border-gray-700 lg:w-[320px] lg:border-b-0 lg:border-r">
+          {/* Search + Filter */}
+          <div className="flex items-center gap-2 p-4 pt-5 pb-3 border-b border-primary-border dark:border-gray-700">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search announcements..."
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                className="w-full h-10 pl-9 pr-3 rounded-xl border border-primary-border bg-white text-sm text-[#20242A] placeholder:text-gray-400 focus:outline-none focus:border-primary dark:bg-[#252830] dark:text-gray-100 dark:border-gray-600 transition-colors"
+              />
+            </div>
             <Dropdown
               menu={{ items: filterMenuItems }}
               trigger={["click"]}
@@ -230,9 +232,11 @@ export default function AnnouncementsDetailsPage() {
             >
               <button
                 type="button"
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary-border bg-white text-gray-600 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-[#252830] dark:text-gray-300 dark:hover:bg-gray-800 ${
-                  categoryFilter ? "border-[#237D3B] text-[#237D3B]" : ""
-                }`}
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-colors ${
+                  categoryFilter
+                    ? "border-primary bg-primary-50 text-primary"
+                    : "border-primary-border bg-white text-gray-500 hover:border-primary hover:text-primary"
+                } dark:bg-[#252830] dark:border-gray-600`}
                 aria-label="Filter by category"
               >
                 <Filter className="h-4 w-4" />
@@ -240,7 +244,8 @@ export default function AnnouncementsDetailsPage() {
             </Dropdown>
           </div>
 
-          <div className="max-h-[420px] flex-1 overflow-y-auto lg:max-h-none lg:flex-1">
+          {/* List */}
+          <div className="max-h-[420px] flex-1 overflow-y-auto no-scrollbar lg:max-h-none">
             {loading ? (
               <div className="flex justify-center py-16">
                 <Spin />
@@ -250,7 +255,7 @@ export default function AnnouncementsDetailsPage() {
                 <Empty description="No announcements match your filters" />
               </div>
             ) : (
-              <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+              <ul>
                 {filteredList.map((a) => {
                   const active = selected?.id === a.id;
                   const logoUrl = getApiImageUrl(
@@ -261,37 +266,43 @@ export default function AnnouncementsDetailsPage() {
                       <button
                         type="button"
                         onClick={() => selectAnnouncement(a.id)}
-                        className={`flex w-full gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/60 ${
+                        className={`flex w-full gap-3 px-4 py-3.5 text-left transition-colors border-l-[3px] ${
                           active
-                            ? "bg-[#E9F2EB]/80 dark:bg-emerald-950/20 border-l-[3px] border-l-[#237D3B]"
-                            : "border-l-[3px] border-l-transparent"
+                            ? "bg-primary-50"
+                            : "border-l-transparent hover:bg-gray-50 dark:hover:bg-gray-800/60"
                         }`}
                       >
-                        <div className="shrink-0 pt-0.5">
+                        <div className="shrink-0">
                           {logoUrl ? (
                             <img
                               src={logoUrl}
                               alt=""
-                              className="h-11 w-11 rounded-full object-cover bg-gray-100 dark:bg-gray-800"
+                              className="h-10 w-10 rounded-full object-cover bg-gray-100 dark:bg-gray-800"
                             />
                           ) : (
-                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                            <div
+                              className={`flex h-10 w-10 items-center justify-center rounded-full text-xs font-semibold ${
+                                active
+                                  ? "bg-primary text-white"
+                                  : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                              }`}
+                            >
                               {initialsFromName(displayTitle(a))}
                             </div>
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-start justify-between gap-2">
-                            <p className="line-clamp-2 text-sm font-semibold text-[#20242A] dark:text-gray-100">
-                              {displayTitle(a)}
-                            </p>
-                            <span className="flex shrink-0 items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400">
-                              <Calendar className="h-3.5 w-3.5" />
-                              {formatListDate(a.createdAt)}
-                            </span>
-                          </div>
+                          <p
+                            className={`line-clamp-2 text-sm font-semibold leading-snug ${active ? "text-primary" : "text-[#20242A] dark:text-gray-100"}`}
+                          >
+                            {displayTitle(a)}
+                          </p>
+                          <span className="mt-1 flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-500">
+                            <Calendar className="h-3 w-3" />
+                            {formatListDate(a.createdAt)}
+                          </span>
                           {hasCategoryOrType(a) ? (
-                            <span className="mt-1.5 inline-flex rounded-full bg-[#E9F2EB] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#237D3B] dark:bg-emerald-950/40 dark:text-emerald-300">
+                            <span className="mt-1.5 inline-flex rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary dark:bg-primary/20">
                               {categoryLabel(a)}
                             </span>
                           ) : null}
@@ -306,7 +317,7 @@ export default function AnnouncementsDetailsPage() {
         </aside>
 
         {/* Right — detail */}
-        <main className="flex min-w-0 flex-1 flex-col ">
+        <main className="flex min-w-0 flex-1 flex-col">
           {loading && !selected ? (
             <div className="flex flex-1 items-center justify-center p-12">
               <Spin size="large" />
@@ -316,9 +327,10 @@ export default function AnnouncementsDetailsPage() {
               <Empty description="No announcement selected" />
             </div>
           ) : (
-            <>
-              <div className="flex-1 space-y-6 overflow-y-auto px-2">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+            <div className="flex flex-1 flex-col overflow-y-auto">
+              <div className="flex-1 space-y-5 p-6">
+                {/* Header */}
+                <div className="flex items-start gap-4">
                   {getApiImageUrl(
                     selected.university?.UniversityLogo ?? null,
                   ) ? (
@@ -327,73 +339,73 @@ export default function AnnouncementsDetailsPage() {
                         selected.university?.UniversityLogo ?? null,
                       )}
                       alt=""
-                      className="h-20 w-20 shrink-0 rounded-full object-cover bg-white shadow-sm ring-1 ring-gray-200 dark:bg-gray-800 dark:ring-gray-700 sm:h-24 sm:w-24"
+                      className="h-14 w-14 shrink-0 rounded-full object-cover ring-1 ring-primary-border"
                     />
                   ) : (
-                    <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-white text-lg font-semibold text-gray-600 shadow-sm ring-1 ring-gray-200 dark:bg-gray-800 dark:text-gray-300 sm:h-24 sm:w-24">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary-50 text-base font-bold text-primary ring-1 ring-primary-border">
                       {initialsFromName(displayTitle(selected))}
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <h1 className="text-lg font-bold text-[#20242A] dark:text-gray-100 ">
-                      {displayTitle(selected)}
+                    <h1 className="text-[18px] font-bold leading-snug text-[#20242A] dark:text-gray-100">
+                      {selected.title || displayTitle(selected)}
                     </h1>
-                    <div className="mt-2 flex flex-wrap items-center gap-3">
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <span className="flex items-center gap-1.5 text-[13px] text-gray-500 dark:text-gray-400">
+                        <Calendar className="h-3.5 w-3.5" />
+                        {formatListDate(selected.createdAt)}
+                      </span>
                       {hasCategoryOrType(selected) ? (
-                        <span className="inline-flex rounded-full bg-[#E9F2EB] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[#237D3B] dark:bg-emerald-950/40 dark:text-emerald-300">
+                        <span className="inline-flex rounded-full bg-primary-50 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-primary dark:bg-primary/20">
                           {categoryLabel(selected)}
                         </span>
                       ) : null}
-                      <span className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
-                        <Calendar className="h-4 w-4" />
-                        {formatListDate(selected.createdAt)}
-                      </span>
                     </div>
                   </div>
                 </div>
 
-                {hasIntakeYearValue(selected) || hasCategoryOrType(selected) ? (
-                  <div className="grid grid-cols-1 gap-4 rounded-xl border border-primary-border bg-white p-5 dark:border-gray-700 dark:bg-[#1f232b] sm:grid-cols-2">
-                    {hasIntakeYearValue(selected) ? (
+                {/* Meta card */}
+                {(hasIntakeYearValue(selected) ||
+                  hasCategoryOrType(selected)) && (
+                  <div className="grid grid-cols-2 gap-4 rounded-xl border border-primary-border bg-gray-50 p-4 dark:border-gray-700 dark:bg-[#1f232b]">
+                    {hasIntakeYearValue(selected) && (
                       <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           Intake year
                         </p>
-                        <p className="mt-1 text-base font-semibold text-[#20242A] dark:text-gray-100">
+                        <p className="mt-0.5 text-sm font-semibold text-[#20242A] dark:text-gray-100">
                           {String(selected.intakeYear)}
                         </p>
                       </div>
-                    ) : null}
-                    {hasCategoryOrType(selected) ? (
+                    )}
+                    {hasCategoryOrType(selected) && (
                       <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           Category
                         </p>
-                        <p className="mt-1 text-base font-semibold text-[#20242A] dark:text-gray-100">
+                        <p className="mt-0.5 text-sm font-semibold text-[#20242A] dark:text-gray-100">
                           {selected.category?.trim() ||
                             selected.type?.trim() ||
                             ""}
                         </p>
                       </div>
-                    ) : null}
+                    )}
                   </div>
-                ) : null}
+                )}
 
-                <div className="">
-                  <AnnouncementBody body={selected.body ?? ""} />
-                </div>
+                <AnnouncementBody body={selected.body ?? ""} />
               </div>
 
-              <div className="flex justify-end px-6 py-4 ">
+              <div className="flex justify-end border-t border-primary-border px-6 py-4 dark:border-gray-700">
                 <button
                   type="button"
                   onClick={markAcknowledged}
-                  className="rounded-lg bg-[#237D3B] px-8 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#1E6A33] focus:outline-none focus:ring-2 focus:ring-[#237D3B] focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                  className="rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary/90 focus:outline-none"
                 >
                   Acknowledge
                 </button>
               </div>
-            </>
+            </div>
           )}
         </main>
       </div>
