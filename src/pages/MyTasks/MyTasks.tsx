@@ -69,6 +69,8 @@ export default function MyTasks() {
   const [limit] = useState(10);
   const [status, setStatus] = useState<PartnerTaskStatus | "">("");
   const [priority, setPriority] = useState<PartnerTaskPriority | "">("");
+  const [lastActiveSection, setLastActiveSection] = useState<"status" | "priority">("priority");
+  const [searchTerm, setSearchTerm] = useState("");
   const [viewTask, setViewTask] = useState<PartnerTaskListItem | null>(null);
   const [completeModalTask, setCompleteModalTask] =
     useState<PartnerTaskListItem | null>(null);
@@ -82,7 +84,8 @@ export default function MyTasks() {
     page,
     limit,
     assignedToMe: true,
-    status: status || undefined,
+    status: lastActiveSection === "priority" ? "IN_PROGRESS" : (status || undefined),
+    searchTerm: searchTerm || undefined,
   });
 
   const { data: taskDetail, isLoading: detailLoading } = useGetTaskByIdQuery(
@@ -97,11 +100,10 @@ export default function MyTasks() {
   const rows = useMemo(
     () =>
       allRows.filter((r) => {
-        if (priority && (r.status === "COMPLETED" || r.status === "CANCELLED"))
-          return false;
+        if (lastActiveSection === "priority" && r.status !== "IN_PROGRESS") return false;
         return !priority || r.priority === priority;
       }),
-    [allRows, priority],
+    [allRows, priority, lastActiveSection],
   );
 
   const stats = useMemo(() => {
@@ -110,22 +112,19 @@ export default function MyTasks() {
       return {
         total: (apiStats as any).total || 0,
         inProgress: (apiStats as any).inProgress || 0,
-        submitted: (apiStats as any).submitted || 0,
         completed: (apiStats as any).completed || 0,
         low: (apiStats as any).low || 0,
         medium: (apiStats as any).medium || 0,
         high: (apiStats as any).high || 0,
         cancelled: (apiStats as any).cancelled || 0,
-        urgent: (apiStats as any).urgent || 0,
       };
     }
     return allRows.reduce(
       (acc, r) => {
         acc.total += 1;
         if (r.status === "IN_PROGRESS") acc.inProgress += 1;
-        if (r.status === "SUBMITTED") acc.submitted += 1;
         if (r.status === "COMPLETED") acc.completed += 1;
-        if (r.status !== "COMPLETED" && r.status !== "CANCELLED") {
+        if (r.status === "IN_PROGRESS") {
           if (r.priority === "LOW") acc.low += 1;
           if (r.priority === "MEDIUM") acc.medium += 1;
           if (r.priority === "HIGH") acc.high += 1;
