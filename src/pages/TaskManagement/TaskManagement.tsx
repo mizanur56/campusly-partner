@@ -25,7 +25,7 @@ import {
   Typography,
 } from "antd";
 import dayjs from "dayjs";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import PageCard from "../../components/common/Card/PageCard";
 import DateTimeHighlight from "../../components/common/DateTimeHighlight";
 import RichTextEditor from "../../components/common/Forms/RichTextEditor";
@@ -92,8 +92,18 @@ export default function TaskManagement() {
   const [limit] = useState(10);
   const [status, setStatus] = useState<PartnerTaskStatus | "">("");
   const [priority, setPriority] = useState<PartnerTaskPriority | "">("");
-  const [lastActiveSection, setLastActiveSection] = useState<"status" | "priority">("priority");
+  const [lastActiveSection, setLastActiveSection] = useState<
+    "status" | "priority"
+  >("priority");
   const [searchTerm, setSearchTerm] = useState("");
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debouncedSearch = useCallback((value: string) => {
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => {
+      setSearchTerm(value);
+      setPage(1);
+    }, 600);
+  }, []);
   const [openFormModal, setOpenFormModal] = useState(false);
   const [editingTask, setEditingTask] = useState<PartnerTaskListItem | null>(
     null,
@@ -102,6 +112,7 @@ export default function TaskManagement() {
   const [cancelTask, setCancelTask] = useState<PartnerTaskListItem | null>(
     null,
   );
+  const [cancelNote, setCancelNote] = useState("");
   const [completeModalTask, setCompleteModalTask] =
     useState<PartnerTaskListItem | null>(null);
   const [completeNote, setCompleteNote] = useState("");
@@ -116,7 +127,8 @@ export default function TaskManagement() {
   } = useGetPartnerTasksQuery({
     page,
     limit,
-    status: lastActiveSection === "priority" ? "IN_PROGRESS" : (status || undefined),
+    status:
+      lastActiveSection === "priority" ? "IN_PROGRESS" : status || undefined,
     createdByMe: true,
     searchTerm: searchTerm || undefined,
   });
@@ -149,7 +161,8 @@ export default function TaskManagement() {
   const rows = useMemo(
     () =>
       allRows.filter((r) => {
-        if (lastActiveSection === "priority" && r.status !== "IN_PROGRESS") return false;
+        if (lastActiveSection === "priority" && r.status !== "IN_PROGRESS")
+          return false;
         return !priority || r.priority === priority;
       }),
     [allRows, priority, lastActiveSection],
@@ -185,13 +198,10 @@ export default function TaskManagement() {
         total: 0,
         inProgress: 0,
         completed: 0,
-        submitted: 0,
-        reviewOpen: 0,
         low: 0,
         medium: 0,
         high: 0,
         cancelled: 0,
-        urgent: 0,
       },
     );
   }, [allRows, tasksData?.meta?.stats]);
@@ -310,6 +320,29 @@ export default function TaskManagement() {
               onClick={() => setViewTask(row)}
             />
           </Tooltip>
+          {row.status === "IN_PROGRESS" && (
+            <Tooltip title="Mark as completed">
+              <Button
+                type="default"
+                icon={<CheckCircleOutlined />}
+                style={{ borderColor: "#10b981", color: "#10b981" }}
+                onClick={() => {
+                  setCompleteModalTask(row);
+                  setCompleteNote("");
+                }}
+              />
+            </Tooltip>
+          )}
+          {row.status === "IN_PROGRESS" && (
+            <Tooltip title="Cancel task">
+              <Button
+                type="default"
+                danger
+                icon={<CloseCircleOutlined />}
+                onClick={() => setCancelTask(row)}
+              />
+            </Tooltip>
+          )}
           <Popconfirm
             title="Delete this task?"
             onConfirm={() => deleteTask(row.id)}
@@ -338,150 +371,194 @@ export default function TaskManagement() {
         ]}
       />
 
-      {/* ── Task Status ── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          {
-            label: "All Tasks",
-            value: stats.total,
-            icon: <AppstoreOutlined />,
-            isActive: !status,
-            activeColor: "border-[#237D3B] bg-[#DFF2E6]",
-            activeText: "text-[#237D3B]",
-            activeIcon: "bg-[#237D3B]/10 text-[#237D3B]",
-            onClick: () => { setStatus(""); setPage(1); },
-          },
-          {
-            label: "In Progress",
-            value: stats.inProgress,
-            icon: <ClockCircleOutlined />,
-            isActive: status === "IN_PROGRESS",
-            activeColor: "border-sky-500 bg-sky-50",
-            activeText: "text-sky-600",
-            activeIcon: "bg-sky-100 text-sky-600",
-            onClick: () => { setStatus("IN_PROGRESS"); setPage(1); },
-          },
-          {
-            label: "Completed",
-            value: stats.completed,
-            icon: <CheckCircleOutlined />,
-            isActive: status === "COMPLETED",
-            activeColor: "border-emerald-500 bg-emerald-50",
-            activeText: "text-emerald-600",
-            activeIcon: "bg-emerald-100 text-emerald-600",
-            onClick: () => { setStatus("COMPLETED"); setPage(1); },
-          },
-          {
-            label: "Cancelled",
-            value: stats.cancelled,
-            icon: <CloseCircleOutlined />,
-            isActive: status === "CANCELLED",
-            activeColor: "border-rose-500 bg-rose-50",
-            activeText: "text-rose-600",
-            activeIcon: "bg-rose-100 text-rose-600",
-            onClick: () => { setStatus("CANCELLED"); setPage(1); },
-          },
-        ].map((item) => (
-          <button
-            key={item.label}
-            type="button"
-            onClick={item.onClick}
-            className={`rounded-2xl border-2 p-5 text-left transition-all duration-150 cursor-pointer focus:outline-none ${
-              item.isActive ? item.activeColor : "border-primary-border bg-white hover:bg-gray-50"
-            }`}
+      <section className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+        <header className="px-4 pt-4 pb-3 flex items-center border-b border-slate-100">
+          <Typography.Title
+            level={4}
+            className="!mb-0 !text-gray-800 font-semibold"
           >
-            <div className="flex items-center justify-between mb-4">
-              <span className={`inline-flex h-10 w-10 items-center justify-center rounded-xl text-[18px] transition-colors ${
-                item.isActive ? item.activeIcon : "bg-gray-100 text-gray-500"
-              }`}>
-                {item.icon}
-              </span>
-              <span className={`text-[12px] font-semibold ${item.isActive ? item.activeText : "text-gray-400"}`}>
-                {item.label}
-              </span>
-            </div>
-            <p className={`text-[32px] font-bold tabular-nums leading-none ${
-              item.isActive ? item.activeText : "text-[#20242A]"
-            }`}>
-              {item.value}
+            Task Status
+          </Typography.Title>
+        </header>
+        <div className="flex divide-x divide-slate-200">
+          <button
+            type="button"
+            onClick={() => {
+              setPriority("");
+              setLastActiveSection("status");
+              setStatus("");
+              setPage(1);
+            }}
+            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-400 ${lastActiveSection === "status" && !status ? "bg-indigo-50" : "bg-white hover:bg-slate-50"}`}
+          >
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <AppstoreOutlined className="text-[10px]" /> All
+            </span>
+            <p
+              className={`text-2xl font-bold tabular-nums ${lastActiveSection === "status" && !status ? "text-indigo-600" : "text-slate-800"}`}
+            >
+              {stats.total}
             </p>
           </button>
-        ))}
-      </div>
+          <button
+            type="button"
+            onClick={() => {
+              setPriority("");
+              setLastActiveSection("status");
+              setStatus("IN_PROGRESS");
+              setPage(1);
+            }}
+            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-400 ${status === "IN_PROGRESS" ? "bg-sky-50" : "bg-white hover:bg-slate-50"}`}
+          >
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <ClockCircleOutlined className="text-[10px]" /> In Progress
+            </span>
+            <p
+              className={`text-2xl font-bold tabular-nums ${status === "IN_PROGRESS" ? "text-sky-600" : "text-slate-800"}`}
+            >
+              {stats.inProgress}
+            </p>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setPriority("");
+              setLastActiveSection("status");
+              setStatus("COMPLETED");
+              setPage(1);
+            }}
+            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 ${status === "COMPLETED" ? "bg-emerald-50" : "bg-white hover:bg-slate-50"}`}
+          >
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <CheckCircleOutlined className="text-[10px]" /> Completed
+            </span>
+            <p
+              className={`text-2xl font-bold tabular-nums ${status === "COMPLETED" ? "text-emerald-600" : "text-slate-800"}`}
+            >
+              {stats.completed}
+            </p>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setPriority("");
+              setLastActiveSection("status");
+              setStatus("CANCELLED");
+              setPage(1);
+            }}
+            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-rose-400 ${status === "CANCELLED" ? "bg-rose-50" : "bg-white hover:bg-slate-50"}`}
+          >
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <CloseCircleOutlined className="text-[10px]" /> Cancelled
+            </span>
+            <p
+              className={`text-2xl font-bold tabular-nums ${status === "CANCELLED" ? "text-rose-600" : "text-slate-800"}`}
+            >
+              {stats.cancelled}
+            </p>
+          </button>
+        </div>
+      </section>
 
-      {/* ── Priority ── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          {
-            label: "All Priority",
-            value: stats.low + stats.medium + stats.high,
-            icon: <ControlOutlined />,
-            isActive: !priority,
-            activeColor: "border-violet-500 bg-violet-50",
-            activeText: "text-violet-600",
-            activeIcon: "bg-violet-100 text-violet-600",
-            onClick: () => { setPriority(""); setPage(1); },
-          },
-          {
-            label: "Low",
-            value: stats.low,
-            icon: <ArrowDownOutlined />,
-            isActive: priority === "LOW",
-            activeColor: "border-slate-400 bg-slate-50",
-            activeText: "text-slate-600",
-            activeIcon: "bg-slate-200 text-slate-600",
-            onClick: () => { setPriority("LOW"); setPage(1); },
-          },
-          {
-            label: "Medium",
-            value: stats.medium,
-            icon: <MinusOutlined />,
-            isActive: priority === "MEDIUM",
-            activeColor: "border-blue-500 bg-blue-50",
-            activeText: "text-blue-600",
-            activeIcon: "bg-blue-100 text-blue-600",
-            onClick: () => { setPriority("MEDIUM"); setPage(1); },
-          },
-          {
-            label: "High",
-            value: stats.high,
-            icon: <ArrowUpOutlined />,
-            isActive: priority === "HIGH",
-            activeColor: "border-amber-500 bg-amber-50",
-            activeText: "text-amber-600",
-            activeIcon: "bg-amber-100 text-amber-600",
-            onClick: () => { setPriority("HIGH"); setPage(1); },
-          },
-        ].map((item) => (
-          <button
-            key={item.label}
-            type="button"
-            onClick={item.onClick}
-            className={`rounded-2xl border-2 p-5 text-left transition-all duration-150 cursor-pointer focus:outline-none ${
-              item.isActive ? item.activeColor : "border-primary-border bg-white hover:bg-gray-50"
-            }`}
+      <section className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+        <header className="px-4 pt-4 pb-3 flex items-center border-b border-slate-100">
+          <Typography.Title
+            level={4}
+            className="!mb-0 !text-gray-800 font-semibold"
           >
-            <div className="flex items-center justify-between mb-4">
-              <span className={`inline-flex h-10 w-10 items-center justify-center rounded-xl text-[18px] transition-colors ${
-                item.isActive ? item.activeIcon : "bg-gray-100 text-gray-500"
-              }`}>
-                {item.icon}
-              </span>
-              <span className={`text-[12px] font-semibold ${item.isActive ? item.activeText : "text-gray-400"}`}>
-                {item.label}
-              </span>
-            </div>
-            <p className={`text-[32px] font-bold tabular-nums leading-none ${
-              item.isActive ? item.activeText : "text-[#20242A]"
-            }`}>
-              {item.value}
+            Priority
+          </Typography.Title>
+        </header>
+        <div className="flex divide-x divide-slate-200">
+          <button
+            type="button"
+            onClick={() => {
+              setStatus("");
+              setLastActiveSection("priority");
+              setPriority("");
+              setPage(1);
+            }}
+            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-400 ${lastActiveSection === "priority" && !priority ? "bg-violet-50" : "bg-white hover:bg-slate-50"}`}
+          >
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <ControlOutlined className="text-[10px]" /> All
+            </span>
+            <p
+              className={`text-2xl font-bold tabular-nums ${lastActiveSection === "priority" && !priority ? "text-violet-600" : "text-slate-800"}`}
+            >
+              {stats.inProgress}
             </p>
           </button>
-        ))}
-      </div>
+          <button
+            type="button"
+            onClick={() => {
+              setStatus("");
+              setLastActiveSection("priority");
+              setPriority("LOW");
+              setPage(1);
+            }}
+            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-400 ${priority === "LOW" ? "bg-slate-100" : "bg-white hover:bg-slate-50"}`}
+          >
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <ArrowDownOutlined className="text-[10px]" /> Low
+            </span>
+            <p
+              className={`text-2xl font-bold tabular-nums ${priority === "LOW" ? "text-slate-700" : "text-slate-800"}`}
+            >
+              {stats.low}
+            </p>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setStatus("");
+              setLastActiveSection("priority");
+              setPriority("MEDIUM");
+              setPage(1);
+            }}
+            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400 ${priority === "MEDIUM" ? "bg-blue-50" : "bg-white hover:bg-slate-50"}`}
+          >
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <MinusOutlined className="text-[10px]" /> Medium
+            </span>
+            <p
+              className={`text-2xl font-bold tabular-nums ${priority === "MEDIUM" ? "text-blue-600" : "text-slate-800"}`}
+            >
+              {stats.medium}
+            </p>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setStatus("");
+              setLastActiveSection("priority");
+              setPriority("HIGH");
+              setPage(1);
+            }}
+            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-400 ${priority === "HIGH" ? "bg-amber-50" : "bg-white hover:bg-slate-50"}`}
+          >
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <ArrowUpOutlined className="text-[10px]" /> High
+            </span>
+            <p
+              className={`text-2xl font-bold tabular-nums ${priority === "HIGH" ? "text-amber-600" : "text-slate-800"}`}
+            >
+              {stats.high}
+            </p>
+          </button>
+        </div>
+      </section>
 
       <PageCard>
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-between mb-4">
+          <Input
+            placeholder="Search tasks by title or description..."
+            allowClear
+            onChange={(e) => {
+              debouncedSearch(e.target.value);
+            }}
+            style={{ maxWidth: 380 }}
+          />
           <Button type="primary" onClick={onOpenCreate}>
             Create Task
           </Button>
@@ -508,6 +585,7 @@ export default function TaskManagement() {
           }}
         />
       </PageCard>
+
       <Modal
         title={editingTask ? "Update task" : "Create new task"}
         open={openFormModal}
@@ -582,7 +660,24 @@ export default function TaskManagement() {
               />
             </Form.Item>
           </div>
-          <Form.Item name="description" label="Task description">
+          <Form.Item
+            name="description"
+            label="Task description"
+            rules={[
+              {
+                validator: async (_, value) => {
+                  const text = value
+                    ? value.replace(/<[^>]*>/g, "").trim()
+                    : "";
+                  if (!text)
+                    return Promise.reject(
+                      new Error("Task description is required"),
+                    );
+                  return Promise.resolve();
+                },
+              },
+            ]}
+          >
             <RichTextEditor
               placeholder="Write detailed task instruction..."
               height={240}
@@ -596,19 +691,6 @@ export default function TaskManagement() {
         open={!!viewTask}
         onCancel={() => setViewTask(null)}
         footer={[
-          taskDetail?.status === "IN_PROGRESS" ? (
-            <Button
-              key="complete"
-              type="primary"
-              style={{ backgroundColor: "#10b981", borderColor: "#10b981" }}
-              onClick={() => {
-                setCompleteModalTask(viewTask);
-                setViewTask(null);
-              }}
-            >
-              Mark as Complete
-            </Button>
-          ) : null,
           <Button key="close" onClick={() => setViewTask(null)}>
             Close
           </Button>,
@@ -619,7 +701,7 @@ export default function TaskManagement() {
           <div className="py-8 text-center text-gray-500">Loading...</div>
         ) : taskDetail ? (
           <div className="space-y-4">
-            <div className="rounded-xl border border-primary-border bg-gradient-to-r from-slate-50 to-white p-4">
+            <div className="rounded-xl border border-gray-200 bg-gradient-to-r from-slate-50 to-white p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
@@ -649,7 +731,7 @@ export default function TaskManagement() {
                 </div>
               </div>
               <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <div className="rounded-lg border border-primary-border bg-white p-3">
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
                   <p className="text-[11px] uppercase tracking-wide text-slate-500">
                     Due
                   </p>
@@ -660,7 +742,7 @@ export default function TaskManagement() {
                     />
                   </div>
                 </div>
-                <div className="rounded-lg border border-primary-border bg-white p-3">
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
                   <p className="text-[11px] uppercase tracking-wide text-slate-500">
                     Created
                   </p>
@@ -671,7 +753,7 @@ export default function TaskManagement() {
                     />
                   </div>
                 </div>
-                <div className="rounded-lg border border-primary-border bg-white p-3">
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
                   <p className="text-[11px] uppercase tracking-wide text-slate-500">
                     Updated
                   </p>
@@ -707,7 +789,7 @@ export default function TaskManagement() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-primary-border bg-white p-4">
+            <div className="rounded-xl border border-gray-200 bg-white p-4">
               <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">
                 Task Description
               </p>
@@ -741,7 +823,7 @@ export default function TaskManagement() {
                   </p>
                 )}
               </div>
-              <div className="rounded-xl border border-primary-border bg-slate-50 p-4">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                 <p className="text-xs font-medium uppercase tracking-wide text-slate-700">
                   Completion Note
                 </p>
@@ -764,7 +846,10 @@ export default function TaskManagement() {
       <Modal
         title="Cancel task"
         open={!!cancelTask}
-        onCancel={() => { setCancelTask(null); setCancelNote(""); }}
+        onCancel={() => {
+          setCancelTask(null);
+          setCancelNote("");
+        }}
         onOk={async () => {
           if (!cancelTask) return;
           await updateTaskStatus({
@@ -780,13 +865,24 @@ export default function TaskManagement() {
         confirmLoading={updatingStatus}
         destroyOnClose
       >
-        <Typography.Paragraph type="secondary">
-          Are you sure you want to cancel this task? This action cannot be
-          undone.
+        <div className="mb-3 rounded-lg border border-red-100 bg-red-50 px-4 py-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-red-700">
+            Task
+          </p>
+          <p className="mt-0.5 text-sm font-semibold text-red-900">
+            {cancelTask?.task_title || "Unknown Task"}
+          </p>
+        </div>
+        <Typography.Paragraph type="secondary" className="mb-2">
+          Add a note explaining why this task is being cancelled. The assignee
+          will be notified.
         </Typography.Paragraph>
-        <Typography.Text strong>
-          Task: {cancelTask?.task_title || "Unknown Task"}
-        </Typography.Text>
+        <Input.TextArea
+          rows={4}
+          placeholder="Cancellation reason..."
+          value={cancelNote}
+          onChange={(e) => setCancelNote(e.target.value)}
+        />
       </Modal>
 
       <Modal
