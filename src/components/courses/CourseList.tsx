@@ -22,12 +22,14 @@ interface CourseListProps {
   courses: Course[];
   onStartApplication?: (course: Course) => void;
   onViewDetails?: (course: Course) => void;
+  appliedCourseIds?: string[];
 }
 
 const CourseList: React.FC<CourseListProps> = ({
   courses,
   onStartApplication,
   onViewDetails,
+  appliedCourseIds, // Add this prop
 }) => {
   return (
     <div className="space-y-4">
@@ -43,6 +45,7 @@ const CourseList: React.FC<CourseListProps> = ({
           startDates={course.startDates}
           onStartApplication={() => onStartApplication?.(course)}
           onViewDetails={() => onViewDetails?.(course)}
+          isApplied={appliedCourseIds?.includes(course.id)}
         />
       ))}
     </div>

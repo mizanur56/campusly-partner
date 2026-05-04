@@ -264,10 +264,10 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
       const profilePayload: Record<string, unknown> = {
         firstName: firstName || null,
         lastName: lastName || null,
-        gender: String(values.gender ?? "").trim() || null,
+        gender: String(values.gender ?? "").trim() || "",
         country: String(values.country ?? "").trim() || null,
         passportNo: String(values.passportNo ?? "").trim() || null,
-        phone: String(values.phone ?? "").trim() || null,
+        phone: String(values.phone ?? "").trim() || "",
         email: email || null,
         lastEducationId: String(values.qualifications ?? "").trim() || null,
         // Dates: always standard YYYY-MM-DD (except passing year: YYYY only)

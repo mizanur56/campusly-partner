@@ -16,7 +16,10 @@ import {
   PHONE_BD_INITIAL_VALUE,
 } from "../sharedFormProps";
 import { toast } from "react-toastify";
-import { useGetStepDataQuery, usePatchStep1Mutation } from "../../../redux/features/onboardingForm/onboardingFormApi";
+import {
+  useGetStepDataQuery,
+  usePatchStep1Mutation,
+} from "../../../redux/features/onboardingForm/onboardingFormApi";
 import type { Step1Payload } from "../../../redux/features/onboardingForm/onboardingFormApi";
 import OnboardingFormSkeleton from "../OnboardingFormSkeleton";
 
@@ -34,11 +37,11 @@ export default function OwnerDetailsStep({ apiStep, onNext }: Props) {
   const [form] = Form.useForm();
   const { data: stepData, isFetching } = useGetStepDataQuery(apiStep);
   const [patchStep1, { isLoading: isSaving }] = usePatchStep1Mutation();
-  const payload = useMemo(
-    () => getOnboardingStepPayload(stepData),
-    [stepData],
+  const payload = useMemo(() => getOnboardingStepPayload(stepData), [stepData]);
+  const hasPersistedData = useMemo(
+    () => step1HasPersistedData(payload),
+    [payload],
   );
-  const hasPersistedData = useMemo(() => step1HasPersistedData(payload), [payload]);
   const {
     formDisabled,
     showEditControl,
@@ -51,7 +54,9 @@ export default function OwnerDetailsStep({ apiStep, onNext }: Props) {
   useEffect(() => {
     const raw = stepData?.data && (stepData.data as any).data;
     if (raw && typeof raw === "object") {
-      const next = { ...raw } as Partial<Step1Payload> & { mobileNumber?: string };
+      const next = { ...raw } as Partial<Step1Payload> & {
+        mobileNumber?: string;
+      };
       const digits = String(next.mobileNumber ?? "").replace(/\D/g, "");
       if (!digits) {
         next.mobileNumber = PHONE_BD_INITIAL_VALUE;
@@ -64,7 +69,9 @@ export default function OwnerDetailsStep({ apiStep, onNext }: Props) {
     cancelEditing();
     const raw = stepData?.data && (stepData.data as any).data;
     if (raw && typeof raw === "object") {
-      const next = { ...raw } as Partial<Step1Payload> & { mobileNumber?: string };
+      const next = { ...raw } as Partial<Step1Payload> & {
+        mobileNumber?: string;
+      };
       const digits = String(next.mobileNumber ?? "").replace(/\D/g, "");
       if (!digits) {
         next.mobileNumber = PHONE_BD_INITIAL_VALUE;
@@ -93,6 +100,7 @@ export default function OwnerDetailsStep({ apiStep, onNext }: Props) {
         try {
           await patchStep1(values as Step1Payload).unwrap();
           toast.success("Saved");
+          cancelEditing();
         } catch (err) {
           patchErrorToast(err);
         }
@@ -123,11 +131,29 @@ export default function OwnerDetailsStep({ apiStep, onNext }: Props) {
         onCancel={handleCancelEdit}
       />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <FormInput name="registeredCompanyName" label="Registered Company Name" placeholder="Enter registered company name" rules={[{ required: true, message: "Required" }]} disabled={formDisabled} />
-        <FormInput name="companyRegistrationNumber" label="Company Registration Number" placeholder="Enter registration number" rules={[{ required: true, message: "Required" }]} disabled={formDisabled} />
+        <FormInput
+          name="registeredCompanyName"
+          label="Registered Company Name"
+          placeholder="Enter registered company name"
+          rules={[{ required: true, message: "Required" }]}
+          disabled={formDisabled}
+        />
+        <FormInput
+          name="companyRegistrationNumber"
+          label="Company Registration Number"
+          placeholder="Enter registration number"
+          rules={[{ required: true, message: "Required" }]}
+          disabled={formDisabled}
+        />
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <FormInput name="countryOfRegistration" label="Country of Registration" placeholder="Select an item" rules={[{ required: true, message: "Required" }]} disabled={formDisabled} />
+        <FormInput
+          name="countryOfRegistration"
+          label="Country of Registration"
+          placeholder="Select an item"
+          rules={[{ required: true, message: "Required" }]}
+          disabled={formDisabled}
+        />
         <Form.Item
           name="mobileNumber"
           label="Mobile Number"
@@ -144,17 +170,48 @@ export default function OwnerDetailsStep({ apiStep, onNext }: Props) {
         </Form.Item>
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <FormInput name="email" label="Email" placeholder="Select an item" disabled={formDisabled} />
-        <FormInput name="website" label="Website" placeholder="Enter website url" disabled={formDisabled} />
+        <FormInput
+          name="email"
+          label="Email"
+          placeholder="Select an item"
+          disabled={formDisabled}
+        />
+        <FormInput
+          name="website"
+          label="Website"
+          placeholder="Enter website url"
+          disabled={formDisabled}
+        />
       </div>
-      <FormInput name="companyAddress" label="Company Address" placeholder="Enter company address" disabled={formDisabled} />
+      <FormInput
+        name="companyAddress"
+        label="Company Address"
+        placeholder="Enter company address"
+        disabled={formDisabled}
+      />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <FormInput name="facebook" label="Facebook" placeholder="Enter facebook url" disabled={formDisabled} />
-        <FormInput name="instagram" label="Instagram" placeholder="Enter instagram url" disabled={formDisabled} />
+        <FormInput
+          name="facebook"
+          label="Facebook"
+          placeholder="Enter facebook url"
+          disabled={formDisabled}
+        />
+        <FormInput
+          name="instagram"
+          label="Instagram"
+          placeholder="Enter instagram url"
+          disabled={formDisabled}
+        />
       </div>
       <div className="mt-8 flex flex-wrap justify-end gap-3">
         {showSaveButton && (
-          <Button type="button" variant="primary" size="sm" onClick={handleSave} disabled={isSaving}>
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            onClick={handleSave}
+            disabled={isSaving}
+          >
             {isSaving ? "Saving…" : "Save"}
           </Button>
         )}

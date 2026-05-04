@@ -58,11 +58,11 @@ export default function RegularComplianceStep({
   const { data: stepData, isFetching } = useGetStepDataQuery(apiStep);
   const [patchStep4, { isLoading: isSaving }] = usePatchStep4Mutation();
   const [uploadFile, { isLoading: isUploading }] = useCreateMediaMutation();
-  const payload = useMemo(
-    () => getOnboardingStepPayload(stepData),
-    [stepData],
+  const payload = useMemo(() => getOnboardingStepPayload(stepData), [stepData]);
+  const hasPersistedData = useMemo(
+    () => step4HasPersistedData(payload),
+    [payload],
   );
-  const hasPersistedData = useMemo(() => step4HasPersistedData(payload), [payload]);
   const {
     formDisabled: readOnly,
     showEditControl,
@@ -223,8 +223,7 @@ export default function RegularComplianceStep({
     businessRegistrationCertificate:
       documents.businessRegistrationCertificate || undefined,
     taxCertificate: documents.taxCertificate || undefined,
-    customDocuments:
-      customDocuments.length > 0 ? customDocuments : undefined,
+    customDocuments: customDocuments.length > 0 ? customDocuments : undefined,
   });
 
   const validateRequiredUploads = () => {
@@ -258,6 +257,7 @@ export default function RegularComplianceStep({
     try {
       await patchStep4(buildStep4Payload()).unwrap();
       toast.success("Saved");
+      cancelEditing();
     } catch (err) {
       patchErrorToast(err);
     }
@@ -427,7 +427,6 @@ export default function RegularComplianceStep({
 
       {/* Fixed Document Fields */}
       <div className="space-y-2">
-       
         {FIXED_UPLOAD_ITEMS.map((item) => {
           const hasFile = !!documents[item.key];
           const isUploadingThis = uploadingField === item.key;
@@ -471,7 +470,8 @@ export default function RegularComplianceStep({
                       type="button"
                       onClick={() => {
                         const url = getFullUrl(documents[item.key]);
-                        if (url) window.open(url, "_blank", "noopener,noreferrer");
+                        if (url)
+                          window.open(url, "_blank", "noopener,noreferrer");
                       }}
                       className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-primary-600 transition-colors hover:bg-primary-50 hover:text-primary-700 dark:text-primary-400 dark:hover:bg-primary-950/30"
                       title="View file"

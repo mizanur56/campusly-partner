@@ -1,6 +1,6 @@
 import { SearchOutlined } from "@ant-design/icons";
 import { Button } from "antd";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import ApplyPreferenceModal from "../../components/common/Modals/Apply/ApplyPreferenceModal";
@@ -13,6 +13,7 @@ import StudyPreferenceFilters, {
   FilterState,
 } from "../../components/courses/StudyPreferenceFilters";
 import { useAppSelector } from "../../redux/features/hooks";
+import { useGetSingleStudentApplicationsQuery } from "../../redux/features/application/applicationApi";
 
 export default function ProgramsSchoolsPage() {
   const [searchParams] = useSearchParams();
@@ -22,6 +23,8 @@ export default function ProgramsSchoolsPage() {
   const [activeTab, setActiveTab] = useState<"courses" | "institutions">(
     tabFromUrl === "institutions" ? "institutions" : "courses",
   );
+  // const {data}=useGetSingleStudentApplicationsQuery({studentId:1})
+
   const [searchQuery, setSearchQuery] = useState(qFromUrl);
   const [filters, setFilters] = useState<FilterState | undefined>(undefined);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
@@ -32,6 +35,15 @@ export default function ProgramsSchoolsPage() {
     useState<CourseForApply | null>(null);
 
   const metaData = useAppSelector((state) => state.searchMeta);
+  const { data: applicationsData } = useGetSingleStudentApplicationsQuery(
+    { studentId: selectedStudent?.id },
+    { skip: !selectedStudent?.id }, //
+  );
+  const appliedCourseIds = useMemo(() => {
+    if (!applicationsData?.data) return [];
+
+    return applicationsData.data.map((app: any) => app.courseId);
+  }, [applicationsData]);
 
   const handleStartApplication = (course: CourseForApply) => {
     if (!selectedStudent) {
@@ -195,6 +207,7 @@ export default function ProgramsSchoolsPage() {
                 searchQuery={searchQuery}
                 filters={filters}
                 onStartApplication={handleStartApplication}
+                appliedCourseIds={appliedCourseIds}
               />
             )}
             {activeTab === "institutions" && (

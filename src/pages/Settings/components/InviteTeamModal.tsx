@@ -30,7 +30,10 @@ export default function InviteTeamModal({
     try {
       const values = await form.validateFields();
       const fullDigits = String(values.phone || "").replace(/\D/g, "");
-      const dial = String(phoneMetaRef.current.dialCode || "").replace(/\D/g, "");
+      const dial = String(phoneMetaRef.current.dialCode || "").replace(
+        /\D/g,
+        "",
+      );
       const national =
         dial && fullDigits.startsWith(dial)
           ? fullDigits.slice(dial.length)
@@ -106,7 +109,9 @@ export default function InviteTeamModal({
             <Form.Item
               label="Contact Number"
               name="phone"
-              rules={[{ required: true, message: "Contact number is required" }]}
+              rules={[
+                { required: true, message: "Contact number is required" },
+              ]}
               getValueFromEvent={phoneInputGetValueFromEvent}
             >
               <PhoneInput
@@ -114,7 +119,7 @@ export default function InviteTeamModal({
                 disableCountryGuess
                 inputStyle={{
                   ...phoneInputStyle,
-                  height: 40,
+                  height: 48,
                   borderRadius: 8,
                 }}
                 buttonStyle={{

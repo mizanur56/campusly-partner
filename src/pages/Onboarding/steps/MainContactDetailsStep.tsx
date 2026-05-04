@@ -16,7 +16,10 @@ import {
   PHONE_BD_INITIAL_VALUE,
 } from "../sharedFormProps";
 import { toast } from "react-toastify";
-import { useGetStepDataQuery, usePatchStep3Mutation } from "../../../redux/features/onboardingForm/onboardingFormApi";
+import {
+  useGetStepDataQuery,
+  usePatchStep3Mutation,
+} from "../../../redux/features/onboardingForm/onboardingFormApi";
 import type { Step3Payload } from "../../../redux/features/onboardingForm/onboardingFormApi";
 import OnboardingFormSkeleton from "../OnboardingFormSkeleton";
 
@@ -31,15 +34,19 @@ interface Props {
   onNext: () => void;
 }
 
-export default function MainContactDetailsStep({ apiStep, onPrev, onNext }: Props) {
+export default function MainContactDetailsStep({
+  apiStep,
+  onPrev,
+  onNext,
+}: Props) {
   const [form] = Form.useForm();
   const { data: stepData, isFetching } = useGetStepDataQuery(apiStep);
   const [patchStep3, { isLoading: isSaving }] = usePatchStep3Mutation();
-  const payload = useMemo(
-    () => getOnboardingStepPayload(stepData),
-    [stepData],
+  const payload = useMemo(() => getOnboardingStepPayload(stepData), [stepData]);
+  const hasPersistedData = useMemo(
+    () => step3HasPersistedData(payload),
+    [payload],
   );
-  const hasPersistedData = useMemo(() => step3HasPersistedData(payload), [payload]);
   const {
     formDisabled,
     showEditControl,
@@ -50,8 +57,7 @@ export default function MainContactDetailsStep({ apiStep, onPrev, onNext }: Prop
   } = useOnboardingFormEditMode(hasPersistedData);
 
   useEffect(() => {
-    const payload =
-      stepData?.data && (stepData.data as any).data;
+    const payload = stepData?.data && (stepData.data as any).data;
     if (payload && typeof payload === "object") {
       const d = payload as Record<string, unknown>;
       form.setFieldsValue({
@@ -112,6 +118,7 @@ export default function MainContactDetailsStep({ apiStep, onPrev, onNext }: Prop
         try {
           await patchStep3(payload).unwrap();
           toast.success("Saved");
+          cancelEditing();
         } catch (err) {
           patchErrorToast(err);
         }
@@ -142,11 +149,29 @@ export default function MainContactDetailsStep({ apiStep, onPrev, onNext }: Prop
         onCancel={handleCancelEdit}
       />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 [&_.ant-form-item]:min-w-0">
-        <FormInput name="fullName" label="Full Name" placeholder="Enter full name" rules={[{ required: true, message: "Required" }]} disabled={formDisabled} />
-        <FormInput name="position" label="Position" placeholder="Enter position" rules={[{ required: true, message: "Required" }]} disabled={formDisabled} />
+        <FormInput
+          name="fullName"
+          label="Full Name"
+          placeholder="Enter full name"
+          rules={[{ required: true, message: "Required" }]}
+          disabled={formDisabled}
+        />
+        <FormInput
+          name="position"
+          label="Position"
+          placeholder="Enter position"
+          rules={[{ required: true, message: "Required" }]}
+          disabled={formDisabled}
+        />
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 [&_.ant-form-item]:min-w-0">
-        <FormInput name="email" label="Email" placeholder="Enter email" rules={[{ required: true, message: "Required", type: "email" }]} disabled={formDisabled} />
+        <FormInput
+          name="email"
+          label="Email"
+          placeholder="Enter email"
+          rules={[{ required: true, message: "Required", type: "email" }]}
+          disabled={formDisabled}
+        />
         <Form.Item
           name="telephoneNumber"
           label="Telephone Number"
@@ -163,13 +188,30 @@ export default function MainContactDetailsStep({ apiStep, onPrev, onNext }: Prop
           />
         </Form.Item>
       </div>
-      <FormInput name="whatsapp" label="Whatsapp (If Applicable)" placeholder="Enter whatsapp number" disabled={formDisabled} />
+      <FormInput
+        name="whatsapp"
+        label="Whatsapp (If Applicable)"
+        placeholder="Enter whatsapp number"
+        disabled={formDisabled}
+      />
       <div className="mt-8 flex flex-wrap justify-end gap-3">
-        <Button type="button" variant="secondary" size="sm" onClick={onPrev} disabled={isSaving}>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={onPrev}
+          disabled={isSaving}
+        >
           ← Previous
         </Button>
         {showSaveButton && (
-          <Button type="button" variant="primary" size="sm" onClick={handleSave} disabled={isSaving}>
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            onClick={handleSave}
+            disabled={isSaving}
+          >
             {isSaving ? "Saving…" : "Save"}
           </Button>
         )}

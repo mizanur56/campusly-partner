@@ -15,7 +15,9 @@ import { isPartnerStudentProfileComplete } from "../../lib/partnerStudentProfile
 
 const DEFAULT_STUDENT_AVATAR = "/user.png";
 
-function resolvePartnerListStudentAvatar(record: Record<string, unknown>): string {
+function resolvePartnerListStudentAvatar(
+  record: Record<string, unknown>,
+): string {
   const fromTopImage = getApiImageUrl(record.image as any);
   if (fromTopImage) return fromTopImage;
 
@@ -189,12 +191,16 @@ export default function StudentSelectBlock({
     );
   }, [studentsList, search]);
 
-  const isLoading = Boolean(user?.id) && (isPartnerLoading || isPartnerFetching);
+  const isLoading =
+    Boolean(user?.id) && (isPartnerLoading || isPartnerFetching);
   const isError = isPartnerError;
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
         setIsOpen(false);
       }
     }
@@ -320,10 +326,10 @@ export default function StudentSelectBlock({
             !isError &&
             !profilesResolving &&
             students.length === 0 && (
-            <div className="px-3 py-2 text-xs text-gray-500">
-              No students with a complete profile match your search.
-            </div>
-          )}
+              <div className="px-3 py-2 text-xs text-gray-500">
+                No students with a complete profile match your search.
+              </div>
+            )}
         </div>
       )}
     </div>

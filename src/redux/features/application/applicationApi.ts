@@ -29,6 +29,14 @@ const applicationApi = baseApi.injectEndpoints({
       providesTags: ["applications"],
     }),
 
+    getSingleStudentApplications: builder.query({
+      query: ({ studentId }) => ({
+        url: `/applications/student/${studentId}`,
+        method: "GET",
+      }),
+      providesTags: ["applications"],
+    }),
+
     deleteApplication: builder.mutation({
       query: (id) => ({
         url: `/applications/${id}`,
@@ -173,6 +181,7 @@ export const {
   useUpdateApplicationNoteMutation,
   useDeleteApplicationNoteMutation,
   useApplicationRecordQuery,
+  useGetSingleStudentApplicationsQuery,
 } = applicationApi;
 
 export { applicationApi };

@@ -117,11 +117,7 @@ const ProfileSettings: React.FC = () => {
       <PageHeader
         title="My Account"
         subtitle="Manage your personal information, update your password, and control your account settings securely."
-        breadcrumbs={[
-          { title: "Home", path: "/" },
-          { title: "Settings", path: "/settings/profile" },
-          { title: "Profile" },
-        ]}
+        breadcrumbs={[{ title: "Home", path: "/" }, { title: "Profile" }]}
         extra={pageHeaderExtra}
       />
 

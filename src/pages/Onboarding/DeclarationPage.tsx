@@ -8,8 +8,7 @@ const formItemLayout = {
     "[&_.ant-form-item-label>label]:!font-medium [&_.ant-form-item-label>label]:!text-[15px] [&_.ant-form-item]:mb-4",
 };
 
-const SUBMIT_DISABLED_HINT =
-  "Please accept all declarations to proceed";
+const SUBMIT_DISABLED_HINT = "Please accept all declarations to proceed";
 
 export default function DeclarationPage() {
   const [form] = Form.useForm();
@@ -24,6 +23,7 @@ export default function DeclarationPage() {
 
   const onFinish = () => {
     if (!allDeclarationsAccepted) return;
+    form.resetFields();
     navigate("/onboarding/submitted");
   };
 
@@ -33,7 +33,6 @@ export default function DeclarationPage() {
       subtitle="I confirm that all the information provided in this application is true and accurate. I understand that submission of this form does not guarantee approval as an agent for Campus Transfer Ltd."
     >
       <div className="space-y-4 mb-6">
-       
         <p className="text-neutral-900 font-semibold text-base leading-relaxed">
           Minor mistakes can cause a major delay in our partnership. Please take
           a moment to verify the information in each section before submitting.
@@ -76,13 +75,16 @@ export default function DeclarationPage() {
           </Checkbox>
         </Form.Item>
         <div className="mt-8 flex justify-end gap-3">
-          <Button as="link" to="/onboarding/compliance" variant="secondary" size="sm">
+          <Button
+            as="link"
+            to="/onboarding/compliance"
+            variant="secondary"
+            size="sm"
+          >
             ← Previous
           </Button>
           <Tooltip
-            title={
-              allDeclarationsAccepted ? undefined : SUBMIT_DISABLED_HINT
-            }
+            title={allDeclarationsAccepted ? undefined : SUBMIT_DISABLED_HINT}
             placement="top"
           >
             <span

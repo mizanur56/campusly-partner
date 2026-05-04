@@ -365,8 +365,6 @@ export default function Students() {
     { skip: !user?.id },
   );
 
-  console.log(allStudents);
-
   const tableData: StudentRecord[] = useMemo(() => {
     if (!allStudents?.data) return [];
     const rows = allStudents.data.map((u: any) => ({
