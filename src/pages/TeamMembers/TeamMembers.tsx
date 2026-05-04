@@ -16,10 +16,10 @@ import {
   Tag,
   Tooltip,
 } from "antd";
-import PhoneInput from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
 import type { ColumnsType } from "antd/es/table";
 import React, { useRef, useState } from "react";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
 import { useSelector } from "react-redux";
 import PageCard from "../../components/common/Card/PageCard";
 import PageMeta from "../../components/common/Meta/PageMeta";
@@ -383,13 +383,13 @@ export default function TeamMembers() {
 
       {/* Stats cards */}
       <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="rounded-xl border border-[#C7CACF] bg-white p-4">
+        <div className="rounded-xl border border-primary-border bg-white p-4">
           <div className="text-xs text-gray-500 mb-1">Total Members</div>
           <div className="text-2xl font-semibold text-gray-900">
             {stats?.total ?? 0}
           </div>
         </div>
-        <div className="rounded-xl border border-[#C7CACF] bg-white p-4">
+        <div className="rounded-xl border border-primary-border bg-white p-4">
           <div className="text-xs text-gray-500 mb-1">Active Members</div>
           <div className="text-2xl font-semibold text-emerald-600">
             {stats?.active ?? 0}
@@ -476,7 +476,7 @@ export default function TeamMembers() {
                 <img
                   src={getApiImageUrl(selectedPhoto.url)}
                   alt="Team member preview"
-                  className="h-16 w-16 rounded-full object-cover border border-[#C7CACF]"
+                  className="h-16 w-16 rounded-full object-cover border border-primary-border"
                 />
               ) : null}
               <Button

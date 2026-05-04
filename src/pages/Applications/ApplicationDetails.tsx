@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Image, Spin } from "antd";
 import React, { useEffect } from "react";
@@ -6,15 +5,14 @@ import { FaCircleCheck, FaCircleXmark } from "react-icons/fa6";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useGetApplicationByIdQuery } from "../../redux/features/application/applicationApi";
 
+import { RefreshCw } from "lucide-react";
 import { config } from "../../config";
 import { useStudentProfile } from "../../context/StudentProfileContext";
 import { useGetStudentProfileQuery } from "../../redux/features/profile/studentProfileApi";
+import { getApiImageUrl } from "../../utils/getApiImageUrl";
 import ApplicationRequirementsTab from "./components/ApplicationRequirementsTab";
 import NotesTab from "./components/NotesTab";
 import StudentRecordsTab from "./components/StudentRecordsTab";
-import { useRefetchApplicationNotesOnNoteNotification } from "../../hooks/useRefetchApplicationNotesOnNoteNotification";
-import { getApiImageUrl } from "../../utils/getApiImageUrl";
-import { RefreshCw } from "lucide-react";
 
 const VALID_TABS = ["requirements", "records", "notes"] as const;
 type TabKey = (typeof VALID_TABS)[number];
@@ -306,7 +304,7 @@ const ApplicationDetails = () => {
     <div>
       {/* Program Overview */}
       <div className="mb-8 space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <div className="flex items-start gap-4">
             {applicationApiData?.course?.university?.UniversityLogo?.url ? (
               <Image
@@ -328,23 +326,23 @@ const ApplicationDetails = () => {
               <h2 className="text-[18px] text-[#4B5563] mb-1">
                 {applicationData.college.name}
               </h2>
-              <h3 className="text-[20px] font-semibold text-[#20242A] mb-4">
+              <h3 className="text-[20px] font-semibold text-[#20242A] lg:mb-2">
                 {applicationData.program}
               </h3>
             </div>
           </div>
 
-          <div className="">
+          <div className="shrink-0">
             <button
               onClick={refetch}
-              className="px-4 py-3 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center gap-2 transition-all disabled:opacity-70"
+              className="px-3 sm:px-4 py-3 text-sm bg-primary-600 text-white rounded-xl hover:bg-primary-700 flex items-center gap-2 transition-all disabled:opacity-70"
               disabled={isFetching}
             >
               <RefreshCw
                 size={18}
                 className={`${isFetching ? "animate-spin" : ""}`}
               />
-              Refresh
+              <span className="hidden sm:inline">Refresh</span>
             </button>
           </div>
         </div>
@@ -386,14 +384,14 @@ const ApplicationDetails = () => {
       </div>
 
       {/* Tabs */}
-      <div className="mb-6 border-b border-[#CFCACF] dark:border-gray-800">
-        <div className="flex items-center gap-8">
+      <div className="mb-6 border-b border-primary-border dark:border-gray-800">
+        <div className="flex items-center gap-8 overflow-x-auto no-scrollbar">
           <button
             type="button"
             onClick={() => setActiveTab("requirements")}
-            className={`-mb-px pb-3 text-sm font-medium transition-colors cursor-pointer ${
+            className={`-mb-px pb-3 text-sm font-medium transition-colors cursor-pointer whitespace-nowrap ${
               activeTab === "requirements"
-                ? "border-b-2 border-[#22C55E] text-[#15803D]"
+                ? "border-b-2 border-primary text-primary"
                 : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             }`}
           >
@@ -402,9 +400,9 @@ const ApplicationDetails = () => {
           <button
             type="button"
             onClick={() => setActiveTab("records")}
-            className={`-mb-px pb-3 text-sm font-medium transition-colors cursor-pointer ${
+            className={`-mb-px pb-3 text-sm font-medium transition-colors cursor-pointer whitespace-nowrap ${
               activeTab === "records"
-                ? "border-b-2 border-[#22C55E] text-[#15803D]"
+                ? "border-b-2 border-primary text-primary"
                 : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             }`}
           >
@@ -413,9 +411,9 @@ const ApplicationDetails = () => {
           <button
             type="button"
             onClick={() => setActiveTab("notes")}
-            className={`-mb-px pb-3 text-sm font-medium transition-colors cursor-pointer ${
+            className={`-mb-px pb-3 text-sm font-medium transition-colors cursor-pointer whitespace-nowrap ${
               activeTab === "notes"
-                ? "border-b-2 border-[#22C55E] text-[#15803D]"
+                ? "border-b-2 border-primary text-primary"
                 : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             }`}
           >
@@ -441,7 +439,7 @@ const ApplicationDetails = () => {
 
         {/* Right sidebar stays the same */}
         <aside className="lg:col-span-1 ">
-          <div className=" rounded-lg border border-[#CFCACF] bg-white p-6 sticky top-20 card-shadow dark:border-gray-800 dark:bg-gray-900">
+          <div className=" rounded-3xl border border-primary-border bg-white p-6 sticky top-20 card-shadow dark:border-gray-800 dark:bg-gray-900">
             <h3 className="text-[18px] font-semibold text-[#20242A] dark:text-white">
               Application journey
             </h3>

@@ -369,7 +369,7 @@ export default function GeneralInformationTab({
           onChange={handleImageChange}
           disabled={!canEdit || isUploadingImage}
         >
-          <div className="relative w-32 h-32 object-cover rounded-full overflow-hidden cursor-pointer group border-2 border-[#C7CACF] hover:border-primary-500 bg-gray-100 transition-all duration-300">
+          <div className="relative w-32 h-32 object-cover rounded-full overflow-hidden cursor-pointer group border-2 border-primary-border hover:border-primary-500 bg-gray-100 transition-all duration-300">
             <AntImage
               src={imageSrc}
               alt="Profile"

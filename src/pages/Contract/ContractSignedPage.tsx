@@ -1,12 +1,12 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { LuClock4 } from "react-icons/lu";
+import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/button";
+import { usePreviewMode } from "../../context/PreviewModeContext";
 import {
   useGetOnboardingStatusQuery,
   useUnlockPortalAccessMutation,
 } from "../../redux/features/onboardingForm/onboardingFormApi";
-import { usePreviewMode } from "../../context/PreviewModeContext";
 
 export default function ContractSignedPage() {
   const navigate = useNavigate();
@@ -44,7 +44,7 @@ export default function ContractSignedPage() {
       <div className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8 lg:flex-row lg:gap-10 md:px-6 md:py-10">
         {/* Left: Contract progress card */}
         <aside className="w-full shrink-0 lg:w-56 xl:w-64">
-          <div className="rounded-[16px] border border-[#C7CACF] bg-white p-5 card-shadow dark:border-gray-800 dark:bg-gray-900 lg:sticky lg:top-24">
+          <div className="rounded-[16px] border border-primary-border bg-white p-5 card-shadow dark:border-gray-800 dark:bg-gray-900 lg:sticky lg:top-24">
             <h2 className="text-[20px] font-semibold text-[#20242A] dark:text-gray-200">
               Contract
             </h2>

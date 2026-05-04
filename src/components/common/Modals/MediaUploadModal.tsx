@@ -91,7 +91,7 @@ const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
     return existingImages.filter(
       (img) =>
         img.folder === currentFolder ||
-        (currentFolder === "Root" && (!img.folder || img.folder === "Root"))
+        (currentFolder === "Root" && (!img.folder || img.folder === "Root")),
     );
   }, [existingImages, currentFolder]);
 
@@ -190,7 +190,7 @@ const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
       if (onUpload) {
         await onUpload(
           uploadFiles,
-          currentFolder === "Root" ? "" : currentFolder
+          currentFolder === "Root" ? "" : currentFolder,
         );
       } else {
         const formData = new FormData();
@@ -199,7 +199,7 @@ const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
         });
         formData.append(
           "folder",
-          currentFolder === "Root" ? "" : currentFolder
+          currentFolder === "Root" ? "" : currentFolder,
         );
 
         const response = await uploadImage(formData).unwrap();
@@ -209,7 +209,7 @@ const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
       message.success(
         `${uploadFiles.length} image${
           uploadFiles.length > 1 ? "s" : ""
-        } uploaded successfully`
+        } uploaded successfully`,
       );
 
       if (selectionMode && uploadedImages.length > 0) {
@@ -229,7 +229,7 @@ const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
         message.info(
           `${uploadedImages.length} uploaded image${
             uploadedImages.length > 1 ? "s" : ""
-          } added to selection`
+          } added to selection`,
         );
       }
 
@@ -271,14 +271,14 @@ const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
         }
       });
     },
-    [selectionMode, multiple]
+    [selectionMode, multiple],
   );
 
   const isImageSelected = useCallback(
     (image: MediaImage) => {
       return internalSelectedImages.some((img) => img.id === image.id);
     },
-    [internalSelectedImages]
+    [internalSelectedImages],
   );
 
   const handleConfirmSelection = useCallback(() => {
@@ -477,7 +477,7 @@ const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
           {/* Mobile Folder Selector - More Prominent */}
           {isMobileView && (
             <div className="mb-3 flex-shrink-0">
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 shadow-sm">
+              <div className="bg-gray-50 border border-primary-border rounded-lg p-3 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <FolderOutlined className="text-primary-600 text-base" />
@@ -564,7 +564,7 @@ const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
                     }}
                   >
                     <div className="flex items-center gap-2">
-                      <div className="flex-shrink-0 w-10 h-10 bg-gray-50 rounded flex items-center justify-center border border-gray-200">
+                      <div className="flex-shrink-0 w-10 h-10 bg-gray-50 rounded flex items-center justify-center border border-primary-border">
                         <Image
                           alt={file.name}
                           width={32}
@@ -612,8 +612,8 @@ const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
           <div
             className={`flex-1 flex flex-col min-h-0 ${
               uploadFiles.length === 0 && !selectionMode
-                ? "border-t border-gray-200 pt-3"
-                : "border-t border-gray-200 pt-3"
+                ? "border-t border-primary-border pt-3"
+                : "border-t border-primary-border pt-3"
             }`}
             style={{ minHeight: "400px" }}
           >
@@ -633,7 +633,7 @@ const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
             </div>
 
             {currentFolderImages.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-200 min-h-[300px]">
+              <div className="flex-1 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-primary-border min-h-[300px]">
                 <Empty
                   description={
                     <div className="text-center">
@@ -728,7 +728,7 @@ const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
 
                 {/* Load More Indicator - Reduced top padding since we added bottom padding to grid */}
                 {visibleImages < currentFolderImages.length && (
-                  <div className="text-center py-3 border-t border-gray-200 mt-2">
+                  <div className="text-center py-3 border-t border-primary-border mt-2">
                     <Button
                       type="dashed"
                       loading={isLoadingMore}
@@ -736,7 +736,7 @@ const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
                         setIsLoadingMore(true);
                         setTimeout(() => {
                           setVisibleImages((prev) =>
-                            Math.min(prev + 12, currentFolderImages.length)
+                            Math.min(prev + 12, currentFolderImages.length),
                           );
                           setIsLoadingMore(false);
                         }, 300);
@@ -757,7 +757,7 @@ const MediaUploadModal: React.FC<MediaUploadModalProps> = ({
                 {/* End of List - Reduced padding */}
                 {visibleImages >= currentFolderImages.length &&
                   currentFolderImages.length > 12 && (
-                    <div className="text-center py-2 border-t border-gray-200">
+                    <div className="text-center py-2 border-t border-primary-border">
                       <p
                         className={`text-gray-500 ${
                           isMobileView ? "text-sm" : "text-sm"

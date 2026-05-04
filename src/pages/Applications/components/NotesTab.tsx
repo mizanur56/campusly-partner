@@ -8,7 +8,7 @@ import {
   List,
   message,
   Modal,
-  Skeleton
+  Skeleton,
 } from "antd";
 import { useState } from "react";
 import ReactQuill from "react-quill";
@@ -50,21 +50,21 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
   const [editorValue, setEditorValue] = useState("");
   const [replyForNoteId, setReplyForNoteId] = useState<string | null>(null);
   const [replyBody, setReplyBody] = useState("");
-  const [expandedThreads, setExpandedThreads] = useState<Record<string, boolean>>(
-    {}
-  );
+  const [expandedThreads, setExpandedThreads] = useState<
+    Record<string, boolean>
+  >({});
   const [editNoteId, setEditNoteId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editBody, setEditBody] = useState("");
   const [editIsReply, setEditIsReply] = useState(false);
 
-  const {
-    data: notesResponse,
-    isLoading
-  } = useGetApplicationNotesQuery(applicationId, {
-    skip: !applicationId,
-    refetchOnMountOrArgChange: true,
-  });
+  const { data: notesResponse, isLoading } = useGetApplicationNotesQuery(
+    applicationId,
+    {
+      skip: !applicationId,
+      refetchOnMountOrArgChange: true,
+    },
+  );
 
   const [createNote, { isLoading: isCreating }] =
     useCreateApplicationNoteMutation();
@@ -110,11 +110,13 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
 
   const roleChipClass = (role?: string) => {
     const r = (role || "").toUpperCase();
-    if (r === "ADMIN") return "bg-emerald-50 text-emerald-700 border-emerald-200";
+    if (r === "ADMIN")
+      return "bg-emerald-50 text-emerald-700 border-emerald-200";
     if (r === "AGENT") return "bg-indigo-50 text-indigo-700 border-indigo-200";
     if (r === "STUDENT") return "bg-amber-50 text-amber-800 border-amber-200";
-    if (r === "PARTNER") return "bg-purple-50 text-purple-700 border-purple-200";
-    return "bg-gray-50 text-gray-700 border-[#CFCACF]";
+    if (r === "PARTNER")
+      return "bg-purple-50 text-purple-700 border-purple-200";
+    return "bg-gray-50 text-gray-700 border-primary-border";
   };
 
   const formatTime = (iso: string) => {
@@ -210,7 +212,8 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
   const confirmDelete = (noteId: string) => {
     Modal.confirm({
       title: "Delete this note?",
-      content: "This will remove the note. If it has replies, they will be removed too.",
+      content:
+        "This will remove the note. If it has replies, they will be removed too.",
       okText: "Delete",
       okButtonProps: { danger: true, loading: isDeleting },
       cancelText: "Cancel",
@@ -238,33 +241,41 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
       {Array.from({ length: 3 }).map((_, idx) => (
         <div
           key={idx}
-          className="rounded-3xl border border-[#CFCACF] bg-white overflow-hidden p-6"
+          className="rounded-3xl border border-primary-border bg-white overflow-hidden p-6"
         >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-3 min-w-0">
-                <Skeleton.Avatar active size={44} shape="circle" />
-                <div className="min-w-0 w-[min(520px,80vw)]">
-                  <div className="flex items-center gap-3">
-                    <Skeleton.Input active size="small" style={{ width: 160 }} />
-                    <Skeleton.Input active size="small" style={{ width: 90 }} />
-                    <Skeleton.Input active size="small" style={{ width: 120 }} />
-                  </div>
-                  <div className="mt-3">
-                    <Skeleton.Input active size="default" style={{ width: 420 }} />
-                  </div>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-3 min-w-0">
+              <Skeleton.Avatar active size={44} shape="circle" />
+              <div className="min-w-0 w-[min(520px,80vw)]">
+                <div className="flex items-center gap-3">
+                  <Skeleton.Input active size="small" style={{ width: 160 }} />
+                  <Skeleton.Input active size="small" style={{ width: 90 }} />
+                  <Skeleton.Input active size="small" style={{ width: 120 }} />
+                </div>
+                <div className="mt-3">
+                  <Skeleton.Input
+                    active
+                    size="default"
+                    style={{ width: 420 }}
+                  />
                 </div>
               </div>
-              <Skeleton.Button active size="default" shape="circle" />
             </div>
+            <Skeleton.Button active size="default" shape="circle" />
+          </div>
 
-            <div className="mt-5">
-              <Skeleton active paragraph={{ rows: 3, width: ["95%", "90%", "75%"] }} title={false} />
-            </div>
+          <div className="mt-5">
+            <Skeleton
+              active
+              paragraph={{ rows: 3, width: ["95%", "90%", "75%"] }}
+              title={false}
+            />
+          </div>
 
-            <div className="mt-5 flex items-center justify-between">
-              <Skeleton.Input active size="small" style={{ width: 110 }} />
-              <Skeleton.Button active size="small" style={{ width: 110 }} />
-            </div>
+          <div className="mt-5 flex items-center justify-between">
+            <Skeleton.Input active size="small" style={{ width: 110 }} />
+            <Skeleton.Button active size="small" style={{ width: 110 }} />
+          </div>
         </div>
       ))}
     </div>
@@ -300,12 +311,13 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
           <div className="flex items-center gap-2 text-[#111827]">
             {/* <FiEdit className="text-[18px] text-[#2d7a42]" /> */}
             <div className="text-[18px] font-semibold">Notes</div>
-            <span className="ml-2 text-xs font-semibold px-2 py-1 rounded-full border border-[#CFCACF] text-gray-600 bg-white">
+            <span className="ml-2 text-xs font-semibold px-2 py-1 rounded-full border border-primary-border text-gray-600 bg-white">
               {notes.length} threads
             </span>
           </div>
           <div className="text-[12px] text-gray-500 mt-1">
-            Internal discussion for this application. Latest activity appears first.
+            Internal discussion for this application. Latest activity appears
+            first.
           </div>
         </div>
 
@@ -315,14 +327,14 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
             onClick={() => setShowForm(true)}
             icon={<PlusOutlined />}
           >
-             New note
+            New note
           </Button>
         )}
       </div>
 
       {/* Note Creation Form */}
       {showForm && (
-        <div className="mb-8 p-5 rounded-3xl bg-[#FFFFFF] border border-[#CFCACF]">
+        <div className="mb-8 p-5 rounded-3xl bg-[#FFFFFF] border border-primary-border">
           <div className="">
             <div className="mb-4">
               <label className="block text-gray-500 text-sm mb-1 font-medium">
@@ -378,14 +390,14 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
       )}
 
       {/* Notes Display List */}
-      {(isLoading) && (
+      {isLoading && (
         <div className="py-2">
           <NotesSkeleton />
         </div>
       )}
 
       {!isLoading && notes.length === 0 && (
-        <div className="py-12 rounded-2xl border border-dashed border-[#CFCACF] bg-white">
+        <div className="py-12 rounded-2xl border border-dashed border-primary-border bg-white">
           <Empty description="No notes yet" />
         </div>
       )}
@@ -394,8 +406,8 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
         <List
           dataSource={notes}
           renderItem={(note) => (
-             <div className="mb-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <div className="rounded-3xl !border-[#CFCACF] !border transition-shadow bg-white overflow-hidden p-6">
+            <div className="mb-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <div className="rounded-3xl !border-primary-border !border transition-shadow bg-white overflow-hidden p-6">
                 <div>
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div className="flex items-start gap-3 min-w-0">
@@ -447,7 +459,7 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
                         <Button
                           variant="outlined"
                           icon={<MoreOutlined className="text-xl" />}
-                          className="border-[#CFCACF] text-gray-400 rounded-lg flex items-center justify-center w-10 h-10 hover:text-gray-700 hover:border-gray-300"
+                          className="border-primary-border text-gray-400 rounded-lg flex items-center justify-center w-10 h-10 hover:text-gray-700 hover:border-gray-300"
                         />
                       </Dropdown>
                     )}
@@ -460,7 +472,7 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
                       {note.replies?.length > 0 ? (
                         <Button
                           type="default"
-                          className="border-[#CFCACF] text-gray-700 rounded-lg h-9 px-3 bg-white hover:border-gray-300"
+                          className="border-primary-border text-gray-700 rounded-lg h-9 px-3 bg-white hover:border-gray-300"
                           onClick={() =>
                             setExpandedThreads((s) => ({
                               ...s,
@@ -524,7 +536,7 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
                           <div className="space-y-3">
                             {note.replies.map((r) => (
                               <div key={r.id} className="relative pl-11">
-                                <span className="absolute left-[14px] top-[18px] h-2.5 w-2.5 rounded-full bg-white border border-[#D1D5DB]" />
+                                <span className="absolute left-[14px] top-[18px] h-2.5 w-2.5 rounded-full bg-white border border-primary-border" />
 
                                 <div className="p-4 rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_1px_0_rgba(0,0,0,0.03)]">
                                   <div className="flex items-start justify-between gap-3">
@@ -561,14 +573,17 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
                                             {
                                               key: "delete",
                                               label: "Delete",
-                                              onClick: () => confirmDelete(r.id),
+                                              onClick: () =>
+                                                confirmDelete(r.id),
                                             },
                                           ],
                                         }}
                                       >
                                         <Button
                                           variant="outlined"
-                                          icon={<MoreOutlined className="text-lg" />}
+                                          icon={
+                                            <MoreOutlined className="text-lg" />
+                                          }
                                           className="border-[#E5E7EB] text-gray-400 rounded-lg flex items-center justify-center w-9 h-9 hover:text-gray-700 hover:border-gray-300 bg-white"
                                         />
                                       </Dropdown>
@@ -590,44 +605,46 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
 
                 {replyForNoteId === note.id && (
                   <div className="mt-5">
-                   
-                   <div className="mb-3">
-                    <h2 className="text-[15px] font-semibold text-[#111827] leading-snug">
-                    Replying to {note.author?.name || "this thread"}
-                   </h2>
-                   <p className="text-[12px] text-gray-500 mt-1"> Keep it short and specific.</p>
-                   </div>
- 
-                      <div className="quill-wrapper">
-                        <ReactQuill
-                          theme="snow"
-                          value={replyBody}
-                          onChange={setReplyBody}
-                          modules={modules}
-                          placeholder="Write a reply..."
-                        />
-                      </div>
-
-                      <div className="flex justify-end gap-2 mt-3">
-                        <Button
-                          className="border-gray-300 text-gray-600 rounded-lg h-9"
-                          onClick={() => {
-                            setReplyForNoteId(null);
-                            setReplyBody("");
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          type="primary"
-                          className="bg-[#2d7a42] hover:bg-[#235e33] border-none rounded-lg h-9 font-semibold shadow-sm"
-                          loading={isReplying}
-                          onClick={() => onReply(note.id)}
-                        >
-                          Send Reply
-                        </Button>
-                      </div>
+                    <div className="mb-3">
+                      <h2 className="text-[15px] font-semibold text-[#111827] leading-snug">
+                        Replying to {note.author?.name || "this thread"}
+                      </h2>
+                      <p className="text-[12px] text-gray-500 mt-1">
+                        {" "}
+                        Keep it short and specific.
+                      </p>
                     </div>
+
+                    <div className="quill-wrapper">
+                      <ReactQuill
+                        theme="snow"
+                        value={replyBody}
+                        onChange={setReplyBody}
+                        modules={modules}
+                        placeholder="Write a reply..."
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-2 mt-3">
+                      <Button
+                        className="border-gray-300 text-gray-600 rounded-lg h-9"
+                        onClick={() => {
+                          setReplyForNoteId(null);
+                          setReplyBody("");
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="primary"
+                        className="bg-[#2d7a42] hover:bg-[#235e33] border-none rounded-lg h-9 font-semibold shadow-sm"
+                        loading={isReplying}
+                        onClick={() => onReply(note.id)}
+                      >
+                        Send Reply
+                      </Button>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>

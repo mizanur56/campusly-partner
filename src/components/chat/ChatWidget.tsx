@@ -83,9 +83,7 @@ function findConversationWithAdvisorPeer(
   myUserId: string,
   advisorUserId: string,
 ): ChatConversation | undefined {
-  return list.find(
-    (c) => peerParticipantUserId(c, myUserId) === advisorUserId,
-  );
+  return list.find((c) => peerParticipantUserId(c, myUserId) === advisorUserId);
 }
 
 function sortMessagesChronological(messages: ChatMessage[]): ChatMessage[] {
@@ -188,7 +186,9 @@ function ThreadIntroBanner({
         />
         <span className="font-semibold text-amber-950">Secure chat.</span> Only
         you and your assigned advisor{" "}
-        <span className="font-semibold text-amber-950">{administratorName}</span>{" "}
+        <span className="font-semibold text-amber-950">
+          {administratorName}
+        </span>{" "}
         can read this conversation. Keep personal details in this private chat.
       </p>
     </div>
@@ -226,7 +226,7 @@ function TypingIndicatorBubble({ peerName }: { peerName: string }) {
       aria-relevant="additions"
     >
       <span className="sr-only">{`${peerName} is typing`}</span>
-      <div className="flex min-h-[40px] max-w-[82%] items-center rounded-2xl rounded-bl-sm border border-gray-200/90 bg-white px-3 py-1.5 shadow-sm">
+      <div className="flex min-h-[40px] max-w-[82%] items-center rounded-2xl rounded-bl-sm border border-primary-border/90 bg-white px-3 py-1.5 shadow-sm">
         <span className="flex items-center gap-1.5" aria-hidden>
           {[0, 1, 2].map((i) => (
             <span
@@ -283,8 +283,7 @@ export function ChatWidget() {
   } = useGetChatConversationsQuery(
     { page: 1, limit: INBOX_PAGE_SIZE },
     {
-      skip:
-        !allowed || !advisorSettled || !advisorUserId || !!advisorError,
+      skip: !allowed || !advisorSettled || !advisorUserId || !!advisorError,
     },
   );
 
@@ -474,25 +473,27 @@ export function ChatWidget() {
   const typingPeer = useMemo(
     () =>
       !!(
-        activeConversationId &&
-        peerTypingByConversationId[activeConversationId]
+        activeConversationId && peerTypingByConversationId[activeConversationId]
       ),
     [activeConversationId, peerTypingByConversationId],
   );
 
-  const clearPeerTypingForConversation = useCallback((conversationId: string) => {
-    const t = typingFallbackClearRef.current[conversationId];
-    if (t) {
-      clearTimeout(t);
-      delete typingFallbackClearRef.current[conversationId];
-    }
-    setPeerTypingByConversationId((prev) => {
-      if (!prev[conversationId]) return prev;
-      const next = { ...prev };
-      delete next[conversationId];
-      return next;
-    });
-  }, []);
+  const clearPeerTypingForConversation = useCallback(
+    (conversationId: string) => {
+      const t = typingFallbackClearRef.current[conversationId];
+      if (t) {
+        clearTimeout(t);
+        delete typingFallbackClearRef.current[conversationId];
+      }
+      setPeerTypingByConversationId((prev) => {
+        if (!prev[conversationId]) return prev;
+        const next = { ...prev };
+        delete next[conversationId];
+        return next;
+      });
+    },
+    [],
+  );
 
   const activeConversationIdRef = useRef<string | null>(null);
   activeConversationIdRef.current = activeConversationId;
@@ -508,8 +509,7 @@ export function ChatWidget() {
         : {
             ...normRaw,
             id: `rt-${conversationId}-${Date.now()}-${
-              globalThis.crypto?.randomUUID?.() ??
-              `${Math.random()}`.slice(2)
+              globalThis.crypto?.randomUUID?.() ?? `${Math.random()}`.slice(2)
             }`,
           };
       const convActive = activeConversationIdRef.current;
@@ -533,7 +533,11 @@ export function ChatWidget() {
   }, [invalidateChatLists]);
 
   const onSocketTyping = useCallback(
-    (payload: { conversationId: string; userId: string; isTyping: boolean }) => {
+    (payload: {
+      conversationId: string;
+      userId: string;
+      isTyping: boolean;
+    }) => {
       if (!user?.id) return;
       if (payload.userId === user.id) return;
       const conversationId = payload.conversationId;
@@ -610,7 +614,13 @@ export function ChatWidget() {
     if (unread <= 0) return;
     if (document.visibilityState !== "visible") return;
     void markRead({ conversationId: activeConversationId });
-  }, [isOpen, activeConversationId, allowed, activeConversation?.unreadCount, markRead]);
+  }, [
+    isOpen,
+    activeConversationId,
+    allowed,
+    activeConversation?.unreadCount,
+    markRead,
+  ]);
 
   const handleSend = async () => {
     const text = composerText.trim();
@@ -662,7 +672,9 @@ export function ChatWidget() {
 
   const inboxErrMsg =
     inboxErr && typeof inboxErr === "object" && "data" in inboxErr
-      ? String((inboxErr as { data?: { message?: string } }).data?.message ?? "")
+      ? String(
+          (inboxErr as { data?: { message?: string } }).data?.message ?? "",
+        )
       : "";
   const msgErrMsg =
     msgErr && typeof msgErr === "object" && "data" in msgErr
@@ -675,7 +687,9 @@ export function ChatWidget() {
   const advisorNotFound = advisorErrStatus === 404;
   const advisorErrMsg =
     advisorErr && typeof advisorErr === "object" && "data" in advisorErr
-      ? String((advisorErr as { data?: { message?: string } }).data?.message ?? "")
+      ? String(
+          (advisorErr as { data?: { message?: string } }).data?.message ?? "",
+        )
       : "";
 
   const headerTitle = advisorUserId ? peerName : "Chat";
@@ -693,7 +707,7 @@ export function ChatWidget() {
     >
       {isOpen ? (
         <div
-          className="pointer-events-auto flex max-h-[min(600px,74vh)] w-[min(100vw-2rem,400px)] flex-col overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-2xl"
+          className="pointer-events-auto flex max-h-[min(600px,74vh)] w-[min(100vw-2rem,400px)] flex-col overflow-hidden rounded-2xl border border-primary-border/80 bg-white shadow-2xl"
           role="dialog"
           aria-label="Chat with your assigned advisor"
         >
@@ -768,80 +782,82 @@ export function ChatWidget() {
                     />
                   ) : (
                     <ul className="flex list-none flex-col gap-1.5 p-0">
-                    {mergedMessages.map((m, index) => {
-                      const mine =
-                        m.senderUserId === user!.id || m.sender?.id === user!.id;
-                      const dayKey = getMessageDayKey(m.createdAt);
-                      const prevKey =
-                        index > 0
-                          ? getMessageDayKey(
-                              mergedMessages[index - 1]?.createdAt,
-                            )
-                          : null;
-                      const showDaySeparator =
-                        !!dayKey &&
-                        (prevKey === null || dayKey !== prevKey);
-                      const bubbleTime = formatBubbleTime(m.createdAt);
-                      return (
-                        <Fragment key={m.id}>
-                          {showDaySeparator && m.createdAt ? (
-                            <li className="flex justify-center py-2">
-                              <span className="rounded-lg bg-gray-200/90 px-3 py-1 text-center text-[11px] font-semibold text-gray-600 shadow-sm">
-                                {formatThreadDaySeparatorLabel(
-                                  new Date(m.createdAt),
-                                )}
-                              </span>
-                            </li>
-                          ) : null}
-                          <li>
-                            <div
-                              className={cn(
-                                "flex items-end",
-                                mine ? "justify-end" : "justify-start",
-                              )}
-                            >
+                      {mergedMessages.map((m, index) => {
+                        const mine =
+                          m.senderUserId === user!.id ||
+                          m.sender?.id === user!.id;
+                        const dayKey = getMessageDayKey(m.createdAt);
+                        const prevKey =
+                          index > 0
+                            ? getMessageDayKey(
+                                mergedMessages[index - 1]?.createdAt,
+                              )
+                            : null;
+                        const showDaySeparator =
+                          !!dayKey && (prevKey === null || dayKey !== prevKey);
+                        const bubbleTime = formatBubbleTime(m.createdAt);
+                        return (
+                          <Fragment key={m.id}>
+                            {showDaySeparator && m.createdAt ? (
+                              <li className="flex justify-center py-2">
+                                <span className="rounded-lg bg-gray-200/90 px-3 py-1 text-center text-[11px] font-semibold text-gray-600 shadow-sm">
+                                  {formatThreadDaySeparatorLabel(
+                                    new Date(m.createdAt),
+                                  )}
+                                </span>
+                              </li>
+                            ) : null}
+                            <li>
                               <div
                                 className={cn(
-                                  "flex max-w-[82%] flex-col rounded-2xl px-2.5 pt-2 pb-1.5 text-sm shadow-sm",
-                                  mine
-                                    ? "rounded-br-sm bg-primary text-white"
-                                    : "rounded-bl-sm border border-gray-200 bg-white text-primary-900",
+                                  "flex items-end",
+                                  mine ? "justify-end" : "justify-start",
                                 )}
                               >
-                                <p className="whitespace-pre-wrap break-words px-0.5 leading-relaxed">
-                                  {messageDisplayText(m)}
-                                </p>
-                                {bubbleTime ? (
-                                  <div className="mt-1 flex justify-end">
-                                    <time
-                                      className={cn(
-                                        "text-[10px] font-medium tabular-nums tracking-tight",
-                                        mine
-                                          ? "text-white/70"
-                                          : "text-gray-400",
-                                      )}
-                                      dateTime={
-                                        m.createdAt
-                                          ? new Date(m.createdAt).toISOString()
-                                          : undefined
-                                      }
-                                    >
-                                      {bubbleTime}
-                                    </time>
-                                  </div>
-                                ) : null}
+                                <div
+                                  className={cn(
+                                    "flex max-w-[82%] flex-col rounded-2xl px-2.5 pt-2 pb-1.5 text-sm shadow-sm",
+                                    mine
+                                      ? "rounded-br-sm bg-primary text-white"
+                                      : "rounded-bl-sm border border-primary-border bg-white text-primary-900",
+                                  )}
+                                >
+                                  <p className="whitespace-pre-wrap break-words px-0.5 leading-relaxed">
+                                    {messageDisplayText(m)}
+                                  </p>
+                                  {bubbleTime ? (
+                                    <div className="mt-1 flex justify-end">
+                                      <time
+                                        className={cn(
+                                          "text-[10px] font-medium tabular-nums tracking-tight",
+                                          mine
+                                            ? "text-white/70"
+                                            : "text-gray-400",
+                                        )}
+                                        dateTime={
+                                          m.createdAt
+                                            ? new Date(
+                                                m.createdAt,
+                                              ).toISOString()
+                                            : undefined
+                                        }
+                                      >
+                                        {bubbleTime}
+                                      </time>
+                                    </div>
+                                  ) : null}
+                                </div>
                               </div>
-                            </div>
-                          </li>
-                        </Fragment>
-                      );
-                    })}
-                      </ul>
-                    )}
-                    {typingPeer ? (
-                      <TypingIndicatorBubble peerName={peerName} />
-                    ) : null}
-                    <div ref={messagesEndRef} />
+                            </li>
+                          </Fragment>
+                        );
+                      })}
+                    </ul>
+                  )}
+                  {typingPeer ? (
+                    <TypingIndicatorBubble peerName={peerName} />
+                  ) : null}
+                  <div ref={messagesEndRef} />
                 </>
               )}
             </div>
@@ -877,7 +893,11 @@ export function ChatWidget() {
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white text-primary transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-40 disabled:bg-white/10 disabled:text-primary-200"
                   aria-label="Send"
                 >
-                  {sending ? <Spin size="small" /> : <Send className="h-5 w-5" />}
+                  {sending ? (
+                    <Spin size="small" />
+                  ) : (
+                    <Send className="h-5 w-5" />
+                  )}
                 </button>
               </div>
             ) : null}

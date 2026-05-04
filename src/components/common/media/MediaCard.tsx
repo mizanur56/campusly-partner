@@ -1,5 +1,5 @@
-import React from "react";
 import { CopyOutlined, DeleteOutlined } from "@ant-design/icons";
+import React from "react";
 import { MediaImage } from "../../../types/media";
 import { formatFileSize } from "../../../utils/mediaHelpers";
 import AntImage from "../../shared/AntImage";
@@ -23,11 +23,9 @@ const MediaCard: React.FC<MediaCardProps> = ({
 }) => {
   const isSmall = size === "small";
 
-
-
   return (
     <div
-      className={`group relative bg-white rounded-lg border border-gray-200 overflow-hidden transition-all duration-300 hover:border-gray-300  ${
+      className={`group relative bg-white rounded-lg border border-primary-border overflow-hidden transition-all duration-300 hover:border-gray-300  ${
         disabled ? "opacity-50 cursor-not-allowed" : ""
       }`}
     >
@@ -84,7 +82,9 @@ const MediaCard: React.FC<MediaCardProps> = ({
       </div>
 
       {/* Image Info */}
-      <div className={`p-3 border-t border-gray-100 ${isSmall ? "p-2" : ""}`}>
+      <div
+        className={`p-3 border-t border-primary-border ${isSmall ? "p-2" : ""}`}
+      >
         <h4
           className={`font-medium text-gray-800 truncate mb-1 ${
             isSmall ? "text-xs" : "text-sm"

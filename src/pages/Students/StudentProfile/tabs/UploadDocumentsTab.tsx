@@ -338,7 +338,7 @@
 //     };
 
 //     return (
-//       <div className="flex items-center justify-between p-4 bg-white border border-[#C7CACF] rounded-lg hover:border-[#237D3B] transition-all group">
+//       <div className="flex items-center justify-between p-4 bg-white border border-primary-border rounded-lg hover:border-[#237D3B] transition-all group">
 //         <div className="flex items-center gap-3 flex-1">
 //           <span className="text-[#4B5563] text-xl group-hover:text-[#237D3B] transition-colors">
 //             {item.icon}
@@ -433,22 +433,16 @@
 // }
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { useState, useRef, useMemo, useEffect } from "react";
+import { Modal } from "antd";
+import { useMemo, useRef, useState } from "react";
 import { FaPlusSquare } from "react-icons/fa";
 import { FaCircleCheck } from "react-icons/fa6";
-import { Modal } from "antd";
 import { toast } from "react-toastify";
-import {
-  DeleteOutlined,
-  EyeOutlined,
-  FilePdfOutlined,
-  FileTextOutlined,
-  FileWordOutlined,
-} from "@ant-design/icons";
-import { RiDeleteBin5Line } from "react-icons/ri";
 
-import ModalContent from "../utils/ModalContent";
 import { FiEdit } from "react-icons/fi";
+import PrimaryButton from "../../../../components/common/Button/PrimaryButton";
+import { useGetCountriesQuery } from "../../../../redux/features/countries/countriesApi";
+import { useCreateMediaMutation } from "../../../../redux/features/media/mediaApi";
 import {
   useCreateEducationMutation,
   useGetDocumentsByCategoryQuery,
@@ -457,9 +451,7 @@ import {
   useUpdateEducationMutation,
   useUpdateStudentProfileMutation,
 } from "../../../../redux/features/profile/studentProfileApi";
-import { useGetCountriesQuery } from "../../../../redux/features/countries/countriesApi";
-import { useCreateMediaMutation } from "../../../../redux/features/media/mediaApi";
-import PrimaryButton from "../../../../components/common/Button/PrimaryButton";
+import ModalContent from "../utils/ModalContent";
 
 interface DocumentItem {
   id: string;
@@ -531,7 +523,10 @@ const UploadDocuments = ({
     studentId,
     { skip: !studentId },
   );
-  const profileData = profileDataRaw as StudentProfileUploadShape | null | undefined;
+  const profileData = profileDataRaw as
+    | StudentProfileUploadShape
+    | null
+    | undefined;
   const documents = profileData?.documents ?? [];
 
   const submittedEnglishTestDocs = documents.filter(
@@ -542,12 +537,11 @@ const UploadDocuments = ({
   const { data: countries } = useGetCountriesQuery({ page: 1, limit: 1000 });
 
   const selectedCountryId = useMemo(() => {
-    
     // ১. ডাটা এখনো লোড হচ্ছে কি না তা চেক করুন (প্রোফাইল অবজেক্টের ভেতর ডাটা আছে কি না)
     const profileCountryName =
       profileData?.data?.country || profileData?.country;
     const countryList = countries?.data;
-    
+
     if (!profileCountryName || !countryList) return null;
 
     // ২. ট্রিম এবং লোয়ারকেস করে ম্যাচ খুঁজুন
@@ -558,20 +552,17 @@ const UploadDocuments = ({
 
     const matchedCountry = countryList.find((c) => {
       const input = profileCountryName?.toString().trim().toLowerCase();
-    
+
       return (
         c.id?.toString() === profileCountryName?.toString() ||
         c.name?.trim().toLowerCase() === input
       );
     });
 
- 
     return matchedCountry ? matchedCountry.id : null;
   }, [profileData, countries]);
 
- 
   const userId = profileData?.userId as string;
- 
 
   const { data: studyLevelsRes } = useGetEligibleStudyLevelsByCountryQuery(
     {
@@ -583,7 +574,6 @@ const UploadDocuments = ({
       skip: !selectedCountryId || !studentId,
     },
   );
-
 
   const studyLevelData = studyLevelsRes?.data || [];
 
@@ -618,13 +608,11 @@ const UploadDocuments = ({
 
   // /* ================= Academic Groups ================= */
   const academicGroups: DocumentGroup[] = useMemo(() => {
-
     return studyLevelData.map((level: any) => {
       const edu = profileData?.educations?.find(
         (e: any) => e.studyLevelId === level.id,
       );
 
-    
       return {
         label: level.countryStudyLevelName,
         studyLevelId: level.id,
@@ -651,8 +639,8 @@ const UploadDocuments = ({
   const sections = useMemo(() => {
     const backgroundDocList = Array.isArray(backgroundData)
       ? backgroundData
-      : (backgroundData as { data?: unknown[] } | null | undefined)?.data ??
-        [];
+      : ((backgroundData as { data?: unknown[] } | null | undefined)?.data ??
+        []);
     const s: any[] = [];
     s.push({
       id: "personal",
@@ -827,7 +815,7 @@ const UploadDocuments = ({
       {sections.map((section) => (
         <div
           key={section.id}
-          className="bg-[#FFFFFF] p-4 rounded-lg border border-[#CFCACF] "
+          className="bg-[#FFFFFF] p-4 rounded-lg border border-primary-border "
         >
           <div className="border-b pb-4 flex flex-col gap-2 mb-4">
             <h3 className="font-semibold text-[18px] text-[#20242A] ">
@@ -862,7 +850,7 @@ const UploadDocuments = ({
                       {item.status === "submitted" ? (
                         <div className="flex items-center gap-2">
                           {/* ভিউ/এডিট আইকন */}
-                          <div className=" border border-[#CFCACF]  cursor-pointer p-1 flex items-center hover:border-primary hover:text-primary rounded-lg ">
+                          <div className=" border border-primary-border  cursor-pointer p-1 flex items-center hover:border-primary hover:text-primary rounded-lg ">
                             <FiEdit
                               className="text-primary text-xl"
                               onClick={() => {
@@ -918,15 +906,13 @@ const UploadDocuments = ({
                   </div>
                   {item.status === "submitted" ? (
                     <FaCircleCheck className="text-green-500 text-xl" />
+                  ) : uploadingItemId === item.id ? (
+                    <div className="h-5 w-5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
                   ) : (
-                    uploadingItemId === item.id ? (
-                      <div className="h-5 w-5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-                    ) : (
-                      <FaPlusSquare
-                        className="text-primary text-xl cursor-pointer hover:scale-110 transition-transform"
-                        onClick={() => triggerDirectUpload(item)}
-                      />
-                    )
+                    <FaPlusSquare
+                      className="text-primary text-xl cursor-pointer hover:scale-110 transition-transform"
+                      onClick={() => triggerDirectUpload(item)}
+                    />
                   )}
                 </div>
               ))}

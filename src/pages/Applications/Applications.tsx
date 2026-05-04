@@ -163,7 +163,7 @@ export default function Applications() {
                 e.stopPropagation();
                 navigate(`/applications/${record.id}`);
               }}
-              className="flex cursor-pointer items-center justify-center w-8 h-8 rounded-lg border border-[#C7CACF] transition-all text-gray-600 hover:text-primary-500 hover:border-primary-500"
+              className="flex cursor-pointer items-center justify-center w-8 h-8 rounded-lg border border-primary-border transition-all text-gray-600 hover:text-primary-500 hover:border-primary-500"
             >
               <FiEye size={16} />
             </button>
@@ -175,7 +175,7 @@ export default function Applications() {
                 setSelectedApplication(record);
                 setDeleteModalOpen(true);
               }}
-              className="flex cursor-pointer items-center justify-center w-8 h-8 rounded-lg border border-[#C7CACF] transition-all text-gray-600 hover:text-primary-500 hover:border-primary-500"
+              className="flex cursor-pointer items-center justify-center w-8 h-8 rounded-lg border border-primary-border transition-all text-gray-600 hover:text-primary-500 hover:border-primary-500"
             >
               <FiTrash2 size={16} />
             </button>

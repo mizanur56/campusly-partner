@@ -40,11 +40,11 @@ const ERPDepartmentsChart: React.FC<ERPDepartmentsChartProps> = ({
     const series = topCategories.map((item) => item.totalAmount);
     const totalSales = topCategories.reduce(
       (sum, item) => sum + item.salesCount,
-      0
+      0,
     );
     const totalAmount = topCategories.reduce(
       (sum, item) => sum + item.totalAmount,
-      0
+      0,
     );
 
     // Color palette with green, orange, purple, cyan
@@ -106,7 +106,8 @@ const ERPDepartmentsChart: React.FC<ERPDepartmentsChartProps> = ({
               fontWeight: 600,
               color: "#374151",
               // eslint-disable-next-line no-constant-binary-expression
-              formatter: () => `${chartData.totalAmount?.toLocaleString()} ৳` || "0 ৳",
+              formatter: () =>
+                `${chartData.totalAmount?.toLocaleString()} ৳` || "0 ৳",
             },
             value: {
               fontSize: "20px",
@@ -143,7 +144,7 @@ const ERPDepartmentsChart: React.FC<ERPDepartmentsChartProps> = ({
         const amount = chartData.series[seriesIndex];
         const percentage = ((amount / chartData.totalAmount) * 100).toFixed(1);
         const originalData = data.find(
-          (item) => item.categoryName === category
+          (item) => item.categoryName === category,
         );
 
         return `
@@ -180,7 +181,7 @@ const ERPDepartmentsChart: React.FC<ERPDepartmentsChartProps> = ({
                 <div>${
                   originalData
                     ? Math.round(
-                        originalData.totalAmount / originalData.totalQuantity
+                        originalData.totalAmount / originalData.totalQuantity,
                       )
                     : 0
                 } ৳</div>
@@ -194,7 +195,7 @@ const ERPDepartmentsChart: React.FC<ERPDepartmentsChartProps> = ({
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+      <div className="bg-white rounded-xl border border-primary-border p-6 shadow-sm">
         <div className="flex justify-center items-center h-64">
           <Loader />
         </div>
@@ -203,7 +204,7 @@ const ERPDepartmentsChart: React.FC<ERPDepartmentsChartProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+    <div className="bg-white rounded-xl border border-primary-border p-6 shadow-sm">
       <div className="flex justify-between items-center mb-4">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">

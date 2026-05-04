@@ -31,7 +31,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
   isApplied,
 }) => {
   return (
-    <div className="bg-white border border-neutral-100 rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.02)] p-5 sm:p-6">
+    <div className="bg-white border border-primary-border rounded-2xl shadow-[0_1px_2px_rgba(0,0,0,0.02)] p-5 sm:p-6">
       {/* Title and Level */}
       <div className="mb-4">
         <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
@@ -69,7 +69,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
             Intake
           </label>
-          <div className="w-full px-3 py-2.5 border border-gray-200 rounded-xl bg-gray-50/80 text-gray-700 text-sm">
+          <div className="w-full px-3 py-2.5 border border-primary-border rounded-xl bg-gray-50/80 text-gray-700 text-sm">
             {intake || "N/A"}
           </div>
         </div>
@@ -77,7 +77,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
             Duration
           </label>
-          <div className="w-full px-3 py-2.5 border border-gray-200 rounded-xl bg-gray-50/80 text-gray-700 text-sm">
+          <div className="w-full px-3 py-2.5 border border-primary-border rounded-xl bg-gray-50/80 text-gray-700 text-sm">
             {duration || "N/A"}
           </div>
         </div>
@@ -85,7 +85,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
             Start Dates
           </label>
-          <div className="w-full px-3 py-2.5 border border-gray-200 rounded-xl bg-gray-50/80 text-gray-700 text-sm">
+          <div className="w-full px-3 py-2.5 border border-primary-border rounded-xl bg-gray-50/80 text-gray-700 text-sm">
             {startDates || "N/A"}
           </div>
         </div>

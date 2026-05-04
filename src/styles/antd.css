@@ -5,7 +5,7 @@
    ================================================ */
 
 /* ── Input / Textarea ── */
-.ant-input {
+.ant-input:not(:disabled) {
   border-radius: 12px !important;
   padding: 12px 16px !important;
   font-size: 15px !important;
@@ -13,11 +13,22 @@
   border-color: #c7cacf !important;
 }
 
-.ant-input:hover {
+.ant-input:disabled {
+  border-radius: 12px !important;
+  padding: 12px 16px !important;
+  font-size: 15px !important;
+  line-height: 1.5 !important;
+}
+
+.ant-input:not(:disabled):hover {
   border-color: var(--primary) !important;
 }
 
-.ant-input-affix-wrapper {
+.ant-input-affix-wrapper > .ant-input {
+  border-radius: 0 !important;
+}
+
+.ant-input-affix-wrapper:not(.ant-input-affix-wrapper-disabled) {
   border-radius: 12px !important;
   padding: 12px 16px !important;
   font-size: 15px !important;
@@ -25,9 +36,15 @@
   border-color: #c7cacf !important;
 }
 
-/* .ant-input:hover, */
-.ant-input-affix-wrapper:hover {
-  border-color: #c7cacf !important;
+.ant-input-affix-wrapper.ant-input-affix-wrapper-disabled {
+  border-radius: 12px !important;
+  padding: 12px 16px !important;
+  font-size: 15px !important;
+  line-height: 1.5 !important;
+}
+
+.ant-input-affix-wrapper:not(.ant-input-affix-wrapper-disabled):hover {
+  border-color: var(--primary) !important;
 }
 
 .ant-input-affix-wrapper .ant-input {
@@ -42,7 +59,11 @@
   min-height: 48px !important;
   align-items: center !important;
   display: flex !important;
-  /* border-color: #c7cacf !important; */
+}
+
+.ant-select:not(.ant-select-disabled):not(.ant-select-customize-input)
+  .ant-select-selector {
+  border-color: #c7cacf !important;
 }
 
 .ant-select-single {
@@ -50,9 +71,9 @@
   height: auto !important;
 }
 
-/* .ant-select:not(.ant-select-disabled):hover .ant-select-selector {
+.ant-select:not(.ant-select-disabled):hover .ant-select-selector {
   border-color: var(--primary) !important;
-} */
+}
 
 .ant-select-single .ant-select-selector .ant-select-selection-item,
 .ant-select-single .ant-select-selector .ant-select-selection-placeholder {
@@ -103,10 +124,13 @@
   padding: 12px 16px !important;
   font-size: 15px !important;
   width: 100% !important;
+}
+
+.ant-picker:not(.ant-picker-disabled) {
   border-color: #c7cacf !important;
 }
 
-.ant-picker:hover {
+.ant-picker:not(.ant-picker-disabled):hover {
   border-color: var(--primary) !important;
 }
 
@@ -118,10 +142,13 @@
 .ant-input-number {
   border-radius: 12px !important;
   width: 100% !important;
+}
+
+.ant-input-number:not(.ant-input-number-disabled) {
   border-color: #c7cacf !important;
 }
 
-.ant-input-number:hover {
+.ant-input-number:not(.ant-input-number-disabled):hover {
   border-color: var(--primary) !important;
 }
 
@@ -230,4 +257,67 @@
   border-radius: 12px !important;
   padding: 8px 16px !important;
   min-height: 48px !important;
+}
+
+/* ── PhoneInput (react-phone-input-2) ── */
+.react-tel-input .form-control:not([disabled]):hover {
+  border-color: var(--primary) !important;
+}
+
+.react-tel-input .form-control[disabled] {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+  color: rgba(0, 0, 0, 0.25) !important;
+  border-color: #d9d9d9 !important;
+  cursor: not-allowed !important;
+}
+
+.react-tel-input .flag-dropdown.disabled {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+  border-color: #d9d9d9 !important;
+  cursor: not-allowed !important;
+}
+
+.react-tel-input .country-list {
+  border: 1px solid #c7cacf !important;
+  border-radius: 16px !important;
+  box-shadow: none !important;
+  overflow-y: auto !important;
+  clip-path: inset(0 0 0 0 round 16px) !important;
+}
+
+.react-tel-input .country-list::-webkit-scrollbar {
+  display: none;
+}
+
+.react-tel-input .country-list {
+  scrollbar-width: none !important;
+}
+
+/* ── PhoneInput search — sticky at top ── */
+.react-tel-input .search {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 1 !important;
+  background-color: #fff !important;
+  padding: 10px 10px 8px !important;
+  border-bottom: 1px solid #c7cacf !important;
+}
+
+.react-tel-input .search-box {
+  width: 100% !important;
+  border: 1px solid #c7cacf !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  font-size: 14px !important;
+  outline: none !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+}
+
+.react-tel-input .search-box:focus {
+  border-color: var(--primary) !important;
+}
+
+.react-tel-input .country-list .country {
+  padding: 12px 16px !important;
 }
