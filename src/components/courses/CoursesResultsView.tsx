@@ -155,6 +155,11 @@ export default function CoursesResultsView({
     filtersKey,
   });
 
+  // Scroll to top whenever filters change so user can see new results
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [filtersKey]);
+
   const transformedCourses = useMemo(
     (): CourseForApply[] =>
       courses.map((course) => ({
@@ -176,12 +181,6 @@ export default function CoursesResultsView({
     [courses],
   );
 
-  // Scroll to top only when initial results load (not on every filter change)
-  useEffect(() => {
-    if (!isLoading && courses.length > 0) {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  }, [filtersKey, isLoading, courses.length]);
 
   if (isLoading) {
     return (

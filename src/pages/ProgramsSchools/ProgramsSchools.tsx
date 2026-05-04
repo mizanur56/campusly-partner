@@ -1,6 +1,6 @@
 import { SearchOutlined } from "@ant-design/icons";
 import { Button } from "antd";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import ApplyPreferenceModal from "../../components/common/Modals/Apply/ApplyPreferenceModal";
@@ -49,9 +49,9 @@ export default function ProgramsSchoolsPage() {
     setActiveTab(tabFromUrl === "institutions" ? "institutions" : "courses");
   }, [qFromUrl, tabFromUrl]);
 
-  const handleFilterChange = (newFilters: FilterState) => {
+  const handleFilterChange = useCallback((newFilters: FilterState) => {
     setFilters(newFilters);
-  };
+  }, []);
 
   return (
     <div className="min-h-screen">
