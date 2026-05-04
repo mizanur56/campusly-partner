@@ -26,7 +26,7 @@ export default function PageCard({
   const padding = padded ? "p-6" : "";
   return (
     <div
-      className={`bg-white border border-[#C7CACF] ${radius} ${padding} ${className}`.trim()}
+      className={`bg-white border border-primary-border ${radius} ${padding} ${className}`.trim()}
     >
       {children}
     </div>

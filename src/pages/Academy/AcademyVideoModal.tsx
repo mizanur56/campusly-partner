@@ -1,5 +1,5 @@
+import { Clock, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { X, Clock } from "lucide-react";
 import type { VideoCardItem } from "../../types/videoGallery";
 import { getYouTubeEmbedUrl } from "../../utils/videoHelpers";
 
@@ -17,7 +17,7 @@ export default function AcademyVideoModal({
   allVideos,
 }: AcademyVideoModalProps) {
   const [overriddenVideoId, setOverriddenVideoId] = useState<string | null>(
-    null
+    null,
   );
 
   useEffect(() => {
@@ -48,8 +48,11 @@ export default function AcademyVideoModal({
 
   if (!open || !currentVideo) return null;
 
-  const similarVideos = allVideos.filter((video) => video.id !== currentVideo.id);
-  const embedUrl = getYouTubeEmbedUrl(currentVideo.videoSrc) || currentVideo.videoSrc;
+  const similarVideos = allVideos.filter(
+    (video) => video.id !== currentVideo.id,
+  );
+  const embedUrl =
+    getYouTubeEmbedUrl(currentVideo.videoSrc) || currentVideo.videoSrc;
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 lg:p-[5%]">
@@ -123,7 +126,7 @@ export default function AcademyVideoModal({
                       className={`bg-gray-50 border rounded-xl p-3 hover:bg-gray-100 transition-all cursor-pointer ${
                         currentVideo.id === video.id
                           ? "bg-primary-50 border-primary-200"
-                          : "border-gray-200"
+                          : "border-primary-border"
                       }`}
                       onClick={() => handleSelectVideo(video)}
                     >

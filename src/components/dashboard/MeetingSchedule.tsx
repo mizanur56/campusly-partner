@@ -26,7 +26,7 @@ const MeetingSchedule: React.FC<MeetingScheduleProps> = ({ data = [] }) => {
       <List
         dataSource={data}
         renderItem={(item) => (
-          <List.Item className="px-0 py-4 border-b border-gray-100 last:border-0">
+          <List.Item className="px-0 py-4 border-b border-primary-border last:border-0">
             <div className="w-full">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="font-semibold text-gray-900">{item.title}</h4>

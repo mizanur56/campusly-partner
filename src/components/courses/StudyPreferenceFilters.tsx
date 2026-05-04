@@ -339,7 +339,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Study Preference Card */}
-      <div className="bg-white border border-neutral-100 rounded-[24px] p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+      <div className="bg-white border border-primary-border rounded-2xl p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
         {/* Header with toggle */}
         <div
           className="flex items-center justify-between mb-4 sm:mb-5 cursor-pointer"
@@ -383,7 +383,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
                   setShowSubjectDropdown(false);
                 }}
               >
-                <div className="flex items-center justify-between px-3 py-2 border border-gray-200 rounded-lg bg-white min-h-[38px]">
+                <div className="flex items-center justify-between px-3 py-2 border border-primary-border rounded-lg bg-white min-h-[38px]">
                   <span
                     className={`text-sm ${!filters.studyDestination ? "text-gray-400" : "text-gray-700"}`}
                   >
@@ -414,7 +414,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
 
                 {/* Study Destination Dropdown */}
                 {showStudyDestinationDropdown && (
-                  <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  <div className="absolute z-20 mt-1 w-full bg-white border border-primary-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     <div className="p-2">
                       {isLoadingFilterOptions ? (
                         <div className="px-4 py-2.5 text-sm text-gray-500 text-center">
@@ -541,7 +541,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
                   setShowStudyDestinationDropdown(false);
                 }}
               >
-                <div className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg bg-white min-h-[38px]">
+                <div className="flex items-center gap-2 px-3 py-2 border border-primary-border rounded-lg bg-white min-h-[38px]">
                   <div className="flex flex-wrap gap-2 flex-1">
                     {filters.subjects.length > 0 ? (
                       filters.subjects.map((subject) => (
@@ -607,7 +607,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
 
                 {/* Subject Dropdown */}
                 {showSubjectDropdown && (
-                  <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  <div className="absolute z-20 mt-1 w-full bg-white border border-primary-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     <div className="p-2">
                       {isLoadingFilterOptions ? (
                         <div className="px-4 py-2.5 text-sm text-gray-500 text-center">
@@ -647,7 +647,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
       </div>
 
       {/* Course Options Card */}
-      <div className="bg-white border border-neutral-100 rounded-[24px] p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+      <div className="bg-white border border-primary-border rounded-[24px] p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
         {/* Header with toggle */}
         <div
           className="flex items-center justify-between mb-4 sm:mb-5 cursor-pointer"
@@ -706,7 +706,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
                   setShowInstitutionDropdown(!showInstitutionDropdown)
                 }
               >
-                <div className="flex items-center justify-between px-3 py-2 border border-gray-200 rounded-lg bg-white min-h-[38px]">
+                <div className="flex items-center justify-between px-3 py-2 border border-primary-border rounded-lg bg-white min-h-[38px]">
                   <span
                     className={`text-sm ${!filters.institution ? "text-gray-400" : "text-gray-700"}`}
                   >
@@ -735,7 +735,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
 
                 {/* Institution Dropdown */}
                 {showInstitutionDropdown && (
-                  <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  <div className="absolute z-20 mt-1 w-full bg-white border border-primary-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     <div className="p-2">
                       {isLoadingFilterOptions ? (
                         <div className="px-4 py-2.5 text-sm text-gray-500 text-center">
@@ -795,7 +795,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
                     value={filters.feeRange.min || ""}
                     onChange={handleMinInputChange}
                     placeholder=""
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-sm"
+                    className="w-full px-3 py-2 border border-primary-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-sm"
                   />
                 </div>
                 <div className="flex-1">
@@ -807,7 +807,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
                     value={filters.feeRange.max || ""}
                     onChange={handleMaxInputChange}
                     placeholder=""
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-sm"
+                    className="w-full px-3 py-2 border border-primary-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-sm"
                   />
                 </div>
               </div>

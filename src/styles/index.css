@@ -156,6 +156,7 @@ layer(base);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-border: #c7cacf; /* Added primary border color */
   /* Primary color variants for text-primary-500, bg-primary-500, etc. */
   --color-primary-50: var(--primary-50);
   --color-primary-100: var(--primary-100);
@@ -429,9 +430,6 @@ layer(base);
 
 @utility menu-dropdown-item-active {
   @apply bg-primary-50 text-primary-500 font-medium;
-  border-left: 3px solid var(--primary);
-  margin-left: 2px;
-  padding-left: calc(0.75rem - 2px);
 }
 
 @utility menu-dropdown-item-inactive {

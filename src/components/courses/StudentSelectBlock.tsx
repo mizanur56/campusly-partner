@@ -1,21 +1,23 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
-import SelectedStudentCard, {
-  type SelectedStudent,
-} from "./SelectedStudentCard";
+import { config } from "../../config";
+import { isPartnerStudentProfileComplete } from "../../lib/partnerStudentProfileGates";
+import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 import {
   useGetAllStudentsByPartnerIdQuery,
   useLazyGetStudentProfileQuery,
 } from "../../redux/features/profile/studentProfileApi";
 import { useGetStudentsWithActiveTasksQuery } from "../../redux/features/tasks/partnerTasksApi";
-import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 import { getApiImageUrl } from "../../utils/getApiImageUrl";
-import { config } from "../../config";
-import { isPartnerStudentProfileComplete } from "../../lib/partnerStudentProfileGates";
+import SelectedStudentCard, {
+  type SelectedStudent,
+} from "./SelectedStudentCard";
 
 const DEFAULT_STUDENT_AVATAR = "/user.png";
 
-function resolvePartnerListStudentAvatar(record: Record<string, unknown>): string {
+function resolvePartnerListStudentAvatar(
+  record: Record<string, unknown>,
+): string {
   const fromTopImage = getApiImageUrl(record.image as any);
   if (fromTopImage) return fromTopImage;
 
@@ -189,12 +191,16 @@ export default function StudentSelectBlock({
     );
   }, [studentsList, search]);
 
-  const isLoading = Boolean(user?.id) && (isPartnerLoading || isPartnerFetching);
+  const isLoading =
+    Boolean(user?.id) && (isPartnerLoading || isPartnerFetching);
   const isError = isPartnerError;
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
         setIsOpen(false);
       }
     }
@@ -218,7 +224,7 @@ export default function StudentSelectBlock({
         onClick={() => {
           if (!isLoading && !isError) setIsOpen(!isOpen);
         }}
-        className="w-full rounded-lg border border-dashed border-gray-300 bg-gray-50/80 p-3.5 text-left hover:border-primary-300 hover:bg-primary-50/40 transition-colors"
+        className="w-full rounded-xl border border-dashed border-primary-border bg-white p-3.5 text-left hover:border-primary-300 hover:bg-primary-50/40 transition-colors"
         disabled={isLoading || isError}
       >
         <div className="flex items-center gap-2.5">
@@ -266,14 +272,14 @@ export default function StudentSelectBlock({
       </button>
 
       {isOpen && (
-        <div className="absolute z-20 mt-1.5 w-full rounded-lg border border-gray-200 bg-white py-1 max-h-52 overflow-y-auto no-scrollbar">
+        <div className="absolute z-20 mt-1.5 w-full rounded-lg border border-primary-border bg-white py-1 max-h-52 overflow-y-auto no-scrollbar">
           <div className="px-2 pb-1">
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by name, email or ID"
-              className="w-full rounded-md border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+              className="w-full rounded-md border border-primary-border px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
             />
           </div>
           {profilesResolving ? (
@@ -320,10 +326,10 @@ export default function StudentSelectBlock({
             !isError &&
             !profilesResolving &&
             students.length === 0 && (
-            <div className="px-3 py-2 text-xs text-gray-500">
-              No students with a complete profile match your search.
-            </div>
-          )}
+              <div className="px-3 py-2 text-xs text-gray-500">
+                No students with a complete profile match your search.
+              </div>
+            )}
         </div>
       )}
     </div>

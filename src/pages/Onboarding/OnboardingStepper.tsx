@@ -14,8 +14,7 @@ const LINE_GRAY = "#E5E7EB";
 const PENDING_RING = "#CBD5E1";
 /** Under review — outlined ring + icon (matches SubmittedStep accent) */
 const REVIEW_ORANGE = "#FFA500";
-const LABEL_CLASS =
-  "text-sm leading-snug text-slate-600 dark:text-slate-400";
+const LABEL_CLASS = "text-sm leading-snug text-slate-600 dark:text-slate-400";
 
 export default function OnboardingStepper({
   currentStepIndex,
@@ -49,7 +48,7 @@ export default function OnboardingStepper({
       className="w-full shrink-0 lg:w-50 xl:w-64 lg:self-start"
       aria-label="Application progress"
     >
-      <div className="sticky top-24 overflow-hidden rounded-[16px] border border-[#C7CACF] bg-white dark:border-gray-700/90 dark:bg-gray-900 py-3">
+      <div className="sticky top-24 overflow-hidden rounded-[16px] border border-primary-border bg-white dark:border-gray-700/90 dark:bg-gray-900 py-3">
         <h2 className="px-5 pt-3 text-[18px] font-semibold text-[#20242A] dark:text-white">
           Onboarding Steps
         </h2>
@@ -111,7 +110,9 @@ export default function OnboardingStepper({
                         />
                       </div>
                     </div>
-                    <span className={`min-w-0 text-[16px] text-[#4B5563] flex-1 leading-5 ${LABEL_CLASS}`}>
+                    <span
+                      className={`min-w-0 text-[16px] text-[#4B5563] flex-1 leading-5 ${LABEL_CLASS}`}
+                    >
                       {stepLabel}
                     </span>
                   </div>
@@ -197,7 +198,6 @@ function StepIcon({
     return (
       <span
         className={`flex ${size} shrink-0 items-center justify-center rounded-full bg-white dark:bg-gray-900`}
-        
         aria-hidden
       >
         <CiClock2

@@ -152,15 +152,15 @@ const Header: React.FC = () => {
           : "lg:left-[80px] lg:w-[calc(100vw-80px)]"
       } ${
         hasScrolled
-          ? "border-[#C7CACF] bg-[#FFFFFF]/95 backdrop-blur-md dark:border-[#353646] dark:bg-[#20242A]/95"
-          : "border-[#C7CACF] bg-[#FFFFFF] dark:border-[#353646] dark:bg-[#20242A]"
+          ? "border-primary-border bg-[#FFFFFF]/95 backdrop-blur-md dark:border-[#353646] dark:bg-[#20242A]/95"
+          : "border-primary-border bg-[#FFFFFF] dark:border-[#353646] dark:bg-[#20242A]"
       }`}
     >
       <div className="flex w-full min-w-0 max-w-full items-center justify-between gap-2 px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
         {/* Dashboard / Onboarding: Partner branding */}
         {isDashboardOrOnboarding ? (
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-xs font-semibold text-gray-600 dark:text-gray-200">
+          <div className="flex items-center gap-3 ml-12 lg:ml-0">
+            <div className="hidden lg:flex h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800 items-center justify-center text-xs font-semibold text-gray-600 dark:text-gray-200">
               {brandLogoUrl ? (
                 <img
                   src={brandLogoUrl}
@@ -208,12 +208,12 @@ const Header: React.FC = () => {
                   ref={inputRef}
                   type="text"
                   placeholder="Search courses, universities..."
-                  className="w-full h-11 pl-12 pr-12 rounded-xl bg-gray-50/80 dark:bg-gray-800/50 border border-gray-200/80 dark:border-gray-700/50 
+                  className="w-full h-11 pl-12 pr-12 rounded-xl bg-gray-50/80 dark:bg-gray-800/50 border border-primary-border/80 dark:border-gray-700/50 
                     focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 focus:bg-white dark:focus:bg-gray-800
                     text-base font-normal text-gray-700 dark:text-gray-200 placeholder:text-gray-400 
                     transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600"
                 />
-                <kbd className="hidden lg:inline-flex absolute right-3 top-1/2 -translate-y-1/2 h-6 items-center gap-1 rounded-md border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 px-1.5 font-mono text-xs font-medium text-gray-500 dark:text-gray-400">
+                <kbd className="hidden lg:inline-flex absolute right-3 top-1/2 -translate-y-1/2 h-6 items-center gap-1 rounded-md border border-primary-border dark:border-gray-600 bg-gray-100 dark:bg-gray-700 px-1.5 font-mono text-xs font-medium text-gray-500 dark:text-gray-400">
                   ⌘K
                 </kbd>
               </div>
@@ -247,7 +247,7 @@ const Header: React.FC = () => {
                 </button>
                 {/* pt-2 bridges the gap so hover is not lost moving from button to menu */}
                 <div className="pointer-events-none absolute left-0 top-full z-[100] w-44 pt-2 opacity-0 transition-all duration-200 group-hover:pointer-events-auto group-hover:visible group-hover:opacity-100 invisible">
-                  <div className="rounded-2xl border border-gray-200 bg-white py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] dark:border-gray-800 dark:bg-gray-800">
+                  <div className="rounded-2xl border border-primary-border bg-white py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] dark:border-gray-800 dark:bg-gray-800">
                     <Link
                       to="/galleries"
                       className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700/50 transition-colors duration-200"
@@ -290,7 +290,7 @@ const Header: React.FC = () => {
                   </svg>
                 </button>
                 <div className="pointer-events-none absolute left-0 top-full z-[100] w-44 pt-2 opacity-0 transition-all duration-200 group-hover:pointer-events-auto group-hover:visible group-hover:opacity-100 invisible">
-                  <div className="rounded-2xl border border-gray-200 bg-white py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] dark:border-gray-800 dark:bg-gray-800">
+                  <div className="rounded-2xl border border-primary-border bg-white py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] dark:border-gray-800 dark:bg-gray-800">
                     <Link
                       to="#"
                       className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700/50 transition-colors duration-200"
@@ -324,7 +324,7 @@ const Header: React.FC = () => {
                 </button>
 
                 {/* Dropdown */}
-                <div className="absolute top-full left-0 mt-2 w-[400px] bg-white rounded-2xl border border-gray-200 py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] z-[100] opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200 dark:border-gray-800 dark:bg-gray-800">
+                <div className="absolute top-full left-0 mt-2 w-[400px] bg-white rounded-2xl border border-primary-border py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] z-[100] opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200 dark:border-gray-800 dark:bg-gray-800">
                   <h1 className="text-sm font-semibold px-4 py-3 text-gray-900 dark:text-gray-100">
                     Top courses
                   </h1>
@@ -375,7 +375,7 @@ const Header: React.FC = () => {
                 </button>
 
                 {/* Dropdown → Hidden by default, show on hover */}
-                <div className="absolute top-full -left-6 mt-2 grid grid-cols-2 gap-2 w-[380px] bg-white rounded-2xl border border-gray-200 py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] z-[100] opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200 dark:border-gray-800 dark:bg-gray-800">
+                <div className="absolute top-full -left-6 mt-2 grid grid-cols-2 gap-2 w-[380px] bg-white rounded-2xl border border-primary-border py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] z-[100] opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200 dark:border-gray-800 dark:bg-gray-800">
                   {countryOptions.map((country: any) => (
                     <Link
                       key={country.value}
@@ -413,7 +413,7 @@ const Header: React.FC = () => {
 
                 {/* Dropdown submenu */}
                 <div
-                  className="absolute top-full left-0 mt-2 w-48 bg-white rounded-2xl border border-gray-200 py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] z-[100]
+                  className="absolute top-full left-0 mt-2 w-48 bg-white rounded-2xl border border-primary-border py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] z-[100]
                   opacity-0 invisible group-hover:visible group-hover:opacity-100
                   max-h-0 group-hover:max-h-96 overflow-hidden
                   transition-all duration-300 ease-in-out dark:border-gray-800 dark:bg-gray-800"
@@ -448,9 +448,9 @@ const Header: React.FC = () => {
                 <button
                   onClick={handleFullscreen}
                   className="
-      relative group inline-flex items-center justify-center
+      hidden lg:inline-flex relative group items-center justify-center
       w-10 h-10 rounded-xl
-      border border-gray-200
+      border border-primary-border
       bg-white
       text-gray-600
       transition-all duration-300 ease-in-out
@@ -467,7 +467,9 @@ const Header: React.FC = () => {
       "
                   />
                 </button>
-                <AnnouncementDropdown />
+                <div className="hidden lg:block">
+                  <AnnouncementDropdown />
+                </div>
                 <NotificationDropdown />
                 <UserDropdown />
               </div>
@@ -478,7 +480,7 @@ const Header: React.FC = () => {
 
       {/* Mobile Menu Toggle Button */}
       <button
-        className="lg:hidden absolute left-4 top-1/2 -translate-y-1/2 p-2 text-gray-600 z-[100]"
+        className="lg:hidden absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-gray-600 hover:text-primary-500 border border-primary-border hover:border-primary-500 rounded-lg transition-colors z-[100]"
         onClick={handleToggle}
         aria-label="Toggle Sidebar"
       >

@@ -140,7 +140,7 @@
 
 //   return (
 //     <>
-//       <div className="bg-white border border-[#C7CACF] rounded-lg p-6 mb-4">
+//       <div className="bg-white border border-primary-border rounded-lg p-6 mb-4">
 //         <div className="flex items-center justify-between">
 //           <h3 className="text-[18px] font-semibold text-[#20242A]">{title}</h3>
 
@@ -434,7 +434,7 @@
 //   };
 
 //   return (
-//     <div className="bg-white border border-[#C7CACF] rounded-lg p-6 mb-4">
+//     <div className="bg-white border border-primary-border rounded-lg p-6 mb-4">
 //       {/* Header */}
 //       <div className="flex items-center justify-between">
 //         <h3 className="text-[18px] font-semibold text-[#20242A]">{title}</h3>
@@ -575,21 +575,20 @@
 
 // export default QualificationForm;
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect } from "react";
-import { Form, Button, Tooltip, InputNumber } from "antd";
+import { Button, Form, InputNumber, Tooltip } from "antd";
 import dayjs from "dayjs";
+import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
-import { FormDatePicker, FormInput, FormSelect } from "../../common/Forms";
-import PrimaryButton from "../../common/Button/PrimaryButton";
 import { FaRegEdit } from "react-icons/fa";
 import { FiChevronUp } from "react-icons/fi";
+import { useGetCountriesQuery } from "../../../redux/features/countries/countriesApi";
 import {
   useCreateEducationMutation,
   useUpdateEducationMutation,
 } from "../../../redux/features/profile/studentProfileApi";
-import { useGetCountriesQuery } from "../../../redux/features/countries/countriesApi";
+import PrimaryButton from "../../common/Button/PrimaryButton";
+import { FormDatePicker, FormInput, FormSelect } from "../../common/Forms";
 
 interface QualificationFormProps {
   profileData?: any;
@@ -631,7 +630,6 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
   const [form] = Form.useForm();
   const selectedGrade = Form.useWatch("outOfGrade", form);
 
-
   const [createEducation] = useCreateEducationMutation();
   const [updateEducation] = useUpdateEducationMutation();
   const {
@@ -639,8 +637,6 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
     isLoading,
     isError,
   } = useGetCountriesQuery({ page: 1, limit: 1000 });
-
- 
 
   const countriesOptions =
     countries?.data?.map((country: any) => ({
@@ -743,7 +739,7 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
 
   return (
     <div
-      className={`bg-white transition-all ${hideHeader ? "border-none p-0" : "border border-[#C7CACF] rounded-lg px-5 py-4 mb-4 shadow-sm"}`}
+      className={`bg-white transition-all ${hideHeader ? "border-none p-0" : "border border-primary-border rounded-lg px-5 py-4 mb-4 shadow-sm"}`}
     >
       {/* --- Conditional Header Section --- */}
       {!hideHeader && (
@@ -794,7 +790,9 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
               name="instituteName"
               label="Institute Name"
               placeholder="Enter institute name"
-              rules={[{ required: true, message: "Institute name is required" }]}
+              rules={[
+                { required: true, message: "Institute name is required" },
+              ]}
             />
             <FormSelect
               name="country"
@@ -821,7 +819,9 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
               name="subject"
               label="Subject / Group"
               placeholder="Enter subject or group"
-              rules={[{ required: true, message: "Subject / group is required" }]}
+              rules={[
+                { required: true, message: "Subject / group is required" },
+              ]}
             />
             <FormSelect
               name="outOfGrade"

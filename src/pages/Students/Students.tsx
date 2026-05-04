@@ -193,7 +193,7 @@
 //               />
 //             )}
 
-//    <div className="bg-[#FFFFFF] p-6 rounded-lg border border-[#C7CACF]">
+//    <div className="bg-[#FFFFFF] p-6 rounded-lg border border-primary-border">
 
 //    <div className="mb-6 max-w-sm">
 //         <Input
@@ -210,7 +210,7 @@
 //         />
 //       </div>
 
-//       <div className="overflow-hidden rounded-[24px] border border-neutral-100 bg-white card-shadow dark:border-gray-800 dark:bg-gray-900">
+//       <div className="overflow-hidden rounded-[24px] border border-primary-border bg-white card-shadow dark:border-gray-800 dark:bg-gray-900">
 // <<<<<<<<< Temporary merge branch 1
 //         <DataTable
 //           data={tableData}
@@ -294,12 +294,14 @@
 //   );
 // }
 
-import { Input } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
+import { Button, Input } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import PageCard from "../../components/common/Card/PageCard";
 import PageMeta from "../../components/common/Meta/PageMeta";
 import CreateStudentModal from "../../components/common/Modals/CreateStudentModal";
 import PageHeader from "../../components/common/Navigation/PageHeader";
@@ -460,13 +462,13 @@ export default function Students() {
         title="Students"
         subtitle="Easily manage every student in your team."
         extra={
-          <button
-            type="button"
+          <Button
+            type="primary"
             onClick={() => setCreateStudentOpen(true)}
-            className="inline-flex cursor-pointer items-center justify-center rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            icon={<PlusOutlined />}
           >
-            + Add student
-          </button>
+            Add student
+          </Button>
         }
         breadcrumbs={[{ title: "Dashboard", path: "/" }, { title: "Students" }]}
       />
@@ -478,8 +480,8 @@ export default function Students() {
         />
       )}
 
-      <div className="bg-[#FFFFFF] p-6 rounded-lg border border-[#C7CACF]">
-        <div className="mb-6 max-w-sm">
+      <PageCard>
+        <div className="mb-4 max-w-sm">
           <Input
             placeholder="Search by name, email, status or phone"
             allowClear
@@ -490,34 +492,32 @@ export default function Students() {
           />
         </div>
 
-        <div className="overflow-hidden rounded-[24px] border border-neutral-100 bg-white card-shadow dark:border-gray-800 dark:bg-gray-900">
-          <DataTable
-            data={tableData}
-            columns={columns}
-            rowKey="key"
-            loading={loading}
-            showHeader
-            isPaginate
-            noInnerBorder
-            currentPage={page}
-            setCurrentPage={setPage}
-            limit={pageSize}
-            setLimit={setPageSize}
-            showSizeChanger
-            onRow={(record: StudentRecord) => ({
-              onClick: () =>
-                navigate(`/students/${record.id}/profile`, {
-                  state: { student: record },
-                }),
-              style: { cursor: "pointer" },
-            })}
-            pagination={{
-              pageSizeOptions: ["10", "20", "50"],
-              showTotal: (total: number) => `Total ${total} students`,
-            }}
-          />
-        </div>
-      </div>
+        <DataTable
+          data={tableData}
+          columns={columns}
+          rowKey="key"
+          loading={loading}
+          showHeader
+          isPaginate
+          noInnerBorder
+          currentPage={page}
+          setCurrentPage={setPage}
+          limit={pageSize}
+          setLimit={setPageSize}
+          showSizeChanger
+          onRow={(record: StudentRecord) => ({
+            onClick: () =>
+              navigate(`/students/${record.id}/profile`, {
+                state: { student: record },
+              }),
+            style: { cursor: "pointer" },
+          })}
+          pagination={{
+            pageSizeOptions: ["10", "20", "50"],
+            showTotal: (total: number) => `Total ${total} students`,
+          }}
+        />
+      </PageCard>
     </div>
   );
 }

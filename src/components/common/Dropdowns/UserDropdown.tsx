@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { RiGlobalLine, RiUserLine } from "react-icons/ri";
+import { RiGlobalLine, RiMegaphoneLine, RiUserLine } from "react-icons/ri";
 import { useDispatch, useSelector } from "react-redux";
 import { config } from "../../../config";
 import { clearAuthLocalStorage } from "../../../lib/authLocalStorage";
@@ -76,10 +76,10 @@ export default function UserDropdown() {
       <Dropdown
         isOpen={isOpen}
         onClose={closeDropdown}
-        className="absolute right-0 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-[#C7CACF] bg-white"
+        className="absolute right-0 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-primary-border bg-white"
       >
         <div className="mb-3 flex items-center gap-3">
-          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
+          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-primary-border bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
             <img
               src={
                 user?.profile_photo
@@ -115,6 +115,15 @@ export default function UserDropdown() {
               <span>Profile</span>
             </DropdownItem>
           )}
+          <DropdownItem
+            onItemClick={closeDropdown}
+            tag="a"
+            to="/announcements"
+            className="flex items-center gap-3 px-4 py-3 font-medium text-gray-700 text-[16px] group hover:bg-primary-50/50 hover:text-primary-600 border-b border-[#C7CACF80] lg:hidden"
+          >
+            <RiMegaphoneLine />
+            <span>Announcements</span>
+          </DropdownItem>
           <DropdownItem
             onItemClick={closeDropdown}
             tag="a"

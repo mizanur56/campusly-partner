@@ -1,18 +1,21 @@
-
-
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useMemo } from "react";
-import { Button, Form, Dropdown, Menu, Spin } from "antd";
 import { DownOutlined, PlusOutlined } from "@ant-design/icons";
+import { Button, Dropdown, Form, Menu } from "antd";
+import { useEffect, useMemo, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { useDeleteDocumentMutation, useGetDocumentsByCategoryQuery, useGetEligibleStudyLevelsByCountryQuery, useGetStudentProfileQuery } from "../../../../redux/features/profile/studentProfileApi";
-import { useGetCountriesQuery } from "../../../../redux/features/countries/countriesApi";
 import { toast } from "react-toastify";
+import LanguageTestCard from "../../../../components/ProfileTab/EducationsTab/LanguageTestCard";
+import MediumOfInstruction from "../../../../components/ProfileTab/EducationsTab/MediumOfInstruction";
 import QualificationForm from "../../../../components/ProfileTab/EducationsTab/QualificationForm";
 import DeleteModal from "../../../../components/shared/DeleteModal";
-import MediumOfInstruction from "../../../../components/ProfileTab/EducationsTab/MediumOfInstruction";
-import LanguageTestCard from "../../../../components/ProfileTab/EducationsTab/LanguageTestCard";
+import { useGetCountriesQuery } from "../../../../redux/features/countries/countriesApi";
+import {
+  useDeleteDocumentMutation,
+  useGetDocumentsByCategoryQuery,
+  useGetEligibleStudyLevelsByCountryQuery,
+  useGetStudentProfileQuery,
+} from "../../../../redux/features/profile/studentProfileApi";
 
 interface EducationHistoryTabProps {
   studentId: string;
@@ -93,11 +96,7 @@ const EducationHistory = ({
     () => profileData?.educations || [],
     [profileData],
   );
-  const documents = useMemo(
-    () => profileData?.documents || [],
-    [profileData],
-  );
-
+  const documents = useMemo(() => profileData?.documents || [], [profileData]);
 
   // Memoize submittedEnglishTestDocs to prevent infinite loops
   const submittedEnglishTestDocs = useMemo(() => {
@@ -115,11 +114,9 @@ const EducationHistory = ({
       slug: "english-language-tests",
     });
   const englishTestData = useMemo(
-    () => englishTests as any || [],
+    () => (englishTests as any) || [],
     [englishTests],
   );
-
-
 
   // Initialize activeTests with submitted tests
   const [activeTests, setActiveTests] = useState<any[]>([]);
@@ -208,8 +205,6 @@ const EducationHistory = ({
     const activeIds = activeTests.map((t) => t.id);
     return englishTestData.filter((test: any) => !activeIds.includes(test.id));
   }, [englishTestData, activeTests]);
-
-
 
   const clearLanguageTestFields = (testId: string) => {
     const fieldsToClear: string[] = [];
@@ -304,7 +299,7 @@ const EducationHistory = ({
           {[1, 2, 3, 4, 5].map((index) => (
             <div
               key={index}
-              className="bg-[#FFFFFF] border border-[#C7CACF] rounded-lg p-6"
+              className="bg-[#FFFFFF] border border-primary-border rounded-lg p-6"
             >
               <div className="flex items-center justify-between mb-4">
                 <Skeleton height={24} width={200} />
@@ -355,7 +350,7 @@ const EducationHistory = ({
           {[1, 2].map((index) => (
             <div
               key={index}
-              className="bg-[#FFFFFF] border border-[#C7CACF] rounded-lg p-6"
+              className="bg-[#FFFFFF] border border-primary-border rounded-lg p-6"
             >
               <div className="flex items-center justify-between mb-4">
                 <Skeleton height={24} width={200} />

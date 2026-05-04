@@ -32,7 +32,7 @@ export default function OnboardingFormLayout({
           <main className="min-w-0 flex-1">
             <div className="overflow-hidden">
               {(title.trim() || subtitle?.trim()) && (
-                <header className="border-b border-[#C7CACF] pb-4 dark:border-gray-800 dark:bg-gray-900 ">
+                <header className="border-b border-primary-border pb-4 dark:border-gray-800 dark:bg-gray-900 ">
                   {title.trim() ? (
                     <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white sm:text-2xl">
                       {title}
@@ -46,7 +46,7 @@ export default function OnboardingFormLayout({
                 </header>
               )}
               {/* Card body — constrained width for form readability */}
-              <div className=" py-6  sm:py-7 [&_.ant-input]:h-10 [&_.ant-input]:rounded-lg [&_.ant-input]:border-gray-200 [&_.ant-input-affix-wrapper]:rounded-lg [&_.ant-input-affix-wrapper]:border-gray-200 dark:[&_.ant-input]:border-gray-600 dark:[&_.ant-input-affix-wrapper]:border-gray-600">
+              <div className=" py-6  sm:py-7 [&_.ant-input]:h-10 [&_.ant-input]:rounded-lg [&_.ant-input]:border-primary-border [&_.ant-input-affix-wrapper]:rounded-lg [&_.ant-input-affix-wrapper]:border-primary-border dark:[&_.ant-input]:border-gray-600 dark:[&_.ant-input-affix-wrapper]:border-gray-600">
                 <div className="max-w-2xl">{children}</div>
               </div>
             </div>

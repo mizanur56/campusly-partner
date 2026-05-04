@@ -1,11 +1,13 @@
-
-import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { ChatWidget } from "../components/chat/ChatWidget";
 import { Backdrop, Header, Sidebar } from "../components/common/Layouts";
 import { ChatProvider } from "../context/ChatContext";
-import { PreviewModeProvider, usePreviewMode } from "../context/PreviewModeContext";
+import {
+  PreviewModeProvider,
+  usePreviewMode,
+} from "../context/PreviewModeContext";
 import { SidebarProvider, useSidebar } from "../context/SidebarContext";
 import { StudentProfileProvider } from "../context/StudentProfileContext";
 import {
@@ -70,10 +72,13 @@ const LayoutContent: React.FC = () => {
   // useRoutePermission(); // Disabled for design migration
 
   if (!isTeamMember && !hasUnlockedPortal) {
-    if (isOnboardingStatusPending && !isPathAllowedBeforePartnerPortalUnlock(pathname)) {
+    if (
+      isOnboardingStatusPending &&
+      !isPathAllowedBeforePartnerPortalUnlock(pathname)
+    ) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-[#fefefe] dark:bg-neutral-900">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-primary-600 dark:border-gray-700 dark:border-t-primary-400" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-border border-t-primary-600 dark:border-gray-700 dark:border-t-primary-400" />
         </div>
       );
     }

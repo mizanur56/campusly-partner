@@ -16,10 +16,10 @@ import {
   Tag,
   Tooltip,
 } from "antd";
-import PhoneInput from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
 import type { ColumnsType } from "antd/es/table";
 import React, { useRef, useState } from "react";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
 import { useSelector } from "react-redux";
 import PageCard from "../../components/common/Card/PageCard";
 import PageMeta from "../../components/common/Meta/PageMeta";
@@ -84,17 +84,19 @@ export default function TeamMembers() {
   const meta = data?.meta;
 
   // Helper function to parse phone number from react-phone-input-2
-  const parsePhoneNumber = (phoneValue: string): { countryCode: string; contactNumber: string } => {
+  const parsePhoneNumber = (
+    phoneValue: string,
+  ): { countryCode: string; contactNumber: string } => {
     if (!phoneValue) return { countryCode: "", contactNumber: "" };
-    
+
     // Remove all non-digit characters except the leading +
     const cleanPhone = phoneValue.replace(/\D/g, "");
-    
+
     // Country codes are 1-3 digits, get first 1-3 digits as country code
     // Most common: +1 (US/CA), +44 (UK), +880 (BD), +91 (India), etc.
     let countryCode = "";
     let contactNumber = "";
-    
+
     if (phoneValue.startsWith("+880")) {
       countryCode = "+880";
       contactNumber = cleanPhone.substring(3);
@@ -118,7 +120,7 @@ export default function TeamMembers() {
         contactNumber = cleanPhone.substring(1);
       }
     }
-    
+
     return { countryCode, contactNumber };
   };
 
@@ -126,7 +128,7 @@ export default function TeamMembers() {
     try {
       const values = await form.validateFields();
       const { countryCode, contactNumber } = parsePhoneNumber(values.phone);
-      
+
       await inviteMember({
         email: values.email,
         firstName: values.firstName,
@@ -191,7 +193,9 @@ export default function TeamMembers() {
     editForm.setFieldsValue({
       firstName: record.firstName ?? "",
       lastName: record.lastName ?? "",
-      phone: record.countryCode ? `${record.countryCode}${record.contactNumber}` : "",
+      phone: record.countryCode
+        ? `${record.countryCode}${record.contactNumber}`
+        : "",
     });
   };
 
@@ -200,7 +204,7 @@ export default function TeamMembers() {
     try {
       const values = await editForm.validateFields();
       const { countryCode, contactNumber } = parsePhoneNumber(values.phone);
-      
+
       await updateMember({
         id: editingMember.id,
         data: {
@@ -379,13 +383,13 @@ export default function TeamMembers() {
 
       {/* Stats cards */}
       <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="rounded-xl border border-[#C7CACF] bg-white p-4">
+        <div className="rounded-xl border border-primary-border bg-white p-4">
           <div className="text-xs text-gray-500 mb-1">Total Members</div>
           <div className="text-2xl font-semibold text-gray-900">
             {stats?.total ?? 0}
           </div>
         </div>
-        <div className="rounded-xl border border-[#C7CACF] bg-white p-4">
+        <div className="rounded-xl border border-primary-border bg-white p-4">
           <div className="text-xs text-gray-500 mb-1">Active Members</div>
           <div className="text-2xl font-semibold text-emerald-600">
             {stats?.active ?? 0}
@@ -471,7 +475,7 @@ export default function TeamMembers() {
                 <img
                   src={getApiImageUrl(selectedPhoto.url)}
                   alt="Team member preview"
-                  className="h-16 w-16 rounded-full object-cover border border-[#C7CACF]"
+                  className="h-16 w-16 rounded-full object-cover border border-primary-border"
                 />
               ) : null}
               <Button
@@ -541,7 +545,8 @@ export default function TeamMembers() {
             rules={[
               { required: true, message: "Phone number is required" },
               {
-                pattern: /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/,
+                pattern:
+                  /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/,
                 message: "Please enter a valid phone number",
               },
             ]}
@@ -549,8 +554,8 @@ export default function TeamMembers() {
             <PhoneInput
               country="bd"
               preferredCountries={["bd", "us", "gb", "in", "au"]}
-              inputStyle={{ 
-                width: "100%", 
+              inputStyle={{
+                width: "100%",
                 height: 32,
                 fontSize: 14,
                 paddingLeft: 48,
@@ -662,7 +667,8 @@ export default function TeamMembers() {
             rules={[
               { required: true, message: "Phone number is required" },
               {
-                pattern: /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/,
+                pattern:
+                  /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/,
                 message: "Please enter a valid phone number",
               },
             ]}
@@ -670,8 +676,8 @@ export default function TeamMembers() {
             <PhoneInput
               country="bd"
               preferredCountries={["bd", "us", "gb", "in", "au"]}
-              inputStyle={{ 
-                width: "100%", 
+              inputStyle={{
+                width: "100%",
                 height: 32,
                 fontSize: 14,
                 paddingLeft: 48,

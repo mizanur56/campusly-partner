@@ -22,14 +22,14 @@
 //         <Skeleton className="mt-3 h-5 w-full max-w-lg" />
 //         {/* Progress summary skeleton */}
 //         <div className="mt-6 flex flex-wrap gap-4">
-//           <div className="min-w-0 flex-1 rounded-xl border border-gray-200/80 bg-white p-4 card-shadow dark:border-gray-700/80 dark:bg-gray-900/50">
+//           <div className="min-w-0 flex-1 rounded-xl border border-primary-border/80 bg-white p-4 card-shadow dark:border-gray-700/80 dark:bg-gray-900/50">
 //             <Skeleton className="h-3 w-20" />
 //             <div className="mt-2 flex items-baseline gap-2">
 //               <Skeleton className="h-8 w-12" />
 //             </div>
 //             <Skeleton className="mt-2 h-1.5 w-full rounded-full" />
 //           </div>
-//           <div className="min-w-0 flex-1 rounded-xl border border-gray-200/80 bg-white p-4 card-shadow dark:border-gray-700/80 dark:bg-gray-900/50">
+//           <div className="min-w-0 flex-1 rounded-xl border border-primary-border/80 bg-white p-4 card-shadow dark:border-gray-700/80 dark:bg-gray-900/50">
 //             <Skeleton className="h-3 w-16" />
 //             <div className="mt-2 flex items-baseline gap-2">
 //               <Skeleton className="h-8 w-12" />
@@ -40,8 +40,8 @@
 //       </header>
 
 //       {/* Onboarding Form card skeleton */}
-//       <section className="rounded-2xl border border-gray-200/90 bg-white card-shadow dark:border-gray-700/90 dark:bg-gray-900">
-//         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+//       <section className="rounded-2xl border border-primary-border/90 bg-white card-shadow dark:border-gray-700/90 dark:bg-gray-900">
+//         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-primary-border px-5 py-4 dark:border-gray-800">
 //           <div className="flex items-center gap-3 min-w-0 flex-1">
 //             <Skeleton className="h-11 w-11 rounded-xl" />
 //             <div className="min-w-0">
@@ -54,14 +54,14 @@
 //             <Skeleton className="h-8 w-8 rounded-lg" />
 //           </div>
 //         </div>
-//         <div className="border-t border-gray-100 bg-gray-50/60 px-5 py-4 dark:border-gray-800 dark:bg-gray-800/30">
+//         <div className="border-t border-primary-border bg-gray-50/60 px-5 py-4 dark:border-gray-800 dark:bg-gray-800/30">
 //           <ul className="space-y-0">
 //             {[...Array(6)].map((_, index) => (
 //               <li
 //                 key={index}
 //                 className={`flex items-center gap-3 py-3 ${
 //                   index > 0
-//                     ? "border-t border-gray-100 dark:border-gray-700/80"
+//                     ? "border-t border-primary-border dark:border-gray-700/80"
 //                     : ""
 //                 }`}
 //               >
@@ -74,8 +74,8 @@
 //       </section>
 
 //       {/* Contract card skeleton */}
-//       <section className="mt-6 rounded-2xl border border-gray-200/90 bg-white card-shadow dark:border-gray-700/90 dark:bg-gray-900">
-//         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+//       <section className="mt-6 rounded-2xl border border-primary-border/90 bg-white card-shadow dark:border-gray-700/90 dark:bg-gray-900">
+//         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-primary-border px-5 py-4 dark:border-gray-800">
 //           <div className="flex items-center gap-3 min-w-0 flex-1">
 //             <Skeleton className="h-11 w-11 rounded-xl" />
 //             <div className="min-w-0">
@@ -88,14 +88,14 @@
 //             <Skeleton className="h-8 w-8 rounded-lg" />
 //           </div>
 //         </div>
-//         <div className="border-t border-gray-100 bg-gray-50/60 px-5 py-4 dark:border-gray-800 dark:bg-gray-800/30">
+//         <div className="border-t border-primary-border bg-gray-50/60 px-5 py-4 dark:border-gray-800 dark:bg-gray-800/30">
 //           <ul className="space-y-0">
 //             {[...Array(2)].map((_, index) => (
 //               <li
 //                 key={index}
 //                 className={`flex items-center gap-3 py-3 ${
 //                   index > 0
-//                     ? "border-t border-gray-100 dark:border-gray-700/80"
+//                     ? "border-t border-primary-border dark:border-gray-700/80"
 //                     : ""
 //                 }`}
 //               >
@@ -202,7 +202,7 @@
 //       {isLoading ? (
 //         <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
 //           <div className="flex flex-col items-center gap-3 text-gray-500 dark:text-gray-300">
-//             <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-primary-600 dark:border-gray-700 dark:border-t-primary-400" />
+//             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-border border-t-primary-600 dark:border-gray-700 dark:border-t-primary-400" />
 //             <p className="text-sm font-medium">Loading your dashboard...</p>
 //           </div>
 //         </div>
@@ -222,7 +222,7 @@
 //               </p>
 //               {/* Progress summary */}
 //               <div className="mt-6 flex flex-wrap gap-4">
-//                 <div className="min-w-0 flex-1 rounded-xl border border-gray-200/80 bg-white p-4 card-shadow dark:border-gray-700/80 dark:bg-gray-900/50">
+//                 <div className="min-w-0 flex-1 rounded-xl border border-primary-border/80 bg-white p-4 card-shadow dark:border-gray-700/80 dark:bg-gray-900/50">
 //                   <p className="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
 //                     Onboarding
 //                   </p>
@@ -243,7 +243,7 @@
 //                     />
 //                   </div>
 //                 </div>
-//                 <div className="min-w-0 flex-1 rounded-xl border border-gray-200/80 bg-white p-4 card-shadow dark:border-gray-700/80 dark:bg-gray-900/50">
+//                 <div className="min-w-0 flex-1 rounded-xl border border-primary-border/80 bg-white p-4 card-shadow dark:border-gray-700/80 dark:bg-gray-900/50">
 //                   <p className="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
 //                     Contract
 //                   </p>
@@ -268,8 +268,8 @@
 //             </header>
 
 //             {/* Onboarding Form card */}
-//             <section className="rounded-2xl border border-gray-200/90 bg-white card-shadow dark:border-gray-700/90 dark:bg-gray-900">
-//               <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+//             <section className="rounded-2xl border border-primary-border/90 bg-white card-shadow dark:border-gray-700/90 dark:bg-gray-900">
+//               <div className="flex flex-wrap items-center justify-between gap-4 border-b border-primary-border px-5 py-4 dark:border-gray-800">
 //                 <div className="flex items-center gap-3 min-w-0 flex-1">
 //                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-50 dark:bg-primary-900/30">
 //                     <svg
@@ -328,7 +328,7 @@
 //                 </div>
 //               </div>
 //               {onboardingOpen && (
-//                 <div className="border-t border-gray-100 bg-gray-50/60 px-5 py-4 dark:border-gray-800 dark:bg-gray-800/30">
+//                 <div className="border-t border-primary-border bg-gray-50/60 px-5 py-4 dark:border-gray-800 dark:bg-gray-800/30">
 //                   <ul className="space-y-0">
 //                     {ONBOARDING_STEPS.map((step, index) => {
 //                       const isCompleted = step.completed;
@@ -346,7 +346,7 @@
 //                           key={step.id}
 //                           className={`flex items-center gap-3 py-3 ${
 //                             index > 0
-//                               ? "border-t border-gray-100 dark:border-gray-700/80"
+//                               ? "border-t border-primary-border dark:border-gray-700/80"
 //                               : ""
 //                           }`}
 //                         >
@@ -360,7 +360,7 @@
 //                                     ? "bg-primary-600 text-white"
 //                                     : isActive
 //                                       ? "border border-primary-500 bg-primary-50 text-primary-600 dark:border-primary-400 dark:bg-primary-900/30"
-//                                       : "border border-gray-200 bg-white text-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-500"
+//                                       : "border border-primary-border bg-white text-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-500"
 //                             }`}
 //                           >
 //                             {isReviewRejected ? (
@@ -421,15 +421,14 @@
 //             {/* Contract card */}
 //             <section
 
-
-//               className={`mt-6 rounded-2xl border border-[#C7CACF] bg-[#FFFFFF] dark:bg-gray-900 ${
+//               className={`mt-6 rounded-2xl border border-primary-border bg-[#FFFFFF] dark:bg-gray-900 ${
 //                 canAccessContract
-//                   ? "border-[#C7CACF] dark:border-gray-700/90"
-//                   : "border-[#C7CACF] opacity-60 dark:border-gray-700/50"
+//                   ? "border-primary-border dark:border-gray-700/90"
+//                   : "border-primary-border opacity-60 dark:border-gray-700/50"
 
 //               }`}
 //             >
-//               <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+//               <div className="flex flex-wrap items-center justify-between gap-4 border-b border-primary-border px-5 py-4 dark:border-gray-800">
 //                 <div className="flex items-center gap-3 min-w-0 flex-1">
 //                   <div
 //                     className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
@@ -506,7 +505,7 @@
 //                 </div>
 //               </div>
 //               {contractOpen && canAccessContract && (
-//                 <div className="border-t border-gray-100 bg-gray-50/60 px-5 py-4 dark:border-gray-800 dark:bg-gray-800/30">
+//                 <div className="border-t border-primary-border bg-gray-50/60 px-5 py-4 dark:border-gray-800 dark:bg-gray-800/30">
 //                   <ul className="space-y-0">
 //                     {BASE_CONTRACT_STEPS.map((step, index) => {
 //                       const isContractRejectedStep =
@@ -522,7 +521,7 @@
 //                           key={step.id}
 //                           className={`flex items-center gap-3 py-3 ${
 //                             index > 0
-//                               ? "border-t border-gray-100 dark:border-gray-700/80"
+//                               ? "border-t border-primary-border dark:border-gray-700/80"
 //                               : ""
 //                           }`}
 //                         >
@@ -534,7 +533,7 @@
 //                                   ? "bg-primary-600 text-white"
 //                                   : isActive
 //                                     ? "border-2 border-primary-500 bg-primary-50 text-primary-600 dark:border-primary-400 dark:bg-primary-900/30"
-//                                     : "border border-gray-200 bg-white text-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-500"
+//                                     : "border border-primary-border bg-white text-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-500"
 //                             }`}
 //                           >
 //                             {isContractRejectedStep ? (
@@ -590,7 +589,7 @@
 //                 </div>
 //               )}
 //               {contractOpen && !canAccessContract && (
-//                 <div className="border-t border-gray-100 bg-gray-50/60 px-5 py-4 dark:border-gray-800 dark:bg-gray-800/30">
+//                 <div className="border-t border-primary-border bg-gray-50/60 px-5 py-4 dark:border-gray-800 dark:bg-gray-800/30">
 //                   <div className="flex items-center gap-3 rounded-lg bg-gray-100 px-4 py-3 dark:bg-gray-800">
 //                     <svg
 //                       className="h-5 w-5 text-gray-400"
@@ -622,16 +621,15 @@
 
 // export default Dashboard;
 
-
 import { useEffect, useState } from "react";
 import { CiClock2 } from "react-icons/ci";
 import { useSelector } from "react-redux";
 import PageMeta from "../../components/common/Meta/PageMeta";
 import { Button } from "../../components/ui/button";
 import { usePreviewMode } from "../../context/PreviewModeContext";
-import SignedDashboardView from "./SignedDashboardView";
 import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 import { useGetOnboardingStatusQuery } from "../../redux/features/onboardingForm";
+import SignedDashboardView from "./SignedDashboardView";
 
 const REVIEW_ORANGE = "#FFA500";
 
@@ -726,7 +724,6 @@ function StepDot({
     return (
       <span
         className=" flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white dark:bg-gray-900"
-     
         aria-hidden
       >
         <CiClock2
@@ -864,7 +861,11 @@ const Dashboard = () => {
 
     if ((hasUnlockedPortal || isTeamMember) && previewMode !== "signed") {
       setPreviewMode("signed");
-    } else if (!hasUnlockedPortal && !isTeamMember && previewMode !== "onboarding") {
+    } else if (
+      !hasUnlockedPortal &&
+      !isTeamMember &&
+      previewMode !== "onboarding"
+    ) {
       setPreviewMode("onboarding");
     }
   }, [hasUnlockedPortal, isLoading, isTeamMember, previewMode, setPreviewMode]);
@@ -879,7 +880,7 @@ const Dashboard = () => {
       {isLoading ? (
         <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
           <div className="flex flex-col items-center gap-3 text-gray-500 dark:text-gray-300">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-primary-600 dark:border-gray-700 dark:border-t-primary-400" />
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-border border-t-primary-600 dark:border-gray-700 dark:border-t-primary-400" />
             <p className="text-sm font-medium">Loading your dashboard...</p>
           </div>
         </div>
@@ -890,19 +891,18 @@ const Dashboard = () => {
           <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
             {/* Welcome — professional header */}
             <header className="mb-10">
-            <div className="flex flex-col gap-2 justify-center items-center">
-            <h1 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white sm:text-3xl">
-                Welcome to Campus Transfer
-              </h1>
-              <p className="text-center max-w-lg text-base leading-relaxed text-gray-500 dark:text-gray-400">
-                Complete onboarding and sign your contract to get full access to
-                the partner portal.
-              </p>
-            </div>
-            
+              <div className="flex flex-col gap-2 justify-center items-center">
+                <h1 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white sm:text-3xl">
+                  Welcome to Campus Transfer
+                </h1>
+                <p className="text-center max-w-lg text-base leading-relaxed text-gray-500 dark:text-gray-400">
+                  Complete onboarding and sign your contract to get full access
+                  to the partner portal.
+                </p>
+              </div>
 
               {/* <div className="mt-6 flex flex-wrap gap-4">
-                <div className="min-w-0 flex-1 rounded-xl border border-gray-200/80 bg-white p-4 card-shadow dark:border-gray-700/80 dark:bg-gray-900/50">
+                <div className="min-w-0 flex-1 rounded-xl border border-primary-border/80 bg-white p-4 card-shadow dark:border-gray-700/80 dark:bg-gray-900/50">
                   <p className="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
                     Onboarding
                   </p>
@@ -923,7 +923,7 @@ const Dashboard = () => {
                     />
                   </div>
                 </div>
-                <div className="min-w-0 flex-1 rounded-xl border border-gray-200/80 bg-white p-4 card-shadow dark:border-gray-700/80 dark:bg-gray-900/50">
+                <div className="min-w-0 flex-1 rounded-xl border border-primary-border/80 bg-white p-4 card-shadow dark:border-gray-700/80 dark:bg-gray-900/50">
                   <p className="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
                     Contract
                   </p>
@@ -948,43 +948,43 @@ const Dashboard = () => {
             </header>
 
             {/* Onboarding Form card */}
-            <section className="rounded-2xl border border-[#C7CACF] bg-[#FFFFFF] dark:border-gray-700/90 dark:bg-gray-900">
+            <section className="rounded-2xl border border-primary-border bg-[#FFFFFF] dark:border-gray-700/90 dark:bg-gray-900">
               <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
                 <div className="flex items-center gap-3 min-w-0 flex-1">
-           
                   <div className="min-w-0">
                     <h2 className="text-base font-semibold text-gray-900 dark:text-white">
                       Onboarding Form
                     </h2>
-                 <div className="flex flex-wrap items-center gap-2">
-                 <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-                      {onboardingCompleted}/{ONBOARDING_STEPS.length} completed
-                    </p>
-                    {(showOnboardingPartial ||
-                      isFormUnderReview ||
-                      showOnboardingCompleteBadge) && (
-                      <p className="mt-0.5 text-sm">
-                        <span
-                          className={`mr-1 ${showOnboardingCompleteBadge ? "text-[#00B561]" : "text-[#FF9100]"}`}
-                        >
-                          •
-                        </span>
-                        <span
-                          className={
-                            showOnboardingCompleteBadge
-                              ? "text-[#00B561]"
-                              : "text-[#FF9100]"
-                          }
-                        >
-                          {isFormUnderReview
-                            ? "Under Review"
-                            : showOnboardingCompleteBadge
-                              ? "Complete"
-                              : "Partially filled"}
-                        </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+                        {onboardingCompleted}/{ONBOARDING_STEPS.length}{" "}
+                        completed
                       </p>
-                    )}
-                 </div>
+                      {(showOnboardingPartial ||
+                        isFormUnderReview ||
+                        showOnboardingCompleteBadge) && (
+                        <p className="mt-0.5 text-sm">
+                          <span
+                            className={`mr-1 ${showOnboardingCompleteBadge ? "text-[#00B561]" : "text-[#FF9100]"}`}
+                          >
+                            •
+                          </span>
+                          <span
+                            className={
+                              showOnboardingCompleteBadge
+                                ? "text-[#00B561]"
+                                : "text-[#FF9100]"
+                            }
+                          >
+                            {isFormUnderReview
+                              ? "Under Review"
+                              : showOnboardingCompleteBadge
+                                ? "Complete"
+                                : "Partially filled"}
+                          </span>
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-1 sm:gap-2">
@@ -1044,7 +1044,8 @@ const Dashboard = () => {
                       if (isReviewRejected) dotKind = "rejected";
                       else if (isReviewRow && isFormUnderReview)
                         dotKind = "reviewPending";
-                      else if (isReviewApproved || isCompleted) dotKind = "done";
+                      else if (isReviewApproved || isCompleted)
+                        dotKind = "done";
                       else if (isActive) dotKind = "active";
 
                       const labelClass = isReviewRejected
@@ -1136,10 +1137,10 @@ const Dashboard = () => {
 
             {/* Contract card */}
             <section
-              className={`mt-6 rounded-2xl border border-[#C7CACF] bg-[#FFFFFF] dark:bg-gray-900 ${
+              className={`mt-6 rounded-2xl border border-primary-border bg-[#FFFFFF] dark:bg-gray-900 ${
                 canAccessContract
-                  ? "border-[#C7CACF] dark:border-gray-700/90"
-                  : "border-[#C7CACF] opacity-60 dark:border-gray-700/50"
+                  ? "border-primary-border dark:border-gray-700/90"
+                  : "border-primary-border opacity-60 dark:border-gray-700/50"
               }`}
             >
               <div className="flex flex-wrap items-start justify-between gap-4 px-5 py-5">
@@ -1245,7 +1246,7 @@ const Dashboard = () => {
                           key={step.id}
                           className={`flex items-center gap-3 py-3 ${
                             index > 0
-                              ? "border-t border-gray-100 dark:border-gray-700/80"
+                              ? "border-t border-primary-border dark:border-gray-700/80"
                               : ""
                           }`}
                         >
@@ -1257,7 +1258,7 @@ const Dashboard = () => {
                                   ? "bg-[#00B561] text-white"
                                   : isActive
                                     ? "border-2 border-primary-500 bg-primary-50 text-primary-600 dark:border-primary-400 dark:bg-primary-900/30"
-                                    : "border border-gray-200 bg-white text-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-500"
+                                    : "border border-primary-border bg-white text-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-500"
                             }`}
                           >
                             {isContractRejectedStep ? (
