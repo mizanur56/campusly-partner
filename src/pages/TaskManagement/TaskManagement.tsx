@@ -10,7 +10,6 @@ import {
   EditOutlined,
   EyeOutlined,
   MinusOutlined,
-  StopOutlined,
 } from "@ant-design/icons";
 import {
   Button,
@@ -93,6 +92,8 @@ export default function TaskManagement() {
   const [limit] = useState(10);
   const [status, setStatus] = useState<PartnerTaskStatus | "">("");
   const [priority, setPriority] = useState<PartnerTaskPriority | "">("");
+  const [lastActiveSection, setLastActiveSection] = useState<"status" | "priority">("priority");
+  const [searchTerm, setSearchTerm] = useState("");
   const [openFormModal, setOpenFormModal] = useState(false);
   const [editingTask, setEditingTask] = useState<PartnerTaskListItem | null>(
     null,
@@ -115,8 +116,9 @@ export default function TaskManagement() {
   } = useGetPartnerTasksQuery({
     page,
     limit,
-    status: status || undefined,
+    status: lastActiveSection === "priority" ? "IN_PROGRESS" : (status || undefined),
     createdByMe: true,
+    searchTerm: searchTerm || undefined,
   });
 
   const { data: taskDetail, isLoading: detailLoading } = useGetTaskByIdQuery(
@@ -147,11 +149,10 @@ export default function TaskManagement() {
   const rows = useMemo(
     () =>
       allRows.filter((r) => {
-        if (priority && (r.status === "COMPLETED" || r.status === "CANCELLED"))
-          return false;
+        if (lastActiveSection === "priority" && r.status !== "IN_PROGRESS") return false;
         return !priority || r.priority === priority;
       }),
-    [allRows, priority],
+    [allRows, priority, lastActiveSection],
   );
 
   const stats = useMemo(() => {
@@ -160,24 +161,19 @@ export default function TaskManagement() {
       return {
         total: (apiStats as any).total || 0,
         inProgress: (apiStats as any).inProgress || 0,
-        submitted: (apiStats as any).submitted || 0,
         completed: (apiStats as any).completed || 0,
-        reviewOpen: (apiStats as any).submitted || 0,
         low: (apiStats as any).low || 0,
         medium: (apiStats as any).medium || 0,
         high: (apiStats as any).high || 0,
         cancelled: (apiStats as any).cancelled || 0,
-        urgent: (apiStats as any).urgent || 0,
       };
     }
     return allRows.reduce(
       (acc, r) => {
         acc.total += 1;
         if (r.status === "IN_PROGRESS") acc.inProgress += 1;
-        if (r.status === "SUBMITTED") acc.submitted += 1;
         if (r.status === "COMPLETED") acc.completed += 1;
-        if (r.status === "SUBMITTED") acc.reviewOpen += 1;
-        if (r.status !== "COMPLETED" && r.status !== "CANCELLED") {
+        if (r.status === "IN_PROGRESS") {
           if (r.priority === "LOW") acc.low += 1;
           if (r.priority === "MEDIUM") acc.medium += 1;
           if (r.priority === "HIGH") acc.high += 1;
@@ -277,9 +273,7 @@ export default function TaskManagement() {
       title: "Status",
       dataIndex: "status",
       render: (s: string) => (
-        <Tag color={statusColor[s] ?? "default"}>
-          {s === "SUBMITTED" ? "IN REVIEW" : s.replace(/_/g, " ")}
-        </Tag>
+        <Tag color={statusColor[s] ?? "default"}>{s.replace(/_/g, " ")}</Tag>
       ),
     },
     {
@@ -302,16 +296,6 @@ export default function TaskManagement() {
       width: 200,
       render: (_: unknown, row: PartnerTaskListItem) => (
         <Space>
-          {row.status === "IN_PROGRESS" && (
-            <Tooltip title="Cancel task">
-              <Button
-                type="text"
-                size="small"
-                icon={<StopOutlined />}
-                onClick={() => setCancelTask(row)}
-              />
-            </Tooltip>
-          )}
           <Tooltip title="Edit task">
             <Button
               type="default"
@@ -780,18 +764,21 @@ export default function TaskManagement() {
       <Modal
         title="Cancel task"
         open={!!cancelTask}
-        onCancel={() => setCancelTask(null)}
+        onCancel={() => { setCancelTask(null); setCancelNote(""); }}
         onOk={async () => {
           if (!cancelTask) return;
           await updateTaskStatus({
             id: cancelTask.id,
             status: "CANCELLED",
-            note: "Task cancelled by creator",
+            note: cancelNote || undefined,
           }).unwrap();
           setCancelTask(null);
+          setCancelNote("");
         }}
         okText="Cancel Task"
         okButtonProps={{ danger: true }}
+        confirmLoading={updatingStatus}
+        destroyOnClose
       >
         <Typography.Paragraph type="secondary">
           Are you sure you want to cancel this task? This action cannot be
