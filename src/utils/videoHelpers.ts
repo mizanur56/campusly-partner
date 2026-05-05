@@ -10,6 +10,29 @@ export function extractYouTubeVideoId(url: string): string | null {
 }
 
 /**
+ * Sum an array of duration strings (HH:MM:SS or MM:SS) into a human-readable
+ * label like "2h 30m", "45m", or "" when the total is zero / all blank.
+ */
+export function sumDurations(durations: string[]): string {
+  let totalSeconds = 0;
+  for (const d of durations) {
+    if (!d) continue;
+    const parts = d.split(":").map(Number);
+    if (parts.length === 3) {
+      totalSeconds += parts[0] * 3600 + parts[1] * 60 + parts[2];
+    } else if (parts.length === 2) {
+      totalSeconds += parts[0] * 60 + parts[1];
+    }
+  }
+  if (totalSeconds === 0) return "";
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  if (h > 0 && m > 0) return `${h}h ${m}m`;
+  if (h > 0) return `${h}h`;
+  return `${m}m`;
+}
+
+/**
  * Convert YouTube URL to embed format for iframe
  */
 export function getYouTubeEmbedUrl(url: string): string | null {

@@ -360,6 +360,9 @@ const Sidebar: React.FC = () => {
         // Single "Payments" menu should stay active for Purchase/Commission tabs
         return location.pathname.startsWith("/payments");
       }
+      if (path === "/academy") {
+        return location.pathname.startsWith("/academy");
+      }
       return location.pathname === path;
     },
     [location.pathname],
