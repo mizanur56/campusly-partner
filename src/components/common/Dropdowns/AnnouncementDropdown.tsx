@@ -71,7 +71,7 @@ export default function AnnouncementDropdown() {
       {
         key: "header",
         label: (
-          <div className="flex items-center justify-between py-3 px-4 border-b border-[#C7CACF]">
+          <div className="flex items-center justify-between py-3 px-4 border-b border-primary-border">
             <h2 className="text-[18px] font-semibold text-gray-800">
               Announcements
             </h2>
@@ -120,7 +120,7 @@ export default function AnnouncementDropdown() {
               key: announcement.id,
               label: (
                 <div
-                  className="p-3 cursor-pointer border-b border-[#C7CACF] hover:bg-primary-50 transition-all duration-300"
+                  className="p-3 cursor-pointer border-b border-primary-border hover:bg-primary-50 transition-all duration-300"
                   onClick={() => {
                     if (!readIds.includes(announcement.id)) {
                       persistReadIds([...readIds, announcement.id]);
@@ -211,7 +211,7 @@ export default function AnnouncementDropdown() {
           className="
             relative flex items-center justify-center
             w-10 h-10 rounded-xl
-            border border-gray-200
+            border border-primary-border
             bg-white
             text-gray-600
             transition-all duration-200 ease-in-out

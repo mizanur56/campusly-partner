@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Search, X, Check } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Check, ChevronDown, Search, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "../../lib/utils";
 
 interface SelectProps {
@@ -66,7 +66,7 @@ export default function Select({
   };
 
   const filteredOptions = options.filter((option) =>
-    option.toLowerCase().includes(searchValue.toLowerCase())
+    option.toLowerCase().includes(searchValue.toLowerCase()),
   );
 
   return (
@@ -85,7 +85,7 @@ export default function Select({
               ? "border-primary-500 ring-2 ring-primary-500/20"
               : "hover:border-neutral-300",
             "focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500",
-            className
+            className,
           )}
         >
           <div className="flex flex-1 flex-wrap gap-1.5 items-center min-h-[20px] overflow-hidden">
@@ -113,7 +113,7 @@ export default function Select({
           <ChevronDown
             className={cn(
               "h-4 w-4 shrink-0 text-neutral-400 transition-transform",
-              open && "rotate-180"
+              open && "rotate-180",
             )}
           />
         </button>
@@ -128,7 +128,7 @@ export default function Select({
               transition={{ duration: 0.15 }}
               className="absolute z-50 mt-1.5 w-full rounded-lg border border-neutral-200 bg-white shadow-lg"
             >
-              <div className="p-2 border-b border-neutral-100">
+              <div className="p-2 border-b border-primary-border">
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
                   <input
@@ -157,7 +157,7 @@ export default function Select({
                           "flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors",
                           isSelected
                             ? "bg-primary-50 text-primary-700"
-                            : "text-neutral-700 hover:bg-neutral-50"
+                            : "text-neutral-700 hover:bg-neutral-50",
                         )}
                       >
                         <div
@@ -165,7 +165,7 @@ export default function Select({
                             "flex h-4 w-4 items-center justify-center rounded border transition-colors",
                             isSelected
                               ? "border-primary-500 bg-primary-500"
-                              : "border-neutral-300"
+                              : "border-neutral-300",
                           )}
                         >
                           {isSelected && (
@@ -182,9 +182,7 @@ export default function Select({
           )}
         </AnimatePresence>
       </div>
-      {helperText && (
-        <p className="text-xs text-neutral-500">{helperText}</p>
-      )}
+      {helperText && <p className="text-xs text-neutral-500">{helperText}</p>}
     </div>
   );
 }

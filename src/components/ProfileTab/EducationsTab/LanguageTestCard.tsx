@@ -1,24 +1,21 @@
-
-
-import { Button, Form, Tooltip } from "antd";
-import { useEffect, useState } from "react";
-import dayjs from "dayjs";
-import { toast } from "react-toastify";
 import {
   DeleteOutlined,
   EyeOutlined,
   FileTextOutlined,
 } from "@ant-design/icons";
-import { FiChevronUp } from "react-icons/fi";
+import { Button, Form, Tooltip } from "antd";
+import dayjs from "dayjs";
+import { useEffect, useState } from "react";
 import { FaRegEdit } from "react-icons/fa";
+import { FiChevronUp } from "react-icons/fi";
+import { toast } from "react-toastify";
 
-import { FormDatePicker, FormInput } from "../../common/Forms";
-import PrimaryButton from "../../common/Button/PrimaryButton";
 import { config } from "../../../config";
 import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
 import { useUpsertDocumentMutation } from "../../../redux/features/profile/studentProfileApi";
+import PrimaryButton from "../../common/Button/PrimaryButton";
+import { FormDatePicker, FormInput } from "../../common/Forms";
 import Uploader from "../../common/Shared/Uploader";
-
 
 interface Props {
   id: string;
@@ -48,7 +45,7 @@ const LanguageTestCard: React.FC<Props> = ({
   const [open, setOpen] = useState(false);
 
   const [createMedia] = useCreateMediaMutation();
-    const [upsertDocument] = useUpsertDocumentMutation();
+  const [upsertDocument] = useUpsertDocumentMutation();
 
   const certFieldName = `${id}_certificateId`;
 
@@ -191,7 +188,7 @@ const LanguageTestCard: React.FC<Props> = ({
 
   /* ================= UI ================= */
   return (
-    <div className="bg-[#FFFFFF] border border-[#C7CACF] rounded-lg mb-6 overflow-hidden">
+    <div className="bg-[#FFFFFF] border border-primary-border rounded-lg mb-6 overflow-hidden">
       {/* Header */}
       <div className="flex justify-between items-center px-6 py-4 border-b">
         <h3 className="text-[16px] font-semibold text-[#20242A]">{type}</h3>

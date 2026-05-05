@@ -90,10 +90,13 @@ const TaskList = () => {
   ];
 
   return (
-    <div className="bg-[#FFFFFF] rounded-lg border border-[#C7CACF] p-6">
+    <div className="bg-[#FFFFFF] rounded-lg border border-primary-border p-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-gray-900">Task List</h2>
-        <a href="#" className="text-[#237D3B] hover:text-[#1e6b32] font-medium text-sm underline">
+        <a
+          href="#"
+          className="text-[#237D3B] hover:text-[#1e6b32] font-medium text-sm underline"
+        >
           View All
         </a>
       </div>

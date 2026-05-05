@@ -144,12 +144,14 @@ export function transformFiltersToApi(
   if (filterData.studyLevel?.length > 0 && studyLevelsResponse?.data) {
     const filteredLevels = filterData.studyLevel.filter((l) => l !== "Any");
     if (filteredLevels.length > 0) {
-      // Create case-insensitive study level map using description field
+      // Create case-insensitive study level map - index by both name and description
+      // because FilterState.studyLevel stores description values ("Postgraduate", "Undergraduate")
       const studyLevelMap = new Map<string, string>();
       studyLevelsResponse.data
-        .filter((sl) => sl.isActive)
+        .filter((sl) => sl.isActive !== false)
         .forEach((sl) => {
-          studyLevelMap.set(sl.name?.toLowerCase() || "", sl.id);
+          if (sl.name) studyLevelMap.set(sl.name.toLowerCase(), sl.id);
+          if (sl.description) studyLevelMap.set(sl.description.toLowerCase(), sl.id);
         });
 
       const studyLevelIds = filteredLevels

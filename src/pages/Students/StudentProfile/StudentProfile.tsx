@@ -499,7 +499,7 @@
 //               </div>
 
 //               <Spin spinning={applicationsLoading}>
-//                 <div className="overflow-hidden rounded-[24px] border border-neutral-100 bg-white card-shadow dark:border-gray-800 dark:bg-gray-900">
+//                 <div className="overflow-hidden rounded-[24px] border border-primary-border bg-white card-shadow dark:border-gray-800 dark:bg-gray-900">
 //                   <Table<ApplicationRecord>
 //                     className="student-applications-table"
 //                     dataSource={applicationsTableData}
@@ -562,7 +562,7 @@
 //                           <button
 //                             onClick={() =>
 //                               navigate(`/applications/${record.id}`)}
-//                             className="flex cursor-pointer items-center justify-center w-8 h-8 rounded-lg border border-[#C7CACF] transition-all text-gray-600 hover:text-primary-500 hover:border-primary-500"
+//                             className="flex cursor-pointer items-center justify-center w-8 h-8 rounded-lg border border-primary-border transition-all text-gray-600 hover:text-primary-500 hover:border-primary-500"
 //                           >
 //                             <FiEye size={16} />
 //                           </button>
@@ -1047,44 +1047,67 @@ export default function StudentProfile() {
               </div>
 
               <div className="mt-6">
-              {activeTab === "general" && (
-                <GeneralInformationTab
-                  studentId={studentId}
-                  profile={profile as Parameters<typeof GeneralInformationTab>[0]["profile"]}
-                  canEdit={true}
-                  onUpdated={() => refetchProfile()}
-                />
-              )}
+                {activeTab === "general" && (
+                  <GeneralInformationTab
+                    studentId={studentId}
+                    profile={
+                      profile as Parameters<
+                        typeof GeneralInformationTab
+                      >[0]["profile"]
+                    }
+                    canEdit={true}
+                    onUpdated={() => refetchProfile()}
+                  />
+                )}
 
-              {activeTab === "education" && (
-                <EducationHistoryTab
-                  studentId={studentId}
-                  profile={profile as Parameters<typeof EducationHistoryTab>[0]["profile"]}
-                  educations={educations as Parameters<typeof EducationHistoryTab>[0]["educations"]}
-                  canEdit={true}
-                  onUpdated={() => refetchProfile()}
-                />
-              )}
+                {activeTab === "education" && (
+                  <EducationHistoryTab
+                    studentId={studentId}
+                    profile={
+                      profile as Parameters<
+                        typeof EducationHistoryTab
+                      >[0]["profile"]
+                    }
+                    educations={
+                      educations as Parameters<
+                        typeof EducationHistoryTab
+                      >[0]["educations"]
+                    }
+                    canEdit={true}
+                    onUpdated={() => refetchProfile()}
+                  />
+                )}
 
-              {activeTab === "background" && (
-                <BackgroundTab
-                  studentId={studentId}
-                  visaRejections={visaRejections as Parameters<typeof BackgroundTab>[0]["visaRejections"]}
-                  cv={(profile as { cv?: string }).cv}
-                  statementOfPurpose={(profile as { statementOfPurpose?: string }).statementOfPurpose}
-                  canEdit={true}
-                  onUpdated={() => refetchProfile()}
-                />
-              )}
+                {activeTab === "background" && (
+                  <BackgroundTab
+                    studentId={studentId}
+                    visaRejections={
+                      visaRejections as Parameters<
+                        typeof BackgroundTab
+                      >[0]["visaRejections"]
+                    }
+                    cv={(profile as { cv?: string }).cv}
+                    statementOfPurpose={
+                      (profile as { statementOfPurpose?: string })
+                        .statementOfPurpose
+                    }
+                    canEdit={true}
+                    onUpdated={() => refetchProfile()}
+                  />
+                )}
 
-              {activeTab === "documents" && (
-                <UploadDocumentsTab
-                  studentId={studentId}
-                  profile={profile as Parameters<typeof UploadDocumentsTab>[0]["profile"]}
-                  canEdit={true}
-                  onUpdated={() => refetchProfile()}
-                />
-              )}
+                {activeTab === "documents" && (
+                  <UploadDocumentsTab
+                    studentId={studentId}
+                    profile={
+                      profile as Parameters<
+                        typeof UploadDocumentsTab
+                      >[0]["profile"]
+                    }
+                    canEdit={true}
+                    onUpdated={() => refetchProfile()}
+                  />
+                )}
 
                 {activeTab === "apply-now" && <ApplyNowTab />}
               </div>
@@ -1114,7 +1137,7 @@ export default function StudentProfile() {
                 subtitle="Manage applications for this student."
               />
 
-              <div className="bg-[#FFFFFF] p-4 rounded-lg border border-[#C7CACF]">
+              <div className="bg-[#FFFFFF] p-4 rounded-lg border border-primary-border">
                 <div className="mb-6 max-w-sm">
                   <Input
                     placeholder="Search by ID, course, university or status"
@@ -1126,7 +1149,7 @@ export default function StudentProfile() {
                 </div>
 
                 <Spin spinning={applicationsLoading}>
-                  <div className="overflow-hidden rounded-[24px] border border-neutral-100 bg-white card-shadow dark:border-gray-800 dark:bg-gray-900">
+                  <div className="overflow-hidden rounded-[24px] border border-primary-border bg-white card-shadow dark:border-gray-800 dark:bg-gray-900">
                     <DataTable
                       data={applicationsTableData}
                       columns={[
@@ -1194,7 +1217,7 @@ export default function StudentProfile() {
                                 onClick={() =>
                                   navigate(`/applications/${record.id}`)
                                 }
-                                className="flex cursor-pointer items-center justify-center w-8 h-8 rounded-lg border border-[#C7CACF] transition-all text-gray-600 hover:text-primary-500 hover:border-primary-500"
+                                className="flex cursor-pointer items-center justify-center w-8 h-8 rounded-lg border border-primary-border transition-all text-gray-600 hover:text-primary-500 hover:border-primary-500"
                               >
                                 <FiEye size={16} />
                               </button>

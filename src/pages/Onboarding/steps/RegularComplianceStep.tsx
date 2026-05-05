@@ -5,18 +5,18 @@ import {
   FaSquarePlus,
   FaTrashCan,
 } from "react-icons/fa6";
-import { Button } from "../../../components/ui/button";
 import { toast } from "react-toastify";
+import { Button } from "../../../components/ui/button";
+import { config } from "../../../config";
+import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
+import type {
+  CustomDocument,
+  Step4Payload,
+} from "../../../redux/features/onboardingForm/onboardingFormApi";
 import {
   useGetStepDataQuery,
   usePatchStep4Mutation,
 } from "../../../redux/features/onboardingForm/onboardingFormApi";
-import type {
-  Step4Payload,
-  CustomDocument,
-} from "../../../redux/features/onboardingForm/onboardingFormApi";
-import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
-import { config } from "../../../config";
 import OnboardingFormSkeleton from "../OnboardingFormSkeleton";
 import { OnboardingStepEditBar } from "../OnboardingStepEditBar";
 import {
@@ -437,7 +437,7 @@ export default function RegularComplianceStep({
               className={`group flex items-center justify-between rounded-md border p-3 transition-colors ${
                 hasFile
                   ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20"
-                  : "border-gray-200 bg-white hover:border-primary-500 dark:border-neutral-700 dark:bg-neutral-800/50"
+                  : "border-primary-border bg-white hover:border-primary-500 dark:border-neutral-700 dark:bg-neutral-800/50"
               }`}
             >
               <div className="min-w-0">
@@ -544,7 +544,7 @@ export default function RegularComplianceStep({
       </div>
 
       {/* Navigation Buttons */}
-      <div className="mt-6 flex flex-wrap justify-end gap-3 border-t border-gray-100 pt-5 dark:border-neutral-800">
+      <div className="mt-6 flex flex-wrap justify-end gap-3 border-t border-primary-border pt-5 dark:border-neutral-800">
         <Button
           type="button"
           variant="secondary"

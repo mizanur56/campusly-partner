@@ -319,6 +319,9 @@ export const PhoneField: React.FC<PhoneFieldProps> = ({
         country="bd"
         value={editValue}
         disabled={!isEditable || isLoading}
+        enableSearch
+        searchPlaceholder="Search countries..."
+        disableSearchIcon
         onChange={(val) => {
           setEditValue(val);
           const formattedValue = `+${val}`;
@@ -330,6 +333,8 @@ export const PhoneField: React.FC<PhoneFieldProps> = ({
         inputStyle={{
           width: "100%",
           height: 40,
+          borderRadius: 10,
+          padding: "24px 50px",
           ...(error ? { borderColor: "#ff4d4f" } : {}),
         }}
         size="large"

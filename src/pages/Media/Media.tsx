@@ -80,22 +80,22 @@ const AllMediaList: React.FC = () => {
   // Memoize derived data to prevent unnecessary recalculations
   const mediaData: MediaImage[] = useMemo(
     () => mediaResponse?.data || [],
-    [mediaResponse?.data]
+    [mediaResponse?.data],
   );
 
   const foldersList: string[] = useMemo(
     () => foldersResponse?.data || ["Root"],
-    [foldersResponse?.data]
+    [foldersResponse?.data],
   );
 
   const folderTree: FolderNode[] = useMemo(
     () => buildFolderTreeFromFolders(foldersList),
-    [foldersList]
+    [foldersList],
   );
 
   const currentFolderImages = useMemo(
     () => filterMediaByFolder(mediaData, currentFolder),
-    [mediaData, currentFolder]
+    [mediaData, currentFolder],
   );
 
   const isLoading = mediaLoading || foldersLoading;
@@ -120,7 +120,7 @@ const AllMediaList: React.FC = () => {
         setFolderOperationLoading(false);
       }
     },
-    [createFolder, refetchFolders]
+    [createFolder, refetchFolders],
   );
 
   const handleRenameFolder = useCallback(
@@ -147,7 +147,7 @@ const AllMediaList: React.FC = () => {
         setFolderOperationLoading(false);
       }
     },
-    [renameFolder, refetchFolders, refetchMedia, currentFolder]
+    [renameFolder, refetchFolders, refetchMedia, currentFolder],
   );
 
   const handleDeleteFolder = useCallback(
@@ -177,7 +177,7 @@ const AllMediaList: React.FC = () => {
         setFolderOperationLoading(false);
       }
     },
-    [deleteFolder, refetchFolders, refetchMedia, currentFolder]
+    [deleteFolder, refetchFolders, refetchMedia, currentFolder],
   );
 
   const handleUploadImage = useCallback(
@@ -201,7 +201,7 @@ const AllMediaList: React.FC = () => {
         setImageOperationLoading(false);
       }
     },
-    [uploadImage, refetchMedia, refetchFolders]
+    [uploadImage, refetchMedia, refetchFolders],
   );
 
   const handleDeleteImage = useCallback(
@@ -229,7 +229,7 @@ const AllMediaList: React.FC = () => {
         },
       });
     },
-    [deleteMedia, refetchMedia, refetchFolders]
+    [deleteMedia, refetchMedia, refetchFolders],
   );
 
   const handleCopyImageUrl = useCallback((url: string) => {
@@ -269,7 +269,7 @@ const AllMediaList: React.FC = () => {
                   />
                 }
                 onClick={toggleMobileSidebar}
-                className="w-14 h-14 flex items-center justify-center hover:bg-primary-50 border border-gray-200 rounded-lg"
+                className="w-14 h-14 flex items-center justify-center hover:bg-primary-50 border border-primary-border rounded-lg"
                 title="Open folders"
               />
             )}
@@ -365,7 +365,7 @@ const AllMediaList: React.FC = () => {
             {/* Right Content - Images */}
             <div className="flex-1">
               {/* Breadcrumb and Stats */}
-              <div className="mb-4 p-3 bg-white rounded-lg shadow-sm border border-gray-200">
+              <div className="mb-4 p-3 bg-white rounded-lg shadow-sm border border-primary-border">
                 <MediaBreadcrumb
                   currentFolder={currentFolder}
                   onFolderSelect={setCurrentFolder}
@@ -396,7 +396,7 @@ const AllMediaList: React.FC = () => {
               {/* Images Grid */}
               <div>
                 {currentFolderImages.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-96 bg-white rounded-lg border-2 border-dashed border-gray-200">
+                  <div className="flex flex-col items-center justify-center h-96 bg-white rounded-lg border-2 border-dashed border-primary-border">
                     <Empty
                       image={Empty.PRESENTED_IMAGE_SIMPLE}
                       description={

@@ -1,4 +1,3 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import type { SearchUniversityItem } from "../../data/searchResultsTypes";
 import { getApiImageUrl } from "../../utils/getApiImageUrl";
@@ -18,10 +17,10 @@ export default function SearchUniversityCard({
   return (
     <Link
       to={href}
-      className={`group flex flex-col items-start gap-3 sm:gap-4 rounded-[24px] border border-neutral-100 bg-white p-4 md:p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)] h-full w-full transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] ${className}`}
+      className={`group flex flex-col items-start gap-3 sm:gap-4 rounded-[24px] border border-primary-border bg-white p-4 md:p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)] h-full w-full transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] ${className}`}
     >
       {university?.image ? (
-        <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-neutral-100 bg-neutral-50/80">
+        <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-primary-border bg-neutral-50/80">
           <img
             src={getApiImageUrl(university?.image)}
             alt={university?.name ?? ""}
@@ -29,9 +28,19 @@ export default function SearchUniversityCard({
           />
         </div>
       ) : (
-        <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-xl bg-neutral-50 border border-neutral-100 text-neutral-400">
-          <svg className="h-6 w-6 sm:h-7 sm:w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-xl bg-neutral-50 border border-primary-border text-neutral-400">
+          <svg
+            className="h-6 w-6 sm:h-7 sm:w-7"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+            />
           </svg>
         </div>
       )}

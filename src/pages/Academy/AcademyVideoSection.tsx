@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { Play } from "lucide-react";
+import { useState } from "react";
 import type { VideoCardItem } from "../../types/videoGallery";
 import AcademyVideoModal from "./AcademyVideoModal";
 
@@ -23,7 +23,7 @@ function VideoCard({
       tabIndex={0}
       onClick={() => onVideoClick(card)}
       onKeyDown={(e) => e.key === "Enter" && onVideoClick(card)}
-      className="group h-full flex flex-col rounded-[24px] border border-neutral-100 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)] overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] cursor-pointer"
+      className="group h-full flex flex-col rounded-[24px] border border-primary-border bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)] overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] cursor-pointer"
     >
       <div className="relative">
         <div className="relative h-[200px] sm:h-[220px] w-full overflow-hidden rounded-t-[24px]">
@@ -46,7 +46,7 @@ function VideoCard({
         <p className="text-neutral-600 text-sm leading-relaxed line-clamp-2">
           {card.description}
         </p>
-        <div className="mt-auto flex justify-between gap-2 text-xs text-neutral-500 pt-2 border-t border-neutral-100">
+        <div className="mt-auto flex justify-between gap-2 text-xs text-neutral-500 pt-2 border-t border-primary-border">
           <span>{card.channel}</span>
           <span>{card.duration}</span>
         </div>
@@ -62,7 +62,9 @@ export default function AcademyVideoSection({
   allVideos,
 }: AcademyVideoSectionProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedVideo, setSelectedVideo] = useState<VideoCardItem | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<VideoCardItem | null>(
+    null,
+  );
 
   const handleVideoClick = (video: VideoCardItem) => {
     setSelectedVideo(video);
@@ -80,7 +82,9 @@ export default function AcademyVideoSection({
               {title}
             </h2>
             {description && (
-              <p className="text-gray-600 text-sm sm:text-base">{description}</p>
+              <p className="text-gray-600 text-sm sm:text-base">
+                {description}
+              </p>
             )}
           </div>
 

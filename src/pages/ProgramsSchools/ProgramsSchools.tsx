@@ -1,6 +1,6 @@
 import { SearchOutlined } from "@ant-design/icons";
 import { Button } from "antd";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import ApplyPreferenceModal from "../../components/common/Modals/Apply/ApplyPreferenceModal";
@@ -61,9 +61,9 @@ export default function ProgramsSchoolsPage() {
     setActiveTab(tabFromUrl === "institutions" ? "institutions" : "courses");
   }, [qFromUrl, tabFromUrl]);
 
-  const handleFilterChange = (newFilters: FilterState) => {
+  const handleFilterChange = useCallback((newFilters: FilterState) => {
     setFilters(newFilters);
-  };
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -91,7 +91,7 @@ export default function ProgramsSchoolsPage() {
                 onClick={() => setIsMobileFiltersOpen(false)}
               />
               <div className="absolute inset-y-0 left-0 w-full max-w-xs bg-white rounded-r-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.08)] flex flex-col">
-                <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                <div className="p-4 border-b border-primary-border flex items-center justify-between">
                   <h2 className="text-xl font-semibold text-gray-900">
                     Filters
                   </h2>
@@ -121,7 +121,7 @@ export default function ProgramsSchoolsPage() {
                   />
                   <StudyPreferenceFilters onFilterChange={handleFilterChange} />
                 </div>
-                <div className="p-4 border-t border-gray-100 bg-gray-50">
+                <div className="p-4 border-t border-primary-border bg-gray-50">
                   <Button
                     onClick={() => setIsMobileFiltersOpen(false)}
                     type="primary"
@@ -162,12 +162,12 @@ export default function ProgramsSchoolsPage() {
                   }
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full border h-10 pl-9 pr-3 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-sm placeholder:text-gray-400"
+                  className="w-full border h-10 pl-9 pr-3 border-primary-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-sm placeholder:text-gray-400"
                 />
               </div>
               <button
                 onClick={() => setIsMobileFiltersOpen(true)}
-                className="lg:hidden px-3 h-10 bg-white border border-gray-200 rounded-lg flex items-center justify-center text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-colors shrink-0"
+                className="lg:hidden px-3 h-10 bg-white border border-primary-border rounded-lg flex items-center justify-center text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-colors shrink-0"
                 aria-label="Filters"
               >
                 <svg

@@ -1,5 +1,5 @@
 import { Button, Dropdown, Space } from "antd";
-import { Printer, Download } from "lucide-react";
+import { Download, Printer } from "lucide-react";
 import { FaFileCsv, FaFilePdf } from "react-icons/fa6";
 import CustomActionButton from "../Button/CustomActionButton";
 
@@ -16,8 +16,6 @@ const PageListPrint: React.FC<PrintProps> = ({
   logoUrl = "/images/logo/logo.png",
   backgroundImageUrl = "/images/logo/logo2.png",
 }) => {
-
-
   // CSV Download
   const handleCSVDownload = () => {
     if (!tableData.length) return;
@@ -25,7 +23,7 @@ const PageListPrint: React.FC<PrintProps> = ({
     const csv = [
       headers.join(","),
       ...tableData.map((row) =>
-        headers.map((h) => JSON.stringify(row[h] ?? "")).join(",")
+        headers.map((h) => JSON.stringify(row[h] ?? "")).join(","),
       ),
     ].join("\n");
 
@@ -52,9 +50,9 @@ const PageListPrint: React.FC<PrintProps> = ({
               (h) =>
                 `<td style="border-bottom:1px solid #e5e7eb;padding:10px 12px;font-size:13px;color:#111827;">${
                   row[h] ?? ""
-                }</td>`
+                }</td>`,
             )
-            .join("")}</tr>`
+            .join("")}</tr>`,
       )
       .join("");
 
@@ -195,7 +193,7 @@ const PageListPrint: React.FC<PrintProps> = ({
                   hour: "2-digit",
                   minute: "2-digit",
                   second: "2-digit",
-                }
+                },
               )}
 </div>
             </div>
@@ -235,9 +233,9 @@ const PageListPrint: React.FC<PrintProps> = ({
               (h) =>
                 `<td style="border-bottom:1px solid #e5e7eb;padding:10px 12px;font-size:13px;color:#111827;">${
                   row[h] ?? ""
-                }</td>`
+                }</td>`,
             )
-            .join("")}</tr>`
+            .join("")}</tr>`,
       )
       .join("");
 
@@ -426,7 +424,7 @@ const PageListPrint: React.FC<PrintProps> = ({
                 pdfDoc.text(
                   `Page ${i} of ${totalPages}`,
                   pdfDoc.internal.pageSize.getWidth() - 25,
-                  pdfDoc.internal.pageSize.getHeight() - 10
+                  pdfDoc.internal.pageSize.getHeight() - 10,
                 );
               }
             }
@@ -441,7 +439,7 @@ const PageListPrint: React.FC<PrintProps> = ({
   };
 
   const menuContent = (
-    <div className="!border bg-white p-2 rounded-md !border-gray-200 !shadow-md">
+    <div className="!border bg-white p-2 rounded-md !border-primary-border !shadow-md">
       <Space direction="vertical" style={{ width: "100%" }}>
         <div className="flex gap-3 items-center">
           <Button

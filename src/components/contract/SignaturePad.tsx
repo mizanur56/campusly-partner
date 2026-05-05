@@ -19,20 +19,17 @@ export function SignaturePad({
   const [hasStroke, setHasStroke] = useState(false);
   const lastPoint = useRef<{ x: number; y: number } | null>(null);
 
-  const getPoint = useCallback(
-    (e: React.PointerEvent | PointerEvent) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return null;
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
-      return {
-        x: (e.clientX - rect.left) * scaleX,
-        y: (e.clientY - rect.top) * scaleY,
-      };
-    },
-    []
-  );
+  const getPoint = useCallback((e: React.PointerEvent | PointerEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY,
+    };
+  }, []);
 
   const draw = useCallback(
     (from: { x: number; y: number }, to: { x: number; y: number }) => {
@@ -44,7 +41,7 @@ export function SignaturePad({
       ctx.lineTo(to.x, to.y);
       ctx.stroke();
     },
-    []
+    [],
   );
 
   const handlePointerDown = useCallback(
@@ -64,7 +61,7 @@ export function SignaturePad({
         ctx.stroke();
       }
     },
-    [getPoint]
+    [getPoint],
   );
 
   const handlePointerMove = useCallback(
@@ -76,7 +73,7 @@ export function SignaturePad({
       draw(lastPoint.current, point);
       lastPoint.current = point;
     },
-    [isDrawing, getPoint, draw]
+    [isDrawing, getPoint, draw],
   );
 
   const handlePointerUp = useCallback(() => {
@@ -126,13 +123,13 @@ export function SignaturePad({
 
   return (
     <div className={className}>
-      <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900/40">
-        <p className="border-b border-gray-100 px-3 py-2 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
+      <div className="rounded-xl border border-primary-border bg-white dark:border-gray-700 dark:bg-gray-900/40">
+        <p className="border-b border-primary-border px-3 py-2 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
           Draw your signature in the box below
         </p>
         <canvas
           ref={canvasRef}
-          className="block w-full cursor-crosshair touch-none border-b border-gray-100 dark:border-gray-800"
+          className="block w-full cursor-crosshair touch-none border-b border-primary-border dark:border-gray-800"
           style={{ height: `${height}px`, width: "100%" }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}

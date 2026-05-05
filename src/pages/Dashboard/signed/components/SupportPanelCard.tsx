@@ -91,14 +91,18 @@ export default function SupportPanelCard({
                       <a
                         href={mailHref}
                         aria-label="Email"
+<<<<<<< HEAD
                         className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 hover:text-primary shadow-sm transition hover:bg-gray-50 hover:border-primary dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
+=======
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-primary-border bg-white text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
+>>>>>>> 75831e938a2995d50fa48f3b42ef767bde2a9925
                       >
                         <Mail className="h-4 w-4 " aria-hidden />
                       </a>
                       <a
                         href={phoneHref ?? "#"}
                         aria-label="Call"
-                        className={`inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm transition dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 ${
+                        className={`inline-flex h-9 w-9 items-center justify-center rounded-full border border-primary-border bg-white text-gray-700 shadow-sm transition dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 ${
                           phoneHref
                             ? "hover:bg-gray-50 dark:hover:bg-gray-800"
                             : "pointer-events-none opacity-40"

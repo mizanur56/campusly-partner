@@ -24,7 +24,7 @@ export default function RegularCompliancePage() {
           {UPLOAD_ITEMS.map((item) => (
             <div
               key={item.key}
-              className="flex items-center justify-between p-4 border border-gray-200 rounded-2xl bg-white hover:border-primary-500 transition-colors cursor-pointer group"
+              className="flex items-center justify-between p-4 border border-primary-border rounded-2xl bg-white hover:border-primary-500 transition-colors cursor-pointer group"
             >
               <span className="text-neutral-800 font-medium text-base">
                 {item.label}
@@ -37,10 +37,20 @@ export default function RegularCompliancePage() {
           ))}
         </div>
         <div className="flex justify-end gap-3 mt-8">
-          <Button as="link" to="/onboarding/contact" variant="secondary" size="sm">
+          <Button
+            as="link"
+            to="/onboarding/contact"
+            variant="secondary"
+            size="sm"
+          >
             ← Previous
           </Button>
-          <Button as="link" to="/onboarding/declaration" variant="primary" size="sm">
+          <Button
+            as="link"
+            to="/onboarding/declaration"
+            variant="primary"
+            size="sm"
+          >
             Next →
           </Button>
         </div>

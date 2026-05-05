@@ -522,7 +522,7 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
           </div>
 
           <Card
-            className="mt-2 rounded-lg border border-[#CFCACF] bg-[#FAFAFA] p-4"
+            className="mt-2 rounded-lg border border-primary-border bg-[#FAFAFA] p-4"
             title="Last Qualifications"
           >
             <Form.Item name="qualifications" label="Select Qualifications">

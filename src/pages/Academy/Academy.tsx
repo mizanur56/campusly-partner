@@ -1,15 +1,19 @@
 import { useMemo } from "react";
 import PageLoader from "../../components/ui/PageLoader";
-import AcademyVideoSection from "./AcademyVideoSection";
 import { useGetVideoGalleryCategoriesQuery } from "../../redux/features/videoGallery/videoGalleryApi";
-import {
-  transformToVideoSections,
-  getAllVideos,
-} from "../../types/videoGallery";
 import type { VideoCategoryWithVideos } from "../../types/videoGallery";
+import {
+  getAllVideos,
+  transformToVideoSections,
+} from "../../types/videoGallery";
+import AcademyVideoSection from "./AcademyVideoSection";
 
 export default function Academy() {
-  const { data: categories, isLoading, isError } = useGetVideoGalleryCategoriesQuery();
+  const {
+    data: categories,
+    isLoading,
+    isError,
+  } = useGetVideoGalleryCategoriesQuery();
 
   const sections = useMemo(() => {
     if (categories && categories.length > 0) {
@@ -32,9 +36,10 @@ export default function Academy() {
           Academy
         </h1>
         <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-          Training videos and guides for partners. Watch tutorials to enhance your skills.
+          Training videos and guides for partners. Watch tutorials to enhance
+          your skills.
         </p>
-        <hr className="mt-4 border-gray-200 dark:border-gray-700" />
+        <hr className="mt-4 border-primary-border dark:border-gray-700" />
       </div>
 
       {isLoading ? (
@@ -46,7 +51,7 @@ export default function Academy() {
           </p>
         </div>
       ) : sections.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 px-4 bg-white rounded-xl border border-gray-200">
+        <div className="flex flex-col items-center justify-center py-16 px-4 bg-white rounded-xl border border-primary-border">
           <div className="text-gray-400 mb-4">
             <svg
               className="w-16 h-16 mx-auto"

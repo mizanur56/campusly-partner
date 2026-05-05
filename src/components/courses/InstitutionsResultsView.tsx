@@ -83,7 +83,8 @@ export default function InstitutionsResultsView({
     if (!coursesResponse?.data) return undefined;
     const seen = new Map<string, string>();
     coursesResponse.data.forEach((c) => {
-      if (!seen.has(c.university.id)) seen.set(c.university.id, c.university.name);
+      if (!seen.has(c.university.id))
+        seen.set(c.university.id, c.university.name);
     });
     return { data: Array.from(seen, ([id, name]) => ({ id, name })) };
   }, [coursesResponse]);
@@ -210,11 +211,11 @@ export default function InstitutionsResultsView({
       {universities.map((university) => (
         <div
           key={university.id}
-          className="bg-white border border-neutral-100 rounded-xl p-5 sm:p-6"
+          className="bg-white border border-primary-border rounded-2xl p-5 sm:p-6"
         >
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-shrink-0">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden ring-1 ring-gray-100">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-2xl flex items-center justify-center overflow-hidden ring-1 ring-gray-100">
                 {university.image ? (
                   <img
                     src={university.image}

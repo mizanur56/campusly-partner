@@ -1,5 +1,5 @@
-import CardShell from "./CardShell";
 import { PartnerDashboardSubject } from "../../../../redux/features/profile/partnerProfileApi";
+import CardShell from "./CardShell";
 
 export default function TopSubjectsCard({
   subjects,
@@ -25,7 +25,7 @@ export default function TopSubjectsCard({
           ? Array.from({ length: 5 }).map((_, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between rounded-lg border border-gray-100 p-3 dark:border-gray-800 animate-pulse"
+                className="flex items-center justify-between rounded-lg border border-primary-border p-3 dark:border-gray-800 animate-pulse"
               >
                 <div className="h-4 w-48 rounded bg-gray-200 dark:bg-gray-700" />
                 <div className="h-3 w-24 rounded bg-gray-100 dark:bg-gray-800" />
@@ -34,7 +34,7 @@ export default function TopSubjectsCard({
           : subjects.map((c) => (
               <div
                 key={c.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-gray-100 p-3 dark:border-gray-800"
+                className="flex items-center justify-between gap-3 rounded-lg border border-primary-border p-3 dark:border-gray-800"
               >
                 <p className="min-w-0 truncate text-sm font-medium text-gray-900 dark:text-white">
                   {c.name}
@@ -54,4 +54,3 @@ export default function TopSubjectsCard({
     </CardShell>
   );
 }
-

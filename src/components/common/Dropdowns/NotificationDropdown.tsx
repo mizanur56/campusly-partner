@@ -62,7 +62,7 @@ const NotificationDropdown = () => {
       {
         key: "header",
         label: (
-          <div className="flex items-center justify-between py-5 px-4 border-b border-[#C7CACF]">
+          <div className="flex items-center justify-between py-5 px-4 border-b border-primary-border">
             <div className="flex items-center gap-2">
               <h2 className="text-[18px] font-semibold text-gray-800">
                 Notifications
@@ -132,7 +132,7 @@ const NotificationDropdown = () => {
                 label: (
                   <div
                     className={`
-                    p-3 cursor-pointer border-b border-[#C7CACF] hover:bg-primary-50 transition-all duration-300
+                    p-3 cursor-pointer border-b border-primary-border hover:bg-primary-50 transition-all duration-300
                   `}
                     onClick={() => handleNotificationClick(notification)}
                   >
@@ -234,7 +234,7 @@ const NotificationDropdown = () => {
           className="
             relative flex items-center justify-center
             w-10 h-10 rounded-xl
-            border border-gray-200
+            border border-primary-border
             bg-white
             text-gray-600
 
