@@ -1,6 +1,4 @@
-import type { MenuProps } from "antd";
-import { Dropdown, Tooltip } from "antd";
-import { LogOutIcon } from "lucide-react";
+import { Dropdown, MenuProps, Tooltip } from "antd";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MdOutlineContentPaste } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
@@ -23,6 +21,7 @@ import { useGetOnboardingStatusQuery } from "../../../redux/features/onboardingF
 import { useGetPartnerProfileQuery } from "../../../redux/features/profile/partnerProfileApi";
 import { useGetStudentProfileQuery } from "../../../redux/features/profile/studentProfileApi";
 import { NavItem, SubMenuItem } from "../../../types/interfaces";
+import { LogOutIcon } from "lucide-react";
 
 const SidebarItems: NavItem[] = [
   { icon: <i className="fa-solid fa-house"></i>, name: "Home", path: "/" },
