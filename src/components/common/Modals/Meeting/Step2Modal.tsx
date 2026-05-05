@@ -80,8 +80,8 @@ const Step2Modal: React.FC<Step2ModalProps> = ({
                 onClick={() => handlePreferenceClick(preference)}
                 className={`cursor-pointer rounded-[50px] px-4 py-3 text-[14px] transition-all ${
                   selectedPreferences.includes(preference)
-                    ? "border-[#237D3B] bg-[#E9F2EB] font-semibold text-[#237D3B]"
-                    : "bg-[#EDEEEF] text-[#4B5563]"
+                    ? "border border-[#237D3B] bg-[#E9F2EB] font-semibold text-[#237D3B]"
+                    : "border border-transparent bg-[#EDEEEF] text-[#4B5563]"
                 }`}
               >
                 <span className="whitespace-nowrap text-[14px]">{preference}</span>
