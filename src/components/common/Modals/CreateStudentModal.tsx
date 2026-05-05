@@ -262,13 +262,13 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
 
       // 1) Create auth user
       const profilePayload: Record<string, unknown> = {
-        firstName: firstName || null,
-        lastName: lastName || null,
+        firstName: firstName || "",
+        lastName: lastName || "",
         gender: String(values.gender ?? "").trim() || "",
-        country: String(values.country ?? "").trim() || null,
-        passportNo: String(values.passportNo ?? "").trim() || null,
+        country: String(values.country ?? "").trim() || "",
+        passportNo: String(values.passportNo ?? "").trim() || "",
         phone: String(values.phone ?? "").trim() || "",
-        email: email || null,
+        email: email || "",
         lastEducationId: String(values.qualifications ?? "").trim() || null,
         // Dates: always standard YYYY-MM-DD (except passing year: YYYY only)
         lastEducationPassingYear: null,
