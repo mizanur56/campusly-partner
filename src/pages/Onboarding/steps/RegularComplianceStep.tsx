@@ -257,6 +257,7 @@ export default function RegularComplianceStep({
     try {
       await patchStep4(buildStep4Payload()).unwrap();
       toast.success("Saved");
+      cancelEditing();
     } catch (err) {
       patchErrorToast(err);
     }

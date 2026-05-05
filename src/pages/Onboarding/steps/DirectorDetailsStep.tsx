@@ -16,7 +16,10 @@ import {
   PHONE_BD_INITIAL_VALUE,
 } from "../sharedFormProps";
 import { toast } from "react-toastify";
-import { useGetStepDataQuery, usePatchStep2Mutation } from "../../../redux/features/onboardingForm/onboardingFormApi";
+import {
+  useGetStepDataQuery,
+  usePatchStep2Mutation,
+} from "../../../redux/features/onboardingForm/onboardingFormApi";
 import type { Step2Payload } from "../../../redux/features/onboardingForm/onboardingFormApi";
 import OnboardingFormSkeleton from "../OnboardingFormSkeleton";
 
@@ -31,15 +34,19 @@ interface Props {
   onNext: () => void;
 }
 
-export default function DirectorDetailsStep({ apiStep, onPrev, onNext }: Props) {
+export default function DirectorDetailsStep({
+  apiStep,
+  onPrev,
+  onNext,
+}: Props) {
   const [form] = Form.useForm();
   const { data: stepData, isFetching } = useGetStepDataQuery(apiStep);
   const [patchStep2, { isLoading: isSaving }] = usePatchStep2Mutation();
-  const payload = useMemo(
-    () => getOnboardingStepPayload(stepData),
-    [stepData],
+  const payload = useMemo(() => getOnboardingStepPayload(stepData), [stepData]);
+  const hasPersistedData = useMemo(
+    () => step2HasPersistedData(payload),
+    [payload],
   );
-  const hasPersistedData = useMemo(() => step2HasPersistedData(payload), [payload]);
   const {
     formDisabled,
     showEditControl,
@@ -50,8 +57,7 @@ export default function DirectorDetailsStep({ apiStep, onPrev, onNext }: Props) 
   } = useOnboardingFormEditMode(hasPersistedData);
 
   useEffect(() => {
-    const payload =
-      stepData?.data && (stepData.data as any).data;
+    const payload = stepData?.data && (stepData.data as any).data;
     if (payload && typeof payload === "object") {
       const d = payload as Record<string, unknown>;
       const mobileDigits = String(d.mobileNumber ?? "").replace(/\D/g, "");
@@ -89,7 +95,8 @@ export default function DirectorDetailsStep({ apiStep, onPrev, onNext }: Props) 
       return;
     }
     if (message) toast.error(message);
-    else toast.error("Failed to save owner/director details. Please try again.");
+    else
+      toast.error("Failed to save owner/director details. Please try again.");
   };
 
   const handleSave = () => {
@@ -105,6 +112,7 @@ export default function DirectorDetailsStep({ apiStep, onPrev, onNext }: Props) 
         try {
           await patchStep2(payload).unwrap();
           toast.success("Saved");
+          cancelEditing();
         } catch (err) {
           patchErrorToast(err);
         }
@@ -135,11 +143,28 @@ export default function DirectorDetailsStep({ apiStep, onPrev, onNext }: Props) 
         onCancel={handleCancelEdit}
       />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <FormInput name="fullName" label="Full name" placeholder="Enter full name" rules={[{ required: true, message: "Required" }]} disabled={formDisabled} />
-        <FormInput name="whatsapp" label="Whatsapp (If Applicable)" placeholder="Enter whatsapp number" disabled={formDisabled} />
+        <FormInput
+          name="fullName"
+          label="Full name"
+          placeholder="Enter full name"
+          rules={[{ required: true, message: "Required" }]}
+          disabled={formDisabled}
+        />
+        <FormInput
+          name="whatsapp"
+          label="Whatsapp (If Applicable)"
+          placeholder="Enter whatsapp number"
+          disabled={formDisabled}
+        />
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <FormInput name="email" label="Email" placeholder="Enter email" rules={[{ required: true, message: "Required", type: "email" }]} disabled={formDisabled} />
+        <FormInput
+          name="email"
+          label="Email"
+          placeholder="Enter email"
+          rules={[{ required: true, message: "Required", type: "email" }]}
+          disabled={formDisabled}
+        />
         <Form.Item
           name="mobileNumber"
           label="Mobile number"
@@ -156,11 +181,23 @@ export default function DirectorDetailsStep({ apiStep, onPrev, onNext }: Props) 
         </Form.Item>
       </div>
       <div className="mt-8 flex flex-wrap justify-end gap-3">
-        <Button type="button" variant="secondary" size="sm" onClick={onPrev} disabled={isSaving}>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={onPrev}
+          disabled={isSaving}
+        >
           ← Previous
         </Button>
         {showSaveButton && (
-          <Button type="button" variant="primary" size="sm" onClick={handleSave} disabled={isSaving}>
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            onClick={handleSave}
+            disabled={isSaving}
+          >
             {isSaving ? "Saving…" : "Save"}
           </Button>
         )}

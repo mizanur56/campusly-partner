@@ -252,8 +252,11 @@ export default function GeneralInformationTab({
         const v = formatDateForApi(editProfileData.dateOfBirth, "DD-MM-YYYY");
         if (v) payload.dateOfBirth = v;
       }
+      // if (editProfileData.country !== profileData.country) {
+      //   payload.countryId = editProfileData.country || null;
+      // }
       if (editProfileData.country !== profileData.country) {
-        payload.countryId = editProfileData.country || null;
+        payload.country = editProfileData.country || null;
       }
       if (editProfileData.passportNo !== profileData.passportNo)
         payload.passportNo = editProfileData.passportNo || null;
@@ -284,7 +287,9 @@ export default function GeneralInformationTab({
         setUpdatingField(null);
         return;
       }
+
       await updateProfile({ studentId, body: payload }).unwrap();
+
       setProfileData(editProfileData);
       toast.success("Profile updated successfully!");
       setIsPersonalEditing(false);

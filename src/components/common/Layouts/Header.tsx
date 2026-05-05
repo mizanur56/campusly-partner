@@ -91,6 +91,7 @@ const Header: React.FC = () => {
       "/team-members",
       "/settings/profile",
     ].includes(pathname) ||
+    pathname.startsWith("/programs-schools") ||
     pathname.startsWith("/payments") ||
     pathname.startsWith("/students/") ||
     pathname.startsWith("/applications/");

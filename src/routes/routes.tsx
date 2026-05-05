@@ -41,6 +41,7 @@ import TeamMembers from "../pages/TeamMembers/TeamMembers";
 import { selectCurrentUser } from "../redux/features/auth/authSlice";
 import GuestOnlyAuthRoute from "./GuestOnlyAuthRoute";
 import ProtectedRoute from "./ProtectedRoute";
+import CourseDetails from "../pages/courseDetails/CourseDetails.tsx";
 
 function StudentProfileRedirect() {
   const { id } = useParams();
@@ -137,6 +138,11 @@ function AppRoutes() {
           <Route path="contract/signed" element={<ContractSignedPage />} />
           <Route path="change-password" element={<ChangePassword />} />
           <Route path="programs-schools" element={<ProgramsSchools />} />
+          <Route
+            path="programs-schools/courses/:universitySlug/:courseSlug"
+            element={<CourseDetails />}
+          />
+
           <Route path="students" element={<Students />} />
           <Route path="students/:id" element={<StudentProfileRedirect />} />
           <Route path="students/:id/profile" element={<StudentProfile />} />
@@ -167,7 +173,7 @@ function AppRoutes() {
           <Route path="notifications" element={<Notifications />} />
           <Route path="academy" element={<Academy />} />
           <Route path="hot-offers" element={<HotOffers />} />
-          <Route path="settings/profile" element={<ProfileSettings />} />
+          <Route path="profile" element={<ProfileSettings />} />
           <Route path="chat" element={<Navigate to="/" replace />} />
           <Route
             path="chat/:conversationId"

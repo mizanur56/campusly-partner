@@ -15,6 +15,7 @@ interface CourseCardProps {
   startDates?: string;
   onStartApplication?: () => void;
   onViewDetails?: () => void;
+  isApplied?: boolean;
 }
 
 const CourseCard: React.FC<CourseCardProps> = ({
@@ -27,6 +28,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
   startDates,
   onStartApplication,
   onViewDetails,
+  isApplied,
 }) => {
   return (
     <div className="bg-white border border-primary-border rounded-2xl shadow-[0_1px_2px_rgba(0,0,0,0.02)] p-5 sm:p-6">
@@ -100,9 +102,19 @@ const CourseCard: React.FC<CourseCardProps> = ({
         </div>
         {(onStartApplication || onViewDetails) && (
           <div className="flex flex-col sm:flex-row gap-2 order-1 sm:order-2 w-full sm:w-auto">
-            {onStartApplication && (
+            {/* {onStartApplication && (
               <Button onClick={onStartApplication} type="primary">
                 Start Application
+              </Button>
+            )} */}
+
+            {onStartApplication && (
+              <Button
+                onClick={onStartApplication}
+                type="primary"
+                disabled={isApplied} // 👈 disable
+              >
+                {isApplied ? "Applied" : "Start Application"}{" "}
               </Button>
             )}
             {onViewDetails && (

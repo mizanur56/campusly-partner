@@ -460,6 +460,7 @@ export default function TeamMembers() {
         okText="Send invitation"
         okButtonProps={{ loading: isInviting }}
         destroyOnHidden
+        centered
       >
         <Form layout="vertical" form={form}>
           <Form.Item label="Photo">
@@ -512,6 +513,36 @@ export default function TeamMembers() {
             <Input type="email" placeholder="e.g. john@example.com" />
           </Form.Item>
           <Form.Item
+            label="Phone Number"
+            name="phone"
+            rules={[
+              { required: true, message: "Phone number is required" },
+              {
+                pattern:
+                  /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/,
+                message: "Please enter a valid phone number",
+              },
+            ]}
+          >
+            <PhoneInput
+              country="bd"
+              preferredCountries={["bd", "us", "gb", "in", "au"]}
+              inputStyle={{
+                width: "100%",
+                height: 32,
+                fontSize: 14,
+                paddingLeft: 48,
+              }}
+              buttonStyle={{
+                borderRadius: "2px 0 0 2px",
+                borderRight: "1px solid #d9d9d9",
+              }}
+              inputProps={{
+                required: true,
+              }}
+            />
+          </Form.Item>
+          <Form.Item
             label="Password"
             name="password"
             rules={[
@@ -538,36 +569,6 @@ export default function TeamMembers() {
             ]}
           >
             <Input.Password placeholder="Confirm password" />
-          </Form.Item>
-          <Form.Item
-            label="Phone Number"
-            name="phone"
-            rules={[
-              { required: true, message: "Phone number is required" },
-              {
-                pattern:
-                  /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/,
-                message: "Please enter a valid phone number",
-              },
-            ]}
-          >
-            <PhoneInput
-              country="bd"
-              preferredCountries={["bd", "us", "gb", "in", "au"]}
-              inputStyle={{
-                width: "100%",
-                height: 32,
-                fontSize: 14,
-                paddingLeft: 48,
-              }}
-              buttonStyle={{
-                borderRadius: "2px 0 0 2px",
-                borderRight: "1px solid #d9d9d9",
-              }}
-              inputProps={{
-                required: true,
-              }}
-            />
           </Form.Item>
         </Form>
       </Modal>
@@ -668,7 +669,7 @@ export default function TeamMembers() {
               { required: true, message: "Phone number is required" },
               {
                 pattern:
-                  /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/,
+                  /^[\\+]?[(]?[0-9]{3}[)]?[-\s\\.]?[0-9]{3}[-\s\\.]?[0-9]{4,6}$/,
                 message: "Please enter a valid phone number",
               },
             ]}

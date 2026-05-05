@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Image, Spin } from "antd";
 import React, { useEffect } from "react";
-import { FaCircleCheck } from "react-icons/fa6";
+import { FaCircleCheck, FaCircleXmark } from "react-icons/fa6";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useGetApplicationByIdQuery } from "../../redux/features/application/applicationApi";
 
@@ -192,6 +192,8 @@ const ApplicationDetails = () => {
 
     status: applicationApiData?.status,
   };
+
+  const isRejected = applicationApiData?.status === "REJECTED";
 
   const steps = React.useMemo(
     () => [
@@ -443,9 +445,31 @@ const ApplicationDetails = () => {
             </h3>
 
             <div className="relative mt-6">
-              <div className="absolute z-10 left-[11px] top-2 bottom-2 w-0.5 bg-[#D1D5DB]" />
+              {/* <div className="absolute z-10 left-[11px] top-2 bottom-2 w-0.5 bg-[#D1D5DB]" /> */}
+
+              <div
+                className={`absolute z-10 left-[11px] top-2 bottom-2 w-0.5 ${isRejected ? "bg-red-400 " : " bg-[#D1D5DB]"}`}
+              />
 
               <div className="space-y-10">
+                {isRejected && (
+                  <div className="flex items-start gap-4 relative z-10 w-full">
+                    <div className="rounded-full z-50 bg-white">
+                      <FaCircleXmark className="text-red-500" size={22} />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[13px] font-bold text-red-600">
+                        Application Rejected
+                      </span>
+                      {/* রিজেকশন নোটটি এখানে দেখান */}
+                      {applicationApiData?.rejectionReason && (
+                        <div className="mt-1 p-2 bg-red-50 border border-red-100 rounded text-[11px] text-red-700 italic max-w-[200px]">
+                          " {applicationApiData?.rejectionReason} "
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
                 {steps.map((step, index) => {
                   // Step routing removed; highlight the first incomplete step instead.
                   const firstIncompleteIndex = steps.findIndex(

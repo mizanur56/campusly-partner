@@ -1,5 +1,8 @@
 import React, { useCallback, useMemo, useEffect } from "react";
-import { useLazySearchCoursesQuery, useGetFilterOptionsQuery } from "../../redux/features/search/searchApi";
+import {
+  useLazySearchCoursesQuery,
+  useGetFilterOptionsQuery,
+} from "../../redux/features/search/searchApi";
 import { useAppDispatch } from "../../redux/features/hooks";
 import { updateCoursesMeta } from "../../redux/features/search/searchMetaSlice";
 import { useInfiniteScrollPagination } from "../../hooks/useInfiniteScrollPagination";
@@ -10,6 +13,7 @@ import type { SearchCourseItem } from "../../data/searchResultsTypes";
 import { transformSearchCourse } from "../../utils/searchTransform";
 import { transformFiltersToApi } from "../../utils/transformFiltersToApi";
 import type { FilterState } from "./StudyPreferenceFilters";
+import { useNavigate } from "react-router-dom";
 
 export interface CourseForApply {
   id: string;
@@ -28,6 +32,7 @@ type CoursesResultsViewProps = {
   searchQuery: string;
   filters?: FilterState;
   onStartApplication?: (course: CourseForApply) => void;
+  appliedCourseIds?: string[];
 };
 
 const COURSES_LIMIT = 20;
@@ -58,9 +63,11 @@ export default function CoursesResultsView({
   searchQuery,
   filters,
   onStartApplication,
+  appliedCourseIds,
 }: CoursesResultsViewProps) {
   const dispatch = useAppDispatch();
   const [triggerCoursesSearch] = useLazySearchCoursesQuery();
+  const navigate = useNavigate();
 
   // Fetch all filter options from single endpoint
   const { data: filterOptionsResponse } = useGetFilterOptionsQuery();
@@ -68,19 +75,20 @@ export default function CoursesResultsView({
   // Transform filter-options response into the format expected by transformFiltersToApi
   const apiResponsesForTransform = useMemo(() => {
     if (!filterOptionsResponse?.data) return null;
-    
+
     const filterData = filterOptionsResponse.data;
     return {
       countriesResponse: {
         data: filterData.countries || [],
       },
       citiesResponse: {
-        data: filterData.countries?.flatMap((c) => 
-          (c.cities || []).map((city) => ({
-            ...city,
-            country: { name: c.name },
-          }))
-        ) || [],
+        data:
+          filterData.countries?.flatMap((c) =>
+            (c.cities || []).map((city) => ({
+              ...city,
+              country: { name: c.name },
+            })),
+          ) || [],
       },
       coursesResponse: {
         data: filterData.courses || [],
@@ -106,11 +114,7 @@ export default function CoursesResultsView({
       apiResponsesForTransform.studyLevelsResponse,
       apiResponsesForTransform.universitiesResponse,
     );
-  }, [
-    filters,
-    searchQuery,
-    apiResponsesForTransform,
-  ]);
+  }, [filters, searchQuery, apiResponsesForTransform]);
 
   const fetchCourses = useCallback(
     async (page: number) => {
@@ -171,6 +175,8 @@ export default function CoursesResultsView({
           location: course.location || "N/A",
           logo: course.image,
         },
+        slug: course.slug,
+        universitySlug: course.universitySlug,
         price: course.tuition || "N/A",
         intake: course.startYear || undefined,
         duration: course.duration || undefined,
@@ -220,11 +226,45 @@ export default function CoursesResultsView({
     );
   }
 
+  const handleViewDetails = (
+    course: any,
+    slug?: string,
+    universitySlug?: string,
+  ) => {
+    const courseId = course?.id;
+    // Find the full course details from the courses array
+    const fullCourse = courses.find((course) => course.id === courseId);
+
+    if (fullCourse) {
+      console.log("Full course details:", fullCourse);
+
+      // Navigate to course details page if slug and universitySlug are available
+      const finalSlug = slug || fullCourse.slug;
+      const finalUniversitySlug = universitySlug || fullCourse.universitySlug;
+
+      if (finalUniversitySlug && finalSlug) {
+        navigate(
+          `/programs-schools/courses/${finalUniversitySlug}/${finalSlug}`,
+        );
+      } else {
+        console.warn(
+          "Course slug or university slug missing for course:",
+          courseId,
+          fullCourse,
+        );
+      }
+    } else {
+      console.warn("Course not found:", courseId);
+    }
+  };
+
   return (
     <div>
       <CourseList
         courses={transformedCourses}
         onStartApplication={onStartApplication}
+        onViewDetails={handleViewDetails}
+        appliedCourseIds={appliedCourseIds}
       />
       {hasMore && (
         <div
