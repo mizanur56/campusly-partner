@@ -37,7 +37,7 @@ function CourseCard({
       <div className="relative h-44 overflow-hidden bg-gray-100">
         <img
           src={cover}
-          alt={course.name}
+          alt={course.title}
           className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
         />
         {/* Category badge */}

@@ -37,7 +37,7 @@ export interface AcademyCourse {
   };
 }
 
-export interface AcademyCourseDetail extends AcademyCourse {
+export interface AcademyCourseDetail extends Omit<AcademyCourse, "progress"> {
   progress: {
     completedVideoIds: string[];
     currentVideoId: string | null;

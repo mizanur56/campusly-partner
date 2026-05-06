@@ -73,19 +73,19 @@ export default function Students() {
 
   const tableData: StudentRecord[] = useMemo(() => {
     if (!allStudents?.data) return [];
-    const rows = allStudents.data.map((u: any) => ({
+    const rows: StudentRecord[] = allStudents.data.map((u: any) => ({
       key: u.id,
       id: u.id,
-      name: u.user.name,
-      email: u.email,
+      name: u.user?.name ?? "—",
+      email: u.email ?? "—",
       phone: u.phone ?? "—",
-      passportNo: u.passportNo ?? "—",
-      AssignedTo: u?.advisor?.name ?? "—",
+      status: u.status ?? "—",
+      lastLogin: u.lastLogin ?? null,
     }));
     if (!searchText.trim()) return rows;
     const q = searchText.toLowerCase();
     return rows.filter(
-      (row: StudentRecord) =>
+      (row) =>
         row.name.toLowerCase().includes(q) ||
         row.email.toLowerCase().includes(q) ||
         row.phone.includes(searchText),
