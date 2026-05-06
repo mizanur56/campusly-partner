@@ -1,6 +1,6 @@
 import { Modal, Skeleton } from "antd";
 import { Search } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { config } from "../../config";
 import { isPartnerStudentProfileComplete } from "../../lib/partnerStudentProfileGates";
@@ -92,12 +92,26 @@ export default function StudentSelectBlock({
       page: 1,
       limit: 100,
     },
-    { skip: !user?.id || !modalOpen },
+    {
+      skip: !user?.id || !modalOpen,
+      refetchOnMountOrArgChange: true,
+      refetchOnFocus: false,
+      refetchOnReconnect: false,
+    },
   );
 
   const sourceRecords = useMemo((): Record<string, unknown>[] => {
     return (allStudents?.data as Record<string, unknown>[]) || [];
   }, [allStudents?.data]);
+
+  const sourceRecordsRef = useRef(sourceRecords);
+  sourceRecordsRef.current = sourceRecords;
+
+  /** Stable key so profile effect does not re-run when RTK returns a new array reference with the same rows */
+  const sourceRecordIds = useMemo(
+    () => sourceRecords.map((r) => String(r.id)).join("\n"),
+    [sourceRecords],
+  );
 
   useEffect(() => {
     if (!modalOpen) {
@@ -109,7 +123,7 @@ export default function StudentSelectBlock({
   useEffect(() => {
     if (!modalOpen) return;
 
-    const raw = sourceRecords;
+    const raw = sourceRecordsRef.current;
     if (!raw.length) {
       setFetchedProfileById({});
       setProfilesResolving(false);
@@ -118,13 +132,19 @@ export default function StudentSelectBlock({
 
     const incomplete = raw.filter((r) => !isPartnerStudentProfileComplete(r));
     if (incomplete.length === 0) {
-      setFetchedProfileById({});
       setProfilesResolving(false);
+      setFetchedProfileById((prev) => {
+        const allowed = new Set(raw.map((r) => String(r.id)));
+        const next = { ...prev };
+        for (const k of Object.keys(next)) {
+          if (!allowed.has(k)) delete next[k];
+        }
+        return next;
+      });
       return;
     }
 
     let cancelled = false;
-    setFetchedProfileById({});
     setProfilesResolving(true);
 
     Promise.all(
@@ -136,18 +156,24 @@ export default function StudentSelectBlock({
       ),
     ).then((pairs) => {
       if (cancelled) return;
-      const next: Record<string, unknown | null> = {};
-      pairs.forEach(([id, data]) => {
-        next[id] = data;
+      setFetchedProfileById((prev) => {
+        const next = { ...prev };
+        const allowed = new Set(raw.map((r) => String(r.id)));
+        for (const k of Object.keys(next)) {
+          if (!allowed.has(k)) delete next[k];
+        }
+        pairs.forEach(([id, data]) => {
+          next[id] = data;
+        });
+        return next;
       });
-      setFetchedProfileById(next);
       setProfilesResolving(false);
     });
 
     return () => {
       cancelled = true;
     };
-  }, [modalOpen, sourceRecords, fetchProfile]);
+  }, [modalOpen, sourceRecordIds, fetchProfile]);
 
   const studentsList: ListStudent[] = useMemo(() => {
     return sourceRecords
@@ -178,15 +204,14 @@ export default function StudentSelectBlock({
 
   const isError = isPartnerError;
 
-  /** Full skeleton only while RTK has no rows for this search key — not during profile fetches */
-  const showListSkeleton = Boolean(user?.id) && isPartnerListLoading;
-
-  /** List API returned rows but every row needs a profile fetch before we know eligibility */
-  const verifyingProfiles =
-    profilesResolving &&
-    sourceRecords.length > 0 &&
-    studentsList.length === 0 &&
-    sourceRecords.some((r) => !isPartnerStudentProfileComplete(r));
+  /** One skeleton phase: initial RTK load OR profile completion still resolving with nothing to show yet */
+  const showUnifiedSkeleton =
+    Boolean(user?.id) &&
+    (isPartnerListLoading ||
+      (profilesResolving &&
+        studentsList.length === 0 &&
+        sourceRecords.length > 0 &&
+        sourceRecords.some((r) => !isPartnerStudentProfileComplete(r))));
 
   if (selectedStudent) {
     return (
@@ -260,7 +285,7 @@ export default function StudentSelectBlock({
         <div className="max-h-[min(360px,calc(100vh-280px))] overflow-y-auto rounded-lg border border-gray-100 bg-gray-50/50">
           {isError ? (
             <div className="px-4 py-8 text-center text-sm text-gray-600">Unable to load students. Try again later.</div>
-          ) : showListSkeleton ? (
+          ) : showUnifiedSkeleton ? (
             <div className="space-y-0 divide-y divide-gray-100 p-2">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3 px-2 py-3">
@@ -271,12 +296,6 @@ export default function StudentSelectBlock({
                   </div>
                 </div>
               ))}
-            </div>
-          ) : verifyingProfiles ? (
-            <div className="flex flex-col items-center gap-3 px-4 py-12">
-              <Skeleton.Avatar active size={48} />
-              <Skeleton.Input active block className="!h-4 !max-w-[200px]" />
-              <p className="text-xs text-gray-500">Checking profile eligibility…</p>
             </div>
           ) : (
             <>
