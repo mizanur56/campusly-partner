@@ -292,14 +292,28 @@ export const partnerStudentProfileApi = baseApi.injectEndpoints({
       providesTags: ["countryStudyLevels"],
     }),
 
-    getAllStudentsByPartnerId:builder.query({
-      query: ({ partnerId }) => ({
-        url: PARTNER_STUDENT_BASE,
-        method: "GET",
-        params: {
-         partnerId
-        },
-      }),
+    getAllStudentsByPartnerId: builder.query<
+      { data?: unknown[]; meta?: unknown },
+      {
+        partnerId: string;
+        search?: string;
+        page?: number;
+        limit?: number;
+      }
+    >({
+      query: ({ partnerId, search, page, limit }) => {
+        const q = search?.trim() ?? "";
+        return {
+          url: PARTNER_STUDENT_BASE,
+          method: "GET",
+          params: {
+            partnerId,
+            page: page ?? 1,
+            limit: limit ?? 100,
+            ...(q ? { search: q } : {}),
+          },
+        };
+      },
       providesTags: ["users"],
     }),
   }),

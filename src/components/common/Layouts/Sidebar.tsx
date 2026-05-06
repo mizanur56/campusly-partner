@@ -134,12 +134,6 @@ const STUDENT_NAV = [
     icon: "fa-solid fa-file-lines",
     path: "applications",
   },
-  {
-    key: "tasks",
-    label: "Tasks",
-    icon: "fa-solid fa-list-check",
-    path: "tasks",
-  },
 ];
 
 const Sidebar: React.FC = () => {
@@ -359,6 +353,9 @@ const Sidebar: React.FC = () => {
       if (path.startsWith("/payments")) {
         // Single "Payments" menu should stay active for Purchase/Commission tabs
         return location.pathname.startsWith("/payments");
+      }
+      if (path === "/academy") {
+        return location.pathname.startsWith("/academy");
       }
       return location.pathname === path;
     },

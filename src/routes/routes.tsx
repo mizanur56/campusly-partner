@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import MainLayout from "../layout/MainLayout";
 import Academy from "../pages/Academy/Academy";
+import AcademyCourseDetail from "../pages/Academy/AcademyCourseDetail";
 import ChangePassword from "../pages/Auth/ChangePassword";
 import ForgetPassword from "../pages/Auth/ForgetPassword";
 import Login from "../pages/Auth/Login";
@@ -172,6 +173,7 @@ function AppRoutes() {
           <Route path="payments/commission" element={<Payments />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="academy" element={<Academy />} />
+          <Route path="academy/:courseId" element={<AcademyCourseDetail />} />
           <Route path="hot-offers" element={<HotOffers />} />
           <Route path="profile" element={<ProfileSettings />} />
           <Route path="chat" element={<Navigate to="/" replace />} />
