@@ -13,6 +13,7 @@ import {
   phoneButtonStyle,
   phoneInputGetValueFromEvent,
   phoneInputStyle,
+  phoneNumberValidator,
   PHONE_BD_INITIAL_VALUE,
 } from "../sharedFormProps";
 import { toast } from "react-toastify";
@@ -127,7 +128,7 @@ export default function MainContactDetailsStep({
   };
 
   const handleNext = () => {
-    onNext();
+    form.validateFields().then(() => onNext()).catch(() => {});
   };
 
   if (isFetching && !stepData) {
@@ -175,7 +176,7 @@ export default function MainContactDetailsStep({
         <Form.Item
           name="telephoneNumber"
           label="Telephone Number"
-          rules={[{ required: true, message: "Required" }]}
+          rules={[{ required: true, message: "Required" }, { validator: phoneNumberValidator }]}
           getValueFromEvent={phoneInputGetValueFromEvent}
         >
           <PhoneInput
