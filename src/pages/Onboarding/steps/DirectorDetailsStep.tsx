@@ -156,6 +156,12 @@ export default function DirectorDetailsStep({
           label="Whatsapp (If Applicable)"
           placeholder="Enter whatsapp number"
           disabled={formDisabled}
+          type="tel"
+          onKeyDown={(e) => {
+            if (!/[\d\b]/.test(e.key) && !["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab"].includes(e.key)) {
+              e.preventDefault();
+            }
+          }}
         />
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

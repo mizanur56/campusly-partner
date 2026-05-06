@@ -128,7 +128,10 @@ export default function MainContactDetailsStep({
   };
 
   const handleNext = () => {
-    form.validateFields().then(() => onNext()).catch(() => {});
+    form
+      .validateFields()
+      .then(() => onNext())
+      .catch(() => {});
   };
 
   if (isFetching && !stepData) {
@@ -176,7 +179,10 @@ export default function MainContactDetailsStep({
         <Form.Item
           name="telephoneNumber"
           label="Telephone Number"
-          rules={[{ required: true, message: "Required" }, { validator: phoneNumberValidator }]}
+          rules={[
+            { required: true, message: "Required" },
+            { validator: phoneNumberValidator },
+          ]}
           getValueFromEvent={phoneInputGetValueFromEvent}
         >
           <PhoneInput
@@ -194,6 +200,17 @@ export default function MainContactDetailsStep({
         label="Whatsapp (If Applicable)"
         placeholder="Enter whatsapp number"
         disabled={formDisabled}
+        type="tel"
+        onKeyDown={(e) => {
+          if (
+            !/[\d\b]/.test(e.key) &&
+            !["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab"].includes(
+              e.key,
+            )
+          ) {
+            e.preventDefault();
+          }
+        }}
       />
       <div className="mt-8 flex flex-wrap justify-end gap-3">
         <Button
