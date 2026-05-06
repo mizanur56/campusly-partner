@@ -112,7 +112,8 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
   );
   const studyLevelData = studyLevelsRes?.data ?? [];
 
-  const [createMedia, { isLoading: isCreatingMedia }] = useCreateMediaMutation();
+  const [createMedia, { isLoading: isCreatingMedia }] =
+    useCreateMediaMutation();
   const [uploadDocument] = useApplicationDocumentUploadMutation();
   const [updateEducation, { isLoading: isUpdatingEducation }] =
     useUpdateEducationMutation();
@@ -121,8 +122,10 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
   const [userToggledExpand, setUserToggledExpand] = React.useState(false);
   const [isQualificationModalOpen, setIsQualificationModalOpen] =
     React.useState(false);
-  const [selectedQualificationStudyLevelId, setSelectedQualificationStudyLevelId] =
-    React.useState<string | null>(null);
+  const [
+    selectedQualificationStudyLevelId,
+    setSelectedQualificationStudyLevelId,
+  ] = React.useState<string | null>(null);
   const [activeQualificationField, setActiveQualificationField] =
     React.useState<"marksheet" | "certificate" | null>(null);
   const [fileSizes, setFileSizes] = React.useState<Record<string, string>>({});
@@ -133,7 +136,9 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
     string | null
   >(null);
   // Immediately reflects uploaded URLs in the UI without waiting for parent refetch
-  const [localUploads, setLocalUploads] = React.useState<Record<string, string>>({});
+  const [localUploads, setLocalUploads] = React.useState<
+    Record<string, string>
+  >({});
 
   /* ================= Helpers ================= */
   const formatFileSize = (bytes: number): string => {
@@ -144,17 +149,20 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
     return `${Math.round((bytes / Math.pow(k, i)) * 100) / 100} ${units[i]}`;
   };
 
-  const getFileSize = React.useCallback(async (url: string): Promise<string> => {
-    try {
-      const response = await fetch(url, { method: "HEAD" });
-      const contentLength = response.headers.get("content-length");
-      if (contentLength) return formatFileSize(parseInt(contentLength, 10));
-      const blob = await (await fetch(url)).blob();
-      return formatFileSize(blob.size);
-    } catch {
-      return "—";
-    }
-  }, []);
+  const getFileSize = React.useCallback(
+    async (url: string): Promise<string> => {
+      try {
+        const response = await fetch(url, { method: "HEAD" });
+        const contentLength = response.headers.get("content-length");
+        if (contentLength) return formatFileSize(parseInt(contentLength, 10));
+        const blob = await (await fetch(url)).blob();
+        return formatFileSize(blob.size);
+      } catch {
+        return "—";
+      }
+    },
+    [],
+  );
 
   const downloadDocument = React.useCallback(
     async (url: string, name?: string) => {
@@ -171,7 +179,11 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
         a.remove();
         URL.revokeObjectURL(objectUrl);
       } catch {
-        try { window.open(url, "_blank"); } catch { /* ignore */ }
+        try {
+          window.open(url, "_blank");
+        } catch {
+          /* ignore */
+        }
       }
     },
     [],
@@ -278,10 +290,14 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
   }, [studyLevelData, studentProfile]);
 
   const documentCategories: DocumentCategory[] = React.useMemo(() => {
-    const reg = localUploads.registrationForm || applicationApiData?.registrationForm;
-    const passport = localUploads.passportFile || applicationApiData?.passportFile;
+    const reg =
+      localUploads.registrationForm || applicationApiData?.registrationForm;
+    const passport =
+      localUploads.passportFile || applicationApiData?.passportFile;
     const cv = localUploads.cv || applicationApiData?.student?.cv;
-    const motivation = localUploads.motivationLetter || applicationApiData?.student?.motivationLetter;
+    const motivation =
+      localUploads.motivationLetter ||
+      applicationApiData?.student?.motivationLetter;
 
     return [
       {
@@ -321,7 +337,7 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
           ? [
               {
                 id: "pf-1",
-                name: "Passport.pdf",
+                name: "Passport",
                 size: fileSizes.passportFile || "—",
                 url: `${config.image_access_url}${passport}`,
               },
@@ -347,7 +363,7 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
           ? [
               {
                 id: "cv-1",
-                name: "CV.pdf",
+                name: "CV",
                 size: fileSizes.cv || "—",
                 url: `${config.image_access_url}${cv}`,
               },
@@ -365,7 +381,7 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
           ? [
               {
                 id: "ml-1",
-                name: "Motivation Letter.pdf",
+                name: "Motivation Letter",
                 size: fileSizes.motivationLetter || "—",
                 url: `${config.image_access_url}${motivation}`,
               },
@@ -399,7 +415,10 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
       }).unwrap();
       // Immediately reflect the new document in the UI
       setLocalUploads((prev) => ({ ...prev, [fieldName]: documentUrl }));
-      setFileSizes((prev) => ({ ...prev, [fieldName]: formatFileSize(file.size) }));
+      setFileSizes((prev) => ({
+        ...prev,
+        [fieldName]: formatFileSize(file.size),
+      }));
       setExpandedCategories((prev) => ({ ...prev, [categoryId]: true }));
     } catch (err) {
       console.error("Upload failed:", err);
@@ -437,11 +456,14 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
     }));
   };
 
-  const isAllRequiredCompleted = documentCategories.every((cat) => cat.isCompleted);
+  const isAllRequiredCompleted = documentCategories.every(
+    (cat) => cat.isCompleted,
+  );
 
   const stageLockedVisual = embedded && !stageUnlocked;
-  const expandToggleClass =
-    stageLockedVisual ? "cursor-not-allowed opacity-50" : "cursor-pointer";
+  const expandToggleClass = stageLockedVisual
+    ? "cursor-not-allowed opacity-50"
+    : "cursor-pointer";
   const stageCardClass = stageLockedVisual
     ? "border border-primary-border rounded-2xl overflow-hidden bg-[#F4F6F5]"
     : "border border-primary-border rounded-2xl overflow-hidden";
@@ -454,7 +476,9 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
       <div className={stageCardClass}>
         {/* ===== Header ===== */}
         <div
-          title={stageLockedVisual ? "Complete the previous stage first" : undefined}
+          title={
+            stageLockedVisual ? "Complete the previous stage first" : undefined
+          }
           className={`${stageHeaderClass} p-6 flex items-center justify-between select-none ${stageLockedVisual ? "cursor-not-allowed" : "cursor-pointer"}`}
           onClick={() => {
             if (stageLockedVisual && !isExpanded) return;
@@ -492,7 +516,8 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
         <Collapsible open={isExpanded}>
           <div className="space-y-4 m-4">
             {documentCategories.map((category) => {
-              const isCategoryExpanded = expandedCategories[category.id] ?? false;
+              const isCategoryExpanded =
+                expandedCategories[category.id] ?? false;
 
               return (
                 <div
@@ -503,7 +528,10 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       {category.isCompleted ? (
-                        <IoCheckmarkCircleSharp size={26} className="text-[#16A34A]" />
+                        <IoCheckmarkCircleSharp
+                          size={26}
+                          className="text-[#16A34A]"
+                        />
                       ) : (
                         <FaRegCircle size={22} />
                       )}
@@ -681,63 +709,66 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
               )}
             </div>
 
-            {selectedQualificationStudyLevelId && (() => {
-              const group = academicGroups.find(
-                (g) => g.studyLevelId === selectedQualificationStudyLevelId,
-              );
-              if (!group) return null;
-              return (
-                <div className="border-t pt-4">
-                  <h4 className="font-semibold text-gray-600 mb-3 uppercase text-xs tracking-wider">
-                    {group.label}
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {group.items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="p-3 border flex justify-between items-center rounded-md hover:bg-gray-50 transition-colors border-primary-border"
-                      >
-                        <div className="flex flex-col">
-                          <span className="text-gray-700 font-medium">
-                            {item.name}
-                          </span>
-                          {item.status === "submitted" && (
-                            <span className="text-[#237D3B] text-[14px]">
-                              Submitted
+            {selectedQualificationStudyLevelId &&
+              (() => {
+                const group = academicGroups.find(
+                  (g) => g.studyLevelId === selectedQualificationStudyLevelId,
+                );
+                if (!group) return null;
+                return (
+                  <div className="border-t pt-4">
+                    <h4 className="font-semibold text-gray-600 mb-3 uppercase text-xs tracking-wider">
+                      {group.label}
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {group.items.map((item) => (
+                        <div
+                          key={item.id}
+                          className="p-3 border flex justify-between items-center rounded-md hover:bg-gray-50 transition-colors border-primary-border"
+                        >
+                          <div className="flex flex-col">
+                            <span className="text-gray-700 font-medium">
+                              {item.name}
                             </span>
-                          )}
-                        </div>
-                        {item.status === "submitted" ? (
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              className="border border-primary-border cursor-pointer p-1 flex items-center hover:border-[#237D3B] hover:text-[#237D3B] rounded-lg text-[#237D3B]"
+                            {item.status === "submitted" && (
+                              <span className="text-[#237D3B] text-[14px]">
+                                Submitted
+                              </span>
+                            )}
+                          </div>
+                          {item.status === "submitted" ? (
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                className="border border-primary-border cursor-pointer p-1 flex items-center hover:border-[#237D3B] hover:text-[#237D3B] rounded-lg text-[#237D3B]"
+                                onClick={() =>
+                                  setActiveQualificationField(
+                                    item.category as
+                                      | "marksheet"
+                                      | "certificate",
+                                  )
+                                }
+                              >
+                                <FiEdit className="text-xl" />
+                              </button>
+                              <FaCircleCheck className="text-green-500 text-xl" />
+                            </div>
+                          ) : (
+                            <FaPlusSquare
+                              className="text-[#237D3B] text-xl cursor-pointer hover:scale-110 transition-transform"
                               onClick={() =>
                                 setActiveQualificationField(
                                   item.category as "marksheet" | "certificate",
                                 )
                               }
-                            >
-                              <FiEdit className="text-xl" />
-                            </button>
-                            <FaCircleCheck className="text-green-500 text-xl" />
-                          </div>
-                        ) : (
-                          <FaPlusSquare
-                            className="text-[#237D3B] text-xl cursor-pointer hover:scale-110 transition-transform"
-                            onClick={() =>
-                              setActiveQualificationField(
-                                item.category as "marksheet" | "certificate",
-                              )
-                            }
-                          />
-                        )}
-                      </div>
-                    ))}
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              );
-            })()}
+                );
+              })()}
           </div>
         ) : (
           <div className="space-y-4">
