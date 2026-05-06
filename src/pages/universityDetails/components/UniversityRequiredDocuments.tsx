@@ -13,7 +13,14 @@ type DocumentGroup = {
 };
 
 export default function UniversityRequiredDocuments({ documents }: { documents: DocumentGroup[] }) {
-  const studyLevels = useMemo(() => documents.map((doc) => ({ id: doc.levelId, name: doc.levelName })), [documents]);
+  const studyLevels = useMemo(
+    () =>
+      documents.map((doc) => ({
+        id: doc.levelId,
+        name: doc.levelName?.trim() || "Description",
+      })),
+    [documents],
+  );
   const [activeTab, setActiveTab] = useState("");
 
   useEffect(() => {

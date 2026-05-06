@@ -1,5 +1,5 @@
 import { Calendar, Clock, DollarSign } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import ApplyPreferenceModal from "../../../components/common/Modals/Apply/ApplyPreferenceModal";
 import { useGetMyAllApplicationsQuery } from "../../../redux/features/application/applicationApi";
@@ -133,7 +133,7 @@ export default function UniversityCourses({ coursesByStudyLevel }: { coursesBySt
   );
 }
 
-function Info({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function Info({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
     <div className="flex items-center gap-2">
       {icon}

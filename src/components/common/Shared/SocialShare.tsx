@@ -56,11 +56,7 @@ export default function SocialShare({
           className="h-7.5 w-7.5 relative cursor-pointer hover:opacity-80 transition"
           aria-label="Share on Facebook"
         >
-          <img
-            alt="Facebook"
-            src="/social/Vector.png"
-            className="h-full w-full object-contain"
-          />
+          <img alt="Facebook" src="/social/Vector.png" className="h-full w-full object-contain" />
         </button>
 
         {/* X (Twitter) */}
@@ -69,11 +65,7 @@ export default function SocialShare({
           className="h-7.5 w-7.5 relative cursor-pointer hover:opacity-80 transition"
           aria-label="Share on X"
         >
-          <img
-            alt="X"
-            src="/social/Vector-1.png"
-            className="h-full w-full object-contain"
-          />
+          <img alt="X" src="/social/Vector-1.png" className="h-full w-full object-contain" />
         </button>
 
         {/* LinkedIn */}
@@ -82,11 +74,7 @@ export default function SocialShare({
           className="h-7.5 w-7.5 relative cursor-pointer hover:opacity-80 transition"
           aria-label="Share on LinkedIn"
         >
-          <img
-            alt="LinkedIn"
-            src="/social/Vector-2.png"
-            className="h-full w-full object-contain"
-          />
+          <img alt="LinkedIn" src="/social/Vector-2.png" className="h-full w-full object-contain" />
         </button>
 
         {/* Pinterest */}
@@ -95,11 +83,7 @@ export default function SocialShare({
           className="h-7.5 w-7.5 relative cursor-pointer hover:opacity-80 transition"
           aria-label="Share on Pinterest"
         >
-          <img
-            alt="Pinterest"
-            src="/social/Vector-3.png"
-            className="h-full w-full object-contain"
-          />
+          <img alt="Pinterest" src="/social/Vector-3.png" className="h-full w-full object-contain" />
         </button>
       </div>
     </div>

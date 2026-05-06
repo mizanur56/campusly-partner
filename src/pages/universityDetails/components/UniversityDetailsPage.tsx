@@ -73,7 +73,15 @@ export default function UniversityDetailsPage({ data, faqs }: { data: University
             if (!doc.studyLevel || !doc.document || !doc.document.category) return acc;
             let levelGroup = acc.find((g) => g.levelId === doc.studyLevel.id);
             if (!levelGroup) {
-              levelGroup = { levelId: doc.studyLevel.id, levelName: doc.studyLevel.name, levelPriority: doc.studyLevel.priority, categories: [] };
+              levelGroup = {
+                levelId: doc.studyLevel.id,
+                levelName:
+                  doc.studyLevel.description ||
+                  doc.studyLevel.name ||
+                  "Description",
+                levelPriority: doc.studyLevel.priority,
+                categories: [],
+              };
               acc.push(levelGroup);
             }
             let category = levelGroup.categories.find((c: any) => c.title === doc.document.category.name);

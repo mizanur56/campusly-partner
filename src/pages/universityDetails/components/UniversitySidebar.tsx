@@ -1,7 +1,8 @@
 import { Clock, DollarSign, FileText, MapPin } from "lucide-react";
+import type { ReactNode } from "react";
 import SocialShare from "../../../components/common/Shared/SocialShare";
 
-const iconMap: Record<string, React.ReactNode> = {
+const iconMap: Record<string, ReactNode> = {
   "upcoming intake": <Clock className="h-7 w-7 text-[#20242A] md:h-8 md:w-8" />,
   "english requirement": <FileText className="h-7 w-7 text-[#20242A] md:h-8 md:w-8" />,
   "tuition fee": <DollarSign className="h-7 w-7 text-[#20242A] md:h-8 md:w-8" />,
