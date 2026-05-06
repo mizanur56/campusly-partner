@@ -1,7 +1,9 @@
+import { Skeleton } from "antd";
 import { BookOpen, Clock, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PageLoader from "../../components/ui/PageLoader";
+import { useDebounced } from "../../redux/features/hooks";
 import { useGetAcademyCategoriesQuery, useGetAcademyCoursesQuery } from "../../redux/features/academy/academyApi";
 import type { AcademyCourse } from "../../types/academy";
 import { sumDurations } from "../../utils/videoHelpers";
@@ -80,11 +82,34 @@ function CourseCard({
   );
 }
 
+function CourseGridSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div
+          key={i}
+          className="flex flex-col overflow-hidden rounded-2xl border border-primary-border bg-white"
+        >
+          <div className="h-44 w-full bg-gray-100">
+            <Skeleton.Image active className="!flex !h-full !w-full items-center justify-center !rounded-none" />
+          </div>
+          <div className="space-y-3 p-4">
+            <Skeleton.Input active size="small" block className="!h-3 !max-w-[120px]" />
+            <Skeleton paragraph={{ rows: 2 }} active title={false} className="!mb-0" />
+            <Skeleton.Input active size="small" block className="!mt-2 !h-1.5 max-w-full" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ── Main page ──────────────────────────────────────────────────────────────────
 export default function Academy() {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounced({ searchQuery: search, delay: 400 });
 
   const { data: categories = [], isLoading: categoriesLoading } =
     useGetAcademyCategoriesQuery();
@@ -93,16 +118,20 @@ export default function Academy() {
   const activeCourses = useMemo(() => courses.filter((c) => c.modules.length > 0), [courses]);
 
   const filtered = useMemo(() => {
+    const q = debouncedSearch.trim().toLowerCase();
     return activeCourses
       .filter((c) => activeCategory === "all" || c.categoryId === activeCategory)
       .filter(
         (c) =>
-          !search ||
-          c.title.toLowerCase().includes(search.toLowerCase()) ||
-          c.description?.toLowerCase().includes(search.toLowerCase()),
+          !q ||
+          c.title.toLowerCase().includes(q) ||
+          c.description?.toLowerCase().includes(q),
       )
       .sort((a, b) => a.title.localeCompare(b.title));
-  }, [activeCourses, activeCategory, search]);
+  }, [activeCourses, activeCategory, debouncedSearch]);
+
+  /** While typed query differs from debounced query, show grid skeleton */
+  const isSearchDebouncing = search !== debouncedSearch;
 
   if (isLoading || categoriesLoading) return <PageLoader fullScreen={false} />;
 
@@ -204,13 +233,15 @@ export default function Academy() {
         </div>
 
         {/* Grid */}
-        {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 rounded-2xl border border-primary-border bg-white">
-            <i className="fa-solid fa-graduation-cap text-4xl text-gray-300 mb-3" />
-            <p className="text-gray-500 text-sm">No courses found.</p>
+        {isSearchDebouncing ? (
+          <CourseGridSkeleton />
+        ) : filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-primary-border bg-white py-20">
+            <i className="fa-solid fa-graduation-cap mb-3 text-4xl text-gray-300" />
+            <p className="text-sm text-gray-500">No courses found.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
             {filtered.map((course) => (
               <CourseCard
                 key={course.id}
