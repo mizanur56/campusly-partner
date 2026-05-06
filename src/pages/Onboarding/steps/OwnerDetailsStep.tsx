@@ -110,7 +110,10 @@ export default function OwnerDetailsStep({ apiStep, onNext }: Props) {
   };
 
   const handleNext = () => {
-    form.validateFields().then(() => onNext()).catch(() => {});
+    form
+      .validateFields()
+      .then(() => onNext())
+      .catch(() => {});
   };
 
   if (isFetching && !stepData) {
@@ -158,7 +161,10 @@ export default function OwnerDetailsStep({ apiStep, onNext }: Props) {
         <Form.Item
           name="mobileNumber"
           label="Mobile Number"
-          rules={[{ required: true, message: "Required" }, { validator: phoneNumberValidator }]}
+          rules={[
+            { required: true, message: "Required" },
+            { validator: phoneNumberValidator },
+          ]}
           getValueFromEvent={phoneInputGetValueFromEvent}
         >
           <PhoneInput
@@ -176,6 +182,7 @@ export default function OwnerDetailsStep({ apiStep, onNext }: Props) {
           label="Email"
           placeholder="Select an item"
           disabled={formDisabled}
+          rules={[{ required: true, message: "Required" }]}
         />
         <FormInput
           name="website"
