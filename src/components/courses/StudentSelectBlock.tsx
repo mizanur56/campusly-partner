@@ -261,7 +261,7 @@ export default function StudentSelectBlock({
         footer={null}
         width={520}
         centered
-        destroyOnClose
+        destroyOnHidden
         styles={{ body: { paddingTop: 12 } }}
       >
         <div className="relative mb-3">

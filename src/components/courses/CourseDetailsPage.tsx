@@ -7,11 +7,14 @@ import type { SearchCourseItem } from "../../data/searchResultsTypes";
 import type {
   SingleUniversityCourse,
   BreadcrumbItem,
+  DocumentCategory,
 } from "../../types/course";
 import { useState, useMemo } from "react";
 import ApplyPreferenceModal from "../common/Modals/Apply/ApplyPreferenceModal";
 import CourseDetailsHeader from "./CourseDetailsHeader";
 import CourseSidebar from "./CourseSidebar";
+import RelatedCourses from "./RelatedCourses";
+import RequiredDocuments from "./RequiredDocuments";
 
 interface CourseDetailsPageProps {
   data: SingleUniversityCourse;
@@ -85,6 +88,53 @@ export default function CourseDetailsPage({ data }: CourseDetailsPageProps) {
       ? `${config.app_domain}/courses/${university.slug}/${course.slug}`
       : "";
 
+  const relatedCourses: SearchCourseItem[] =
+    data?.relatedCourses?.map((relatedCourse) => ({
+      id: relatedCourse?.id ?? "",
+      title: relatedCourse?.course?.name ?? "Course",
+      university: university?.name ?? "University",
+      location: university?.city?.name ?? "",
+      tuition: relatedCourse?.tuition
+        ? `$${relatedCourse.tuition.toLocaleString()}`
+        : "Contact for pricing",
+      slug: relatedCourse?.course?.slug ?? undefined,
+      universitySlug: university?.slug ?? undefined,
+      image: university?.UniversityLogo?.url ?? undefined,
+      description:
+        relatedCourse?.course?.description ??
+        relatedCourse?.description ??
+        undefined,
+    })) ?? [];
+
+  const requiredDocuments: DocumentCategory[] = (() => {
+    if (
+      !data?.universityCourseDocuments ||
+      data.universityCourseDocuments.length === 0
+    ) {
+      return [];
+    }
+
+    const categoryMap = new Map<string, DocumentCategory>();
+    data.universityCourseDocuments.forEach((ucDoc) => {
+      const category = ucDoc?.document?.category;
+      if (!category) return;
+      const categoryId = category.slug ?? category.id;
+      if (!categoryMap.has(categoryId)) {
+        categoryMap.set(categoryId, {
+          id: categoryId,
+          title: category.name ?? "Documents",
+          items: [],
+        });
+      }
+      categoryMap.get(categoryId)!.items.push({
+        id: ucDoc?.document?.id ?? ucDoc.id,
+        label: ucDoc?.document?.name ?? "Document",
+      });
+    });
+
+    return Array.from(categoryMap.values());
+  })();
+
   const normalizeStartDates = (input: any) => {
     if (!input) return [];
     if (Array.isArray(input)) return input;
@@ -138,6 +188,12 @@ export default function CourseDetailsPage({ data }: CourseDetailsPageProps) {
                     ))}
                   </div>
                 </section>
+              )}
+              {requiredDocuments.length > 0 && (
+                <RequiredDocuments documents={requiredDocuments} />
+              )}
+              {relatedCourses.length > 0 && (
+                <RelatedCourses courses={relatedCourses} />
               )}
             </div>
 

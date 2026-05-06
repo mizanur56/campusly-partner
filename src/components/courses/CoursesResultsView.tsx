@@ -31,6 +31,7 @@ export interface CourseForApply {
 type CoursesResultsViewProps = {
   searchQuery: string;
   filters?: FilterState;
+  forcedUniversityId?: string;
   onStartApplication?: (course: CourseForApply) => void;
   appliedCourseIds?: string[];
 };
@@ -62,6 +63,7 @@ const transformToFilterFormData = (filters?: FilterState) => {
 export default function CoursesResultsView({
   searchQuery,
   filters,
+  forcedUniversityId,
   onStartApplication,
   appliedCourseIds,
 }: CoursesResultsViewProps) {
@@ -104,8 +106,10 @@ export default function CoursesResultsView({
 
   const apiFilters = useMemo(() => {
     const filterFormData = transformToFilterFormData(filters);
-    if (!filterFormData || !apiResponsesForTransform) return undefined;
-    return transformFiltersToApi(
+    if (!filterFormData || !apiResponsesForTransform) {
+      return forcedUniversityId ? { universityIds: [forcedUniversityId] } : undefined;
+    }
+    const transformed = transformFiltersToApi(
       filterFormData,
       searchQuery || "",
       apiResponsesForTransform.countriesResponse,
@@ -114,7 +118,11 @@ export default function CoursesResultsView({
       apiResponsesForTransform.studyLevelsResponse,
       apiResponsesForTransform.universitiesResponse,
     );
-  }, [filters, searchQuery, apiResponsesForTransform]);
+    if (forcedUniversityId) {
+      return { ...transformed, universityIds: [forcedUniversityId] };
+    }
+    return transformed;
+  }, [filters, searchQuery, apiResponsesForTransform, forcedUniversityId]);
 
   const fetchCourses = useCallback(
     async (page: number) => {

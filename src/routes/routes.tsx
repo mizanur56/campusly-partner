@@ -43,6 +43,7 @@ import { selectCurrentUser } from "../redux/features/auth/authSlice";
 import GuestOnlyAuthRoute from "./GuestOnlyAuthRoute";
 import ProtectedRoute from "./ProtectedRoute";
 import CourseDetails from "../pages/courseDetails/CourseDetails.tsx";
+import UniversityDetails from "../pages/universityDetails/UniversityDetails.tsx";
 
 function StudentProfileRedirect() {
   const { id } = useParams();
@@ -142,6 +143,10 @@ function AppRoutes() {
           <Route
             path="programs-schools/courses/:universitySlug/:courseSlug"
             element={<CourseDetails />}
+          />
+          <Route
+            path="programs-schools/universities/:slug"
+            element={<UniversityDetails />}
           />
 
           <Route path="students" element={<Students />} />

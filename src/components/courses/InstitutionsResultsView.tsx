@@ -164,7 +164,9 @@ export default function InstitutionsResultsView({
   const handleViewCourses = (universityId: string) => {
     const university = universities.find((u) => u.id === universityId);
     if (university?.slug) {
-      navigate(`/programs-schools?tab=courses&university=${university.slug}`);
+      navigate(
+        `/programs-schools?tab=courses&university=${university.slug}&universityId=${university.id}`,
+      );
     }
   };
 

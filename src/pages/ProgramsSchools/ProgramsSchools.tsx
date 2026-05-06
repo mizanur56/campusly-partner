@@ -19,6 +19,7 @@ export default function ProgramsSchoolsPage() {
   const [searchParams] = useSearchParams();
   const qFromUrl = searchParams.get("q") || "";
   const tabFromUrl = searchParams.get("tab") || "courses";
+  const universityIdFromUrl = searchParams.get("universityId") || "";
 
   const [activeTab, setActiveTab] = useState<"courses" | "institutions">(
     tabFromUrl === "institutions" ? "institutions" : "courses",
@@ -206,6 +207,7 @@ export default function ProgramsSchoolsPage() {
               <CoursesResultsView
                 searchQuery={searchQuery}
                 filters={filters}
+                forcedUniversityId={universityIdFromUrl || undefined}
                 onStartApplication={handleStartApplication}
                 appliedCourseIds={appliedCourseIds}
               />
