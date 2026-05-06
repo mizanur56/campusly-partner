@@ -29,4 +29,12 @@ export const PHONE_BD_INITIAL_VALUE = "880";
 export const phoneInputGetValueFromEvent = (value: unknown) =>
   value === undefined || value === null ? "" : String(value);
 
+/** Rejects if phone contains only the country-code digits (e.g. "880" alone). */
+export const phoneNumberValidator = (_: unknown, value: string) => {
+  const digits = String(value ?? "").replace(/\D/g, "");
+  return digits.length > 3
+    ? Promise.resolve()
+    : Promise.reject(new Error("Enter a valid phone number"));
+};
+
 export { Form, PhoneInput };

@@ -155,7 +155,23 @@ export default function RegularComplianceStep({
       const uploadedUrl = (response as any)?.data?.url || "";
 
       if (uploadedUrl) {
-        setDocuments((prev) => ({ ...prev, [key]: uploadedUrl }));
+        const updatedDocuments = { ...documents, [key]: uploadedUrl };
+        setDocuments(updatedDocuments);
+
+        // Only save to backend once BOTH required files are present
+        if (
+          updatedDocuments.yourId &&
+          updatedDocuments.businessRegistrationCertificate
+        ) {
+          await patchStep4({
+            yourId: updatedDocuments.yourId,
+            businessRegistrationCertificate:
+              updatedDocuments.businessRegistrationCertificate,
+            taxCertificate: updatedDocuments.taxCertificate || undefined,
+            customDocuments:
+              customDocuments.length > 0 ? customDocuments : undefined,
+          }).unwrap();
+        }
       } else {
         toast.error("Upload failed - no URL returned");
       }
@@ -184,10 +200,23 @@ export default function RegularComplianceStep({
       const uploadedUrl = (response as any)?.data?.url || "";
 
       if (uploadedUrl) {
-        setCustomDocuments((prev) => [
-          ...prev,
-          { label: newQualificationLabel.trim(), fileUrl: uploadedUrl },
-        ]);
+        const newDoc = {
+          label: newQualificationLabel.trim(),
+          fileUrl: uploadedUrl,
+        };
+        const updatedCustomDocuments = [...customDocuments, newDoc];
+        setCustomDocuments(updatedCustomDocuments);
+
+        // Only save to backend if both required files are already present
+        if (documents.yourId && documents.businessRegistrationCertificate) {
+          await patchStep4({
+            yourId: documents.yourId,
+            businessRegistrationCertificate:
+              documents.businessRegistrationCertificate,
+            taxCertificate: documents.taxCertificate || undefined,
+            customDocuments: updatedCustomDocuments,
+          }).unwrap();
+        }
         setNewQualificationLabel("");
         setShowAddQualification(false);
       } else {
@@ -264,6 +293,7 @@ export default function RegularComplianceStep({
   };
 
   const handleNext = () => {
+    if (!validateRequiredUploads()) return;
     onNext();
   };
 
@@ -399,27 +429,40 @@ export default function RegularComplianceStep({
                   </p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => removeCustomDocument(index)}
-                disabled={readOnly}
-                className="text-red-500 hover:text-red-700 disabled:opacity-40 dark:text-red-400 dark:hover:text-red-300"
-                title="Remove"
-              >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              <div className="flex shrink-0 items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = getFullUrl(doc.fileUrl);
+                    if (url) window.open(url, "_blank", "noopener,noreferrer");
+                  }}
+                  className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-primary-600 transition-colors hover:bg-primary-50 hover:text-primary-700 dark:text-primary-400 dark:hover:bg-primary-950/30"
+                  title="View file"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                  />
-                </svg>
-              </button>
+                  <FaEye className="h-4 w-4" aria-hidden />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeCustomDocument(index)}
+                  disabled={readOnly}
+                  className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-40 dark:text-red-400 dark:hover:bg-red-950/30 dark:hover:text-red-300"
+                  title="Remove"
+                >
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
           ))}
         </div>

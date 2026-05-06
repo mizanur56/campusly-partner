@@ -127,10 +127,16 @@ export const ApplyStep: React.FC<ApplyStepProps> = ({
 
   const [isExpanded, setIsExpanded] = useState(true);
   const [userToggledExpand, setUserToggledExpand] = useState(false);
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  const [expandedSections, setExpandedSections] = useState<
+    Record<string, boolean>
+  >({});
   const [fileSizes, setFileSizes] = useState<Record<string, string>>({});
-  const [uploadingCategoryId, setUploadingCategoryId] = useState<string | null>(null);
-  const [localReceipts, setLocalReceipts] = useState<Record<string, string>>({});
+  const [uploadingCategoryId, setUploadingCategoryId] = useState<string | null>(
+    null,
+  );
+  const [localReceipts, setLocalReceipts] = useState<Record<string, string>>(
+    {},
+  );
 
   const toggleSection = (sectionId: string) => {
     setExpandedSections((prev) => ({ ...prev, [sectionId]: !prev[sectionId] }));
@@ -232,16 +238,17 @@ export const ApplyStep: React.FC<ApplyStepProps> = ({
             <span>Your application fee has been successfully paid.</span>
           ) : (
             <span>
-              Application fee invoice is available. Amount: {applicationFee.amount}{" "}
-              {applicationFee.currency}.
+              Application fee invoice is available. Amount:{" "}
+              {applicationFee.amount} {applicationFee.currency}.
             </span>
           )
         ) : (
           "Great news! You don't need to pay the application fee—it's fully waived."
         ),
         isCompleted:
-          !!applicationFee &&
-          (applicationFee.status === "PAID" || applicationFee.amount === 0),
+          !applicationFee ||
+          applicationFee.status === "PAID" ||
+          applicationFee.amount === 0,
         hasUpload: !!applicationFee,
         documents: [
           applicationFee?.invoiceFile
@@ -252,7 +259,7 @@ export const ApplyStep: React.FC<ApplyStepProps> = ({
                 url: `${config.image_access_url}${applicationFee.invoiceFile}`,
               }
             : null,
-          (localReceipts.application_fee || paymentDoc?.paymentReceipt)
+          localReceipts.application_fee || paymentDoc?.paymentReceipt
             ? {
                 id: "pay-1",
                 name: "Payment Receipt",
@@ -290,7 +297,7 @@ export const ApplyStep: React.FC<ApplyStepProps> = ({
                 url: `${config.image_access_url}${tuitionFee.invoiceFile}`,
               }
             : null,
-          (localReceipts.tuition_fee || tuitionPaymentDoc?.paymentReceipt)
+          localReceipts.tuition_fee || tuitionPaymentDoc?.paymentReceipt
             ? {
                 id: "pay-t-1",
                 name: "Payment Receipt",
@@ -325,7 +332,6 @@ export const ApplyStep: React.FC<ApplyStepProps> = ({
   }, [embedded, stageUnlocked]);
 
   const stageLockedVisual = embedded && !stageUnlocked;
-  const expandToggleClass = stageLockedVisual ? "cursor-not-allowed opacity-50" : "cursor-pointer";
   const stageCardClass = stageLockedVisual
     ? "border border-primary-border rounded-2xl overflow-hidden bg-[#F4F6F5]"
     : "border border-primary-border rounded-2xl overflow-hidden";
@@ -345,7 +351,9 @@ export const ApplyStep: React.FC<ApplyStepProps> = ({
       const payload = {
         applicationId: id,
         invoiceId:
-          categoryId === "application_fee" ? applicationFee?.id : tuitionFee?.id,
+          categoryId === "application_fee"
+            ? applicationFee?.id
+            : tuitionFee?.id,
         studentId: applicationApiData?.studentId,
         paymentReceipt: documentUrl,
       };
@@ -353,8 +361,14 @@ export const ApplyStep: React.FC<ApplyStepProps> = ({
 
       // Immediate UI update
       setLocalReceipts((prev) => ({ ...prev, [categoryId]: documentUrl }));
-      const sizeKey = categoryId === "application_fee" ? "paymentReceiptSize" : "tuitionReceiptSize";
-      setFileSizes((prev) => ({ ...prev, [sizeKey]: formatFileSize(file.size) }));
+      const sizeKey =
+        categoryId === "application_fee"
+          ? "paymentReceiptSize"
+          : "tuitionReceiptSize";
+      setFileSizes((prev) => ({
+        ...prev,
+        [sizeKey]: formatFileSize(file.size),
+      }));
       setExpandedSections((prev) => ({ ...prev, [categoryId]: true }));
 
       refetch();
@@ -379,7 +393,9 @@ export const ApplyStep: React.FC<ApplyStepProps> = ({
     <>
       <div className={stageCardClass}>
         <div
-          title={stageLockedVisual ? "Complete the previous stage first" : undefined}
+          title={
+            stageLockedVisual ? "Complete the previous stage first" : undefined
+          }
           className={`${stageHeaderClass} p-6 flex items-center justify-between select-none ${stageLockedVisual ? "cursor-not-allowed" : "cursor-pointer"}`}
           onClick={() => {
             if (stageLockedVisual && !isExpanded) return;
@@ -417,7 +433,8 @@ export const ApplyStep: React.FC<ApplyStepProps> = ({
             {sections.map((section) => {
               const isSectionExpanded = expandedSections[section.id] ?? false;
               const hasDocs =
-                section.document || (section.documents && section.documents.length > 0);
+                section.document ||
+                (section.documents && section.documents.length > 0);
 
               return (
                 <div
@@ -427,7 +444,10 @@ export const ApplyStep: React.FC<ApplyStepProps> = ({
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                       {section.isCompleted ? (
-                        <IoCheckmarkCircleSharp size={24} className="text-[#16A34A]" />
+                        <IoCheckmarkCircleSharp
+                          size={24}
+                          className="text-[#16A34A]"
+                        />
                       ) : (
                         <FaRegCircle size={22} className="text-gray-300" />
                       )}
@@ -454,13 +474,16 @@ export const ApplyStep: React.FC<ApplyStepProps> = ({
                     )}
                   </div>
 
-                  <p className="text-[14px] text-[#4B5563] mb-2">{section.description}</p>
+                  <p className="text-[14px] text-[#4B5563] mb-2">
+                    {section.description}
+                  </p>
 
-                  {section.id === "application_fee" && isPaymentPendingApproval && (
-                    <div className="mb-3 bg-[#FFFBEB] border border-[#FCD34D] p-3 rounded-lg text-[#92400E] text-sm">
-                      Please wait for admin approval.
-                    </div>
-                  )}
+                  {section.id === "application_fee" &&
+                    isPaymentPendingApproval && (
+                      <div className="mb-3 bg-[#FFFBEB] border border-[#FCD34D] p-3 rounded-lg text-[#92400E] text-sm">
+                        Please wait for admin approval.
+                      </div>
+                    )}
                   {section.id === "tuition_fee" && isTuitionPendingApproval && (
                     <div className="mb-3 bg-[#FFFBEB] border border-[#FCD34D] p-3 rounded-lg text-[#92400E] text-sm">
                       Please wait for admin approval.
@@ -489,9 +512,13 @@ export const ApplyStep: React.FC<ApplyStepProps> = ({
                   <Collapsible open={isSectionExpanded}>
                     {hasDocs && (
                       <div className="mt-3">
-                        <p className="text-[16px] font-semibold mb-3">Attached Documents:</p>
+                        <p className="text-[16px] font-semibold mb-3">
+                          Attached Documents:
+                        </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {section?.document && <DocumentCard doc={section.document} />}
+                          {section?.document && (
+                            <DocumentCard doc={section.document} />
+                          )}
                           {section?.documents?.map((doc) => (
                             <DocumentCard key={doc?.id} doc={doc} />
                           ))}
@@ -517,7 +544,9 @@ export const ApplyStep: React.FC<ApplyStepProps> = ({
           <PrimaryButton
             text="Next"
             disabled={!isAllRequiredCompleted}
-            className={!isAllRequiredCompleted ? "opacity-50 cursor-not-allowed" : ""}
+            className={
+              !isAllRequiredCompleted ? "opacity-50 cursor-not-allowed" : ""
+            }
             onClick={() => id && navigate(`/applications/${id}/checklist`)}
           />
         </div>

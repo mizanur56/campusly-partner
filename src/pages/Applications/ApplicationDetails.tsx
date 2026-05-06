@@ -195,8 +195,18 @@ const ApplicationDetails = () => {
 
   const isRejected = applicationApiData?.status === "REJECTED";
 
-  const steps = React.useMemo(
-    () => [
+  const steps = React.useMemo(() => {
+    const _invoices: any[] = applicationApiData?.invoices ?? [];
+    const _appFeeInv = _invoices.find((inv) => inv.type === "APPLICATION_FEE");
+    const _tuitionFeeInv = _invoices.find((inv) =>
+      ["TUITION_FEE_HALF_BEFORE", "TUITION_FEE_FULL", "TUITION_FEE_FULL_BEFORE", "TUITION_FEE_FULL_AFTER_VISA"].includes(inv.type),
+    );
+    const _appFeeComplete = !_appFeeInv || _appFeeInv.status === "PAID" || _appFeeInv.amount === 0;
+    const _tuitionFeeComplete =
+      !!_tuitionFeeInv &&
+      (_tuitionFeeInv.status === "PAID" || _tuitionFeeInv.amount === 0);
+
+    return [
       {
         id: "admission",
         name: "Admission",
@@ -214,13 +224,11 @@ const ApplicationDetails = () => {
         id: "apply",
         name: "Apply",
         isCompleted:
-          applicationApiData?.isReviewed &&
-          applicationApiData?.isCollageSubmitted &&
+          !!applicationApiData?.isReviewed &&
+          !!applicationApiData?.isCollageSubmitted &&
           !!applicationApiData?.conditionalOfferLetter &&
-          applicationApiData?.invoices?.length > 0 &&
-          applicationApiData?.invoices?.every(
-            (inv: any) => inv.status === "PAID" || inv.amount === 0,
-          ),
+          _appFeeComplete &&
+          _tuitionFeeComplete,
       },
       {
         id: "checklist",
@@ -258,9 +266,8 @@ const ApplicationDetails = () => {
         name: "Enroll",
         isCompleted: applicationApiData?.status === "SUCCESS",
       },
-    ],
-    [applicationApiData, profileData],
-  );
+    ];
+  }, [applicationApiData, profileData]);
 
   // ২. 🔥 Route Guard: ইউজার ম্যানুয়ালি URL এ নাম লিখলে তাকে আটকে দিবে
   // useEffect(() => {

@@ -4,6 +4,7 @@ type StepperVariant = "form" | "submitted" | "verified" | "rejected";
 
 interface OnboardingStepperProps {
   currentStepIndex?: number;
+  completedStepsCount?: number;
   variant?: StepperVariant;
   workflowStatus?: string;
 }
@@ -18,6 +19,7 @@ const LABEL_CLASS = "text-sm leading-snug text-slate-600 dark:text-slate-400";
 
 export default function OnboardingStepper({
   currentStepIndex,
+  completedStepsCount,
   variant: variantProp,
   workflowStatus,
 }: OnboardingStepperProps) {
@@ -60,7 +62,10 @@ export default function OnboardingStepper({
                 variant === "verified" ||
                 (variant === "submitted" && index < 5) ||
                 (variant === "rejected" && index < 5) ||
-                (variant === "form" && currentIndex > index);
+                (variant === "form" &&
+                  (completedStepsCount !== undefined
+                    ? completedStepsCount > index
+                    : currentIndex > index));
               const isCurrentFormStep =
                 variant === "form" &&
                 currentIndex === index &&
