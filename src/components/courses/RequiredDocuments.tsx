@@ -43,10 +43,10 @@ export default function RequiredDocuments({
               type="button"
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "rounded-lg border px-5 py-2.5 text-sm font-medium transition-all duration-200",
+                "rounded-full border px-4 py-2 text-sm font-normal transition-colors",
                 isActive
-                  ? "border-primary bg-primary text-white"
-                  : "border-transparent bg-[#EDEEEF] text-[#4B5563] hover:bg-primary-50",
+                  ? "border-primary-200 bg-primary-100 text-primary-700"
+                  : "border-transparent bg-neutral-50 text-neutral-500 hover:bg-primary-50",
               )}
             >
               {tab.label}

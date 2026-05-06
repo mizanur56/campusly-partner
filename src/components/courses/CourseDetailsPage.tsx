@@ -2,6 +2,8 @@ import { useNavigate } from "react-router-dom";
 import { config } from "../../config";
 import { getApiImageUrl } from "../../utils/getApiImageUrl";
 import { toast } from "react-toastify";
+import { Collapse } from "antd";
+import { ChevronDown } from "lucide-react";
 
 import type { SearchCourseItem } from "../../data/searchResultsTypes";
 import type {
@@ -10,6 +12,7 @@ import type {
   DocumentCategory,
 } from "../../types/course";
 import { useState, useMemo } from "react";
+import { useGetUniversityFaqsQuery } from "../../redux/features/universityApi";
 import ApplyPreferenceModal from "../common/Modals/Apply/ApplyPreferenceModal";
 import CourseDetailsHeader from "./CourseDetailsHeader";
 import CourseSidebar from "./CourseSidebar";
@@ -34,6 +37,11 @@ export default function CourseDetailsPage({ data }: CourseDetailsPageProps) {
 
   const university = data?.university;
   const course = data?.course;
+  const universitySlug = university?.slug || "";
+
+  const { data: faqsData } = useGetUniversityFaqsQuery(universitySlug, {
+    skip: !universitySlug,
+  });
 
   const breadcrumbs: BreadcrumbItem[] = [
     { label: "Programs & Schools", href: "/programs-schools" },
@@ -135,6 +143,35 @@ export default function CourseDetailsPage({ data }: CourseDetailsPageProps) {
     return Array.from(categoryMap.values());
   })();
 
+  const transformedFaqs = (faqsData?.data || [])
+    .filter((faq) => faq.isActive)
+    .sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))
+    .map((faq) => ({
+      key: faq.id,
+      label: faq.question ?? "",
+      children: (
+        <div className="px-4 pb-5 text-left text-sm leading-relaxed text-neutral-600 md:px-6 md:pb-6 md:text-base">
+          {faq.answer ?? ""}
+        </div>
+      ),
+      className: "border-none rounded-lg bg-primary-50/70",
+    }));
+
+  const sectionTabs = [
+    {
+      label: "Course Description",
+      id: "course-description",
+      show: description.length > 0,
+    },
+    {
+      label: "Basic Requirements",
+      id: "basic-requirements",
+      show: requiredDocuments.length > 0,
+    },
+    { label: "Related Courses", id: "related-courses", show: relatedCourses.length > 0 },
+    { label: "FAQ", id: "faqs", show: transformedFaqs.length > 0 },
+  ].filter((tab) => tab.show);
+
   const normalizeStartDates = (input: any) => {
     if (!input) return [];
     if (Array.isArray(input)) return input;
@@ -174,11 +211,33 @@ export default function CourseDetailsPage({ data }: CourseDetailsPageProps) {
           universityCourseId={data?.id}
         />
 
+        {sectionTabs.length > 0 && (
+          <nav className="mt-6 flex w-full flex-wrap items-center gap-2">
+            {sectionTabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  const section = document.getElementById(tab.id);
+                  if (section) {
+                    section.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }
+                }}
+                className="h-10 cursor-pointer rounded-[50px] bg-[#EDEEEF] px-4 text-[13px] text-[#4B5563] transition-colors hover:bg-[#DFE1E3] md:text-[14px]"
+              >
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+        )}
+
         <div className="mt-8 lg:mt-12 ">
           <div className="flex flex-col lg:flex-row lg:items-start lg:gap-8 ">
             <div className="flex-[0_0_100%] lg:flex-[0_0_65%] space-y-8 md:space-y-10">
               {description.length > 0 && (
-                <section className="space-y-4">
+                <section id="course-description" className="space-y-4">
                   <h2 className="text-[22px] font-semibold text-neutral-900 md:text-[30px]">
                     Course Description
                   </h2>
@@ -190,10 +249,34 @@ export default function CourseDetailsPage({ data }: CourseDetailsPageProps) {
                 </section>
               )}
               {requiredDocuments.length > 0 && (
-                <RequiredDocuments documents={requiredDocuments} />
+                <section id="basic-requirements" className="space-y-4">
+                  <RequiredDocuments documents={requiredDocuments} />
+                </section>
               )}
               {relatedCourses.length > 0 && (
-                <RelatedCourses courses={relatedCourses} />
+                <section id="related-courses" className="space-y-4">
+                  <RelatedCourses courses={relatedCourses} />
+                </section>
+              )}
+              {transformedFaqs.length > 0 && (
+                <section id="faqs" className="space-y-4">
+                  <h2 className="text-[26px] font-semibold text-[#20242A] md:text-[30px]">
+                    FAQS
+                  </h2>
+                  <Collapse
+                    accordion
+                    defaultActiveKey={["0"]}
+                    expandIconPosition="end"
+                    expandIcon={({ isActive }) => (
+                      <ChevronDown
+                        className={`h-4 w-4 transition-transform duration-200 ${isActive ? "rotate-180" : ""}`}
+                      />
+                    )}
+                    className="space-y-4 bg-transparent"
+                    bordered={false}
+                    items={transformedFaqs}
+                  />
+                </section>
               )}
             </div>
 
