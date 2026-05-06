@@ -8,7 +8,7 @@ import {
   Lock,
   PlayCircle,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import PageLoader from "../../components/ui/PageLoader";
 import {
@@ -16,26 +16,138 @@ import {
   useUpdateAcademyProgressMutation,
 } from "../../redux/features/academy/academyApi";
 import type { AcademyModule, AcademyVideo } from "../../types/academy";
-import { getYouTubeEmbedUrl, sumDurations } from "../../utils/videoHelpers";
+import {
+  extractYouTubeVideoId,
+  getYouTubeEmbedUrl,
+  loadYouTubeIframeApi,
+  sumDurations,
+} from "../../utils/videoHelpers";
+
+const ACADEMY_PROGRESS_LS_PREFIX = "ct-academy-progress:v1:";
+
+/** Browser backup when API succeeds — survives refresh if server data matches */
+function saveAcademyProgressBackup(
+  courseId: string,
+  payload: {
+    completedVideoIds: string[];
+    currentVideoId: string | null;
+    currentModuleId: string | null;
+  },
+) {
+  try {
+    localStorage.setItem(`${ACADEMY_PROGRESS_LS_PREFIX}${courseId}`, JSON.stringify({ ...payload, savedAt: Date.now() }));
+  } catch {
+    /* storage full / private window */
+  }
+}
 
 type VideoWithMeta = AcademyVideo & { moduleId: string; moduleTitle: string };
 
-function VideoPlayer({ video }: { video: AcademyVideo }) {
+/** YouTube embed via IFrame API so we get ENDED and can advance + sync progress */
+function YouTubeEmbedPlayer({ videoId, title, onEnded }: { videoId: string; title: string; onEnded: () => void }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const playerRef = useRef<{ destroy: () => void } | null>(null);
+  const onEndedRef = useRef(onEnded);
+  onEndedRef.current = onEnded;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    loadYouTubeIframeApi().then(() => {
+      if (cancelled || !containerRef.current) return;
+      const YT = (window as Window & { YT?: { Player: new (el: HTMLElement, opts: unknown) => { destroy: () => void }; PlayerState: { ENDED: number } } }).YT;
+      if (!YT?.Player) return;
+
+      try {
+        playerRef.current?.destroy?.();
+      } catch {
+        /* noop */
+      }
+
+      playerRef.current = new YT.Player(containerRef.current, {
+        videoId,
+        width: "100%",
+        height: "100%",
+        playerVars: {
+          rel: 0,
+          modestbranding: 1,
+          playsinline: 1,
+        },
+        events: {
+          onStateChange: (e: { data: number }) => {
+            if (e.data === YT.PlayerState.ENDED) {
+              onEndedRef.current?.();
+            }
+          },
+        },
+      });
+    });
+
+    return () => {
+      cancelled = true;
+      try {
+        playerRef.current?.destroy?.();
+      } catch {
+        /* noop */
+      }
+      playerRef.current = null;
+    };
+  }, [videoId]);
+
+  return (
+    <div className="aspect-video w-full rounded-xl overflow-hidden bg-gray-900 shadow-sm">
+      <div ref={containerRef} className="h-full w-full min-h-[180px]" aria-label={title} />
+    </div>
+  );
+}
+
+function stripHtmlTags(html: string) {
+  return String(html || "").replace(/<[^>]*>/g, "").trim();
+}
+
+/** Rich-text lesson notes from admin */
+function LessonDescription({ html }: { html?: string }) {
+  const text = stripHtmlTags(html ?? "");
+  if (!text) return null;
+  return (
+    <div className="rounded-xl border border-gray-100 bg-gray-50/80 px-4 py-4">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">About this lesson</p>
+      <div
+        className="prose prose-sm max-w-none text-gray-700 prose-p:my-2 prose-p:last:mb-0 prose-headings:text-gray-900 prose-a:text-primary-600 [&_img]:max-w-full [&_img]:rounded-lg"
+        dangerouslySetInnerHTML={{ __html: html ?? "" }}
+      />
+    </div>
+  );
+}
+
+function VideoPlayer({
+  video,
+  onPlaybackEnded,
+}: {
+  video: AcademyVideo;
+  onPlaybackEnded?: () => void;
+}) {
   const embedUrl = getYouTubeEmbedUrl(video.youtubeUrl);
-  if (!embedUrl) {
+  const ytId = extractYouTubeVideoId(video.youtubeUrl);
+
+  if (!embedUrl || !ytId) {
     return (
       <div className="aspect-video w-full rounded-xl overflow-hidden bg-gray-900 shadow-sm">
-        <video controls className="w-full h-full" src={video.youtubeUrl}>
+        <video
+          key={video.id}
+          controls
+          playsInline
+          className="w-full h-full"
+          src={video.youtubeUrl}
+          onEnded={() => onPlaybackEnded?.()}
+        >
           Your browser does not support the video tag.
         </video>
       </div>
     );
   }
-  return (
-    <div className="aspect-video w-full rounded-xl overflow-hidden bg-gray-900 shadow-sm">
-      <iframe key={video.id} src={embedUrl} title={video.title} allowFullScreen className="w-full h-full" />
-    </div>
-  );
+
+  return <YouTubeEmbedPlayer videoId={ytId} title={video.title} onEnded={() => onPlaybackEnded?.()} />;
 }
 
 function ChapterItem({
@@ -129,10 +241,14 @@ export default function AcademyCourseDetail() {
   const [watchedVideoIds, setWatchedVideoIds] = useState<Set<string>>(new Set());
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
 
+  const completedIdsKey = (course?.progress?.completedVideoIds ?? []).join(",");
+  const firstFlatVideoId = flatVideos[0]?.id ?? null;
+
   useEffect(() => {
-    setActiveVideoId(course?.progress?.currentVideoId ?? flatVideos[0]?.id ?? null);
-    setWatchedVideoIds(new Set(course?.progress?.completedVideoIds ?? []));
-  }, [course?.progress?.completedVideoIds, course?.progress?.currentVideoId, flatVideos]);
+    if (!course) return;
+    setActiveVideoId(course.progress?.currentVideoId ?? firstFlatVideoId);
+    setWatchedVideoIds(new Set(course.progress?.completedVideoIds ?? []));
+  }, [course, course?.id, course?.progress?.currentVideoId, completedIdsKey, firstFlatVideoId]);
 
   const currentVideo = useMemo(
     () => flatVideos.find((v) => v.id === activeVideoId) ?? flatVideos[0] ?? null,
@@ -151,40 +267,123 @@ export default function AcademyCourseDetail() {
 
   const progressPct = flatVideos.length > 0 ? Math.round((watchedVideoIds.size / flatVideos.length) * 100) : 0;
 
+  const advancingRef = useRef(false);
+
+  const advanceAfterCompletion = useCallback(async () => {
+    if (!courseId || !currentVideo || advancingRef.current) return;
+    advancingRef.current = true;
+    try {
+      const mergedCompletedIds = [...new Set([...watchedVideoIds, currentVideo.id])];
+      setWatchedVideoIds((prev) => new Set([...prev, currentVideo.id]));
+
+      if (nextVideo) {
+        setActiveVideoId(nextVideo.id);
+        setCollapsedSections((prev) => new Set([...prev].filter((id) => id !== nextVideo.moduleId)));
+        await updateProgress({
+          courseId,
+          completedVideoId: currentVideo.id,
+          currentModuleId: nextVideo.moduleId,
+          currentVideoId: nextVideo.id,
+        }).unwrap();
+        saveAcademyProgressBackup(courseId, {
+          completedVideoIds: mergedCompletedIds,
+          currentVideoId: nextVideo.id,
+          currentModuleId: nextVideo.moduleId,
+        });
+      } else {
+        await updateProgress({
+          courseId,
+          completedVideoId: currentVideo.id,
+          currentModuleId: currentVideo.moduleId,
+          currentVideoId: currentVideo.id,
+        }).unwrap();
+        saveAcademyProgressBackup(courseId, {
+          completedVideoIds: mergedCompletedIds,
+          currentVideoId: currentVideo.id,
+          currentModuleId: currentVideo.moduleId,
+        });
+      }
+    } catch {
+      /* baseApi may toast; keep UI state best-effort */
+    } finally {
+      advancingRef.current = false;
+    }
+  }, [courseId, currentVideo, nextVideo, updateProgress, watchedVideoIds]);
+
+  const handlePlaybackEnded = useCallback(() => {
+    void advanceAfterCompletion();
+  }, [advanceAfterCompletion]);
+
   const handleNext = () => {
-    if (!currentVideo || !nextVideo || !courseId) return;
-    const completed = new Set([...watchedVideoIds, currentVideo.id]);
-    setWatchedVideoIds(completed);
-    setActiveVideoId(nextVideo.id);
-    setCollapsedSections((prev) => new Set([...prev].filter((id) => id !== nextVideo.moduleId)));
-    void updateProgress({
-      courseId,
-      completedVideoId: currentVideo.id,
-      currentModuleId: nextVideo.moduleId,
-      currentVideoId: nextVideo.id,
-    });
+    void advanceAfterCompletion();
   };
 
   if (isLoading) return <PageLoader fullScreen={false} />;
-  if (isError) return <div className="py-20 text-center text-gray-500">Unable to load course details.</div>;
+  if (isError || !course) return <div className="py-20 text-center text-gray-500">Unable to load course details.</div>;
 
   return (
-    <div className="flex flex-col gap-5">
-      <button onClick={() => navigate("/academy")} className="flex items-center gap-1.5 text-sm text-gray-500"><ChevronLeft className="w-4 h-4" />Back to Academy</button>
-      <div className="flex gap-6 items-start">
-        <div className="flex-1 min-w-0 flex flex-col gap-5">
-          {currentVideo && <VideoPlayer video={currentVideo} />}
-          <h2 className="text-xl font-bold text-gray-900">{currentVideo?.title}</h2>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 flex items-center gap-5">
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-2"><span className="text-xs text-gray-500">Progress</span><span className="text-xs font-bold text-primary-600">{progressPct}%</span></div>
-              <div className="h-1.5 w-full rounded-full bg-gray-100"><div className="h-1.5 rounded-full bg-primary-500" style={{ width: `${progressPct}%` }} /></div>
+    <div className="flex flex-col gap-2">
+      <button
+        type="button"
+        onClick={() => navigate("/academy")}
+        className="flex w-fit items-center gap-1.5 text-sm text-gray-500 transition-colors hover:text-gray-800"
+      >
+        <ChevronLeft className="h-4 w-4" />
+        Back to Academy
+      </button>
+
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span className="inline-flex shrink-0 rounded-md bg-primary-50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-primary-700">
+          {course.category?.name ?? "Academy"}
+        </span>
+        <h1 className="min-w-0 flex-1 text-lg font-bold leading-snug text-gray-900 md:text-xl">{course.title}</h1>
+      </div>
+
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-5">
+        <div className="flex min-w-0 flex-1 flex-col gap-3">
+          {currentVideo && <VideoPlayer video={currentVideo} onPlaybackEnded={handlePlaybackEnded} />}
+          {currentVideo ? (
+            <div className="space-y-1">
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary-600">{currentVideo.moduleTitle}</p>
+              <h2 className="text-xl font-bold leading-snug text-gray-900 md:text-2xl">{currentVideo.title}</h2>
             </div>
-            {nextVideo && <button onClick={handleNext} className="shrink-0 flex items-center gap-2 rounded-lg bg-primary-600 text-white px-4 py-2 text-sm font-medium">Next<ChevronRight className="w-4 h-4" /></button>}
+          ) : null}
+          <div className="rounded-xl border border-gray-200 bg-white p-4 flex flex-wrap items-center gap-4">
+            <div className="min-w-0 flex-1">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-xs text-gray-500">Progress</span>
+                <span className="text-xs font-bold text-primary-600">{progressPct}%</span>
+              </div>
+              <div className="h-1.5 w-full rounded-full bg-gray-100">
+                <div className="h-1.5 rounded-full bg-primary-500 transition-[width]" style={{ width: `${progressPct}%` }} />
+              </div>
+            </div>
+            {nextVideo ? (
+              <button
+                type="button"
+                onClick={handleNext}
+                className="flex shrink-0 items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            ) : flatVideos.length > 0 && watchedVideoIds.size >= flatVideos.length ? (
+              <span className="shrink-0 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs font-medium text-green-700">
+                Course completed
+              </span>
+            ) : null}
           </div>
+          {currentVideo ? (
+            <div className="space-y-3">
+              <LessonDescription html={currentVideo.description} />
+            </div>
+          ) : null}
         </div>
-        <aside className="w-[340px] shrink-0 rounded-xl border border-gray-200 bg-white overflow-hidden">
-          <div className="px-4 py-3.5 border-b border-gray-100"><p className="text-sm font-semibold text-gray-900">Course Content</p></div>
+        <aside className="w-full shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-white lg:w-[340px]">
+          <div className="border-b border-gray-100 px-4 py-3.5">
+            <p className="text-sm font-semibold text-gray-900">Course Content</p>
+            <p className="mt-0.5 text-xs text-gray-500">{course.title}</p>
+          </div>
           <div className="overflow-y-auto max-h-[calc(100vh-12rem)]">
             {(course?.modules ?? []).map((mod) => (
               <AccordionSection

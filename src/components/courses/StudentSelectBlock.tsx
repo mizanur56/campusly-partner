@@ -1,3 +1,4 @@
+import { Skeleton } from "antd";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { config } from "../../config";
@@ -192,7 +193,10 @@ export default function StudentSelectBlock({
   }, [studentsList, search]);
 
   const isLoading =
-    Boolean(user?.id) && (isPartnerLoading || isPartnerFetching);
+    Boolean(user?.id) &&
+    (isPartnerLoading ||
+      isPartnerFetching ||
+      (isTeamMember && (isTeamLoading || isTeamFetching)));
   const isError = isPartnerError;
 
   useEffect(() => {
@@ -214,6 +218,21 @@ export default function StudentSelectBlock({
         student={selectedStudent}
         onRemove={() => onSelect(null)}
       />
+    );
+  }
+
+  if (isLoading && !isError) {
+    return (
+      <div className="rounded-xl border border-dashed border-primary-border bg-white p-4 shadow-sm">
+        <div className="flex gap-3">
+          <Skeleton.Avatar active size={40} />
+          <div className="min-w-0 flex-1 space-y-2">
+            <Skeleton.Input active size="small" block className="!h-4 !max-w-[140px]" />
+            <Skeleton.Input active size="small" block className="!h-3 !max-w-[200px]" />
+          </div>
+        </div>
+        <Skeleton paragraph={{ rows: 2 }} active className="mt-4" title={false} />
+      </div>
     );
   }
 
