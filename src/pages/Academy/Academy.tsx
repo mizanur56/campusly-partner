@@ -111,11 +111,17 @@ export default function Academy() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounced({ searchQuery: search, delay: 400 });
 
-  const { data: categories = [], isLoading: categoriesLoading } =
-    useGetAcademyCategoriesQuery();
+  const { data: categories = [] } = useGetAcademyCategoriesQuery();
   const { data: courses = [], isLoading, isError } = useGetAcademyCoursesQuery();
 
   const activeCourses = useMemo(() => courses.filter((c) => c.modules.length > 0), [courses]);
+
+  // Only show categories that have at least one visible course —
+  // this automatically hides inactive categories (server excludes their courses)
+  const activeCategories = useMemo(() => {
+    const ids = new Set(activeCourses.map((c) => c.categoryId));
+    return categories.filter((c) => ids.has(c.id));
+  }, [categories, activeCourses]);
 
   const filtered = useMemo(() => {
     const q = debouncedSearch.trim().toLowerCase();
@@ -133,7 +139,7 @@ export default function Academy() {
   /** While typed query differs from debounced query, show grid skeleton */
   const isSearchDebouncing = search !== debouncedSearch;
 
-  if (isLoading || categoriesLoading) return <PageLoader fullScreen={false} />;
+  if (isLoading) return <PageLoader fullScreen={false} />;
 
   if (isError) {
     return (
@@ -165,7 +171,7 @@ export default function Academy() {
               All
             </button>
           </li>
-          {categories.map((c) => (
+          {activeCategories.map((c) => (
             <li key={c.id}>
               <button
                 onClick={() => setActiveCategory(c.id)}
@@ -217,7 +223,7 @@ export default function Academy() {
           >
             All
           </button>
-          {categories.map((c) => (
+          {activeCategories.map((c) => (
             <button
               key={c.id}
               onClick={() => setActiveCategory(c.id)}

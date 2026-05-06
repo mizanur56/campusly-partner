@@ -76,7 +76,6 @@ export default function StudentSelectBlock({
   const [fetchedProfileById, setFetchedProfileById] = useState<
     Record<string, unknown | null>
   >({});
-  const [profilesResolving, setProfilesResolving] = useState(false);
 
   const [fetchProfile] = useLazyGetStudentProfileQuery();
 
@@ -116,7 +115,6 @@ export default function StudentSelectBlock({
   useEffect(() => {
     if (!modalOpen) {
       setFetchedProfileById({});
-      setProfilesResolving(false);
     }
   }, [modalOpen]);
 
@@ -126,13 +124,11 @@ export default function StudentSelectBlock({
     const raw = sourceRecordsRef.current;
     if (!raw.length) {
       setFetchedProfileById({});
-      setProfilesResolving(false);
       return;
     }
 
     const incomplete = raw.filter((r) => !isPartnerStudentProfileComplete(r));
     if (incomplete.length === 0) {
-      setProfilesResolving(false);
       setFetchedProfileById((prev) => {
         const allowed = new Set(raw.map((r) => String(r.id)));
         const next = { ...prev };
@@ -145,7 +141,6 @@ export default function StudentSelectBlock({
     }
 
     let cancelled = false;
-    setProfilesResolving(true);
 
     Promise.all(
       incomplete.map((r) =>
@@ -167,7 +162,6 @@ export default function StudentSelectBlock({
         });
         return next;
       });
-      setProfilesResolving(false);
     });
 
     return () => {
@@ -204,14 +198,20 @@ export default function StudentSelectBlock({
 
   const isError = isPartnerError;
 
-  /** One skeleton phase: initial RTK load OR profile completion still resolving with nothing to show yet */
+  /** Synchronous: incomplete rows whose profile detail has not been merged yet (no async state lag → no skeleton flash) */
+  const profileFetchPending = useMemo(() => {
+    if (!sourceRecords.length) return false;
+    return sourceRecords.some((r) => {
+      if (isPartnerStudentProfileComplete(r)) return false;
+      const id = String(r.id);
+      return fetchedProfileById[id] === undefined;
+    });
+  }, [sourceRecords, fetchedProfileById]);
+
+  /** Single skeleton: RTK first paint, or still waiting on profile fetches with no eligible row to show yet */
   const showUnifiedSkeleton =
     Boolean(user?.id) &&
-    (isPartnerListLoading ||
-      (profilesResolving &&
-        studentsList.length === 0 &&
-        sourceRecords.length > 0 &&
-        sourceRecords.some((r) => !isPartnerStudentProfileComplete(r))));
+    (isPartnerListLoading || (profileFetchPending && studentsList.length === 0));
 
   if (selectedStudent) {
     return (
@@ -247,9 +247,6 @@ export default function StudentSelectBlock({
           </span>
           <div className="min-w-0 flex-1">
             <span className="text-sm font-medium text-gray-900">Select Student</span>
-            <p className="mt-0.5 text-xs text-gray-500">
-              Only students with a complete profile are listed.
-            </p>
           </div>
         </div>
       </button>
@@ -267,9 +264,6 @@ export default function StudentSelectBlock({
         destroyOnClose
         styles={{ body: { paddingTop: 12 } }}
       >
-        <p className="mb-3 text-xs text-gray-500">
-          Only students with a complete profile are listed. Server search (name, email, ID) runs after a brief pause — same 400ms debounce as the Academy course search.
-        </p>
         <div className="relative mb-3">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input

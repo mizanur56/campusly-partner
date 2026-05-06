@@ -134,12 +134,6 @@ const STUDENT_NAV = [
     icon: "fa-solid fa-file-lines",
     path: "applications",
   },
-  {
-    key: "tasks",
-    label: "Tasks",
-    icon: "fa-solid fa-list-check",
-    path: "tasks",
-  },
 ];
 
 const Sidebar: React.FC = () => {
