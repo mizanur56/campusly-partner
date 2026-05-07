@@ -439,19 +439,30 @@ import { FaPlusSquare } from "react-icons/fa";
 import { FaCircleCheck } from "react-icons/fa6";
 import { toast } from "react-toastify";
 
-import { FiEdit } from "react-icons/fi";
+import { FiEdit, FiEye, FiTrash2 } from "react-icons/fi";
 import PrimaryButton from "../../../../components/common/Button/PrimaryButton";
 import { useGetCountriesQuery } from "../../../../redux/features/countries/countriesApi";
 import { useCreateMediaMutation } from "../../../../redux/features/media/mediaApi";
 import {
   useCreateEducationMutation,
+  useDeleteDocumentMutation,
   useGetDocumentsByCategoryQuery,
   useGetEligibleStudyLevelsByCountryQuery,
   useGetStudentProfileQuery,
   useUpdateEducationMutation,
   useUpdateStudentProfileMutation,
+  useUpsertDocumentMutation,
 } from "../../../../redux/features/profile/studentProfileApi";
+import {
+  buildPersonalDocumentsUploadRows,
+  resolvePassportDocumentTemplateId,
+} from "@workspace-shared/profileUploadShared";
+import {
+  AcademicCertificatesSectionSkeleton,
+  PersonalDocumentsSectionSkeleton,
+} from "@workspace-shared/profileUploadSkeletons";
 import ModalContent from "../utils/ModalContent";
+import { getApiImageUrl } from "../../../../utils/getApiImageUrl";
 
 interface DocumentItem {
   id: string;
@@ -459,6 +470,7 @@ interface DocumentItem {
   status: "pending" | "submitted";
   category: string;
   educationId?: string;
+  documentId?: string;
 }
 
 interface DocumentGroup {
@@ -466,6 +478,13 @@ interface DocumentGroup {
   studyLevelId: string;
   educationData?: any;
   items: DocumentItem[];
+}
+
+interface PendingDeleteState {
+  id: string;
+  name: string;
+  category: string;
+  documentId?: string;
 }
 
 /** Partner student profile fields used in this tab (RTK unwraps `response.data`). */
@@ -486,8 +505,10 @@ export interface StudentProfileUploadShape {
   documents?: Array<{
     id?: string;
     documentId?: string;
+    document?: string;
     documentRelation?: { name?: string; category?: { name?: string } };
   }>;
+  image?: { url?: string };
 }
 
 interface UploadDocumentsTabProps {
@@ -519,10 +540,11 @@ const UploadDocuments = ({
   canEdit: _canEdit,
   onUpdated: _onUpdated,
 }: UploadDocumentsTabProps) => {
-  const { data: profileDataRaw, refetch } = useGetStudentProfileQuery(
-    studentId,
-    { skip: !studentId },
-  );
+  const {
+    data: profileDataRaw,
+    refetch,
+    isLoading: profileLoading,
+  } = useGetStudentProfileQuery(studentId, { skip: !studentId });
   const profileData = profileDataRaw as
     | StudentProfileUploadShape
     | null
@@ -564,22 +586,53 @@ const UploadDocuments = ({
 
   const userId = profileData?.userId as string;
 
-  const { data: studyLevelsRes } = useGetEligibleStudyLevelsByCountryQuery(
-    {
-      countryId: selectedCountryId,
-      studentId: userId,
-    },
-    {
-      refetchOnMountOrArgChange: true,
-      skip: !selectedCountryId || !studentId,
-    },
-  );
+  const { data: studyLevelsRes, isLoading: isLoadingStudyLevels } =
+    useGetEligibleStudyLevelsByCountryQuery(
+      {
+        countryId: selectedCountryId,
+        studentId: userId,
+      },
+      {
+        refetchOnMountOrArgChange: true,
+        skip: !selectedCountryId || !studentId,
+      },
+    );
 
   const studyLevelData = studyLevelsRes?.data || [];
 
   const { data: backgroundData } = useGetDocumentsByCategoryQuery(
     { studentId, slug: "background-information" },
     { skip: !studentId },
+  );
+
+  const {
+    data: docsPassportCategory,
+    isLoading: passportCategoryLoading,
+  } = useGetDocumentsByCategoryQuery(
+    { studentId, slug: "passport" },
+    { skip: !studentId },
+  );
+  const {
+    data: docsIdentityCategory,
+    isLoading: identityCategoryLoading,
+  } = useGetDocumentsByCategoryQuery(
+    { studentId, slug: "identity" },
+    { skip: !studentId },
+  );
+
+  const personalSectionSkeleton =
+    !studentId ||
+    profileLoading ||
+    passportCategoryLoading ||
+    identityCategoryLoading;
+
+  const passportTemplateId = useMemo(
+    () =>
+      resolvePassportDocumentTemplateId(
+        docsPassportCategory,
+        docsIdentityCategory,
+      ),
+    [docsPassportCategory, docsIdentityCategory],
   );
 
   const [createMedia, { isLoading: isCreatingMedia }] =
@@ -589,6 +642,8 @@ const UploadDocuments = ({
   const [createEducation] = useCreateEducationMutation();
   const [updateProfile, { isLoading: isUpdatingProfile }] =
     useUpdateStudentProfileMutation();
+  const [upsertStudentDocument] = useUpsertDocumentMutation();
+  const [deleteDocument] = useDeleteDocumentMutation();
 
   const [activeModal, setActiveModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<DocumentGroup | null>(
@@ -605,6 +660,10 @@ const UploadDocuments = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeItem, setActiveItem] = useState<DocumentItem | null>(null);
   const [uploadingItemId, setUploadingItemId] = useState<string | null>(null);
+  const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<PendingDeleteState | null>(
+    null,
+  );
 
   // /* ================= Academic Groups ================= */
   const academicGroups: DocumentGroup[] = useMemo(() => {
@@ -635,6 +694,22 @@ const UploadDocuments = ({
     });
   }, [studyLevelData, profileData]);
 
+  const personalSectionItems = useMemo(
+    (): DocumentItem[] =>
+      buildPersonalDocumentsUploadRows({
+        imageId: profileData?.imageId,
+        cv: profileData?.cv,
+        passportTemplateId,
+        studentDocuments: profileData?.documents,
+      }),
+    [
+      profileData?.documents,
+      profileData?.imageId,
+      profileData?.cv,
+      passportTemplateId,
+    ],
+  );
+
   // /* ================= Section Logic ================= */
   const sections = useMemo(() => {
     const backgroundDocList = Array.isArray(backgroundData)
@@ -646,35 +721,23 @@ const UploadDocuments = ({
       id: "personal",
       title: "Personal Documents",
       desc: "Submit a valid ID proof to enrol in courses.",
-      items: [
-        {
-          id: "photo",
-          name: "Photo",
-          status: profileData?.imageId ? "submitted" : "pending",
-          category: "profile",
-        },
-        {
-          id: "passport",
-          name: "Passport",
-          status: profileData?.passportNo ? "submitted" : "pending",
-          category: "passport",
-        },
-        {
-          id: "resume",
-          name: "Resume",
-          status: profileData?.cv ? "submitted" : "pending",
-          category: "cv",
-        },
-      ],
+      items: personalSectionItems,
     });
 
-    if (academicGroups.length)
+    if (
+      !!selectedCountryId &&
+      studentId &&
+      (isLoadingStudyLevels || academicGroups.length > 0)
+    ) {
       s.push({
         id: "academic",
         title: "Academic Certificates",
         desc: "Secure admission to your best-matching courses by submitting accurate and comprehensive documents.",
         groups: academicGroups,
+        academicBodyLoading:
+          isLoadingStudyLevels && academicGroups.length === 0,
       });
+    }
 
     if (submittedEnglishTestDocs.length > 0) {
       s.push({
@@ -713,6 +776,7 @@ const UploadDocuments = ({
 
             return {
               id: doc.id,
+              documentId: doc.id,
               name: doc.name,
               status: isSubmitted ? "submitted" : "pending",
               category: "document",
@@ -728,7 +792,16 @@ const UploadDocuments = ({
       ],
     });
     return s;
-  }, [profileData, academicGroups, backgroundData, submittedEnglishTestDocs]);
+  }, [
+    profileData,
+    academicGroups,
+    backgroundData,
+    submittedEnglishTestDocs,
+    personalSectionItems,
+    selectedCountryId,
+    studentId,
+    isLoadingStudyLevels,
+  ]);
 
   // /* ================= Upload Handler ================= */
   const handleFileUpload = async (file: File, item: DocumentItem) => {
@@ -742,7 +815,10 @@ const UploadDocuments = ({
 
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("category", item.category);
+      formData.append(
+        "category",
+        item.category === "document" ? "document" : item.category,
+      );
 
       const res = await createMedia(formData).unwrap();
       // const url = `${config.image_access_url}${res.data.url}`;
@@ -755,9 +831,16 @@ const UploadDocuments = ({
         }).unwrap();
       else if (item.category === "cv")
         await updateProfile({ studentId, body: { cv: url } }).unwrap();
-      else if (item.category === "passport")
-        await updateProfile({ studentId, body: { passportNo: url } }).unwrap();
-      else if (item.category === "statement-of-purpose")
+      else if (item.category === "document") {
+        if (!item.documentId) {
+          toast.error("Missing document configuration.");
+          return;
+        }
+        await upsertStudentDocument({
+          studentId,
+          body: { documentId: item.documentId, document: url },
+        }).unwrap();
+      } else if (item.category === "statement-of-purpose")
         await updateProfile({
           studentId,
           body: { statementOfPurpose: url },
@@ -792,6 +875,65 @@ const UploadDocuments = ({
     fileInputRef.current?.click();
   };
 
+  const resolveItemViewUrl = (item: DocumentItem): string => {
+    if (item.category === "profile") return getApiImageUrl(profileData?.image?.url);
+    if (item.category === "cv") return getApiImageUrl(profileData?.cv);
+    if (item.category === "document" && item.documentId) {
+      const matchedDoc = (profileData?.documents ?? []).find(
+        (d) => d.documentId === item.documentId,
+      );
+      return getApiImageUrl(matchedDoc?.document);
+    }
+    return "";
+  };
+
+  const handleViewPersonalItem = (item: DocumentItem) => {
+    const url = resolveItemViewUrl(item);
+    if (!url) {
+      toast.error("No file found to preview.");
+      return;
+    }
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  const requestDeletePersonalItem = (item: DocumentItem) => {
+    if (item.category === "profile") {
+      toast.info("Photo delete is not available here.");
+      return;
+    }
+    setPendingDelete({
+      id: item.id,
+      name: item.name,
+      category: item.category,
+      documentId: item.documentId,
+    });
+  };
+
+  const handleConfirmDeletePersonalItem = async () => {
+    if (!pendingDelete) return;
+    setDeletingItemId(pendingDelete.id);
+    try {
+      if (pendingDelete.category === "cv") {
+        await updateProfile({ studentId, body: { cv: "" } }).unwrap();
+      } else if (pendingDelete.category === "document" && pendingDelete.documentId) {
+        await deleteDocument({
+          studentId,
+          documentId: pendingDelete.documentId,
+        }).unwrap();
+      } else {
+        toast.error("Delete is not supported for this item.");
+        return;
+      }
+      await refetch();
+      toast.success(`${pendingDelete.name} removed.`);
+    } catch {
+      toast.error("Delete failed");
+    } finally {
+      setDeletingItemId(null);
+      setPendingDelete(null);
+    }
+  };
+
   return (
     <div className="space-y-8 pb-10">
       {/* Hidden input for direct uploads */}
@@ -824,7 +966,12 @@ const UploadDocuments = ({
             <p className="text-[14px] text-[#4B5563]">{section.desc}</p>
           </div>
 
-          {section.groups ? (
+          {section.id === "academic" &&
+          section.groups &&
+          section.groups.length === 0 &&
+          section.academicBodyLoading ? (
+            <AcademicCertificatesSectionSkeleton />
+          ) : section.groups && section.groups.length > 0 ? (
             section.groups.map((group: DocumentGroup) => (
               <div key={group.studyLevelId} className="mb-6 last:mb-0 ">
                 <h4 className="font-semibold text-gray-600 mb-2 uppercase text-xs tracking-wider">
@@ -848,25 +995,27 @@ const UploadDocuments = ({
                         )}
                       </div>
                       {item.status === "submitted" ? (
-                        <div className="flex items-center gap-2">
-                          {/* ভিউ/এডিট আইকন */}
-                          <div className=" border border-primary-border  cursor-pointer p-1 flex items-center hover:border-primary hover:text-primary rounded-lg ">
-                            <FiEdit
-                              className="text-primary text-xl"
-                              onClick={() => {
-                                setSelectedStudyLevelId(group.studyLevelId);
-                                setActiveField(
-                                  item.category as "marksheet" | "certificate",
-                                );
-                                setActiveModal(true);
-                              }}
-                            />
-                          </div>
-                          <FaCircleCheck className="text-green-500 text-xl" />
+                        <div className="flex items-center gap-1.5">
+                          {/* Compact action icons for academic section */}
+                          <button
+                            type="button"
+                            className="border border-primary-border cursor-pointer p-1 flex items-center hover:border-primary hover:text-primary rounded-md"
+                            onClick={() => {
+                              setSelectedStudyLevelId(group.studyLevelId);
+                              setActiveField(
+                                item.category as "marksheet" | "certificate",
+                              );
+                              setActiveModal(true);
+                            }}
+                            aria-label={`Edit ${item.name}`}
+                          >
+                            <FiEdit className="text-primary text-base" />
+                          </button>
+                          <FaCircleCheck className="text-green-500 text-base" />
                         </div>
                       ) : (
                         <FaPlusSquare
-                          className="text-primary text-xl cursor-pointer hover:scale-110 transition-transform"
+                          className="text-primary text-lg cursor-pointer hover:scale-110 transition-transform"
                           onClick={() => {
                             // setSelectedGroup(group);
                             // setSelectedStudyLevelId(group.studyLevelId);
@@ -886,6 +1035,8 @@ const UploadDocuments = ({
                 </div>
               </div>
             ))
+          ) : section.id === "personal" && personalSectionSkeleton ? (
+            <PersonalDocumentsSectionSkeleton />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {section.items.map((item: DocumentItem) => (
@@ -905,12 +1056,41 @@ const UploadDocuments = ({
                     )}
                   </div>
                   {item.status === "submitted" ? (
-                    <FaCircleCheck className="text-green-500 text-xl" />
+                    section.id === "personal" ? (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          className="border border-[#CFCACF] p-1 rounded-md hover:border-primary hover:text-primary"
+                          onClick={() => handleViewPersonalItem(item)}
+                          aria-label={`View ${item.name}`}
+                        >
+                          <FiEye className="text-primary text-base" />
+                        </button>
+                        {item.category !== "profile" && (
+                          <button
+                            type="button"
+                            disabled={deletingItemId === item.id}
+                            className="border border-[#CFCACF] p-1 rounded-md hover:border-red-500 hover:text-red-500 disabled:opacity-50"
+                            onClick={() => requestDeletePersonalItem(item)}
+                            aria-label={`Delete ${item.name}`}
+                          >
+                            {deletingItemId === item.id ? (
+                              <div className="h-4 w-4 rounded-full border-2 border-red-500 border-t-transparent animate-spin" />
+                            ) : (
+                              <FiTrash2 className="text-red-500 text-base" />
+                            )}
+                          </button>
+                        )}
+                        <FaCircleCheck className="text-green-500 text-base" />
+                      </div>
+                    ) : (
+                      <FaCircleCheck className="text-green-500 text-base" />
+                    )
                   ) : uploadingItemId === item.id ? (
                     <div className="h-5 w-5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
                   ) : (
                     <FaPlusSquare
-                      className="text-primary text-xl cursor-pointer hover:scale-110 transition-transform"
+                      className="text-primary text-lg cursor-pointer hover:scale-110 transition-transform"
                       onClick={() => triggerDirectUpload(item)}
                     />
                   )}
@@ -943,6 +1123,22 @@ const UploadDocuments = ({
             activeField={activeField}
           />
         )}
+      </Modal>
+
+      <Modal
+        open={!!pendingDelete}
+        title="Delete document?"
+        okText="Delete"
+        okButtonProps={{ danger: true, loading: !!deletingItemId }}
+        cancelButtonProps={{ disabled: !!deletingItemId }}
+        onOk={handleConfirmDeletePersonalItem}
+        onCancel={() => (deletingItemId ? null : setPendingDelete(null))}
+      >
+        <p className="text-sm text-gray-600">
+          {pendingDelete
+            ? `Are you sure you want to delete "${pendingDelete.name}"?`
+            : ""}
+        </p>
       </Modal>
 
       <div className="flex justify-end mt-6">
