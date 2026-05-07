@@ -1,6 +1,7 @@
 import { config } from "../config";
 
 const COOKIE_NAME = "ct_logout";
+const LOGOUT_SIGNAL_TTL_SECONDS = 60 * 60 * 24; // 24h
 
 function getRootDomain(): string {
   const h = window.location.hostname.toLowerCase();
@@ -21,7 +22,7 @@ function buildCookieStr(value: string, maxAgeSeconds: number): string {
 }
 
 export function setLogoutCookie(): void {
-  document.cookie = buildCookieStr("1", 60);
+  document.cookie = buildCookieStr("1", LOGOUT_SIGNAL_TTL_SECONDS);
 }
 
 export function clearLogoutCookie(): void {
