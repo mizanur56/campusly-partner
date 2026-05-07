@@ -10,6 +10,16 @@ import UniversityRequiredDocuments from "./UniversityRequiredDocuments";
 import UniversitySidebar from "./UniversitySidebar";
 import UniversityTabs from "./UniversityTabs";
 
+type RequiredDocsLevelGroup = {
+  levelId: string;
+  levelName: string;
+  levelPriority: number;
+  categories: Array<{
+    title: string;
+    documents: Array<{ id: string; name: string; submitted: boolean }>;
+  }>;
+};
+
 export default function UniversityDetailsPage({ data, faqs }: { data: UniversityDetails; faqs: UniversityFaq[] }) {
   const logoUrl = data?.UniversityLogo ? getApiImageUrl(data.UniversityLogo) : "/assets/default-university-logo.png";
   const headerData = { name: data.name ?? "", country: data.country?.name ?? "", logo: logoUrl };
@@ -68,12 +78,13 @@ export default function UniversityDetailsPage({ data, faqs }: { data: University
   const documents =
     data?.universityDocuments && Array.isArray(data.universityDocuments) && data.universityDocuments.length > 0
       ? (data.universityDocuments as Array<any>)
-          .reduce((acc, doc) => {
+          .reduce<RequiredDocsLevelGroup[]>((acc, doc) => {
             if (!doc.studyLevel || !doc.document || !doc.document.category) return acc;
-            let levelGroup = acc.find((g) => g.levelId === doc.studyLevel.id);
+            const levelId = String(doc.studyLevel.id);
+            let levelGroup = acc.find((g) => g.levelId === levelId);
             if (!levelGroup) {
               levelGroup = {
-                levelId: doc.studyLevel.id,
+                levelId,
                 levelName:
                   doc.studyLevel.description ||
                   doc.studyLevel.name ||
@@ -83,14 +94,16 @@ export default function UniversityDetailsPage({ data, faqs }: { data: University
               };
               acc.push(levelGroup);
             }
-            let category = levelGroup.categories.find((c: any) => c.title === doc.document.category.name);
+            let category = levelGroup.categories.find(
+              (c) => c.title === doc.document.category.name,
+            );
             if (!category) {
               category = { title: doc.document.category.name, documents: [] };
               levelGroup.categories.push(category);
             }
             category.documents.push({ id: doc.id, name: doc.document.name, submitted: false });
             return acc;
-          }, [] as Array<any>)
+          }, [])
           .sort((a, b) => a.levelPriority - b.levelPriority)
       : [];
 
