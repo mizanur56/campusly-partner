@@ -105,8 +105,22 @@ export function readPortalRoleCookie(): string | null {
   return null;
 }
 
+function hasClientAuthEvidence(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const token = localStorage.getItem("token")?.trim();
+    if (token) return true;
+    const persisted = localStorage.getItem("persist:auth");
+    if (persisted) return true;
+  } catch {
+    return false;
+  }
+  return false;
+}
+
 export function redirectFromPortalRoleCookieIfNeeded(): boolean {
   if (typeof window === "undefined") return false;
+  if (!hasClientAuthEvidence()) return false;
   const raw = readPortalRoleCookie();
   if (!raw?.trim()) return false;
   const home = homePortalForRole(raw.trim());

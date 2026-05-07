@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useGetUniversityGalleriesQuery } from "../../../redux/features/universityApi";
 import { getApiImageUrl } from "../../../utils/getApiImageUrl";
 
@@ -8,6 +9,7 @@ type GalleryItem = { src: string; alt: string };
 export default function UniversityGallery({ slug }: { slug: string }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [mounted, setMounted] = useState(false);
   const { data: galleriesData, isLoading } = useGetUniversityGalleriesQuery(slug || "", { skip: !slug });
 
   const allImages: GalleryItem[] = useMemo(() => {
@@ -22,6 +24,10 @@ export default function UniversityGallery({ slug }: { slug: string }) {
   }, [galleriesData]);
 
   const displayedImages = allImages.slice(0, 5);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = isModalOpen ? "hidden" : "unset";
@@ -72,20 +78,23 @@ export default function UniversityGallery({ slug }: { slug: string }) {
         </div>
       </section>
 
-      {isModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4">
-          <button onClick={() => setIsModalOpen(false)} className="absolute right-4 top-4 rounded-full p-2 text-white hover:bg-white/10">
+      {isModalOpen && mounted
+        ? createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 p-4" onClick={() => setIsModalOpen(false)}>
+          <button onClick={(e) => { e.stopPropagation(); setIsModalOpen(false); }} className="absolute right-4 top-4 rounded-full p-2 text-white hover:bg-white/10">
             <X className="size-6" />
           </button>
-          <button onClick={() => setSelectedImageIndex((prev) => (prev - 1 + allImages.length) % allImages.length)} className="absolute left-4 rounded-full p-2 text-white hover:bg-white/10">
+          <button onClick={(e) => { e.stopPropagation(); setSelectedImageIndex((prev) => (prev - 1 + allImages.length) % allImages.length); }} className="absolute left-4 rounded-full p-2 text-white hover:bg-white/10">
             <ChevronLeft className="size-8" />
           </button>
-          <img src={allImages[selectedImageIndex]?.src} alt={allImages[selectedImageIndex]?.alt} className="max-h-[90vh] max-w-full object-contain" />
-          <button onClick={() => setSelectedImageIndex((prev) => (prev + 1) % allImages.length)} className="absolute right-4 rounded-full p-2 text-white hover:bg-white/10">
+          <img src={allImages[selectedImageIndex]?.src} alt={allImages[selectedImageIndex]?.alt} className="max-h-[90vh] max-w-full object-contain" onClick={(e) => e.stopPropagation()} />
+          <button onClick={(e) => { e.stopPropagation(); setSelectedImageIndex((prev) => (prev + 1) % allImages.length); }} className="absolute right-4 rounded-full p-2 text-white hover:bg-white/10">
             <ChevronRight className="size-8" />
           </button>
-        </div>
-      ) : null}
+        </div>,
+        document.body,
+      )
+        : null}
     </>
   );
 }
