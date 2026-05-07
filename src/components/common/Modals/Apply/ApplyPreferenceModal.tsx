@@ -7,14 +7,8 @@ import {
   useGetSingleStudentApplicationsQuery,
 } from "../../../../redux/features/application/applicationApi";
 import { toast } from "react-toastify";
-import { Select } from "antd";
-import {
-  useGetAllStudentsByPartnerIdQuery,
-  useLazyGetStudentProfileQuery,
-} from "../../../../redux/features/profile/studentProfileApi";
-import { useSelector } from "react-redux";
-import { selectCurrentUser } from "../../../../redux/features/auth/authSlice";
-import { isPartnerStudentProfileComplete } from "../../../../lib/partnerStudentProfileGates";
+import StudentSelectBlock from "../../../courses/StudentSelectBlock";
+import type { SelectedStudent } from "../../../courses/SelectedStudentCard";
 
 interface ApplyPreferenceModalProps {
   open: boolean;
@@ -73,18 +67,17 @@ export default function ApplyPreferenceModal({
   data,
   showStudentSelect = false,
 }: ApplyPreferenceModalProps) {
-  const user = useSelector(selectCurrentUser);
-  const [selectedStudentId, setSelectedStudentId] = useState<
-    string | undefined
-  >();
-  const { data: allStudents } = useGetAllStudentsByPartnerIdQuery(
-    { partnerId: user?.id as string },
-    { skip: !user?.id },
+  const [pickedStudent, setPickedStudent] = useState<SelectedStudent | null>(
+    null,
   );
 
+  useEffect(() => {
+    if (!open) setPickedStudent(null);
+  }, [open]);
+
   const { data: applicationsData } = useGetSingleStudentApplicationsQuery(
-    { studentId: selectedStudentId || studentId },
-    { skip: !(selectedStudentId || studentId) },
+    { studentId: pickedStudent?.id || studentId },
+    { skip: !(pickedStudent?.id || studentId) },
   );
 
   const appliedMap = useMemo(() => {
@@ -97,68 +90,6 @@ export default function ApplyPreferenceModal({
 
     return map;
   }, [applicationsData]);
-
-  const [fetchedProfileById, setFetchedProfileById] = useState<
-    Record<string, any>
-  >({});
-  const [profilesResolving, setProfilesResolving] = useState(false);
-
-  const [fetchProfile] = useLazyGetStudentProfileQuery();
-  useEffect(() => {
-    if (!open) return;
-
-    const raw = allStudents?.data || [];
-    if (!raw.length) return;
-
-    let cancelled = false;
-
-    const incomplete = raw.filter(
-      (r: any) => !isPartnerStudentProfileComplete(r),
-    );
-
-    if (incomplete.length === 0) return;
-
-    setProfilesResolving(true);
-
-    Promise.all(
-      incomplete.map((r: any) =>
-        fetchProfile(r.id)
-          .unwrap()
-          .then((res) => [r.id, res])
-          .catch(() => [r.id, null]),
-      ),
-    ).then((pairs) => {
-      if (cancelled) return;
-
-      const map: Record<string, any> = {};
-      pairs.forEach(([id, data]) => {
-        map[id] = data;
-      });
-
-      setFetchedProfileById(map);
-      setProfilesResolving(false);
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [allStudents, open]);
-
-  const studentOptions = useMemo(() => {
-    const raw = allStudents?.data || [];
-
-    return raw
-      .filter((student: any) => {
-        if (isPartnerStudentProfileComplete(student)) return true;
-
-        const extra = fetchedProfileById[student.id];
-        return extra && isPartnerStudentProfileComplete(extra);
-      })
-      .map((student: any) => ({
-        label: `${student.firstName} ${student.lastName}`,
-        value: student.id,
-      }));
-  }, [allStudents, fetchedProfileById]);
 
   const [createApplication, { isLoading }] = useCreateApplicationMutation();
   const navigate = useNavigate();
@@ -182,23 +113,31 @@ export default function ApplyPreferenceModal({
     mode?.toUpperCase().replace(/\s+/g, "_") || "ON_CAMPUS";
 
   const intake = selectedStartDate || defaultDate;
-  const finalStudentId = selectedStudentId || studentId;
+  const finalStudentId = pickedStudent?.id || studentId;
 
   const isAlreadyApplied = appliedMap.has(`${data.id}_${intake}`);
+  const needsStudentPick = showStudentSelect && !studentId;
+  const canSubmit =
+    Boolean(selectedStartDate) &&
+    Boolean(finalStudentId) &&
+    !isLoading &&
+    !isAlreadyApplied;
 
   const handleContinue = async () => {
-    // const intake = selectedStartDate || defaultDate;
-    // const finalStudentId = selectedStudentId || studentId;
+    if (needsStudentPick && !pickedStudent?.id) {
+      toast.error("Please select a student first");
+      return;
+    }
+
     const key = `${data.id}_${intake}`;
 
-    // 🔴 HERE IS THE CHECK
     if (appliedMap.has(key)) {
       toast.error("Already applied for this course & intake");
       return;
     }
 
     const payload = {
-      studentId: finalStudentId,
+      studentId: finalStudentId as string,
       courseId: data.id,
       intake,
       campus: data.campus || "Main Campus",
@@ -238,32 +177,12 @@ export default function ApplyPreferenceModal({
 
         {showStudentSelect && (
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-800">
-                Select Student
-              </p>
-
-              {profilesResolving && (
-                <span className="text-xs text-gray-500">
-                  Checking profiles...
-                </span>
-              )}
-            </div>
-
-            <Select
-              placeholder="Select a student"
-              className="w-full"
-              options={studentOptions}
-              loading={profilesResolving}
-              onChange={(value) => setSelectedStudentId(value)}
-              showSearch
-              optionFilterProp="label"
-              size="large"
-              notFoundContent={
-                profilesResolving
-                  ? "Loading students..."
-                  : "No eligible students found"
-              }
+            <p className="text-sm font-medium text-gray-800">Select Student</p>
+            <StudentSelectBlock
+              selectedStudent={pickedStudent}
+              onSelect={setPickedStudent}
+              eagerFetch={open && showStudentSelect}
+              nestedUnderModal={open && showStudentSelect}
             />
           </div>
         )}
@@ -316,7 +235,7 @@ export default function ApplyPreferenceModal({
         </div>
         <button
           onClick={handleContinue}
-          disabled={!selectedStartDate || isLoading || isAlreadyApplied}
+          disabled={!canSubmit}
           className="w-full bg-[#237D3B] cursor-pointer text-[#E7E7E7] py-3 rounded-lg font-medium hover:bg-green-800 transition disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {isLoading
@@ -325,13 +244,6 @@ export default function ApplyPreferenceModal({
               ? "Already Applied"
               : "Continue with application"}
         </button>
-        {/* <button
-          onClick={handleContinue}
-          disabled={!selectedStartDate || isLoading}
-          className="w-full bg-[#237D3B] cursor-pointer text-[#E7E7E7] py-3 rounded-lg font-medium hover:bg-green-800 transition disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          {isLoading ? "Processing..." : "Continue with application"}
-        </button> */}
       </div>
     </Modal>
   );
