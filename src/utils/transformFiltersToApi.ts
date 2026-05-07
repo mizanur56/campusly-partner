@@ -79,6 +79,47 @@ function getMonthNumber(monthName: string): number | undefined {
   return index !== -1 ? index + 1 : undefined;
 }
 
+/** Accept 1–12, "01"–"12", full month names, or 3-letter abbrev (Jan, Feb, …). */
+function resolveMonthNumber(raw: string): number | undefined {
+  const s = raw?.trim();
+  if (!s) return undefined;
+  const n = Number(s);
+  if (!Number.isNaN(n) && n >= 1 && n <= 12 && Number.isInteger(n)) {
+    return n;
+  }
+  const padded = s.padStart(2, "0");
+  if (/^\d{2}$/.test(padded)) {
+    const m = Number(padded);
+    if (m >= 1 && m <= 12) return m;
+  }
+  const fromFull = getMonthNumber(s);
+  if (fromFull) return fromFull;
+  const monthsShort = [
+    "jan",
+    "feb",
+    "mar",
+    "apr",
+    "may",
+    "jun",
+    "jul",
+    "aug",
+    "sep",
+    "oct",
+    "nov",
+    "dec",
+  ];
+  const idx = monthsShort.indexOf(s.toLowerCase().slice(0, 3));
+  return idx !== -1 ? idx + 1 : undefined;
+}
+
+function isCountryActive(c: { isActive?: boolean }): boolean {
+  return c.isActive !== false;
+}
+
+function isCityActive(c: { isActive?: boolean }): boolean {
+  return c.isActive !== false;
+}
+
 export function transformFiltersToApi(
   filterData: FilterFormData,
   searchTerm: string,
@@ -100,23 +141,25 @@ export function transformFiltersToApi(
   if (searchTerm?.trim()) params.searchTerm = searchTerm.trim();
 
   if (filterData.destination?.length > 0 && countriesResponse?.data) {
-    const countryMap = new Map(
-      countriesResponse.data
-        .filter((c) => c.isActive)
-        .map((c) => [c.name, c.id]),
-    );
+    const countryMap = new Map<string, string>();
+    countriesResponse.data.filter(isCountryActive).forEach((c) => {
+      countryMap.set(c.name, c.id);
+      countryMap.set(c.name.toLowerCase(), c.id);
+    });
     const countryIds = filterData.destination
-      .map((name) => countryMap.get(name))
+      .map((name) => countryMap.get(name) ?? countryMap.get(name.toLowerCase()))
       .filter((id): id is string => !!id);
     if (countryIds.length > 0) params.countryIds = countryIds;
   }
 
   if (filterData.city?.length > 0 && citiesResponse?.data) {
-    const cityMap = new Map(
-      citiesResponse.data.filter((c) => c.isActive).map((c) => [c.name, c.id]),
-    );
+    const cityMap = new Map<string, string>();
+    citiesResponse.data.filter(isCityActive).forEach((c) => {
+      cityMap.set(c.name, c.id);
+      cityMap.set(c.name.toLowerCase(), c.id);
+    });
     const cityIds = filterData.city
-      .map((name) => cityMap.get(name))
+      .map((name) => cityMap.get(name) ?? cityMap.get(name.toLowerCase()))
       .filter((id): id is string => !!id);
     if (cityIds.length > 0) params.cityIds = cityIds;
   }
@@ -193,8 +236,8 @@ export function transformFiltersToApi(
   if (filterData.startMonth?.length) {
     const filteredMonths = filterData.startMonth.filter((m) => m !== "Any");
     if (filteredMonths.length > 0) {
-      const monthNum = getMonthNumber(filteredMonths[0]);
-      if (monthNum) params.startMonth = monthNum;
+      const monthNum = resolveMonthNumber(filteredMonths[0]);
+      if (monthNum !== undefined) params.startMonth = monthNum;
     }
   }
 

@@ -10,6 +10,10 @@ import { KeywordGroup } from "../common/Tabs";
 
 interface StudyPreferenceFiltersProps {
   onFilterChange?: (filters: FilterState) => void;
+  /** Clear sidebar filters + URL (e.g. universityId from "View courses") */
+  onRequestReset?: () => void;
+  /** When URL scopes results (e.g. `universityId`), reset clears it — show prominent Reset */
+  urlScopeActive?: boolean;
 }
 
 export interface FilterState {
@@ -28,6 +32,8 @@ export interface FilterState {
 
 const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
   onFilterChange,
+  onRequestReset,
+  urlScopeActive = false,
 }) => {
   const [isStudyPreferenceExpanded, setIsStudyPreferenceExpanded] =
     useState(true);
@@ -106,6 +112,36 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
     };
   }, [filterOptionsResponse?.data?.ranges?.fee]);
 
+  /** How many distinct filter choices are active (shown on Reset — incl. university URL scope) */
+  const appliedFilterCount = useMemo(() => {
+    let n = 0;
+    if (filters.studyDestination) n += 1;
+    n += filters.studyLevel.length;
+    if (
+      filters.startYear.length > 0 &&
+      !(filters.startYear.length === 1 && filters.startYear[0] === "Any")
+    ) {
+      n += 1;
+    }
+    if (filters.startMonth.length > 0) n += 1;
+    n += filters.subjects.length;
+    n += filters.duration.length;
+    if (filters.institution) n += 1;
+    if (feeRangeFromApi.max > 0) {
+      const tol = 1;
+      if (
+        Math.abs(filters.feeRange.min - feeRangeFromApi.min) > tol ||
+        Math.abs(filters.feeRange.max - feeRangeFromApi.max) > tol
+      ) {
+        n += 1;
+      }
+    }
+    if (urlScopeActive) n += 1;
+    return n;
+  }, [filters, feeRangeFromApi, urlScopeActive]);
+
+  const resetButtonHighlighted = appliedFilterCount > 0;
+
   const [isDraggingMin, setIsDraggingMin] = useState(false);
   const [isDraggingMax, setIsDraggingMax] = useState(false);
   const sliderRef = useRef<HTMLDivElement>(null);
@@ -159,7 +195,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
   }, [feeRangeFromApi.min, feeRangeFromApi.max]);
 
   // Tabs options
-  const startMonths = [
+  const startMonthLabels = [
     "January",
     "February",
     "March",
@@ -173,6 +209,11 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
     "November",
     "December",
   ];
+  /** Values 1–12 for API / backend month filter */
+  const startMonths = startMonthLabels.map((label, i) => ({
+    value: String(i + 1),
+    label,
+  }));
   const startYears = ["Any", "2025", "2026", "2027", "2028"];
   const durations = [
     "Less than 1 year",
@@ -342,7 +383,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
       <div className="bg-white border border-primary-border rounded-2xl p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
         {/* Header with toggle */}
         <div
-          className="flex items-center justify-between mb-4 sm:mb-5 cursor-pointer"
+          className="flex items-center justify-between mb-4 sm:mb-5 cursor-pointer gap-2"
           onClick={() =>
             setIsStudyPreferenceExpanded(!isStudyPreferenceExpanded)
           }
@@ -350,21 +391,83 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
           <h2 className="text-lg font-semibold text-gray-900">
             Study Preference
           </h2>
-          <svg
-            className={`w-4 h-4 sm:w-5 sm:h-5 text-gray-500 transition-transform ${
-              isStudyPreferenceExpanded ? "rotate-180" : ""
-            }`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M5 15l7-7 7 7"
-            />
-          </svg>
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {onRequestReset ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRequestReset();
+                }}
+                title={
+                  appliedFilterCount > 0
+                    ? `Clear ${appliedFilterCount} active filter${appliedFilterCount === 1 ? "" : "s"}`
+                    : "Reset study preferences"
+                }
+                aria-label={
+                  appliedFilterCount > 0
+                    ? `Reset filters, ${appliedFilterCount} active`
+                    : "Reset study preferences"
+                }
+                className={[
+                  "group inline-flex items-center gap-1.5 rounded-full border text-xs font-medium transition-all duration-200",
+                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+                  resetButtonHighlighted
+                    ? "relative border-primary-300/90 bg-gradient-to-b from-primary-50 via-white to-primary-100/80 pl-2.5 pr-3 py-1.5 text-primary-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_2px_10px_-3px_rgba(37,99,235,0.35)] ring-1 ring-primary-400/35 hover:border-primary-400 hover:from-primary-100 hover:to-primary-50 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_4px_14px_-4px_rgba(37,99,235,0.4)] active:scale-[0.98]"
+                    : "border-primary-200/70 bg-white/90 px-3 py-1.5 text-primary-600 shadow-sm hover:border-primary-300 hover:bg-primary-50/90 hover:text-primary-700 hover:shadow active:scale-[0.98]",
+                ].join(" ")}
+              >
+                <span
+                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors ${
+                    resetButtonHighlighted
+                      ? "bg-primary-600 text-white shadow-sm group-hover:bg-primary-700"
+                      : "bg-primary-50 text-primary-600 group-hover:bg-primary-100 group-hover:text-primary-700"
+                  }`}
+                  aria-hidden
+                >
+                  <svg
+                    className="h-3.5 w-3.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                  </svg>
+                </span>
+                <span className="flex items-center gap-1.5 pr-0.5 tracking-wide">
+                  Reset
+                  {appliedFilterCount > 0 ? (
+                    <span
+                      className="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-primary-600 px-1 text-[10px] font-bold tabular-nums leading-none text-white shadow-sm ring-2 ring-white/90 group-hover:bg-primary-700"
+                      aria-hidden
+                    >
+                      {appliedFilterCount > 99 ? "99+" : appliedFilterCount}
+                    </span>
+                  ) : null}
+                </span>
+              </button>
+            ) : null}
+            <svg
+              className={`w-4 h-4 sm:w-5 sm:h-5 text-gray-500 transition-transform ${
+                isStudyPreferenceExpanded ? "rotate-180" : ""
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 15l7-7 7 7"
+              />
+            </svg>
+          </div>
         </div>
 
         {isStudyPreferenceExpanded && (
@@ -514,8 +617,8 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
               </label>
               <KeywordGroup
                 options={startMonths.map((month) => ({
-                  value: month,
-                  label: month,
+                  value: month.value,
+                  label: month.label,
                 }))}
                 value={filters.startMonth}
                 onChange={(value) => {

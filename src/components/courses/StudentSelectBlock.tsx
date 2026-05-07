@@ -60,15 +60,28 @@ type ListStudent = {
 interface StudentSelectBlockProps {
   selectedStudent: SelectedStudent | null;
   onSelect: (student: SelectedStudent | null) => void;
+  /**
+   * Load partner students even before opening the picker (e.g. inside Apply modal).
+   * Shows an inline skeleton until the list is ready.
+   */
+  eagerFetch?: boolean;
+  /**
+   * When this block lives inside another Ant Design Modal, bump z-index and portal
+   * so the student picker opens above the parent mask/dialog.
+   */
+  nestedUnderModal?: boolean;
 }
 
 export default function StudentSelectBlock({
   selectedStudent,
   onSelect,
+  eagerFetch = false,
+  nestedUnderModal = false,
 }: StudentSelectBlockProps) {
   const user = useSelector(selectCurrentUser);
 
   const [modalOpen, setModalOpen] = useState(false);
+  const listQueryActive = modalOpen || eagerFetch;
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounced({ searchQuery: search, delay: 400 });
 
@@ -92,7 +105,7 @@ export default function StudentSelectBlock({
       limit: 100,
     },
     {
-      skip: !user?.id || !modalOpen,
+      skip: !user?.id || !listQueryActive,
       refetchOnMountOrArgChange: true,
       refetchOnFocus: false,
       refetchOnReconnect: false,
@@ -113,13 +126,13 @@ export default function StudentSelectBlock({
   );
 
   useEffect(() => {
-    if (!modalOpen) {
+    if (!listQueryActive) {
       setFetchedProfileById({});
     }
-  }, [modalOpen]);
+  }, [listQueryActive]);
 
   useEffect(() => {
-    if (!modalOpen) return;
+    if (!listQueryActive) return;
 
     const raw = sourceRecordsRef.current;
     if (!raw.length) {
@@ -167,7 +180,7 @@ export default function StudentSelectBlock({
     return () => {
       cancelled = true;
     };
-  }, [modalOpen, sourceRecordIds, fetchProfile]);
+  }, [listQueryActive, sourceRecordIds, fetchProfile]);
 
   const studentsList: ListStudent[] = useMemo(() => {
     return sourceRecords
@@ -222,6 +235,24 @@ export default function StudentSelectBlock({
     );
   }
 
+  if (eagerFetch && showUnifiedSkeleton) {
+    return (
+      <div
+        className="w-full rounded-xl border border-primary-border bg-white p-3.5"
+        aria-busy
+        aria-label="Loading students"
+      >
+        <div className="flex items-center gap-2.5">
+          <Skeleton.Avatar active size={32} />
+          <div className="min-w-0 flex-1 space-y-2">
+            <Skeleton.Input active size="small" block className="!h-4 !max-w-[160px]" />
+            <Skeleton.Input active size="small" block className="!h-3 !max-w-[220px]" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <button
@@ -262,6 +293,8 @@ export default function StudentSelectBlock({
         width={520}
         centered
         destroyOnClose
+        getContainer={() => document.body}
+        zIndex={nestedUnderModal ? 2600 : undefined}
         styles={{ body: { paddingTop: 12 } }}
       >
         <div className="relative mb-3">

@@ -16,9 +16,10 @@ import { useAppSelector } from "../../redux/features/hooks";
 import { useGetSingleStudentApplicationsQuery } from "../../redux/features/application/applicationApi";
 
 export default function ProgramsSchoolsPage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const qFromUrl = searchParams.get("q") || "";
   const tabFromUrl = searchParams.get("tab") || "courses";
+  const universityIdFromUrl = searchParams.get("universityId") || "";
 
   const [activeTab, setActiveTab] = useState<"courses" | "institutions">(
     tabFromUrl === "institutions" ? "institutions" : "courses",
@@ -27,6 +28,8 @@ export default function ProgramsSchoolsPage() {
 
   const [searchQuery, setSearchQuery] = useState(qFromUrl);
   const [filters, setFilters] = useState<FilterState | undefined>(undefined);
+  /** Remount StudyPreferenceFilters (desktop + drawer) so both stay in sync after reset */
+  const [filterPanelKey, setFilterPanelKey] = useState(0);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] =
     useState<SelectedStudent | null>(null);
@@ -65,6 +68,20 @@ export default function ProgramsSchoolsPage() {
     setFilters(newFilters);
   }, []);
 
+  const resetStudyPreferences = useCallback(() => {
+    setFilters(undefined);
+    setFilterPanelKey((k) => k + 1);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("universityId");
+        next.delete("university");
+        return next;
+      },
+      { replace: true },
+    );
+  }, [setSearchParams]);
+
   return (
     <div className="min-h-screen">
       <div className="">
@@ -79,7 +96,12 @@ export default function ProgramsSchoolsPage() {
                 selectedStudent={selectedStudent}
                 onSelect={setSelectedStudent}
               />
-              <StudyPreferenceFilters onFilterChange={handleFilterChange} />
+              <StudyPreferenceFilters
+                key={`study-filters-desktop-${filterPanelKey}`}
+                onFilterChange={handleFilterChange}
+                onRequestReset={resetStudyPreferences}
+                urlScopeActive={Boolean(universityIdFromUrl)}
+              />
             </div>
           </div>
 
@@ -119,7 +141,12 @@ export default function ProgramsSchoolsPage() {
                     selectedStudent={selectedStudent}
                     onSelect={setSelectedStudent}
                   />
-                  <StudyPreferenceFilters onFilterChange={handleFilterChange} />
+                  <StudyPreferenceFilters
+                    key={`study-filters-mobile-${filterPanelKey}`}
+                    onFilterChange={handleFilterChange}
+                    onRequestReset={resetStudyPreferences}
+                    urlScopeActive={Boolean(universityIdFromUrl)}
+                  />
                 </div>
                 <div className="p-4 border-t border-primary-border bg-gray-50">
                   <Button
@@ -206,6 +233,7 @@ export default function ProgramsSchoolsPage() {
               <CoursesResultsView
                 searchQuery={searchQuery}
                 filters={filters}
+                forcedUniversityId={universityIdFromUrl || undefined}
                 onStartApplication={handleStartApplication}
                 appliedCourseIds={appliedCourseIds}
               />
