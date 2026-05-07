@@ -60,7 +60,6 @@ export default function UniversityDetailsPage({ data, faqs }: { data: University
 
   const sidebarInfo = [
     { label: "Upcoming Intake", value: data.upcomingIntake ?? "TBA" },
-    { label: "English Requirement", value: data.englishRequirements ?? "Contact for details" },
     { label: "Tuition Fee", value: tuition },
   ];
 
