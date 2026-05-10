@@ -1,8 +1,5 @@
 import React, { useCallback, useMemo, useEffect } from "react";
-import {
-  useLazySearchCoursesQuery,
-  useGetFilterOptionsQuery,
-} from "../../redux/features/search/searchApi";
+import { useLazySearchCoursesQuery } from "../../redux/features/search/searchApi";
 import { useAppDispatch } from "../../redux/features/hooks";
 import { updateCoursesMeta } from "../../redux/features/search/searchMetaSlice";
 import { useInfiniteScrollPagination } from "../../hooks/useInfiniteScrollPagination";
@@ -12,8 +9,8 @@ import SkeletonCourseCard from "./SkeletonCourseCard";
 import type { SearchCourseItem } from "../../data/searchResultsTypes";
 import { transformSearchCourse } from "../../utils/searchTransform";
 import { transformFiltersToApi } from "../../utils/transformFiltersToApi";
-import { buildFilterOptionsQueryArg } from "../../utils/buildFilterOptionsQueryArg";
-import type { FilterState } from "./StudyPreferenceFilters";
+import type { FilterState } from "./filterTypes";
+import type { ProgramsSchoolFilterOptionsBundle } from "../../hooks/useProgramsSchoolFilterOptions";
 import { useNavigate } from "react-router-dom";
 
 export interface CourseForApply {
@@ -32,12 +29,18 @@ export interface CourseForApply {
 type CoursesResultsViewProps = {
   searchQuery: string;
   filters?: FilterState;
+  /** Shared GET /search/filter-options transform from Programs Schools page (single subscription). */
+  programsSchoolFilterOptions: Pick<
+    ProgramsSchoolFilterOptionsBundle,
+    "apiResponsesForTransform" | "filtersReady"
+  >;
   forcedUniversityId?: string;
   onStartApplication?: (course: CourseForApply) => void;
   appliedCourseIds?: string[];
 };
 
-const COURSES_LIMIT = 20;
+/** Smaller first page = faster time-to-content; infinite scroll loads more */
+const COURSES_LIMIT = 10;
 
 const transformToFilterFormData = (filters?: FilterState) => {
   if (!filters) return null;
@@ -64,6 +67,7 @@ const transformToFilterFormData = (filters?: FilterState) => {
 export default function CoursesResultsView({
   searchQuery,
   filters,
+  programsSchoolFilterOptions,
   forcedUniversityId,
   onStartApplication,
   appliedCourseIds,
@@ -72,71 +76,7 @@ export default function CoursesResultsView({
   const [triggerCoursesSearch] = useLazySearchCoursesQuery();
   const navigate = useNavigate();
 
-  const { data: baseFilterOptions } = useGetFilterOptionsQuery(undefined);
-
-  const scopedFilterArg = useMemo(() => {
-    if (filters?.studyDestinationCountryId) {
-      return { countryIds: [filters.studyDestinationCountryId] };
-    }
-    return buildFilterOptionsQueryArg(
-      filters?.studyDestination,
-      baseFilterOptions?.data
-    );
-  }, [
-    filters?.studyDestinationCountryId,
-    filters?.studyDestination,
-    baseFilterOptions?.data,
-  ]);
-
-  const { currentData: scopedFilterCurrent } = useGetFilterOptionsQuery(
-    scopedFilterArg!,
-    { skip: !scopedFilterArg }
-  );
-
-  const hasDestinationSelected = Boolean(
-    filters?.studyDestinationCountryId || filters?.studyDestination?.trim(),
-  );
-
-  const filterOptionsResponse = useMemo(() => {
-    if (!hasDestinationSelected) return baseFilterOptions;
-    if (scopedFilterArg != null) return scopedFilterCurrent;
-    return undefined;
-  }, [
-    hasDestinationSelected,
-    scopedFilterArg,
-    scopedFilterCurrent,
-    baseFilterOptions,
-  ]);
-
-  // Transform filter-options response into the format expected by transformFiltersToApi
-  const apiResponsesForTransform = useMemo(() => {
-    if (!filterOptionsResponse?.data) return null;
-
-    const filterData = filterOptionsResponse.data;
-    return {
-      countriesResponse: {
-        data: filterData.countries || [],
-      },
-      citiesResponse: {
-        data:
-          filterData.countries?.flatMap((c) =>
-            (c.cities || []).map((city) => ({
-              ...city,
-              country: { name: c.name },
-            })),
-          ) || [],
-      },
-      coursesResponse: {
-        data: filterData.courses || [],
-      },
-      universitiesResponse: {
-        data: filterData.universities || [],
-      },
-      studyLevelsResponse: {
-        data: filterData.studyLevels || [],
-      },
-    };
-  }, [filterOptionsResponse?.data]);
+  const { apiResponsesForTransform, filtersReady } = programsSchoolFilterOptions;
 
   const apiFilters = useMemo(() => {
     const filterFormData = transformToFilterFormData(filters);
@@ -184,8 +124,12 @@ export default function CoursesResultsView({
   );
 
   const filtersKey = useMemo(
-    () => (apiFilters ? JSON.stringify(apiFilters) : ""),
-    [apiFilters],
+    () =>
+      JSON.stringify({
+        search: searchQuery || "",
+        filters: apiFilters ?? null,
+      }),
+    [apiFilters, searchQuery],
   );
 
   const {
@@ -194,11 +138,12 @@ export default function CoursesResultsView({
     isLoadingMore,
     hasMore,
     sentinelRef,
+    initialFetchDone,
   } = useInfiniteScrollPagination<SearchCourseItem>({
-    searchQuery: searchQuery || "",
     fetchFn: fetchCourses,
     limit: COURSES_LIMIT,
     filtersKey,
+    enabled: filtersReady,
   });
 
   // Scroll to top whenever filters change so user can see new results
@@ -230,10 +175,10 @@ export default function CoursesResultsView({
   );
 
 
-  if (isLoading) {
+  if (!filtersReady || isLoading || !initialFetchDone) {
     return (
       <div className="space-y-5">
-        {Array.from({ length: 6 }).map((_, index) => (
+        {Array.from({ length: COURSES_LIMIT }).map((_, index) => (
           <SkeletonCourseCard key={`skeleton-course-${index}`} />
         ))}
       </div>

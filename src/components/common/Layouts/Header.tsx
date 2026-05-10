@@ -69,7 +69,8 @@ const Header: React.FC = () => {
     pathname.startsWith("/programs-schools") ||
     pathname.startsWith("/payments") ||
     pathname.startsWith("/students/") ||
-    pathname.startsWith("/applications/");
+    pathname.startsWith("/applications/") ||
+    pathname.startsWith("/academy");
   const [isCoursesOpen, setIsCoursesOpen] = useState(false);
   const [isCountriesOpen, setIsCountriesOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
@@ -95,7 +96,8 @@ const Header: React.FC = () => {
     pathname.startsWith("/programs-schools") ||
     pathname.startsWith("/payments") ||
     pathname.startsWith("/students/") ||
-    pathname.startsWith("/applications/");
+    pathname.startsWith("/applications/") ||
+    pathname.startsWith("/academy");
 
   const countries = mockCountries;
   const countryOptions = countries;
