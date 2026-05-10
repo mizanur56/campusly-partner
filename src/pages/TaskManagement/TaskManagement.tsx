@@ -182,15 +182,16 @@ export default function TaskManagement() {
   );
 
   const editDetailPending =
-    Boolean(editingTask) &&
+    editingTask != null &&
     (!taskDetail || taskDetail.id !== editingTask.id);
   const showEditDetailSpinner = editDetailPending && detailLoading;
 
   useEffect(() => {
-    if (!openFormModal || !editingTask?.id || !taskDetail) return;
-    if (taskDetail.id !== editingTask.id) return;
+    const row = editingTask;
+    if (!openFormModal || !row || !taskDetail) return;
+    if (taskDetail.id !== row.id) return;
 
-    const due = parsePartnerDueForForm(taskDetail, editingTask);
+    const due = parsePartnerDueForForm(taskDetail, row);
     form.setFieldsValue({
       title: taskDetail.task_title,
       priority: taskDetail.priority ?? undefined,
@@ -198,7 +199,7 @@ export default function TaskManagement() {
       description: taskDetail.task_description ?? "",
       dueDateTime: due?.isValid() ? due : undefined,
     });
-  }, [openFormModal, editingTask, taskDetail, form]);
+  }, [openFormModal, editingTask?.id, taskDetail, form, editingTask]);
 
   const [createTask, { isLoading: creating }] = useCreateTaskMutation();
   const [updateTask, { isLoading: updating }] = useUpdateTaskMutation();
