@@ -17,12 +17,7 @@ import {
 } from "../../redux/features/academy/academyApi";
 import type { AcademyModule, AcademyVideo } from "../../types/academy";
 import { resolveAcademyMediaUrl } from "../../utils/academyMedia";
-import {
-  extractYouTubeVideoId,
-  getYouTubeEmbedUrl,
-  loadYouTubeIframeApi,
-  sumDurations,
-} from "../../utils/videoHelpers";
+import { extractYouTubeVideoId, loadYouTubeIframeApi, sumDurations } from "../../utils/videoHelpers";
 
 const ACADEMY_PROGRESS_LS_PREFIX = "ct-academy-progress:v1:";
 
@@ -128,28 +123,27 @@ function VideoPlayer({
   video: AcademyVideo;
   onPlaybackEnded?: () => void;
 }) {
-  const embedUrl = getYouTubeEmbedUrl(video.youtubeUrl);
   const ytId = extractYouTubeVideoId(video.youtubeUrl);
 
-  if (!embedUrl || !ytId) {
-    const src = resolveAcademyMediaUrl(video.youtubeUrl);
-    return (
-      <div className="aspect-video w-full rounded-xl overflow-hidden bg-gray-900 shadow-sm">
-        <video
-          key={video.id}
-          controls
-          playsInline
-          className="w-full h-full"
-          src={src || undefined}
-          onEnded={() => onPlaybackEnded?.()}
-        >
-          Your browser does not support the video tag.
-        </video>
-      </div>
-    );
+  if (ytId) {
+    return <YouTubeEmbedPlayer videoId={ytId} title={video.title} onEnded={() => onPlaybackEnded?.()} />;
   }
 
-  return <YouTubeEmbedPlayer videoId={ytId} title={video.title} onEnded={() => onPlaybackEnded?.()} />;
+  const src = resolveAcademyMediaUrl(video.youtubeUrl);
+  return (
+    <div className="aspect-video w-full rounded-xl overflow-hidden bg-gray-900 shadow-sm">
+      <video
+        key={video.id}
+        controls
+        playsInline
+        className="w-full h-full"
+        src={src || undefined}
+        onEnded={() => onPlaybackEnded?.()}
+      >
+        Your browser does not support the video tag.
+      </video>
+    </div>
+  );
 }
 
 function ChapterItem({
@@ -168,7 +162,11 @@ function ChapterItem({
   return (
     <button onClick={isLocked ? undefined : onClick} disabled={isLocked} className="flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-left hover:bg-gray-50">
       <div className="relative shrink-0 w-16 h-10 rounded-md overflow-hidden bg-gray-100">
-        <img src={video.thumbnail || "/images/logo/logo.svg"} alt={video.title} className="w-full h-full object-cover" />
+        <img
+          src={video.thumbnail ? resolveAcademyMediaUrl(video.thumbnail) : "/images/logo/logo.svg"}
+          alt={video.title}
+          className="w-full h-full object-cover"
+        />
         {isActive && <div className="absolute inset-0 bg-primary-600/50 flex items-center justify-center"><PlayCircle className="w-5 h-5 text-white" /></div>}
         {isLocked && <div className="absolute inset-0 bg-black/30 flex items-center justify-center"><Lock className="w-3.5 h-3.5 text-white" /></div>}
         {isWatched && !isActive && !isLocked && <div className="absolute top-1 right-1"><CheckCircle className="w-3.5 h-3.5 text-green-400" /></div>}
