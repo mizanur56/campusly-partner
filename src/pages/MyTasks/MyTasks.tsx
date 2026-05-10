@@ -231,16 +231,18 @@ export default function MyTasks() {
           <button
             type="button"
             onClick={() => {
+              setPriority("");
+              setLastActiveSection("status");
               setStatus("");
               setPage(1);
             }}
-            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-400 ${!status ? "bg-indigo-50" : "bg-white hover:bg-slate-50"}`}
+            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-400 ${lastActiveSection === "status" && !status ? "bg-indigo-50" : "bg-white hover:bg-slate-50"}`}
           >
             <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
               <AppstoreOutlined className="text-[10px]" /> All
             </span>
             <p
-              className={`text-2xl font-bold tabular-nums ${!status ? "text-indigo-600" : "text-slate-800"}`}
+              className={`text-2xl font-bold tabular-nums ${lastActiveSection === "status" && !status ? "text-indigo-600" : "text-slate-800"}`}
             >
               {stats.total}
             </p>
@@ -248,16 +250,18 @@ export default function MyTasks() {
           <button
             type="button"
             onClick={() => {
+              setPriority("");
+              setLastActiveSection("status");
               setStatus("IN_PROGRESS");
               setPage(1);
             }}
-            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-400 ${status === "IN_PROGRESS" ? "bg-sky-50" : "bg-white hover:bg-slate-50"}`}
+            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-400 ${lastActiveSection === "status" && status === "IN_PROGRESS" ? "bg-sky-50" : "bg-white hover:bg-slate-50"}`}
           >
             <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
               <ClockCircleOutlined className="text-[10px]" /> In Progress
             </span>
             <p
-              className={`text-2xl font-bold tabular-nums ${status === "IN_PROGRESS" ? "text-sky-600" : "text-slate-800"}`}
+              className={`text-2xl font-bold tabular-nums ${lastActiveSection === "status" && status === "IN_PROGRESS" ? "text-sky-600" : "text-slate-800"}`}
             >
               {stats.inProgress}
             </p>
@@ -265,16 +269,18 @@ export default function MyTasks() {
           <button
             type="button"
             onClick={() => {
+              setPriority("");
+              setLastActiveSection("status");
               setStatus("COMPLETED");
               setPage(1);
             }}
-            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 ${status === "COMPLETED" ? "bg-emerald-50" : "bg-white hover:bg-slate-50"}`}
+            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 ${lastActiveSection === "status" && status === "COMPLETED" ? "bg-emerald-50" : "bg-white hover:bg-slate-50"}`}
           >
             <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
               <CheckCircleOutlined className="text-[10px]" /> Completed
             </span>
             <p
-              className={`text-2xl font-bold tabular-nums ${status === "COMPLETED" ? "text-emerald-600" : "text-slate-800"}`}
+              className={`text-2xl font-bold tabular-nums ${lastActiveSection === "status" && status === "COMPLETED" ? "text-emerald-600" : "text-slate-800"}`}
             >
               {stats.completed}
             </p>
@@ -282,16 +288,18 @@ export default function MyTasks() {
           <button
             type="button"
             onClick={() => {
+              setPriority("");
+              setLastActiveSection("status");
               setStatus("CANCELLED");
               setPage(1);
             }}
-            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-rose-400 ${status === "CANCELLED" ? "bg-rose-50" : "bg-white hover:bg-slate-50"}`}
+            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-rose-400 ${lastActiveSection === "status" && status === "CANCELLED" ? "bg-rose-50" : "bg-white hover:bg-slate-50"}`}
           >
             <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
               <CloseCircleOutlined className="text-[10px]" /> Cancelled
             </span>
             <p
-              className={`text-2xl font-bold tabular-nums ${status === "CANCELLED" ? "text-rose-600" : "text-slate-800"}`}
+              className={`text-2xl font-bold tabular-nums ${lastActiveSection === "status" && status === "CANCELLED" ? "text-rose-600" : "text-slate-800"}`}
             >
               {stats.cancelled}
             </p>
@@ -312,16 +320,18 @@ export default function MyTasks() {
           <button
             type="button"
             onClick={() => {
+              setStatus("");
+              setLastActiveSection("priority");
               setPriority("");
               setPage(1);
             }}
-            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-400 ${!priority ? "bg-violet-50" : "bg-white hover:bg-slate-50"}`}
+            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-400 ${lastActiveSection === "priority" && !priority ? "bg-violet-50" : "bg-white hover:bg-slate-50"}`}
           >
             <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
               <ControlOutlined className="text-[10px]" /> All
             </span>
             <p
-              className={`text-2xl font-bold tabular-nums ${!priority ? "text-violet-600" : "text-slate-800"}`}
+              className={`text-2xl font-bold tabular-nums ${lastActiveSection === "priority" && !priority ? "text-violet-600" : "text-slate-800"}`}
             >
               {stats.low + stats.medium + stats.high}
             </p>
@@ -329,16 +339,18 @@ export default function MyTasks() {
           <button
             type="button"
             onClick={() => {
+              setStatus("");
+              setLastActiveSection("priority");
               setPriority("LOW");
               setPage(1);
             }}
-            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-400 ${priority === "LOW" ? "bg-slate-100" : "bg-white hover:bg-slate-50"}`}
+            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-400 ${lastActiveSection === "priority" && priority === "LOW" ? "bg-slate-100" : "bg-white hover:bg-slate-50"}`}
           >
             <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
               <ArrowDownOutlined className="text-[10px]" /> Low
             </span>
             <p
-              className={`text-2xl font-bold tabular-nums ${priority === "LOW" ? "text-slate-700" : "text-slate-800"}`}
+              className={`text-2xl font-bold tabular-nums ${lastActiveSection === "priority" && priority === "LOW" ? "text-slate-700" : "text-slate-800"}`}
             >
               {stats.low}
             </p>
@@ -346,16 +358,18 @@ export default function MyTasks() {
           <button
             type="button"
             onClick={() => {
+              setStatus("");
+              setLastActiveSection("priority");
               setPriority("MEDIUM");
               setPage(1);
             }}
-            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400 ${priority === "MEDIUM" ? "bg-blue-50" : "bg-white hover:bg-slate-50"}`}
+            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400 ${lastActiveSection === "priority" && priority === "MEDIUM" ? "bg-blue-50" : "bg-white hover:bg-slate-50"}`}
           >
             <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
               <MinusOutlined className="text-[10px]" /> Medium
             </span>
             <p
-              className={`text-2xl font-bold tabular-nums ${priority === "MEDIUM" ? "text-blue-600" : "text-slate-800"}`}
+              className={`text-2xl font-bold tabular-nums ${lastActiveSection === "priority" && priority === "MEDIUM" ? "text-blue-600" : "text-slate-800"}`}
             >
               {stats.medium}
             </p>
@@ -363,16 +377,18 @@ export default function MyTasks() {
           <button
             type="button"
             onClick={() => {
+              setStatus("");
+              setLastActiveSection("priority");
               setPriority("HIGH");
               setPage(1);
             }}
-            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-400 ${priority === "HIGH" ? "bg-amber-50" : "bg-white hover:bg-slate-50"}`}
+            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-400 ${lastActiveSection === "priority" && priority === "HIGH" ? "bg-amber-50" : "bg-white hover:bg-slate-50"}`}
           >
             <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
               <ArrowUpOutlined className="text-[10px]" /> High
             </span>
             <p
-              className={`text-2xl font-bold tabular-nums ${priority === "HIGH" ? "text-amber-600" : "text-slate-800"}`}
+              className={`text-2xl font-bold tabular-nums ${lastActiveSection === "priority" && priority === "HIGH" ? "text-amber-600" : "text-slate-800"}`}
             >
               {stats.high}
             </p>
