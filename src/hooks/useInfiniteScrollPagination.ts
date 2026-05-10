@@ -110,40 +110,39 @@ export function useInfiniteScrollPagination<T>({
     [enabled, reset]
   );
 
-  const prevFiltersKeyRef = useRef<string | undefined>(filtersKey);
+  /** Sync latest strings without widening the “initial load” effect deps */
+  const prevFiltersKeyRef = useRef<string | undefined>(undefined);
   const prevSearchQueryRef = useRef<string>(searchQuery);
   const hasMountedRef = useRef(false);
-  const prevFetchFnRef = useRef(fetchFn);
+  /** After remount or `enabled` false→true, run exactly one page-1 fetch */
+  const pendingInitialFetchRef = useRef(true);
 
-  // Initial mount or fetchFn change - always fetch
-  // This handles tab switches where the component unmounts/remounts
+  const searchQueryLiveRef = useRef(searchQuery);
+  const filtersKeyLiveRef = useRef(filtersKey);
+  searchQueryLiveRef.current = searchQuery;
+  filtersKeyLiveRef.current = filtersKey;
+
+  // First load only — NOT on fetchFn identity change (that duplicated filtersKey refetches).
+  // Tab switch = component remount → pendingInitialFetchRef is true again.
   useEffect(() => {
-    const fetchFnChanged = prevFetchFnRef.current !== fetchFn;
-    
-    if (enabled) {
-      if (!hasMountedRef.current || fetchFnChanged) {
-        hasMountedRef.current = true;
-        prevFetchFnRef.current = fetchFn;
-        prevSearchQueryRef.current = searchQuery;
-        prevFiltersKeyRef.current = filtersKey;
-        
-        // Reset state when fetchFn changes (e.g., tab switch)
-        if (fetchFnChanged) {
-          setData([]);
-          setPage(1);
-          setHasMore(false);
-          setIsLoading(false);
-          setIsLoadingMore(false);
-          isLoadingRef.current = false;
-        }
-        
-        fetchData(1, false);
-      }
+    if (!enabled) {
+      pendingInitialFetchRef.current = true;
+      hasMountedRef.current = false;
+      reset();
+      return;
     }
-    // Note: We intentionally don't include searchQuery and filtersKey here
-    // because they are handled by separate useEffects below
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, fetchFn]);
+
+    if (!pendingInitialFetchRef.current) {
+      return;
+    }
+
+    pendingInitialFetchRef.current = false;
+    hasMountedRef.current = true;
+    prevSearchQueryRef.current = searchQueryLiveRef.current;
+    prevFiltersKeyRef.current = filtersKeyLiveRef.current;
+
+    fetchData(1, false);
+  }, [enabled, fetchData, reset]);
 
   // Handle filtersKey changes
   useEffect(() => {

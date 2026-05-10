@@ -141,6 +141,27 @@ export default function InstitutionsResultsView({
     [apiFilters],
   );
 
+  /**
+   * Wait until lookup queries resolve before enabling search. Otherwise `apiFilters` /
+   * `filtersKey` update twice (empty → full) and `useInfiniteScrollPagination` runs
+   * two page-1 fetches → double skeleton / loading on the Institutions tab.
+   */
+  const referenceDataReady = useMemo(
+    () =>
+      Boolean(
+        countriesResponse?.data &&
+          citiesResponse?.data &&
+          coursesResponse?.data &&
+          studyLevelsResponse?.data,
+      ),
+    [
+      countriesResponse?.data,
+      citiesResponse?.data,
+      coursesResponse?.data,
+      studyLevelsResponse?.data,
+    ],
+  );
+
   const {
     data: universities,
     isLoading,
@@ -152,6 +173,7 @@ export default function InstitutionsResultsView({
     fetchFn: fetchUniversities,
     limit: INSTITUTIONS_LIMIT,
     filtersKey,
+    enabled: referenceDataReady,
   });
 
   const handleViewDetails = (universityId: string) => {
@@ -170,7 +192,7 @@ export default function InstitutionsResultsView({
     }
   };
 
-  if (isLoading) {
+  if (!referenceDataReady || isLoading) {
     return (
       <div className="space-y-4">
         {Array.from({ length: 6 }).map((_, index) => (
