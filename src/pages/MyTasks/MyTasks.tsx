@@ -178,7 +178,7 @@ export default function MyTasks() {
     },
     {
       title: "Actions",
-      width: 160,
+      width: 200,
       render: (_: unknown, row: PartnerTaskListItem) => (
         <Space>
           <Tooltip title="View details">
@@ -191,9 +191,9 @@ export default function MyTasks() {
           {row.status === "IN_PROGRESS" && (
             <Tooltip title="Mark as complete">
               <Button
-                type="text"
-                size="small"
+                type="default"
                 icon={<CheckCircleOutlined />}
+                style={{ borderColor: "#10b981", color: "#10b981" }}
                 onClick={() => {
                   setCompleteModalTask(row);
                   setCompleteNote("");
