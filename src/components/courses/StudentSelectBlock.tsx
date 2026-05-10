@@ -292,7 +292,7 @@ export default function StudentSelectBlock({
         footer={null}
         width={520}
         centered
-        destroyOnClose
+        destroyOnHidden
         getContainer={() => document.body}
         zIndex={nestedUnderModal ? 2600 : undefined}
         styles={{ body: { paddingTop: 12 } }}
