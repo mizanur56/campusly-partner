@@ -6,6 +6,7 @@ import PageLoader from "../../components/ui/PageLoader";
 import { useDebounced } from "../../redux/features/hooks";
 import { useGetAcademyCategoriesQuery, useGetAcademyCoursesQuery } from "../../redux/features/academy/academyApi";
 import type { AcademyCourse } from "../../types/academy";
+import { resolveAcademyMediaUrl } from "../../utils/academyMedia";
 import { sumDurations } from "../../utils/videoHelpers";
 
 // ── Course card ────────────────────────────────────────────────────────────────
@@ -17,7 +18,11 @@ function CourseCard({
   onClick: () => void;
 }) {
   const videos = course.modules.flatMap((module) => module.videos);
-  const cover = course.thumbnail || videos[0]?.thumbnail || "/images/logo/logo.svg";
+  const coverRaw = course.thumbnail || videos[0]?.thumbnail || "/images/logo/logo.svg";
+  const cover =
+    coverRaw.startsWith("/images/") || coverRaw.startsWith("http")
+      ? coverRaw
+      : resolveAcademyMediaUrl(coverRaw) || coverRaw;
 
   const totalDuration = sumDurations(
     videos.map((v) => v.duration ?? ""),
