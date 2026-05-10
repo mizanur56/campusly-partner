@@ -13,6 +13,7 @@ import {
   phoneButtonStyle,
   phoneInputGetValueFromEvent,
   phoneInputStyle,
+  phoneNumberValidator,
   PHONE_BD_INITIAL_VALUE,
 } from "../sharedFormProps";
 import { toast } from "react-toastify";
@@ -109,7 +110,10 @@ export default function OwnerDetailsStep({ apiStep, onNext }: Props) {
   };
 
   const handleNext = () => {
-    onNext();
+    form
+      .validateFields()
+      .then(() => onNext())
+      .catch(() => {});
   };
 
   if (isFetching && !stepData) {
@@ -157,7 +161,10 @@ export default function OwnerDetailsStep({ apiStep, onNext }: Props) {
         <Form.Item
           name="mobileNumber"
           label="Mobile Number"
-          rules={[{ required: true, message: "Required" }]}
+          rules={[
+            { required: true, message: "Required" },
+            { validator: phoneNumberValidator },
+          ]}
           getValueFromEvent={phoneInputGetValueFromEvent}
         >
           <PhoneInput
@@ -175,6 +182,7 @@ export default function OwnerDetailsStep({ apiStep, onNext }: Props) {
           label="Email"
           placeholder="Select an item"
           disabled={formDisabled}
+          rules={[{ required: true, message: "Required" }]}
         />
         <FormInput
           name="website"

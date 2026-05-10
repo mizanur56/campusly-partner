@@ -16,8 +16,13 @@ import RejectedStep from "./steps/RejectedStep";
 import VerifiedStep from "./steps/VerifiedStep";
 import {
   useGetOnboardingStatusQuery,
+  useGetStepDataQuery,
   useResubmitOnboardingMutation,
 } from "../../redux/features/onboardingForm/onboardingFormApi";
+import {
+  getOnboardingStepPayload,
+  step4HasPersistedData,
+} from "./onboardingStepDataUtils";
 
 /** Step index: 0-4 = form steps, 5 = submitted, 6 = verified, 7 = rejected. API steps are 1–5. */
 export type OnboardingStepIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
@@ -28,6 +33,16 @@ export default function OnboardingPage() {
   const { data: status, refetch } = useGetOnboardingStatusQuery(undefined);
   const [resubmitOnboarding, { isLoading: isResubmitting }] =
     useResubmitOnboardingMutation();
+
+  const serverCompletedSteps = status?.onboardingStep ?? 0;
+  const { data: step4Data } = useGetStepDataQuery(4, {
+    skip: serverCompletedSteps < 4,
+  });
+  const step4Complete = step4HasPersistedData(
+    getOnboardingStepPayload(step4Data),
+  );
+  const completedStepsCount =
+    serverCompletedSteps >= 4 && !step4Complete ? 3 : serverCompletedSteps;
   /**
    * While ONBOARDING_IN_PROGRESS, only apply server-driven step once per "visit"
    * to this workflow (initial load or re-entry). Saving a step refetches status and
@@ -144,6 +159,7 @@ export default function OnboardingPage() {
       title={title}
       subtitle={subtitle}
       currentStepIndex={step}
+      completedStepsCount={completedStepsCount}
       stepperVariant={stepperVariant}
       workflowStatus={status?.status}
     >

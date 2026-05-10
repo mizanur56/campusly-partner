@@ -7,6 +7,8 @@ interface OnboardingFormLayoutProps {
   subtitle?: string;
   /** 0-4 form steps, 5 submitted, 6 verified, 7 rejected. When set, stepper uses this instead of route */
   currentStepIndex?: number;
+  /** Number of steps already saved to the server (status.onboardingStep). Drives stepper completion independently of the active UI step. */
+  completedStepsCount?: number;
   stepperVariant?: "form" | "submitted" | "verified" | "rejected";
   /** Optional: workflow status to determine if approved */
   workflowStatus?: string;
@@ -17,6 +19,7 @@ export default function OnboardingFormLayout({
   title,
   subtitle,
   currentStepIndex,
+  completedStepsCount,
   stepperVariant = "form",
   workflowStatus,
 }: OnboardingFormLayoutProps) {
@@ -26,6 +29,7 @@ export default function OnboardingFormLayout({
         <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
           <OnboardingStepper
             currentStepIndex={currentStepIndex}
+            completedStepsCount={completedStepsCount}
             variant={stepperVariant}
             workflowStatus={workflowStatus}
           />

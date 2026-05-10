@@ -13,6 +13,7 @@ import {
   phoneButtonStyle,
   phoneInputGetValueFromEvent,
   phoneInputStyle,
+  phoneNumberValidator,
   PHONE_BD_INITIAL_VALUE,
 } from "../sharedFormProps";
 import { toast } from "react-toastify";
@@ -121,7 +122,7 @@ export default function DirectorDetailsStep({
   };
 
   const handleNext = () => {
-    onNext();
+    form.validateFields().then(() => onNext()).catch(() => {});
   };
 
   if (isFetching && !stepData) {
@@ -155,6 +156,12 @@ export default function DirectorDetailsStep({
           label="Whatsapp (If Applicable)"
           placeholder="Enter whatsapp number"
           disabled={formDisabled}
+          type="tel"
+          onKeyDown={(e) => {
+            if (!/[\d\b]/.test(e.key) && !["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab"].includes(e.key)) {
+              e.preventDefault();
+            }
+          }}
         />
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -168,7 +175,7 @@ export default function DirectorDetailsStep({
         <Form.Item
           name="mobileNumber"
           label="Mobile number"
-          rules={[{ required: true, message: "Required" }]}
+          rules={[{ required: true, message: "Required" }, { validator: phoneNumberValidator }]}
           getValueFromEvent={phoneInputGetValueFromEvent}
         >
           <PhoneInput

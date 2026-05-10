@@ -33,7 +33,9 @@ export const FinalLetterStep: React.FC<FinalLetterStepProps> = ({
 
   const resolveAssetUrl = React.useCallback((url: string): string => {
     if (!url) return "";
-    return String(url).startsWith("http") ? url : `${config.image_access_url}${url}`;
+    return String(url).startsWith("http")
+      ? url
+      : `${config.image_access_url}${url}`;
   }, []);
 
   const downloadDocument = React.useCallback(
@@ -71,10 +73,15 @@ export const FinalLetterStep: React.FC<FinalLetterStepProps> = ({
     async (url: string): Promise<string> => {
       try {
         const resolved = resolveAssetUrl(url);
-        const response = await fetch(resolved, { method: "HEAD", credentials: "include" });
+        const response = await fetch(resolved, {
+          method: "HEAD",
+          credentials: "include",
+        });
         const contentLength = response.headers.get("content-length");
         if (contentLength) return formatFileSize(parseInt(contentLength, 10));
-        const blob = await (await fetch(resolved, { credentials: "include" })).blob();
+        const blob = await (
+          await fetch(resolved, { credentials: "include" })
+        ).blob();
         return formatFileSize(blob.size);
       } catch {
         return "—";
@@ -88,7 +95,8 @@ export const FinalLetterStep: React.FC<FinalLetterStepProps> = ({
     const fetchSizes = async () => {
       const sizes: Record<string, string> = {};
       if (loaUrl) sizes.acceptanceLetter = await getFileSize(loaUrl);
-      if (moneyReceiptUrl) sizes.moneyReceipt = await getFileSize(moneyReceiptUrl);
+      if (moneyReceiptUrl)
+        sizes.moneyReceipt = await getFileSize(moneyReceiptUrl);
       setFileSizes(sizes);
     };
     fetchSizes();
@@ -133,7 +141,9 @@ export const FinalLetterStep: React.FC<FinalLetterStepProps> = ({
   }, [embedded, stageUnlocked]);
 
   const stageLockedVisual = embedded && !stageUnlocked;
-  const expandToggleClass = stageLockedVisual ? "cursor-not-allowed opacity-50" : "cursor-pointer";
+  const expandToggleClass = stageLockedVisual
+    ? "cursor-not-allowed opacity-50"
+    : "cursor-pointer";
   const stageCardClass = stageLockedVisual
     ? "border border-primary-border rounded-2xl overflow-hidden bg-[#F4F6F5]"
     : "border border-primary-border rounded-2xl overflow-hidden";
@@ -145,7 +155,9 @@ export const FinalLetterStep: React.FC<FinalLetterStepProps> = ({
     <>
       <div className={stageCardClass}>
         <div
-          title={stageLockedVisual ? "Complete the previous stage first" : undefined}
+          title={
+            stageLockedVisual ? "Complete the previous stage first" : undefined
+          }
           className={`${stageHeaderClass} p-6 flex items-center justify-between select-none ${stageLockedVisual ? "cursor-not-allowed" : "cursor-pointer"}`}
           onClick={() => {
             if (stageLockedVisual && !isExpanded) return;
@@ -187,11 +199,16 @@ export const FinalLetterStep: React.FC<FinalLetterStepProps> = ({
               >
                 <div className="flex items-center gap-2 mb-4">
                   {section.isCompleted ? (
-                    <IoCheckmarkCircleSharp size={24} className="text-[#16A34A]" />
+                    <IoCheckmarkCircleSharp
+                      size={24}
+                      className="text-[#16A34A]"
+                    />
                   ) : (
                     <FaRegCircle size={22} className="text-gray-300" />
                   )}
-                  <h4 className="text-[18px] font-semibold text-[#111827]">{section.title}</h4>
+                  <h4 className="text-[18px] font-semibold text-[#111827]">
+                    {section.title}
+                  </h4>
                 </div>
 
                 <p className="text-[14px] text-[#4B5563] mb-6 leading-relaxed">
@@ -208,7 +225,7 @@ export const FinalLetterStep: React.FC<FinalLetterStepProps> = ({
                         <BsFileEarmarkBarGraph className="text-[20px]" />
                         <div>
                           <p className="text-[14px] font-medium text-[#20242A]">
-                            {section.documentName}.pdf
+                            {section.documentName}
                           </p>
                           <p className="text-[12px] text-[#6B7280]">
                             {fileSizes[section.sizeKey] || "—"}
@@ -217,7 +234,10 @@ export const FinalLetterStep: React.FC<FinalLetterStepProps> = ({
                       </div>
                       <button
                         onClick={() =>
-                          downloadDocument(section.url ?? "", `${section.documentName}.pdf`)
+                          downloadDocument(
+                            section.url ?? "",
+                            `${section.documentName}.pdf`,
+                          )
                         }
                         className="text-[#4B5563] hover:text-[#237D3B] cursor-pointer ml-4"
                       >
@@ -243,7 +263,9 @@ export const FinalLetterStep: React.FC<FinalLetterStepProps> = ({
           <PrimaryButton
             text="Next"
             disabled={!isAllRequiredCompleted}
-            className={!isAllRequiredCompleted ? "opacity-50 pointer-events-none" : ""}
+            className={
+              !isAllRequiredCompleted ? "opacity-50 pointer-events-none" : ""
+            }
             onClick={() => id && navigate(`/applications/${id}/embassy`)}
           />
         </div>
@@ -253,7 +275,9 @@ export const FinalLetterStep: React.FC<FinalLetterStepProps> = ({
 };
 
 const FinalLetter: React.FC = () => {
-  const { applicationApiData } = useOutletContext<{ applicationApiData: any }>();
+  const { applicationApiData } = useOutletContext<{
+    applicationApiData: any;
+  }>();
   return <FinalLetterStep applicationApiData={applicationApiData} />;
 };
 

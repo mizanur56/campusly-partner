@@ -32,10 +32,16 @@ export const EnrollStep: React.FC<EnrollStepProps> = ({
   const [userToggledExpand, setUserToggledExpand] = React.useState(false);
   const [uploadingId, setUploadingId] = React.useState<string | null>(null);
   const [fileSizes, setFileSizes] = React.useState<Record<string, string>>({});
-  const [localUploads, setLocalUploads] = React.useState<Record<string, string>>({});
+  const [localUploads, setLocalUploads] = React.useState<
+    Record<string, string>
+  >({});
 
   const [createMedia] = useCreateMediaMutation();
   const [uploadDocument] = useApplicationDocumentUploadMutation();
+
+  const tuitionPaymentPolicy = applicationApiData?.tuitionPaymentPolicy;
+  const requiresEnrollPaymentReceipt =
+    tuitionPaymentPolicy && tuitionPaymentPolicy !== "FULL_BEFORE_VISA";
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return "0 Bytes";
@@ -45,64 +51,118 @@ export const EnrollStep: React.FC<EnrollStepProps> = ({
     return `${Math.round((bytes / Math.pow(k, i)) * 100) / 100} ${units[i]}`;
   };
 
-  const getFileSize = React.useCallback(async (url: string): Promise<string> => {
-    try {
-      const response = await fetch(url, { method: "HEAD" });
-      const contentLength = response.headers.get("content-length");
-      if (contentLength) return formatFileSize(parseInt(contentLength, 10));
-      const blob = await (await fetch(url)).blob();
-      return formatFileSize(blob.size);
-    } catch {
-      return "—";
-    }
-  }, []);
+  const getFileSize = React.useCallback(
+    async (url: string): Promise<string> => {
+      try {
+        const response = await fetch(url, { method: "HEAD" });
+        const contentLength = response.headers.get("content-length");
+        if (contentLength) return formatFileSize(parseInt(contentLength, 10));
+        const blob = await (await fetch(url)).blob();
+        return formatFileSize(blob.size);
+      } catch {
+        return "—";
+      }
+    },
+    [],
+  );
 
   React.useEffect(() => {
     if (!applicationApiData) return;
     const fetchSizes = async () => {
       const sizes: Record<string, string> = {};
       if (applicationApiData?.airticket)
-        sizes.airticket = await getFileSize(applicationApiData.airticket);
+        sizes.airticket = await getFileSize(
+          `${config.image_access_url}${applicationApiData.airticket}`,
+        );
       if (applicationApiData?.travelLetter)
-        sizes.travelLetter = await getFileSize(applicationApiData.travelLetter);
+        sizes.travelLetter = await getFileSize(
+          `${config.image_access_url}${applicationApiData.travelLetter}`,
+        );
+      if (applicationApiData?.tuitionDepositReceipt)
+        sizes.tuitionDepositReceipt = await getFileSize(
+          `${config.image_access_url}${applicationApiData.tuitionDepositReceipt}`,
+        );
       setFileSizes((prev) => ({ ...prev, ...sizes }));
     };
     fetchSizes();
   }, [applicationApiData, getFileSize]);
 
-  const sections = React.useMemo(
+  const tuitionReceiptUrl =
+    (localUploads.tuitionDepositReceipt &&
+      `${config.image_access_url}${localUploads.tuitionDepositReceipt}`) ||
+    (applicationApiData?.tuitionDepositReceipt &&
+      `${config.image_access_url}${applicationApiData.tuitionDepositReceipt}`);
+
+  const isTuitionReceiptCompleted = !!(
+    localUploads.tuitionDepositReceipt ||
+    applicationApiData?.tuitionDepositReceipt
+  );
+
+  const docSections = React.useMemo(
     () => [
+      ...(requiresEnrollPaymentReceipt
+        ? [
+            {
+              id: "tuition_receipt",
+              title: "Tuition Payment Receipt",
+              category: "tuition_receipt",
+              name: "Tuition Deposit Receipt",
+              type: "document" as const,
+              description:
+                tuitionPaymentPolicy === "HALF_AFTER_VISA"
+                  ? "Upload the payment receipt for the first half of the tuition fee paid after receiving your visa."
+                  : "Upload the payment receipt for the full tuition fee paid after receiving your visa.",
+              url: tuitionReceiptUrl,
+              isCompleted: isTuitionReceiptCompleted,
+              fileSizeKey: "tuitionDepositReceipt",
+            },
+          ]
+        : []),
       {
         id: "air_ticket",
         title: "Air Ticket",
         category: "airticket",
-        hasUploaded: true,
+        name: "Air Ticket",
+        type: "document" as const,
         description:
           "Upload your air ticket confirming travel arrangements to the destination country.",
         url:
-          (localUploads.airticket && `${config.image_access_url}${localUploads.airticket}`) ||
+          (localUploads.airticket &&
+            `${config.image_access_url}${localUploads.airticket}`) ||
           (applicationApiData?.airticket &&
             `${config.image_access_url}${applicationApiData.airticket}`),
-        isCompleted: !!(localUploads.airticket || applicationApiData?.airticket),
+        isCompleted: !!(
+          localUploads.airticket || applicationApiData?.airticket
+        ),
+        fileSizeKey: "airticket",
       },
       {
         id: "travel_letter",
         title: "Travel Letter",
         category: "travelLetter",
-        hasUploaded: true,
+        name: "Travel Letter",
+        type: "document" as const,
+        readOnly: true,
         description:
-          "Upload the travel letter issued in connection with your enrollment and travel plans.",
-        url:
-          (localUploads.travelLetter && `${config.image_access_url}${localUploads.travelLetter}`) ||
-          (applicationApiData?.travelLetter &&
-            `${config.image_access_url}${applicationApiData.travelLetter}`),
-        isCompleted: !!(localUploads.travelLetter || applicationApiData?.travelLetter),
+          "The travel letter will be provided by the admin once it is ready.",
+        url: applicationApiData?.travelLetter
+          ? `${config.image_access_url}${applicationApiData.travelLetter}`
+          : undefined,
+        isCompleted: !!applicationApiData?.travelLetter,
+        fileSizeKey: "travelLetter",
       },
     ],
-    [applicationApiData, localUploads],
+    [
+      applicationApiData,
+      localUploads,
+      requiresEnrollPaymentReceipt,
+      tuitionPaymentPolicy,
+      tuitionReceiptUrl,
+      isTuitionReceiptCompleted,
+    ],
   );
 
-  const isAllRequiredCompleted = sections.every((s) => !!s.isCompleted);
+  const allSectionsCompleted = docSections.every((s) => s.isCompleted);
 
   React.useEffect(() => {
     if (!embedded || userToggledExpand) return;
@@ -115,7 +175,6 @@ export const EnrollStep: React.FC<EnrollStepProps> = ({
   }, [embedded, stageUnlocked]);
 
   const stageLockedVisual = embedded && !stageUnlocked;
-  const expandToggleClass = stageLockedVisual ? "cursor-not-allowed opacity-50" : "cursor-pointer";
   const stageCardClass = stageLockedVisual
     ? "border border-primary-border rounded-2xl overflow-hidden bg-[#F4F6F5]"
     : "border border-primary-border rounded-2xl overflow-hidden";
@@ -123,7 +182,7 @@ export const EnrollStep: React.FC<EnrollStepProps> = ({
     ? "bg-[#EEF2EF]"
     : "bg-[#DFF2E6] border-[#237D3B] border rounded-2xl";
 
-  const handleFileUpload = async (categoryKey: string, file: File) => {
+  const handleDocumentUpload = async (categoryKey: string, file: File) => {
     if (!applicationApiData?.id) return;
     setUploadingId(categoryKey);
     try {
@@ -132,11 +191,15 @@ export const EnrollStep: React.FC<EnrollStepProps> = ({
       formData.append("category", "document");
       const response = await createMedia(formData).unwrap();
       const documentUrl = response.data.url;
-      await uploadDocument({ id: applicationApiData.id, [categoryKey]: documentUrl }).unwrap();
-
-      // Immediate UI update
+      await uploadDocument({
+        id: applicationApiData.id,
+        [categoryKey]: documentUrl,
+      }).unwrap();
       setLocalUploads((prev) => ({ ...prev, [categoryKey]: documentUrl }));
-      setFileSizes((prev) => ({ ...prev, [categoryKey]: formatFileSize(file.size) }));
+      setFileSizes((prev) => ({
+        ...prev,
+        [categoryKey]: formatFileSize(file.size),
+      }));
     } catch (err) {
       console.error("Upload failed:", err);
       toast.error("Upload failed");
@@ -150,16 +213,48 @@ export const EnrollStep: React.FC<EnrollStepProps> = ({
     input.type = "file";
     input.accept = ".pdf,.doc,.docx,.jpg,.png";
     input.onchange = () => {
-      if (input.files?.[0]) handleFileUpload(categoryKey, input.files[0]);
+      if (!input.files?.[0]) return;
+      const key =
+        categoryKey === "tuition_receipt"
+          ? "tuitionDepositReceipt"
+          : categoryKey;
+      handleDocumentUpload(key, input.files[0]);
     };
     input.click();
   };
+
+  const downloadDocument = React.useCallback(
+    async (url: string, name?: string) => {
+      try {
+        const res = await fetch(url, { credentials: "include" });
+        if (!res.ok) throw new Error(`${res.status}`);
+        const blob = await res.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = objectUrl;
+        a.download = name?.trim() || "download";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(objectUrl);
+      } catch {
+        try {
+          window.open(url, "_blank");
+        } catch {
+          /* ignore */
+        }
+      }
+    },
+    [],
+  );
 
   return (
     <>
       <div className={stageCardClass}>
         <div
-          title={stageLockedVisual ? "Complete the previous stage first" : undefined}
+          title={
+            stageLockedVisual ? "Complete the previous stage first" : undefined
+          }
           className={`${stageHeaderClass} p-6 flex items-center justify-between select-none ${stageLockedVisual ? "cursor-not-allowed" : "cursor-pointer"}`}
           onClick={() => {
             if (stageLockedVisual && !isExpanded) return;
@@ -170,17 +265,18 @@ export const EnrollStep: React.FC<EnrollStepProps> = ({
           <div>
             <h3
               className={`text-[20px] font-semibold ${
-                isAllRequiredCompleted ? "text-primary" : "text-[#20242A]"
+                allSectionsCompleted ? "text-primary" : "text-[#20242A]"
               }`}
             >
               Stage: 7 Enroll
             </h3>
             <p
               className={`text-[14px] ${
-                isAllRequiredCompleted ? "text-primary" : "text-[#4B5563]"
+                allSectionsCompleted ? "text-primary" : "text-[#4B5563]"
               }`}
             >
-              Upload final enrollment documents (air ticket, travel letter, etc.).
+              Upload final enrollment documents (air ticket, travel letter,
+              etc.).
             </p>
           </div>
           <div className={stageLockedVisual ? "opacity-50" : ""}>
@@ -194,7 +290,7 @@ export const EnrollStep: React.FC<EnrollStepProps> = ({
 
         <Collapsible open={isExpanded}>
           <div className="space-y-4 p-4">
-            {sections.map((section) => {
+            {docSections.map((section) => {
               const isSectionUploading = uploadingId === section.category;
 
               return (
@@ -205,14 +301,19 @@ export const EnrollStep: React.FC<EnrollStepProps> = ({
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                       {section.isCompleted ? (
-                        <IoCheckmarkCircleSharp size={24} className="text-[#16A34A]" />
+                        <IoCheckmarkCircleSharp
+                          size={24}
+                          className="text-[#16A34A]"
+                        />
                       ) : (
                         <FaRegCircle size={22} className="text-gray-300" />
                       )}
-                      <h4 className="text-[18px] font-semibold text-[#111827]">{section.title}</h4>
+                      <h4 className="text-[18px] font-semibold text-[#111827]">
+                        {section.title}
+                      </h4>
                     </div>
 
-                    {section.hasUploaded && (
+                    {!section.readOnly && (
                       <button
                         disabled={!!uploadingId}
                         onClick={(e) => {
@@ -234,6 +335,12 @@ export const EnrollStep: React.FC<EnrollStepProps> = ({
                     {section.description}
                   </p>
 
+                  {/* {section.isPending && (
+                    <div className="mb-3 bg-[#FFFBEB] border border-[#FCD34D] p-3 rounded-lg text-[#92400E] text-sm">
+                      Please wait for admin approval.
+                    </div>
+                  )} */}
+
                   {section.isCompleted && section.url && (
                     <div>
                       <p className="text-[16px] font-semibold text-[#111827] mb-3">
@@ -247,12 +354,15 @@ export const EnrollStep: React.FC<EnrollStepProps> = ({
                               {section.title}
                             </p>
                             <p className="text-[12px] text-[#6B7280]">
-                              {fileSizes[section.category] || "—"}
+                              {fileSizes[section.fileSizeKey] || "—"}
                             </p>
                           </div>
                         </div>
                         <button
-                          onClick={() => window.open(section.url, "_blank")}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            downloadDocument(section.url ?? "", section.name);
+                          }}
                           className="text-[#4B5563] hover:text-[#237D3B] cursor-pointer ml-4"
                         >
                           <DownloadOutlined style={{ fontSize: 18 }} />
@@ -277,8 +387,10 @@ export const EnrollStep: React.FC<EnrollStepProps> = ({
           </button>
           <PrimaryButton
             text="Continue"
-            disabled={!isAllRequiredCompleted}
-            className={!isAllRequiredCompleted ? "opacity-50 pointer-events-none" : ""}
+            disabled={!allSectionsCompleted}
+            className={
+              !allSectionsCompleted ? "opacity-50 pointer-events-none" : ""
+            }
             onClick={() => navigate("/visa-success")}
           />
         </div>
@@ -288,7 +400,9 @@ export const EnrollStep: React.FC<EnrollStepProps> = ({
 };
 
 const Enroll: React.FC = () => {
-  const { applicationApiData } = useOutletContext<{ applicationApiData: any }>();
+  const { applicationApiData } = useOutletContext<{
+    applicationApiData: any;
+  }>();
   return <EnrollStep applicationApiData={applicationApiData} />;
 };
 
