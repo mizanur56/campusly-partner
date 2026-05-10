@@ -16,6 +16,7 @@ import {
   useUpdateAcademyProgressMutation,
 } from "../../redux/features/academy/academyApi";
 import type { AcademyModule, AcademyVideo } from "../../types/academy";
+import { resolveAcademyMediaUrl } from "../../utils/academyMedia";
 import {
   extractYouTubeVideoId,
   getYouTubeEmbedUrl,
@@ -131,6 +132,7 @@ function VideoPlayer({
   const ytId = extractYouTubeVideoId(video.youtubeUrl);
 
   if (!embedUrl || !ytId) {
+    const src = resolveAcademyMediaUrl(video.youtubeUrl);
     return (
       <div className="aspect-video w-full rounded-xl overflow-hidden bg-gray-900 shadow-sm">
         <video
@@ -138,7 +140,7 @@ function VideoPlayer({
           controls
           playsInline
           className="w-full h-full"
-          src={video.youtubeUrl}
+          src={src || undefined}
           onEnded={() => onPlaybackEnded?.()}
         >
           Your browser does not support the video tag.

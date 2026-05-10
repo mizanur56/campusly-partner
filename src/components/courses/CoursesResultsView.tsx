@@ -12,6 +12,7 @@ import SkeletonCourseCard from "./SkeletonCourseCard";
 import type { SearchCourseItem } from "../../data/searchResultsTypes";
 import { transformSearchCourse } from "../../utils/searchTransform";
 import { transformFiltersToApi } from "../../utils/transformFiltersToApi";
+import { buildFilterOptionsQueryArg } from "../../utils/buildFilterOptionsQueryArg";
 import type { FilterState } from "./StudyPreferenceFilters";
 import { useNavigate } from "react-router-dom";
 
@@ -71,8 +72,41 @@ export default function CoursesResultsView({
   const [triggerCoursesSearch] = useLazySearchCoursesQuery();
   const navigate = useNavigate();
 
-  // Fetch all filter options from single endpoint
-  const { data: filterOptionsResponse } = useGetFilterOptionsQuery();
+  const { data: baseFilterOptions } = useGetFilterOptionsQuery(undefined);
+
+  const scopedFilterArg = useMemo(() => {
+    if (filters?.studyDestinationCountryId) {
+      return { countryIds: [filters.studyDestinationCountryId] };
+    }
+    return buildFilterOptionsQueryArg(
+      filters?.studyDestination,
+      baseFilterOptions?.data
+    );
+  }, [
+    filters?.studyDestinationCountryId,
+    filters?.studyDestination,
+    baseFilterOptions?.data,
+  ]);
+
+  const { currentData: scopedFilterCurrent } = useGetFilterOptionsQuery(
+    scopedFilterArg!,
+    { skip: !scopedFilterArg }
+  );
+
+  const hasDestinationSelected = Boolean(
+    filters?.studyDestinationCountryId || filters?.studyDestination?.trim(),
+  );
+
+  const filterOptionsResponse = useMemo(() => {
+    if (!hasDestinationSelected) return baseFilterOptions;
+    if (scopedFilterArg != null) return scopedFilterCurrent;
+    return undefined;
+  }, [
+    hasDestinationSelected,
+    scopedFilterArg,
+    scopedFilterCurrent,
+    baseFilterOptions,
+  ]);
 
   // Transform filter-options response into the format expected by transformFiltersToApi
   const apiResponsesForTransform = useMemo(() => {

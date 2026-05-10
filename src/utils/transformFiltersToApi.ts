@@ -36,7 +36,8 @@ export interface ApiSearchParams {
   durationMax?: number;
   feeMin?: number;
   feeMax?: number;
-  startYear?: number;
+  /** Set when user picks a “year” chip — server applies forward-month intake window (no year filter). */
+  intakeForwardMonthsOnly?: boolean;
   startMonth?: number;
   sortBy?: string;
   sortOrder?: string;
@@ -228,8 +229,7 @@ export function transformFiltersToApi(
   if (filterData.startYear?.length > 0) {
     const filteredYears = filterData.startYear.filter((y) => y !== "Any");
     if (filteredYears.length > 0) {
-      const year = Number(filteredYears[0]);
-      if (!isNaN(year)) params.startYear = year;
+      params.intakeForwardMonthsOnly = true;
     }
   }
 
@@ -265,8 +265,8 @@ export function buildSearchQueryString(params: ApiSearchParams): string {
     queryParams.append("feeMin", params.feeMin.toString());
   if (params.feeMax !== undefined)
     queryParams.append("feeMax", params.feeMax.toString());
-  if (params.startYear !== undefined)
-    queryParams.append("startYear", params.startYear.toString());
+  if (params.intakeForwardMonthsOnly === true)
+    queryParams.append("intakeForwardMonthsOnly", "true");
   if (params.startMonth !== undefined)
     queryParams.append("startMonth", params.startMonth.toString());
   if (params.sortBy) queryParams.append("sortBy", params.sortBy);

@@ -357,6 +357,9 @@ const Sidebar: React.FC = () => {
       if (path === "/academy") {
         return location.pathname.startsWith("/academy");
       }
+      if (path === "/programs-schools") {
+        return location.pathname.startsWith("/programs-schools");
+      }
       return location.pathname === path;
     },
     [location.pathname],

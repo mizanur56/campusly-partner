@@ -6,6 +6,8 @@ import React, {
   useState,
 } from "react";
 import { useGetFilterOptionsQuery } from "../../redux/features/search/searchApi";
+import { buildFilterOptionsQueryArg } from "../../utils/buildFilterOptionsQueryArg";
+import { START_YEARS } from "../../utils/filterConstants";
 import { KeywordGroup } from "../common/Tabs";
 
 interface StudyPreferenceFiltersProps {
@@ -17,7 +19,10 @@ interface StudyPreferenceFiltersProps {
 }
 
 export interface FilterState {
+  /** Country display name — used for search API mapping */
   studyDestination: string;
+  /** Resolved when user picks from list — drives scoped filter-options (subjects / universities) */
+  studyDestinationCountryId?: string;
   studyLevel: string[];
   startYear: string[];
   startMonth: string[];
@@ -48,6 +53,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
   // Initialize filters state first
   const [filters, setFilters] = useState<FilterState>({
     studyDestination: "",
+    studyDestinationCountryId: undefined,
     studyLevel: [],
     startYear: [],
     startMonth: [],
@@ -60,18 +66,66 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
     },
   });
 
-  // Fetch data from single filter-options API
-  const { data: filterOptionsResponse, isLoading: isLoadingFilterOptions } =
-    useGetFilterOptionsQuery();
+  const hasDestinationSelected = Boolean(
+    filters.studyDestinationCountryId || filters.studyDestination?.trim(),
+  );
 
-  // Extract data from filter-options API
+  // Base options (full country list + ids); scoped query applies countryIds so subjects/institutions match destination
+  const { data: baseFilterOptions, isLoading: isLoadingBaseFilterOptions } =
+    useGetFilterOptionsQuery(undefined);
+
+  const scopedFilterArg = useMemo(() => {
+    if (filters.studyDestinationCountryId) {
+      return { countryIds: [filters.studyDestinationCountryId] };
+    }
+    return buildFilterOptionsQueryArg(
+      filters.studyDestination,
+      baseFilterOptions?.data
+    );
+  }, [
+    filters.studyDestinationCountryId,
+    filters.studyDestination,
+    baseFilterOptions?.data,
+  ]);
+
+  /**
+   * RTK Query `data` can keep the previous subscription result when args change.
+   * `currentData` is always for the active args — required so subjects/institutions
+   * match the selected country only.
+   */
+  const {
+    currentData: scopedFilterCurrent,
+    isFetching: isFetchingScopedFilterOptions,
+  } = useGetFilterOptionsQuery(scopedFilterArg!, {
+    skip: !scopedFilterArg,
+  });
+
+  /** With a destination selected, never fall back to global courses/universities from base. */
+  const filterOptionsResponse = useMemo(() => {
+    if (!hasDestinationSelected) return baseFilterOptions;
+    if (scopedFilterArg != null) return scopedFilterCurrent;
+    return undefined;
+  }, [
+    hasDestinationSelected,
+    scopedFilterArg,
+    scopedFilterCurrent,
+    baseFilterOptions,
+  ]);
+
+  const isLoadingFilterOptions =
+    isLoadingBaseFilterOptions ||
+    (!!scopedFilterArg &&
+      isFetchingScopedFilterOptions &&
+      scopedFilterCurrent === undefined);
+
+  // Extract data from filter-options API (countries always from base so the picker stays populated while scoped loads)
   const studyDestinations = useMemo(() => {
-    const countries = filterOptionsResponse?.data?.countries || [];
+    const countries = baseFilterOptions?.data?.countries || [];
     return countries.map((country) => ({
-      value: country.name,
+      value: country.id,
       label: country.name,
     }));
-  }, [filterOptionsResponse?.data?.countries]);
+  }, [baseFilterOptions?.data?.countries]);
 
   const availableSubjects = useMemo(() => {
     const courses = filterOptionsResponse?.data?.courses || [];
@@ -80,14 +134,27 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
 
   const institutions = useMemo(() => {
     const universities = filterOptionsResponse?.data?.universities || [];
-    const selectedCountry = filters.studyDestination;
+    if (filters.studyDestinationCountryId) {
+      return universities
+        .filter((u) => u.countryId === filters.studyDestinationCountryId)
+        .map((u) => u.name)
+        .sort();
+    }
+    const selectedCountry = filters.studyDestination?.trim();
     if (!selectedCountry) return [];
 
     return universities
-      .filter((u) => u.countryName === selectedCountry)
+      .filter(
+        (u) =>
+          u.countryName.trim().toLowerCase() === selectedCountry.toLowerCase()
+      )
       .map((u) => u.name)
       .sort();
-  }, [filterOptionsResponse?.data?.universities, filters.studyDestination]);
+  }, [
+    filterOptionsResponse?.data?.universities,
+    filters.studyDestinationCountryId,
+    filters.studyDestination,
+  ]);
 
   // Extract study levels - Only show Postgraduate and Undergraduate
   const studyLevels = useMemo(() => {
@@ -115,7 +182,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
   /** How many distinct filter choices are active (shown on Reset — incl. university URL scope) */
   const appliedFilterCount = useMemo(() => {
     let n = 0;
-    if (filters.studyDestination) n += 1;
+    if (hasDestinationSelected) n += 1;
     n += filters.studyLevel.length;
     if (
       filters.startYear.length > 0 &&
@@ -214,7 +281,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
     value: String(i + 1),
     label,
   }));
-  const startYears = ["Any", "2025", "2026", "2027", "2028"];
+  const startYears = START_YEARS;
   const durations = [
     "Less than 1 year",
     "1 - 2 years",
@@ -247,21 +314,8 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
   };
 
   const handleSelectChange = (key: keyof FilterState, value: string) => {
-    // If changing study destination, reset subjects and institution
-    if (key === "studyDestination") {
-      setFilters({
-        ...filters,
-        studyDestination: value,
-        subjects: [], // Reset subjects when country changes
-        institution: "", // Reset institution when country changes
-      });
-      // onFilterChange will be called by debounced useEffect
-      setShowStudyDestinationDropdown(false);
-    } else {
-      updateFilter(key, value);
-      // Close dropdown after selection
-      if (key === "institution") setShowInstitutionDropdown(false);
-    }
+    updateFilter(key, value);
+    if (key === "institution") setShowInstitutionDropdown(false);
   };
 
   const getFilteredSubjects = () => {
@@ -488,13 +542,15 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
               >
                 <div className="flex items-center justify-between px-3 py-2 border border-primary-border rounded-lg bg-white min-h-[38px]">
                   <span
-                    className={`text-sm ${!filters.studyDestination ? "text-gray-400" : "text-gray-700"}`}
+                    className={`text-sm ${!filters.studyDestinationCountryId && !filters.studyDestination ? "text-gray-400" : "text-gray-700"}`}
                   >
                     {isLoadingFilterOptions
                       ? "Loading destinations..."
-                      : filters.studyDestination
+                      : filters.studyDestinationCountryId ||
+                          filters.studyDestination
                         ? studyDestinations.find(
-                            (d) => d.value === filters.studyDestination,
+                            (d) =>
+                              d.value === filters.studyDestinationCountryId,
                           )?.label || filters.studyDestination
                         : "Select a destination"}
                   </span>
@@ -532,20 +588,26 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
                           <div
                             key={destination.value}
                             className={`px-4 py-2.5 hover:bg-gray-50 cursor-pointer rounded-md transition-colors ${
-                              filters.studyDestination === destination.value
+                              filters.studyDestinationCountryId ===
+                              destination.value
                                 ? "bg-primary-50"
                                 : ""
                             }`}
-                            onClick={() =>
-                              handleSelectChange(
-                                "studyDestination",
-                                destination.value,
-                              )
-                            }
+                            onClick={() => {
+                              setFilters({
+                                ...filters,
+                                studyDestination: destination.label,
+                                studyDestinationCountryId: destination.value,
+                                subjects: [],
+                                institution: "",
+                              });
+                              setShowStudyDestinationDropdown(false);
+                            }}
                           >
                             <span
                               className={`text-sm ${
-                                filters.studyDestination === destination.value
+                                filters.studyDestinationCountryId ===
+                                destination.value
                                   ? "text-primary-700 font-medium"
                                   : "text-gray-700"
                               }`}
@@ -683,7 +745,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
                       <span className="text-sm text-gray-400">
                         {isLoadingFilterOptions
                           ? "Loading subjects..."
-                          : !filters.studyDestination
+                          : !hasDestinationSelected
                             ? "Select a destination first"
                             : "Select subjects..."}
                       </span>
@@ -716,7 +778,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
                         <div className="px-4 py-2.5 text-sm text-gray-500 text-center">
                           Loading subjects...
                         </div>
-                      ) : !filters.studyDestination ? (
+                      ) : !hasDestinationSelected ? (
                         <div className="px-4 py-2.5 text-sm text-gray-500 text-center">
                           Please select a destination first
                         </div>
@@ -815,7 +877,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
                   >
                     {isLoadingFilterOptions
                       ? "Loading institutions..."
-                      : !filters.studyDestination
+                      : !hasDestinationSelected
                         ? "Select a destination first"
                         : filters.institution || "Select an institution"}
                   </span>
@@ -844,7 +906,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
                         <div className="px-4 py-2.5 text-sm text-gray-500 text-center">
                           Loading institutions...
                         </div>
-                      ) : !filters.studyDestination ? (
+                      ) : !hasDestinationSelected ? (
                         <div className="px-4 py-2.5 text-sm text-gray-500 text-center">
                           Please select a destination first
                         </div>

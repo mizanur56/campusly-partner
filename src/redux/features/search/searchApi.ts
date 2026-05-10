@@ -1,3 +1,4 @@
+import { defaultSerializeQueryArgs } from "@reduxjs/toolkit/query";
 import { baseApi } from "../../api/baseApi";
 import type {
   UnifiedSearchApiResponse,
@@ -8,6 +9,7 @@ import type {
 import type { FilterOptionsResponse } from "../../../types/filterOptions";
 import type { ApiSearchParams } from "../../../utils/transformFiltersToApi";
 import { buildSearchQueryString } from "../../../utils/transformFiltersToApi";
+import type { GetFilterOptionsQueryArg } from "../../../utils/buildFilterOptionsQueryArg";
 
 type SearchCoursesArgs = {
   searchTerm: string;
@@ -91,10 +93,31 @@ const searchApi = baseApi.injectEndpoints({
       },
       providesTags: ["search"],
     }),
-    getFilterOptions: builder.query<FilterOptionsResponse, void>({
-      query: () => ({
-        url: "/search/filter-options",
-      }),
+    getFilterOptions: builder.query<
+      FilterOptionsResponse,
+      GetFilterOptionsQueryArg | undefined
+    >({
+      query: (arg) => {
+        const qs =
+          arg?.countryIds?.length
+            ? buildSearchQueryString({ countryIds: arg.countryIds })
+            : "";
+        return {
+          url: qs ? `/search/filter-options?${qs}` : "/search/filter-options",
+        };
+      },
+      /** Distinct cache entries: unscoped vs per-countryIds (avoids wrong reuse). */
+      serializeQueryArgs: ({ queryArgs, endpointDefinition, endpointName }) => {
+        if (queryArgs?.countryIds?.length) {
+          const sorted = [...queryArgs.countryIds].sort().join(",");
+          return `${endpointName}?countryIds=${sorted}`;
+        }
+        return defaultSerializeQueryArgs({
+          queryArgs,
+          endpointDefinition,
+          endpointName,
+        });
+      },
       providesTags: ["search"],
     }),
   }),
