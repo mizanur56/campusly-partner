@@ -306,13 +306,15 @@ export default function TaskManagement() {
       width: 200,
       render: (_: unknown, row: PartnerTaskListItem) => (
         <Space>
-          <Tooltip title="Edit task">
-            <Button
-              type="default"
-              icon={<EditOutlined />}
-              onClick={() => onOpenEdit(row)}
-            />
-          </Tooltip>
+          {row.status === "IN_PROGRESS" && (
+            <Tooltip title="Edit task">
+              <Button
+                type="default"
+                icon={<EditOutlined />}
+                onClick={() => onOpenEdit(row)}
+              />
+            </Tooltip>
+          )}
           <Tooltip title="View details">
             <Button
               type="default"
