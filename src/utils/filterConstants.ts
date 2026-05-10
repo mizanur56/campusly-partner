@@ -11,7 +11,16 @@ export const DURATIONS = [
   "More than 5 years",
 ];
 
-export const START_YEARS = ["Any", "2025", "2026", "2027", "2028"];
+/**
+ * Start-year filter options for Programs & Schools: "Any" plus four years
+ * starting from the current calendar year (e.g. 2026–2029 when current is 2026).
+ */
+export function buildStartYearFilterOptions(): string[] {
+  const current = new Date().getFullYear();
+  return ["Any", ...Array.from({ length: 4 }, (_, i) => String(current + i))];
+}
+
+export const START_YEARS = buildStartYearFilterOptions();
 
 export const FEE_MIN = 0;
 export const FEE_MAX = 100000;

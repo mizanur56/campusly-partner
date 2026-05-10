@@ -66,6 +66,7 @@ const Header: React.FC = () => {
   const isSignedMode =
     (pathname === "/" && previewMode === "signed") ||
     SIGNED_HEADER_PATHS.includes(pathname) ||
+    pathname.startsWith("/programs-schools") ||
     pathname.startsWith("/payments") ||
     pathname.startsWith("/students/") ||
     pathname.startsWith("/applications/");
