@@ -456,11 +456,11 @@ import {
 import {
   buildPersonalDocumentsUploadRows,
   resolvePassportDocumentTemplateId,
-} from "@workspace-shared/profileUploadShared";
+} from "../profileUploadShared";
 import {
   AcademicCertificatesSectionSkeleton,
   PersonalDocumentsSectionSkeleton,
-} from "@workspace-shared/profileUploadSkeletons";
+} from "../profileUploadSkeletons";
 import ModalContent from "../utils/ModalContent";
 import { getApiImageUrl } from "../../../../utils/getApiImageUrl";
 
