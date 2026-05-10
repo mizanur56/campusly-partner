@@ -22,12 +22,14 @@ import {
   Popconfirm,
   Select,
   Space,
+  Spin,
   Tag,
   Tooltip,
   Typography,
 } from "antd";
 import dayjs from "dayjs";
-import { useCallback, useMemo, useRef, useState } from "react";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PageCard from "../../components/common/Card/PageCard";
 import DateTimeHighlight from "../../components/common/DateTimeHighlight";
 import RichTextEditor from "../../components/common/Forms/RichTextEditor";
@@ -37,6 +39,7 @@ import "../../components/common/Tables/AntTable.css";
 import DataTable from "../../components/common/Tables/DataTable";
 import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 import { useAppSelector } from "../../redux/features/hooks";
+import type { PartnerTaskDetail } from "../../redux/features/tasks/partnerTasksApi";
 import {
   CreateTaskBody,
   PartnerTaskListItem,
@@ -48,6 +51,8 @@ import {
   useUpdateTaskMutation,
   useUpdateTaskStatusMutation,
 } from "../../redux/features/tasks/partnerTasksApi";
+
+dayjs.extend(customParseFormat);
 import "../MyTasks/MyTasks.css";
 
 type PartnerTaskStatus =
@@ -77,6 +82,35 @@ const statusColor: Record<string, string> = {
   COMPLETED: "success",
   CANCELLED: "error",
 };
+
+/** Due date/time for the create/update modal — prefers GET-by-id response, falls back to list row. */
+function parsePartnerDueForForm(
+  detail: Pick<PartnerTaskDetail, "due_date" | "due_time"> | null | undefined,
+  listRow: PartnerTaskListItem | null,
+): dayjs.Dayjs | undefined {
+  const rawDate = detail?.due_date ?? listRow?.dueDate ?? null;
+  const rawTime = detail?.due_time ?? listRow?.dueTime ?? null;
+  if (!rawDate) return undefined;
+
+  const dateStr =
+    typeof rawDate === "string"
+      ? rawDate.length >= 10
+        ? rawDate.slice(0, 10)
+        : rawDate
+      : dayjs(rawDate).format("YYYY-MM-DD");
+
+  if (rawTime && String(rawTime).trim()) {
+    const parsed = dayjs(
+      `${dateStr} ${String(rawTime).trim()}`,
+      ["YYYY-MM-DD h:mm A", "YYYY-MM-DD hh:mm A", "YYYY-MM-DD HH:mm"],
+      true,
+    );
+    if (parsed.isValid()) return parsed;
+  }
+
+  const d = dayjs(rawDate);
+  return d.isValid() ? d : undefined;
+}
 
 function StatCardIcon({
   children,
@@ -141,10 +175,30 @@ export default function TaskManagement() {
     searchTerm: searchTerm || undefined,
   });
 
+  const taskDetailId = editingTask?.id ?? viewTask?.id ?? "";
   const { data: taskDetail, isLoading: detailLoading } = useGetTaskByIdQuery(
-    viewTask?.id ?? editingTask?.id ?? "",
-    { skip: !viewTask?.id && !editingTask?.id },
+    taskDetailId,
+    { skip: !taskDetailId },
   );
+
+  const editDetailPending =
+    Boolean(editingTask) &&
+    (!taskDetail || taskDetail.id !== editingTask.id);
+  const showEditDetailSpinner = editDetailPending && detailLoading;
+
+  useEffect(() => {
+    if (!openFormModal || !editingTask?.id || !taskDetail) return;
+    if (taskDetail.id !== editingTask.id) return;
+
+    const due = parsePartnerDueForForm(taskDetail, editingTask);
+    form.setFieldsValue({
+      title: taskDetail.task_title,
+      priority: taskDetail.priority ?? undefined,
+      assignedToUserId: taskDetail.assignedTo?.id,
+      description: taskDetail.task_description ?? "",
+      dueDateTime: due?.isValid() ? due : undefined,
+    });
+  }, [openFormModal, editingTask, taskDetail, form]);
 
   const [createTask, { isLoading: creating }] = useCreateTaskMutation();
   const [updateTask, { isLoading: updating }] = useUpdateTaskMutation();
@@ -221,6 +275,7 @@ export default function TaskManagement() {
   }, [allRows, tasksData?.meta?.stats]);
 
   const onOpenCreate = () => {
+    setViewTask(null);
     setEditingTask(null);
     form.resetFields();
     form.setFieldsValue({ priority: "MEDIUM" });
@@ -228,21 +283,14 @@ export default function TaskManagement() {
   };
 
   const onOpenEdit = (task: PartnerTaskListItem) => {
-    const mergedDue = task.dueDate
-      ? dayjs(
-          task.dueTime ? `${task.dueDate} ${task.dueTime}` : task.dueDate,
-          task.dueTime
-            ? ["YYYY-MM-DD h:mm A", "YYYY-MM-DD HH:mm"]
-            : ["YYYY-MM-DD"],
-        )
-      : undefined;
+    setViewTask(null);
     setEditingTask(task);
+    form.resetFields();
+    const quickDue = parsePartnerDueForForm(null, task);
     form.setFieldsValue({
       title: task.task_title,
-      priority: task.priority || undefined,
-      dueDateTime: mergedDue && mergedDue.isValid() ? mergedDue : undefined,
-      assignedToUserId: taskDetail?.assignedTo?.id || undefined,
-      description: taskDetail?.task_description || "",
+      priority: task.priority ?? undefined,
+      dueDateTime: quickDue?.isValid() ? quickDue : undefined,
     });
     setOpenFormModal(true);
   };
@@ -655,13 +703,20 @@ export default function TaskManagement() {
         }}
         onOk={handleSubmit}
         confirmLoading={creating || updating}
+        okButtonProps={{ disabled: editDetailPending }}
         width={860}
         destroyOnClose
       >
         <Typography.Paragraph type="secondary" className="mb-4">
           Write full task details clearly, set priority, and deadline.
         </Typography.Paragraph>
-        <Form layout="vertical" form={form}>
+        <div className="relative min-h-[120px]">
+          {showEditDetailSpinner ? (
+            <div className="absolute inset-0 z-[1] flex items-center justify-center rounded-lg bg-white/85">
+              <Spin tip="Loading task…" />
+            </div>
+          ) : null}
+          <Form layout="vertical" form={form} className={showEditDetailSpinner ? "pointer-events-none opacity-50" : undefined}>
           <Form.Item
             name="title"
             label="Task title"
@@ -744,6 +799,7 @@ export default function TaskManagement() {
             />
           </Form.Item>
         </Form>
+        </div>
       </Modal>
 
       <Modal
