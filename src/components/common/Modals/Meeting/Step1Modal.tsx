@@ -176,7 +176,12 @@ const Step1Modal: React.FC<Step1ModalProps> = ({
       const minsRaw = slotItem.slotMinutes ?? 30;
       const slotMins = Math.max(5, Math.min(Number(minsRaw) || 30, 24 * 60));
       const end = start.add(slotMins, "minute");
-      const slotObj = {
+      const slotObj: {
+        iso: string;
+        label: string;
+        endLabel: string;
+        status: "OPEN" | "BOOKED";
+      } = {
         iso: slotItem.slot,
         label: start.format("hh:mm A"),
         endLabel: end.format("hh:mm A"),
