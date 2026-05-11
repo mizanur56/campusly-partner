@@ -266,9 +266,7 @@ const Step1Modal: React.FC<Step1ModalProps> = ({
     >
       <div className="space-y-4 px-2 sm:px-0">
         <div className="flex items-center justify-between">
-          <h2 className="text-[20px] font-semibold text-[#20242A]">
-            Book a session
-          </h2>
+          <h2 className="text-lg font-semibold text-[#20242A]">Book session</h2>
           <button
             onClick={handleClose}
             className="rounded-full p-2 transition-colors hover:bg-gray-100"
@@ -281,9 +279,7 @@ const Step1Modal: React.FC<Step1ModalProps> = ({
           <div className="w-full space-y-4 lg:w-auto">
             <div className="flex items-center gap-2">
               <CalendarOutlined className="text-[#237D3B]" />
-              <h3 className="text-[18px] font-semibold text-[#20242A]">
-                Select Date
-              </h3>
+              <h3 className="text-base font-semibold text-[#20242A]">Date</h3>
             </div>
             <div
               className="mx-auto w-full rounded-xl border border-primary-border bg-[#FFFFFF] p-4 shadow-sm lg:mx-0 lg:w-[440px]"
@@ -292,19 +288,12 @@ const Step1Modal: React.FC<Step1ModalProps> = ({
               <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-[#237D3B]/15 bg-[#F3FAF5] px-3 py-2.5">
                 <CalendarOutlined className="shrink-0 text-lg text-[#237D3B]" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[#64748B]">
-                    Selected date
-                  </p>
                   <p className="truncate text-sm font-semibold leading-tight text-[#20242A]">
                     {selectedDate.format("dddd · D MMM YYYY")}
                   </p>
                 </div>
               </div>
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <p className="text-xs leading-snug text-[#4B5563]">
-                  Grey numbers = not bookable. Bold/dark dates with a green dot
-                  = openings (only those days are clickable).
-                </p>
+              <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
                 <button
                   type="button"
                   disabled={!hasAvailableDates || isLoadingSlots}
@@ -323,16 +312,11 @@ const Step1Modal: React.FC<Step1ModalProps> = ({
               </div>
               {!isLoadingSlots ? (
                 <div className="mb-3 rounded-xl border border-[#E4E7EC] bg-linear-to-b from-[#FAFBFC] to-[#F4F6F8] p-3 shadow-inner">
-                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-xs font-semibold text-[#374151]">
-                      Weekly pattern
-                    </p>
-                    <div className="flex flex-wrap items-center gap-x-2 text-[10px] text-[#64748B]">
-                      <span className="inline-flex items-center gap-1.5 font-medium">
-                        <span className="h-2 w-2 shrink-0 rounded-full bg-[#237D3B]" />
-                        Opening
-                      </span>
-                    </div>
+                  <div className="mb-2 flex flex-wrap items-center justify-end gap-2">
+                    <span className="inline-flex items-center gap-1.5 text-[10px] font-medium text-[#64748B]">
+                      <span className="h-2 w-2 shrink-0 rounded-full bg-[#237D3B]" />
+                      Open
+                    </span>
                   </div>
                   <div className="grid grid-cols-7 gap-1.5">
                     {WEEKDAY_LABELS.map((label, weekday) => {
@@ -347,11 +331,7 @@ const Step1Modal: React.FC<Step1ModalProps> = ({
                           disabled={idle}
                           onClick={() => jumpToWeekday(weekday)}
                           title={
-                            hasBook
-                              ? "Has bookable slots"
-                              : hasRule
-                                ? "Weekly hours set — open calendar if no times"
-                                : "No weekly slot"
+                            hasBook ? "Has slots" : hasRule ? "Hours set" : "—"
                           }
                           className={`flex min-h-[48px] flex-col items-center justify-center rounded-lg border px-0.5 py-1.5 text-[10px] font-semibold leading-tight shadow-sm transition-colors ${
                             idle
@@ -379,10 +359,6 @@ const Step1Modal: React.FC<Step1ModalProps> = ({
                       );
                     })}
                   </div>
-                  <p className="mt-2.5 text-[10px] leading-relaxed text-[#6B7280]">
-                    Tap a weekday to match the calendar. Use ← → above the grid
-                    to change month.
-                  </p>
                 </div>
               ) : null}
               <Calendar
@@ -479,54 +455,32 @@ const Step1Modal: React.FC<Step1ModalProps> = ({
           <div className="w-full space-y-4 lg:w-auto">
             <div className="flex items-center gap-2">
               <ClockCircleOutlined className="text-[#237D3B]" />
-              <h3 className="text-[18px] font-semibold text-[#20242A]">
-                Select Time
-              </h3>
+              <h3 className="text-base font-semibold text-[#20242A]">Time</h3>
             </div>
             <div className="mx-auto flex h-[376px] w-full flex-col overflow-hidden rounded-xl border border-primary-border bg-[#FFFFFF] p-4 shadow-sm lg:mx-0 lg:w-[350px]">
               <div className="mb-3 shrink-0 border-b border-[#F0F2F5] pb-3">
                 <p className="text-[16px] font-semibold text-[#20242A]">
-                  Available time slots
-                </p>
-                <p className="mt-1 text-xs text-[#64748B]">
-                  For{" "}
-                  <span className="font-semibold text-[#20242A]">
-                    {selectedDate.format("ddd D MMM")}
-                  </span>
+                  {selectedDate.format("ddd D MMM")}
                   {hasAnyAvailableInSelectedDate ? (
-                    <span className="text-[#237D3B]">
-                      {" "}
-                      · {slotsForSelectedDate.length} opening
-                      {slotsForSelectedDate.length === 1 ? "" : "s"}
+                    <span className="ml-2 text-sm font-normal text-[#237D3B]">
+                      ({slotsForSelectedDate.length} slot
+                      {slotsForSelectedDate.length === 1 ? "" : "s"})
                     </span>
                   ) : null}
                 </p>
               </div>
               {!isLoadingSlots && selectedDateTemplates.length > 0 ? (
                 <div className="mb-3 shrink-0 space-y-2 rounded-lg border border-[#E8ECF1] bg-[#FAFBFC] p-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[#64748B]">
-                    Weekly window (same day each week)
-                  </p>
                   <div className="flex flex-col gap-2">
                     {selectedDateTemplates.map((tpl, idx) => {
                       const start = dayjs(tpl.startTime, "HH:mm");
                       const end = dayjs(tpl.endTime, "HH:mm");
-                      const duration = Math.max(0, end.diff(start, "minute"));
-                      const step = tpl.slotMinutes ?? 30;
                       return (
                         <div
                           key={`${tpl.dayOfWeek}-${tpl.startTime}-${idx}`}
-                          className="flex flex-wrap items-center gap-2 text-xs"
+                          className="text-xs font-medium tabular-nums text-[#374151]"
                         >
-                          <span className="inline-flex items-center rounded-md border border-primary-border bg-white px-2 py-1 font-semibold tabular-nums text-[#20242A]">
-                            {start.format("h:mm A")} – {end.format("h:mm A")}
-                          </span>
-                          <span className="rounded-md bg-[#E9F2EB] px-2 py-0.5 text-[11px] font-medium text-[#1B5E2A]">
-                            {duration} min window
-                          </span>
-                          <span className="text-[11px] text-[#64748B]">
-                            · {step} min slots
-                          </span>
+                          {start.format("h:mm A")} – {end.format("h:mm A")}
                         </div>
                       );
                     })}
@@ -546,11 +500,7 @@ const Step1Modal: React.FC<Step1ModalProps> = ({
                 ) : !hasAnyAvailableInSelectedDate ? (
                   <div className="col-span-2 rounded-xl border border-dashed border-[#CBD5E1] bg-[#FAFBFC] p-4 text-center">
                     <p className="text-sm font-medium text-[#475569]">
-                      No openings this day
-                    </p>
-                    <p className="mt-1 text-xs text-[#94A3B8]">
-                      Pick another date in the calendar or use the week row
-                      above.
+                      No slots this day
                     </p>
                   </div>
                 ) : (
@@ -583,17 +533,11 @@ const Step1Modal: React.FC<Step1ModalProps> = ({
                         >
                           {label}
                         </span>
-                        <span
-                          className={`mt-1 text-[8px] font-semibold uppercase tracking-[0.14em] ${
-                            booked
-                              ? "text-amber-800/90"
-                              : selectedSlotIso === iso
-                                ? "text-white/85"
-                                : "text-[#94A3B8] group-hover:text-[#237D3B]"
-                          }`}
-                        >
-                          {booked ? "Booked" : "Slot"}
-                        </span>
+                        {booked ? (
+                          <span className="mt-1 text-[8px] font-semibold uppercase tracking-[0.14em] text-amber-800/90">
+                            Booked
+                          </span>
+                        ) : null}
                       </button>
                     );
                   })
