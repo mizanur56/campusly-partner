@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { Modal, message } from "antd";
+import { Dropdown, Input, Modal, message } from "antd";
+import type { MenuProps } from "antd";
 import { useEffect, useMemo, useState } from "react";
 import { FaRegFileAlt } from "react-icons/fa";
 import { FaRegUser } from "react-icons/fa6";
@@ -10,10 +11,12 @@ import {
   FiChevronLeft,
   FiChevronRight,
   FiDownload,
+  FiMoreVertical,
   FiZoomIn,
   FiZoomOut,
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
+import ExistingPartnerMeetingModal from "../../components/common/Modals/Meeting/ExistingPartnerMeetingModal";
 import Step1MeetingModal from "../../components/common/Modals/Meeting/Step1Modal";
 import Step2MeetingModal from "../../components/common/Modals/Meeting/Step2Modal";
 import Step3MeetingModal from "../../components/common/Modals/Meeting/Step3Modal";
@@ -24,6 +27,7 @@ import { useCreateMediaMutation } from "../../redux/features/media/mediaApi";
 import {
   useBookMeetingMutation,
   useCancelMeetingMutation,
+  useCompletePartnerMeetingForTestMutation,
   useGetContractQuery,
   useGetMyMeetingsQuery,
   useGetOnboardingStatusQuery,
@@ -31,6 +35,66 @@ import {
   useSignContractMutation,
 } from "../../redux/features/onboardingForm/onboardingFormApi";
 import { useGetPartnerProfileQuery } from "../../redux/features/profile/partnerProfileApi";
+
+/**
+ * Join link becomes usable exactly at the scheduled start time (no pre-lead).
+ * Set to 0 so the join button does not unlock before the session begins.
+ */
+const PARTNER_JOIN_LEAD_MS = 0;
+/** After start, join link stays valid until this offset (covers overrun past booked slot). */
+const PARTNER_JOIN_WINDOW_AFTER_START_MS = 3 * 60 * 60 * 1000;
+/** Hide “Starts in 0s” — omit countdown when within 1s of start. */
+const SHOW_STARTS_IN_THRESHOLD_MS = 1000;
+
+/** Show “Testing: end session” when VITE_PARTNER_MEETING_TEST=true or local dev build. */
+const SHOW_PARTNER_MEETING_TEST_BUTTON =
+  import.meta.env.DEV ||
+  import.meta.env.VITE_PARTNER_MEETING_TEST === "true";
+
+function formatPartnerCountdown(ms: number): string {
+  if (ms <= 0) return "0s";
+  const s = Math.ceil(ms / 1000);
+  const d = Math.floor(s / 86400);
+  const h = Math.floor((s % 86400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (d > 0) return `${d}d ${h}h ${m}m ${sec}s`;
+  if (h > 0) return `${h}h ${m}m ${sec}s`;
+  if (m > 0) return `${m}m ${sec}s`;
+  return `${sec}s`;
+}
+
+/** Full date line + start/end times (end = slot end from slotMinutes, default 30). */
+function formatPartnerMeetingStartEndLabels(
+  scheduledAtIso: string,
+  slotMinutes?: number | null,
+): {
+  dateLine: string;
+  startTime: string;
+  endTime: string;
+} {
+  const start = new Date(scheduledAtIso);
+  const minsRaw = slotMinutes ?? 30;
+  const mins = Math.max(5, Math.min(Number(minsRaw) || 30, 24 * 60));
+  const end = new Date(start.getTime() + mins * 60 * 1000);
+  const dateLine = start.toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+  const timeOpts: Intl.DateTimeFormatOptions = {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  };
+  const startTime = start.toLocaleTimeString("en-US", timeOpts);
+  let endTime = end.toLocaleTimeString("en-US", timeOpts);
+  if (start.toDateString() !== end.toDateString()) {
+    endTime = `${endTime} · next day`;
+  }
+  return { dateLine, startTime, endTime };
+}
 
 export default function ContractPage() {
   const navigate = useNavigate();
@@ -43,6 +107,10 @@ export default function ContractPage() {
   const [showSignaturePad, setShowSignaturePad] = useState(false);
   const [signedAt, setSignedAt] = useState<string | null>(null);
   const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
+  const [existingMeetingModalOpen, setExistingMeetingModalOpen] =
+    useState(false);
+  const [partnerCancelModalOpen, setPartnerCancelModalOpen] = useState(false);
+  const [partnerCancelReason, setPartnerCancelReason] = useState("");
   const [meetingStep, setMeetingStep] = useState<1 | 2 | 3>(1);
   const [selectedSlot, setSelectedSlot] = useState<string | undefined>();
   const [selectedMeetingDate, setSelectedMeetingDate] = useState<string>("");
@@ -80,10 +148,12 @@ export default function ContractPage() {
     useSignContractMutation();
   const [createMedia] = useCreateMediaMutation();
   const [fetchOnboardingStatus] = useLazyGetOnboardingStatusQuery();
-  const { data: meetings, isLoading: isMeetingsLoading } =
+  const { data: meetings, isLoading: isMeetingsLoading, refetch: refetchMeetings } =
     useGetMyMeetingsQuery();
   const [cancelMeeting, { isLoading: isCancelingMeeting }] =
     useCancelMeetingMutation();
+  const [completeMeetingForTest, { isLoading: isCompletingMeetingTest }] =
+    useCompletePartnerMeetingForTestMutation();
 
   // Build contract document URL (pdf/image).
   const contractPdfUrl = useMemo(() => {
@@ -245,11 +315,27 @@ export default function ContractPage() {
   };
 
   const handleOpenMeetingModal = () => {
+    if (upcomingMeeting) {
+      setExistingMeetingModalOpen(true);
+      return;
+    }
     setIsMeetingModalOpen(true);
     setMeetingStep(1);
     setSelectedSlot(undefined);
     setSelectedMeetingDate("");
     setSelectedMeetingTime("");
+  };
+
+  const openNewBookingAfterCancel = () => {
+    setIsMeetingModalOpen(true);
+    setMeetingStep(1);
+    setSelectedSlot(undefined);
+    setSelectedMeetingDate("");
+    setSelectedMeetingTime("");
+  };
+
+  const runPartnerCancel = async (meetingId: string, reason: string) => {
+    await cancelMeeting({ meetingId, reason }).unwrap();
   };
 
   const handleStep1Next = (date: string, time: string, slotIso: string) => {
@@ -259,21 +345,16 @@ export default function ContractPage() {
     setMeetingStep(2);
   };
 
-  const handleStep2Next = async (
-    preferences: string[],
-    additionalInfo: string,
-  ) => {
+  const handleStep2Next = async (additionalInfo: string) => {
     if (!selectedSlot) {
-      message.warning("Please select an available slot");
+      message.warning("Please select an available time");
       return;
     }
 
     try {
       await bookMeeting({
         scheduledAt: selectedSlot,
-        note: additionalInfo?.trim()
-          ? `Preferences: ${preferences.join(", ") || "N/A"}\n\nTell us more: ${additionalInfo.trim()}`
-          : `Preferences: ${preferences.join(", ") || "N/A"}`,
+        note: additionalInfo?.trim() || undefined,
       }).unwrap();
       message.success("Meeting arranged successfully");
       setMeetingStep(3);
@@ -287,39 +368,126 @@ export default function ContractPage() {
       (availableSlots || []).map((slot) => ({
         slot: slot.slot,
         date: slot.date,
+        slotMinutes: slot.slotMinutes,
+        status: slot.status,
       })),
     [availableSlots],
   );
 
+  const [liveNowMs, setLiveNowMs] = useState(() => Date.now());
+  /**
+   * DEV-only client-side fast-forward (in ms). Lets a tester "skip to session
+   * start" so they can preview the live state without waiting. Real network
+   * calls (cancel/complete) still hit the server with the actual clock; this
+   * only affects countdown UI + join-button enablement on this page.
+   */
+  const [liveTestOffsetMs, setLiveTestOffsetMs] = useState(0);
+  const effectiveNowMs = liveNowMs + liveTestOffsetMs;
+
   const upcomingMeeting = useMemo(() => {
     return (meetings || [])
-      .filter(
-        (meeting) =>
-          meeting.status === "SCHEDULED" &&
-          new Date(meeting.scheduledAt).getTime() > Date.now(),
-      )
+      .filter((meeting) => meeting.status === "SCHEDULED")
       .sort(
         (a, b) =>
           new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime(),
       )[0];
   }, [meetings]);
 
+  const hasHadCompletedPartnerMeeting = useMemo(
+    () => (meetings || []).some((m) => m.status === "COMPLETED"),
+    [meetings],
+  );
+
+  /** Pick up auto-complete on server shortly after the booked slot ends. */
+  useEffect(() => {
+    const hasSched = (meetings || []).some((m) => m.status === "SCHEDULED");
+    if (!hasSched) return;
+    const id = window.setInterval(() => {
+      void refetchMeetings();
+    }, 20000);
+    return () => clearInterval(id);
+  }, [meetings, refetchMeetings]);
+
+  useEffect(() => {
+    if (!upcomingMeeting) return;
+    const id = window.setInterval(() => setLiveNowMs(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [upcomingMeeting]);
+
+  const partnerMeetingTimeline = useMemo(() => {
+    if (!upcomingMeeting) return null;
+    const start = new Date(upcomingMeeting.scheduledAt).getTime();
+    const unlock = start - PARTNER_JOIN_LEAD_MS;
+    const linkClose = start + PARTNER_JOIN_WINDOW_AFTER_START_MS;
+    const minsRaw = upcomingMeeting.slotMinutes ?? 30;
+    const slotMins = Math.max(5, Math.min(Number(minsRaw) || 30, 24 * 60));
+    const slotEnd = start + slotMins * 60 * 1000;
+    return {
+      start,
+      unlock,
+      linkClose,
+      slotEnd,
+      msUntilStart: start - effectiveNowMs,
+      msUntilUnlock: unlock - effectiveNowMs,
+      msUntilSlotEnd: slotEnd - effectiveNowMs,
+      msUntilLinkClose: linkClose - effectiveNowMs,
+    };
+  }, [upcomingMeeting, effectiveNowMs]);
+
+  const canJoinPartnerMeeting = useMemo(() => {
+    if (!upcomingMeeting || upcomingMeeting.status !== "SCHEDULED") return false;
+    const t = partnerMeetingTimeline;
+    if (!t) return false;
+    return effectiveNowMs >= t.unlock && effectiveNowMs <= t.linkClose;
+  }, [upcomingMeeting, effectiveNowMs, partnerMeetingTimeline]);
+
+  const cardMeetingStartsInLabel = useMemo(() => {
+    if (!partnerMeetingTimeline) return "";
+    const ms = partnerMeetingTimeline.msUntilStart;
+    if (ms <= SHOW_STARTS_IN_THRESHOLD_MS) return "";
+    return formatPartnerCountdown(ms);
+  }, [partnerMeetingTimeline]);
+
+  /**
+   * While join is allowed (session start ≤ now ≤ start + 3h):
+   *   - Before booked end → "Auto-completes in …" (server will auto-mark
+   *     completed when the meeting time elapses).
+   *   - After booked end, link still open → "Join link closes in …".
+   */
+  const cardJoinWindowCountdown = useMemo(() => {
+    if (!partnerMeetingTimeline || !canJoinPartnerMeeting) return null;
+    const { msUntilSlotEnd, msUntilLinkClose } = partnerMeetingTimeline;
+    if (msUntilSlotEnd > 0) {
+      return {
+        title: "Auto-completes in",
+        text: formatPartnerCountdown(msUntilSlotEnd),
+      };
+    }
+    if (msUntilLinkClose > 0) {
+      return {
+        title: "Join link closes in",
+        text: formatPartnerCountdown(msUntilLinkClose),
+      };
+    }
+    return null;
+  }, [partnerMeetingTimeline, canJoinPartnerMeeting]);
+
+  const showPartnerMeetingCountdownRow = useMemo(() => {
+    if (canJoinPartnerMeeting) return true;
+    return !!cardMeetingStartsInLabel;
+  }, [canJoinPartnerMeeting, cardMeetingStartsInLabel]);
+
+  /** Reset client fast-forward whenever the active meeting changes. */
+  useEffect(() => {
+    setLiveTestOffsetMs(0);
+  }, [upcomingMeeting?.id]);
+
   const upcomingMeetingSummary = useMemo(() => {
     if (!upcomingMeeting) return null;
-    const meetingDate = new Date(upcomingMeeting.scheduledAt);
-    return {
-      date: meetingDate.toLocaleDateString("en-GB", {
-        weekday: "long",
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      }),
-      time: meetingDate.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      }),
-    };
+    return formatPartnerMeetingStartEndLabels(
+      upcomingMeeting.scheduledAt,
+      upcomingMeeting.slotMinutes,
+    );
   }, [upcomingMeeting]);
 
   const meetingManager = useMemo(() => {
@@ -343,37 +511,56 @@ export default function ContractPage() {
         meetingAdvisor?.email || advisor?.email || "support@campustransfer.com",
       phone: meetingAdvisor?.phone || advisor?.phone || null,
       photoUrl: meetingAdvisorPhotoUrl || advisorPhotoUrl || null,
-      meetingLink:
-        upcomingMeeting.meetingLink ||
-        meetingAdvisor?.meetingLink ||
-        advisor?.meetingLink ||
-        null,
+      meetingLink: (() => {
+        const raw =
+          upcomingMeeting.meetingLink ||
+          meetingAdvisor?.meetingLink ||
+          advisor?.meetingLink ||
+          "";
+        const t = typeof raw === "string" ? raw.trim() : "";
+        return t || null;
+      })(),
     };
   }, [upcomingMeeting, advisor, advisorPhotoUrl]);
 
-  const handleCancelMeeting = () => {
+  const handleOpenPartnerCancelFromCard = () => {
     if (!upcomingMeeting) return;
+    setPartnerCancelReason("");
+    setPartnerCancelModalOpen(true);
+  };
 
-    Modal.confirm({
-      title: "Cancel meeting?",
-      content:
-        "This will cancel your scheduled meeting with the onboarding manager.",
-      okText: "Cancel Meeting",
-      cancelText: "Keep Meeting",
-      okButtonProps: {
-        danger: true,
-        style: { fontWeight: 700 },
-      },
-      cancelButtonProps: { style: { fontWeight: 700 } },
-      onOk: async () => {
-        try {
-          await cancelMeeting(upcomingMeeting.id).unwrap();
-          message.success("Meeting canceled successfully");
-        } catch (error: any) {
-          message.error(error?.data?.message || "Failed to cancel meeting");
-        }
-      },
-    });
+  const handleConfirmPartnerCancelFromCard = async () => {
+    if (!upcomingMeeting) return;
+    const r = partnerCancelReason.trim();
+    if (r.length < 10) {
+      message.warning("Please write a cancellation reason (at least 10 characters).");
+      return;
+    }
+    try {
+      await runPartnerCancel(upcomingMeeting.id, r);
+      message.success("Meeting canceled");
+      setPartnerCancelModalOpen(false);
+      openNewBookingAfterCancel();
+    } catch (error: any) {
+      message.error(error?.data?.message || "Failed to cancel meeting");
+    }
+  };
+
+  const handleCompleteMeetingForTest = async () => {
+    if (!upcomingMeeting) return;
+    try {
+      await completeMeetingForTest(upcomingMeeting.id).unwrap();
+      message.success(
+        "Meeting marked completed (test). You can use Book again to schedule another.",
+      );
+      setExistingMeetingModalOpen(false);
+      setIsMeetingModalOpen(false);
+    } catch (error: any) {
+      message.error(
+        error?.data?.message ||
+          "Test action failed. On the server use development mode or set PARTNER_MEETING_TEST_COMPLETE=1.",
+      );
+    }
   };
 
   const handleDownload = async () => {
@@ -660,9 +847,9 @@ export default function ContractPage() {
                   ) : upcomingMeeting && upcomingMeetingSummary ? (
                     <div className="space-y-4">
                       <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4 dark:border-emerald-900/30 dark:bg-emerald-950/20">
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
+                        <div className="space-y-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex min-w-0 flex-wrap items-center gap-2">
                               <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
                                 Scheduled
                               </span>
@@ -670,6 +857,68 @@ export default function ContractPage() {
                                 Meeting with your onboarding manager
                               </span>
                             </div>
+                            {(() => {
+                              const items: MenuProps["items"] = [];
+                              const canCancel =
+                                (partnerMeetingTimeline?.msUntilStart ?? 1) > 0;
+                              if (canCancel) {
+                                items.push({
+                                  key: "cancel",
+                                  danger: true,
+                                  label: isCancelingMeeting
+                                    ? "Canceling..."
+                                    : "Cancel meeting",
+                                  disabled: isCancelingMeeting,
+                                  onClick: handleOpenPartnerCancelFromCard,
+                                });
+                              }
+                              if (SHOW_PARTNER_MEETING_TEST_BUTTON) {
+                                if (
+                                  (partnerMeetingTimeline?.msUntilStart ?? 0) >
+                                  0
+                                ) {
+                                  items.push({
+                                    key: "skip",
+                                    label: "Test: skip to session start",
+                                    onClick: () => {
+                                      if (!partnerMeetingTimeline) return;
+                                      const jumpBy = Math.max(
+                                        0,
+                                        partnerMeetingTimeline.msUntilStart,
+                                      );
+                                      setLiveTestOffsetMs(
+                                        (prev) => prev + jumpBy,
+                                      );
+                                    },
+                                  });
+                                }
+                                items.push({
+                                  key: "finish",
+                                  label: isCompletingMeetingTest
+                                    ? "Finishing…"
+                                    : "Test: session finished",
+                                  disabled: isCompletingMeetingTest,
+                                  onClick: handleCompleteMeetingForTest,
+                                });
+                              }
+                              if (items.length === 0) return null;
+                              return (
+                                <Dropdown
+                                  menu={{ items }}
+                                  trigger={["click"]}
+                                  placement="bottomRight"
+                                >
+                                  <button
+                                    type="button"
+                                    aria-label="Meeting actions"
+                                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-emerald-200 bg-white/70 text-gray-600 transition-colors hover:bg-white hover:text-gray-900 dark:border-emerald-900/40 dark:bg-gray-900/30 dark:text-gray-300"
+                                  >
+                                    <FiMoreVertical className="h-4 w-4" />
+                                  </button>
+                                </Dropdown>
+                              );
+                            })()}
+                          </div>
                             <div className="flex items-center gap-3 rounded-xl border border-white/70 bg-white/80 p-3 dark:border-white/10 dark:bg-gray-900/30">
                               {meetingManager?.photoUrl ? (
                                 <img
@@ -703,12 +952,54 @@ export default function ContractPage() {
                                 )}
                               </div>
                             </div>
-                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                              {upcomingMeetingSummary.date}
-                            </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-300">
-                              {upcomingMeetingSummary.time}
-                            </p>
+                            <div className="rounded-xl border border-emerald-200/80 bg-white/90 px-3 py-2.5 dark:border-emerald-900/40 dark:bg-gray-900/40">
+                              <p className="text-sm font-semibold leading-snug text-gray-900 dark:text-white">
+                                {upcomingMeetingSummary.dateLine}
+                              </p>
+                              <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-400">
+                                Starts
+                              </p>
+                              <p className="mt-0.5 text-base font-semibold tabular-nums text-gray-900 dark:text-white">
+                                {upcomingMeetingSummary.startTime}
+                              </p>
+                              <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                                Ends{" "}
+                                <span className="font-normal normal-case text-gray-400">
+                                  (end of meeting)
+                                </span>
+                              </p>
+                              <p className="mt-0.5 text-base tabular-nums text-gray-800 dark:text-gray-200">
+                                {upcomingMeetingSummary.endTime}
+                              </p>
+                            </div>
+                            {showPartnerMeetingCountdownRow && (
+                              <p className="text-xs tabular-nums text-gray-500 dark:text-gray-400">
+                                {canJoinPartnerMeeting ? (
+                                  cardJoinWindowCountdown ? (
+                                    <>
+                                      <span className="mr-1 font-medium text-emerald-700 dark:text-emerald-400">
+                                        Meeting started ·
+                                      </span>
+                                      {cardJoinWindowCountdown.title}{" "}
+                                      <span className="font-semibold text-emerald-700 tabular-nums dark:text-emerald-300">
+                                        {cardJoinWindowCountdown.text}
+                                      </span>
+                                    </>
+                                  ) : (
+                                    <span className="font-medium text-emerald-700 dark:text-emerald-400">
+                                      Join link is closing — tap Join now
+                                    </span>
+                                  )
+                                ) : cardMeetingStartsInLabel ? (
+                                  <>
+                                    Meeting starts in{" "}
+                                    <span className="font-semibold text-primary-600">
+                                      {cardMeetingStartsInLabel}
+                                    </span>
+                                  </>
+                                ) : null}
+                              </p>
+                            )}
                             {upcomingMeeting.note && (
                               <div className="rounded-xl border border-primary-border bg-white/70 p-3 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300">
                                 <p className="font-semibold text-gray-800 dark:text-gray-100">
@@ -719,29 +1010,24 @@ export default function ContractPage() {
                                 </p>
                               </div>
                             )}
-                            {meetingManager?.meetingLink && (
-                              <a
-                                href={meetingManager.meetingLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-700"
-                              >
-                                Meeting link
-                              </a>
-                            )}
-                          </div>
-                          <div className="flex flex-wrap gap-3">
-                            <button
-                              type="button"
-                              onClick={handleCancelMeeting}
-                              disabled={isCancelingMeeting}
-                              className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                              {isCancelingMeeting
-                                ? "Canceling..."
-                                : "Cancel Meeting"}
-                            </button>
-                          </div>
+                            {canJoinPartnerMeeting ? (
+                              meetingManager?.meetingLink ? (
+                                <a
+                                  href={meetingManager.meetingLink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex min-h-[40px] items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-600/35 ring-2 ring-emerald-400/80 ring-offset-2 ring-offset-white transition hover:from-emerald-500 hover:to-emerald-600 hover:shadow-xl dark:ring-offset-gray-900"
+                                >
+                                  Join meeting — open link
+                                </a>
+                              ) : (
+                                <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                                  Join window is open, but no meeting link is on
+                                  file yet. Please message your advisor or open
+                                  this page again shortly.
+                                </span>
+                              )
+                            ) : null}
                         </div>
                       </div>
                     </div>
@@ -789,10 +1075,14 @@ export default function ContractPage() {
                           variant="primary"
                           size="sm"
                           onClick={handleOpenMeetingModal}
-                          disabled={!advisor}
+                          disabled={!upcomingMeeting && !advisor}
                           className="w-full"
                         >
-                          Arrange meeting
+                          {upcomingMeeting
+                            ? "View meeting"
+                            : hasHadCompletedPartnerMeeting
+                              ? "Book again"
+                              : "Arrange meeting"}
                         </Button>
                       </div>
                     </div>
@@ -948,6 +1238,54 @@ export default function ContractPage() {
           </div>
         </main>
       </div>
+
+      <ExistingPartnerMeetingModal
+        open={existingMeetingModalOpen && !!upcomingMeeting}
+        meeting={upcomingMeeting}
+        advisor={{
+          name: meetingManager?.name || advisor?.name || "Onboarding Manager",
+          email:
+            meetingManager?.email ||
+            advisor?.email ||
+            "support@campustransfer.com",
+          phone: meetingManager?.phone ?? advisor?.phone ?? null,
+          photoUrl: meetingManager?.photoUrl ?? advisorPhotoUrl ?? null,
+          meetingLink: meetingManager?.meetingLink ?? null,
+        }}
+        onClose={() => setExistingMeetingModalOpen(false)}
+        onCanceledOpenBooking={() => {
+          setExistingMeetingModalOpen(false);
+          openNewBookingAfterCancel();
+        }}
+        onCancelMeeting={(meetingId, reason) =>
+          cancelMeeting({ meetingId, reason }).unwrap()
+        }
+        isCanceling={isCancelingMeeting}
+      />
+
+      <Modal
+        title="Cancel meeting"
+        open={partnerCancelModalOpen}
+        onCancel={() =>
+          !isCancelingMeeting && setPartnerCancelModalOpen(false)
+        }
+        okText="Confirm cancel"
+        okButtonProps={{ danger: true, loading: isCancelingMeeting }}
+        onOk={handleConfirmPartnerCancelFromCard}
+        destroyOnHidden
+      >
+        <p className="mb-2 text-sm text-gray-600">
+          Your advisor will be notified with this reason.
+        </p>
+        <Input.TextArea
+          rows={4}
+          maxLength={2000}
+          showCount
+          placeholder="Why are you canceling? (min. 10 characters)"
+          value={partnerCancelReason}
+          onChange={(e) => setPartnerCancelReason(e.target.value)}
+        />
+      </Modal>
 
       <Step1MeetingModal
         open={isMeetingModalOpen && meetingStep === 1}

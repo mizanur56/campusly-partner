@@ -73,6 +73,8 @@ export interface AvailableMeetingSlot {
   slot: string;
   label: string;
   date: string;
+  slotMinutes?: number;
+  status?: "OPEN" | "BOOKED";
 }
 
 export interface BookMeetingPayload {
@@ -87,9 +89,14 @@ export interface SignContractPayload {
 export interface PartnerMeetingItem {
   id: string;
   scheduledAt: string;
+  /** Booked slot length (minutes); null on legacy meetings → UI defaults to 30. */
+  slotMinutes?: number | null;
   status: "SCHEDULED" | "COMPLETED" | "NO_SHOW" | "CANCELED";
   meetingLink?: string | null;
   note?: string | null;
+  cancelReason?: string | null;
+  canceledAt?: string | null;
+  canceledBy?: string | null;
   advisor?: {
     id: string;
     name: string;
@@ -276,11 +283,27 @@ const onboardingFormApi = baseApi.injectEndpoints({
       providesTags: ["partnerOnboarding"],
     }),
 
-    /** Cancel a scheduled meeting. */
-    cancelMeeting: builder.mutation<any, string>({
-      query: (meetingId) => ({
+    /** Cancel a scheduled meeting (requires reason — advisor is notified). */
+    cancelMeeting: builder.mutation<
+      any,
+      { meetingId: string; reason: string }
+    >({
+      query: ({ meetingId, reason }) => ({
         url: `/partners/meetings/${meetingId}/cancel`,
         method: "PATCH",
+        body: { reason },
+      }),
+      invalidatesTags: ["partnerOnboarding"],
+    }),
+
+    /**
+     * Dev/staging only (server checks config): mark current scheduled meeting completed
+     * so you can verify “Book again” and slot-ended UI without waiting.
+     */
+    completePartnerMeetingForTest: builder.mutation<any, string>({
+      query: (meetingId) => ({
+        url: `/partners/meetings/${meetingId}/complete-test`,
+        method: "POST",
       }),
       invalidatesTags: ["partnerOnboarding"],
     }),
@@ -306,5 +329,6 @@ export const {
   useBookMeetingMutation,
   useGetMyMeetingsQuery,
   useCancelMeetingMutation,
+  useCompletePartnerMeetingForTestMutation,
   useUnlockPortalAccessMutation,
 } = onboardingFormApi;

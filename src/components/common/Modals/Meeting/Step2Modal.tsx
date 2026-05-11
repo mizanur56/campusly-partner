@@ -8,23 +8,9 @@ interface Step2ModalProps {
   open: boolean;
   onClose: () => void;
   onBack: () => void;
-  onNext: (preferences: string[], additionalInfo: string) => void | Promise<void>;
+  onNext: (additionalInfo: string) => void | Promise<void>;
   isLoading?: boolean;
 }
-
-const preferences = [
-  "Application process",
-  "Travel",
-  "Accommodation",
-  "Universities",
-  "Courses",
-  "Documents",
-  "Careers",
-  "Visa",
-  "Funds",
-  "Others",
-  "Scholarships",
-];
 
 const Step2Modal: React.FC<Step2ModalProps> = ({
   open,
@@ -33,25 +19,14 @@ const Step2Modal: React.FC<Step2ModalProps> = ({
   onNext,
   isLoading = false,
 }) => {
-  const [selectedPreferences, setSelectedPreferences] = useState<string[]>([]);
   const [additionalInfo, setAdditionalInfo] = useState("");
 
-  const handlePreferenceClick = (preference: string) => {
-    setSelectedPreferences((prev) =>
-      prev.includes(preference)
-        ? prev.filter((p) => p !== preference)
-        : [...prev, preference],
-    );
-  };
-
   const handleNext = async () => {
-    if (selectedPreferences.length > 0 && !isLoading) {
-      await onNext(selectedPreferences, additionalInfo);
-    }
+    if (isLoading) return;
+    await onNext(additionalInfo);
   };
 
   const handleClose = () => {
-    setSelectedPreferences([]);
     setAdditionalInfo("");
     onClose();
   };
@@ -69,26 +44,8 @@ const Step2Modal: React.FC<Step2ModalProps> = ({
     >
       <div className="space-y-5">
         <h2 className="text-center text-xl font-semibold text-[#20242A]">
-          Topics
+          Add note
         </h2>
-
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-            {preferences.map((preference) => (
-              <button
-                key={preference}
-                onClick={() => handlePreferenceClick(preference)}
-                className={`cursor-pointer rounded-[50px] px-4 py-3 text-[14px] transition-all ${
-                  selectedPreferences.includes(preference)
-                    ? "border border-[#237D3B] bg-[#E9F2EB] font-semibold text-[#237D3B]"
-                    : "border border-transparent bg-[#EDEEEF] text-[#4B5563]"
-                }`}
-              >
-                <span className="whitespace-nowrap text-[14px]">{preference}</span>
-              </button>
-            ))}
-          </div>
-        </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-[#20242A]">
@@ -117,7 +74,7 @@ const Step2Modal: React.FC<Step2ModalProps> = ({
             variant="primary"
             size="md"
             onClick={handleNext}
-            disabled={selectedPreferences.length === 0 || isLoading}
+            disabled={isLoading}
             className="px-6 py-2"
           >
             {isLoading ? "Booking..." : "Book session"}
