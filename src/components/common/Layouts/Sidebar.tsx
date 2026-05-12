@@ -25,11 +25,21 @@ import { LogOutIcon } from "lucide-react";
 
 const SidebarItems: NavItem[] = [
   { icon: <i className="fa-solid fa-house"></i>, name: "Home", path: "/" },
+  {
+    icon: <i className="fa-solid fa-video"></i>,
+    name: "Meeting",
+    path: "/meeting",
+  },
 ];
 
 /** Full partner sidebar (PARTNER role). */
 const SignedSidebarItems: NavItem[] = [
   { icon: <i className="fa-solid fa-house"></i>, name: "Home", path: "/" },
+  {
+    icon: <i className="fa-solid fa-video"></i>,
+    name: "Meeting",
+    path: "/meeting",
+  },
   {
     icon: <i className="fa-solid fa-magnifying-glass"></i>,
     name: "Programs & Schools",
@@ -315,6 +325,10 @@ const Sidebar: React.FC = () => {
       (previewMode === "signed" || hasUnlockedPortal || isTeamMember)) ||
       signedPaths.some((path) => location.pathname.startsWith(path)) ||
       location.pathname.startsWith("/payments") ||
+      // Meeting page works for every partner stage, but only approved /
+      // team-member users should see the full signed nav while on it.
+      (location.pathname.startsWith("/meeting") &&
+        (previewMode === "signed" || hasUnlockedPortal || isTeamMember)) ||
       (isTeamMember &&
         (location.pathname.startsWith("/students/") ||
           location.pathname.startsWith("/applications/"))));

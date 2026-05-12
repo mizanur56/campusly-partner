@@ -18,6 +18,7 @@ import ResetPassword from "../pages/Auth/ResetPassword";
 import SetPasswordByInvite from "../pages/Auth/SetPasswordByInvite";
 import ContractPage from "../pages/Contract/ContractPage";
 import ContractSignedPage from "../pages/Contract/ContractSignedPage";
+import MeetingPage from "../pages/Meeting/MeetingPage";
 import Applications from "../pages/Applications/Applications";
 import ApplicationDetails from "../pages/Applications/ApplicationDetails";
 import VisaRejectPage from "../pages/Applications/ApplicationStep/VisaRejectPage";
@@ -138,6 +139,7 @@ function AppRoutes() {
           <Route path="onboarding" element={<OnboardingPage />} />
           <Route path="contract" element={<ContractPage />} />
           <Route path="contract/signed" element={<ContractSignedPage />} />
+          <Route path="meeting" element={<MeetingPage />} />
           <Route path="change-password" element={<ChangePassword />} />
           <Route path="programs-schools" element={<ProgramsSchools />} />
           <Route
