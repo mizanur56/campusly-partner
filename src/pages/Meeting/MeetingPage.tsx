@@ -92,7 +92,7 @@ export default function MeetingPage() {
   const [selectedMeetingDate, setSelectedMeetingDate] = useState<string>("");
   const [selectedMeetingTime, setSelectedMeetingTime] = useState<string>("");
 
-  const { data: partnerProfile, isLoading: isProfileLoading } =
+  const { data: partnerProfile, isLoading: isProfileLoading, refetch: refetchPartnerProfile } =
     useGetPartnerProfileQuery(undefined);
   const advisor = partnerProfile?.advisor ?? null;
   const advisorPhotoUrl = advisor?.profile?.url
@@ -254,6 +254,8 @@ export default function MeetingPage() {
   );
 
   const handleOpenMeetingModal = () => {
+    void refetchMeetings();
+    void refetchPartnerProfile();
     if (upcomingMeeting) {
       setExistingMeetingModalOpen(true);
       return;
@@ -266,6 +268,8 @@ export default function MeetingPage() {
   };
 
   const openNewBookingAfterCancel = () => {
+    void refetchMeetings();
+    void refetchPartnerProfile();
     setIsMeetingModalOpen(true);
     setMeetingStep(1);
     setSelectedSlot(undefined);
