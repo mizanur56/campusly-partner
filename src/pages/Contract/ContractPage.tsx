@@ -27,7 +27,6 @@ import { useCreateMediaMutation } from "../../redux/features/media/mediaApi";
 import {
   useBookMeetingMutation,
   useCancelMeetingMutation,
-  useCompletePartnerMeetingForTestMutation,
   useGetContractQuery,
   useGetMyMeetingsQuery,
   useGetOnboardingStatusQuery,
@@ -45,11 +44,6 @@ const PARTNER_JOIN_LEAD_MS = 0;
 const PARTNER_JOIN_WINDOW_AFTER_START_MS = 3 * 60 * 60 * 1000;
 /** Hide “Starts in 0s” — omit countdown when within 1s of start. */
 const SHOW_STARTS_IN_THRESHOLD_MS = 1000;
-
-/** Show “Testing: end session” when VITE_PARTNER_MEETING_TEST=true or local dev build. */
-const SHOW_PARTNER_MEETING_TEST_BUTTON =
-  import.meta.env.DEV ||
-  import.meta.env.VITE_PARTNER_MEETING_TEST === "true";
 
 function formatPartnerCountdown(ms: number): string {
   if (ms <= 0) return "0s";
@@ -152,8 +146,6 @@ export default function ContractPage() {
     useGetMyMeetingsQuery();
   const [cancelMeeting, { isLoading: isCancelingMeeting }] =
     useCancelMeetingMutation();
-  const [completeMeetingForTest, { isLoading: isCompletingMeetingTest }] =
-    useCompletePartnerMeetingForTestMutation();
 
   // Build contract document URL (pdf/image).
   const contractPdfUrl = useMemo(() => {
@@ -375,14 +367,6 @@ export default function ContractPage() {
   );
 
   const [liveNowMs, setLiveNowMs] = useState(() => Date.now());
-  /**
-   * DEV-only client-side fast-forward (in ms). Lets a tester "skip to session
-   * start" so they can preview the live state without waiting. Real network
-   * calls (cancel/complete) still hit the server with the actual clock; this
-   * only affects countdown UI + join-button enablement on this page.
-   */
-  const [liveTestOffsetMs, setLiveTestOffsetMs] = useState(0);
-  const effectiveNowMs = liveNowMs + liveTestOffsetMs;
 
   const upcomingMeeting = useMemo(() => {
     return (meetings || [])
@@ -427,19 +411,19 @@ export default function ContractPage() {
       unlock,
       linkClose,
       slotEnd,
-      msUntilStart: start - effectiveNowMs,
-      msUntilUnlock: unlock - effectiveNowMs,
-      msUntilSlotEnd: slotEnd - effectiveNowMs,
-      msUntilLinkClose: linkClose - effectiveNowMs,
+      msUntilStart: start - liveNowMs,
+      msUntilUnlock: unlock - liveNowMs,
+      msUntilSlotEnd: slotEnd - liveNowMs,
+      msUntilLinkClose: linkClose - liveNowMs,
     };
-  }, [upcomingMeeting, effectiveNowMs]);
+  }, [upcomingMeeting, liveNowMs]);
 
   const canJoinPartnerMeeting = useMemo(() => {
     if (!upcomingMeeting || upcomingMeeting.status !== "SCHEDULED") return false;
     const t = partnerMeetingTimeline;
     if (!t) return false;
-    return effectiveNowMs >= t.unlock && effectiveNowMs <= t.linkClose;
-  }, [upcomingMeeting, effectiveNowMs, partnerMeetingTimeline]);
+    return liveNowMs >= t.unlock && liveNowMs <= t.linkClose;
+  }, [upcomingMeeting, liveNowMs, partnerMeetingTimeline]);
 
   const cardMeetingStartsInLabel = useMemo(() => {
     if (!partnerMeetingTimeline) return "";
@@ -476,11 +460,6 @@ export default function ContractPage() {
     if (canJoinPartnerMeeting) return true;
     return !!cardMeetingStartsInLabel;
   }, [canJoinPartnerMeeting, cardMeetingStartsInLabel]);
-
-  /** Reset client fast-forward whenever the active meeting changes. */
-  useEffect(() => {
-    setLiveTestOffsetMs(0);
-  }, [upcomingMeeting?.id]);
 
   const upcomingMeetingSummary = useMemo(() => {
     if (!upcomingMeeting) return null;
@@ -543,23 +522,6 @@ export default function ContractPage() {
       openNewBookingAfterCancel();
     } catch (error: any) {
       message.error(error?.data?.message || "Failed to cancel meeting");
-    }
-  };
-
-  const handleCompleteMeetingForTest = async () => {
-    if (!upcomingMeeting) return;
-    try {
-      await completeMeetingForTest(upcomingMeeting.id).unwrap();
-      message.success(
-        "Meeting marked completed (test). You can use Book again to schedule another.",
-      );
-      setExistingMeetingModalOpen(false);
-      setIsMeetingModalOpen(false);
-    } catch (error: any) {
-      message.error(
-        error?.data?.message ||
-          "Test action failed. On the server use development mode or set PARTNER_MEETING_TEST_COMPLETE=1.",
-      );
     }
   };
 
@@ -870,35 +832,6 @@ export default function ContractPage() {
                                     : "Cancel meeting",
                                   disabled: isCancelingMeeting,
                                   onClick: handleOpenPartnerCancelFromCard,
-                                });
-                              }
-                              if (SHOW_PARTNER_MEETING_TEST_BUTTON) {
-                                if (
-                                  (partnerMeetingTimeline?.msUntilStart ?? 0) >
-                                  0
-                                ) {
-                                  items.push({
-                                    key: "skip",
-                                    label: "Test: skip to session start",
-                                    onClick: () => {
-                                      if (!partnerMeetingTimeline) return;
-                                      const jumpBy = Math.max(
-                                        0,
-                                        partnerMeetingTimeline.msUntilStart,
-                                      );
-                                      setLiveTestOffsetMs(
-                                        (prev) => prev + jumpBy,
-                                      );
-                                    },
-                                  });
-                                }
-                                items.push({
-                                  key: "finish",
-                                  label: isCompletingMeetingTest
-                                    ? "Finishing…"
-                                    : "Test: session finished",
-                                  disabled: isCompletingMeetingTest,
-                                  onClick: handleCompleteMeetingForTest,
                                 });
                               }
                               if (items.length === 0) return null;

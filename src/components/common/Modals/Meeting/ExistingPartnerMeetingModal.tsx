@@ -2,18 +2,12 @@ import { Dropdown, Input, Modal, message } from "antd";
 import type { MenuProps } from "antd";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FiMoreVertical } from "react-icons/fi";
-import {
-  type PartnerMeetingItem,
-  useCompletePartnerMeetingForTestMutation,
-} from "../../../../redux/features/onboardingForm/onboardingFormApi";
+import type { PartnerMeetingItem } from "../../../../redux/features/onboardingForm/onboardingFormApi";
 
 /** Join link unlocks exactly at the scheduled start time (no pre-lead). */
 const JOIN_LEAD_MS = 0;
 const JOIN_WINDOW_AFTER_START_MS = 3 * 60 * 60 * 1000;
 
-const SHOW_PARTNER_MEETING_TEST_BUTTON =
-  import.meta.env.DEV ||
-  import.meta.env.VITE_PARTNER_MEETING_TEST === "true";
 /** Hide “Starts in 0s” / flicker within the last second before start. */
 const START_HIDE_BELOW_MS = 1000;
 
@@ -59,18 +53,8 @@ const ExistingPartnerMeetingModal: React.FC<Props> = ({
   isCanceling,
 }) => {
   const [now, setNow] = useState(() => Date.now());
-  /**
-   * DEV-only fast-forward: lets testers preview the live state without
-   * waiting until the actual scheduled time. Only affects countdown UI +
-   * join-button enablement; the test "end session" button still calls the
-   * real server hook.
-   */
-  const [liveTestOffsetMs, setLiveTestOffsetMs] = useState(0);
-  const effectiveNow = now + liveTestOffsetMs;
   const [cancelReason, setCancelReason] = useState("");
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
-  const [completeMeetingForTest, { isLoading: isCompletingMeetingTest }] =
-    useCompletePartnerMeetingForTestMutation();
 
   useEffect(() => {
     if (!open) return;
@@ -82,13 +66,8 @@ const ExistingPartnerMeetingModal: React.FC<Props> = ({
     if (!open) {
       setCancelReason("");
       setCancelModalOpen(false);
-      setLiveTestOffsetMs(0);
     }
   }, [open]);
-
-  useEffect(() => {
-    setLiveTestOffsetMs(0);
-  }, [meeting?.id]);
 
   const scheduledMs = meeting ? new Date(meeting.scheduledAt).getTime() : NaN;
   const slotMinsResolved = meeting
@@ -104,14 +83,14 @@ const ExistingPartnerMeetingModal: React.FC<Props> = ({
   const joinAllowed = useMemo(() => {
     if (!meeting || meeting.status !== "SCHEDULED" || !Number.isFinite(scheduledMs))
       return false;
-    return effectiveNow >= joinUnlockMs && effectiveNow <= joinCloseMs;
-  }, [meeting, effectiveNow, scheduledMs, joinUnlockMs, joinCloseMs]);
+    return now >= joinUnlockMs && now <= joinCloseMs;
+  }, [meeting, now, scheduledMs, joinUnlockMs, joinCloseMs]);
 
-  const msUntilMeetingStart = scheduledMs - effectiveNow;
+  const msUntilMeetingStart = scheduledMs - now;
   const msUntilSlotEnd = Number.isFinite(slotEndMs)
-    ? slotEndMs - effectiveNow
+    ? slotEndMs - now
     : NaN;
-  const msUntilLinkClose = joinCloseMs - effectiveNow;
+  const msUntilLinkClose = joinCloseMs - now;
   const canCancelBeforeStart =
     !!meeting &&
     meeting.status === "SCHEDULED" &&
@@ -175,22 +154,6 @@ const ExistingPartnerMeetingModal: React.FC<Props> = ({
 
   const link = advisor.meetingLink || meeting?.meetingLink || null;
 
-  const handleTestCompleteMeeting = useCallback(async () => {
-    if (!meeting) return;
-    try {
-      await completeMeetingForTest(meeting.id).unwrap();
-      message.success(
-        "Meeting marked completed (test). Close this dialog and use Book again on the contract page.",
-      );
-      onClose();
-    } catch (e: any) {
-      message.error(
-        e?.data?.message ||
-          "Test failed. Server needs development mode or PARTNER_MEETING_TEST_COMPLETE=1.",
-      );
-    }
-  }, [meeting, completeMeetingForTest, onClose]);
-
   const overflowMenuItems = useMemo<MenuProps["items"]>(() => {
     if (!meeting) return [];
     const items: NonNullable<MenuProps["items"]> = [];
@@ -203,33 +166,8 @@ const ExistingPartnerMeetingModal: React.FC<Props> = ({
         onClick: () => setCancelModalOpen(true),
       });
     }
-    if (SHOW_PARTNER_MEETING_TEST_BUTTON && meeting.status === "SCHEDULED") {
-      if (msUntilMeetingStart > 0) {
-        items.push({
-          key: "skip",
-          label: "Test: skip to session start",
-          onClick: () => {
-            const jumpBy = Math.max(0, msUntilMeetingStart);
-            setLiveTestOffsetMs((prev) => prev + jumpBy);
-          },
-        });
-      }
-      items.push({
-        key: "finish",
-        label: isCompletingMeetingTest ? "Finishing…" : "Test: session finished",
-        disabled: isCompletingMeetingTest,
-        onClick: handleTestCompleteMeeting,
-      });
-    }
     return items;
-  }, [
-    meeting,
-    canCancelBeforeStart,
-    isCanceling,
-    msUntilMeetingStart,
-    isCompletingMeetingTest,
-    handleTestCompleteMeeting,
-  ]);
+  }, [meeting, canCancelBeforeStart, isCanceling]);
 
   const modalTitle = (
     <div className="flex items-center justify-between gap-3 pr-6">

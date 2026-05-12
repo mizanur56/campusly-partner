@@ -13,7 +13,6 @@ import { config } from "../../config";
 import {
   useBookMeetingMutation,
   useCancelMeetingMutation,
-  useCompletePartnerMeetingForTestMutation,
   useGetMyMeetingsQuery,
 } from "../../redux/features/onboardingForm/onboardingFormApi";
 import { useGetPartnerProfileQuery } from "../../redux/features/profile/partnerProfileApi";
@@ -37,10 +36,6 @@ const PARTNER_JOIN_LEAD_MS = 0;
 const PARTNER_JOIN_WINDOW_AFTER_START_MS = 3 * 60 * 60 * 1000;
 /** Hide "Starts in 0s" — omit countdown when within 1s of start. */
 const SHOW_STARTS_IN_THRESHOLD_MS = 1000;
-
-const SHOW_PARTNER_MEETING_TEST_BUTTON =
-  import.meta.env.DEV ||
-  import.meta.env.VITE_PARTNER_MEETING_TEST === "true";
 
 function formatPartnerCountdown(ms: number): string {
   if (ms <= 0) return "0s";
@@ -116,18 +111,8 @@ export default function MeetingPage() {
   } = useGetMyMeetingsQuery();
   const [cancelMeeting, { isLoading: isCancelingMeeting }] =
     useCancelMeetingMutation();
-  const [completeMeetingForTest, { isLoading: isCompletingMeetingTest }] =
-    useCompletePartnerMeetingForTestMutation();
 
   const [liveNowMs, setLiveNowMs] = useState(() => Date.now());
-  /**
-   * DEV-only client-side fast-forward (in ms). Lets a tester "skip to session
-   * start" so they can preview the live state without waiting. Real network
-   * calls still hit the server with the actual clock; this only affects the
-   * countdown UI + join-button enablement on this page.
-   */
-  const [liveTestOffsetMs, setLiveTestOffsetMs] = useState(0);
-  const effectiveNowMs = liveNowMs + liveTestOffsetMs;
 
   const upcomingMeeting = useMemo(() => {
     return (meetings || [])
@@ -172,19 +157,19 @@ export default function MeetingPage() {
       unlock,
       linkClose,
       slotEnd,
-      msUntilStart: start - effectiveNowMs,
-      msUntilUnlock: unlock - effectiveNowMs,
-      msUntilSlotEnd: slotEnd - effectiveNowMs,
-      msUntilLinkClose: linkClose - effectiveNowMs,
+      msUntilStart: start - liveNowMs,
+      msUntilUnlock: unlock - liveNowMs,
+      msUntilSlotEnd: slotEnd - liveNowMs,
+      msUntilLinkClose: linkClose - liveNowMs,
     };
-  }, [upcomingMeeting, effectiveNowMs]);
+  }, [upcomingMeeting, liveNowMs]);
 
   const canJoinPartnerMeeting = useMemo(() => {
     if (!upcomingMeeting || upcomingMeeting.status !== "SCHEDULED") return false;
     const t = partnerMeetingTimeline;
     if (!t) return false;
-    return effectiveNowMs >= t.unlock && effectiveNowMs <= t.linkClose;
-  }, [upcomingMeeting, effectiveNowMs, partnerMeetingTimeline]);
+    return liveNowMs >= t.unlock && liveNowMs <= t.linkClose;
+  }, [upcomingMeeting, liveNowMs, partnerMeetingTimeline]);
 
   const cardMeetingStartsInLabel = useMemo(() => {
     if (!partnerMeetingTimeline) return "";
@@ -215,11 +200,6 @@ export default function MeetingPage() {
     if (canJoinPartnerMeeting) return true;
     return !!cardMeetingStartsInLabel;
   }, [canJoinPartnerMeeting, cardMeetingStartsInLabel]);
-
-  /** Reset client fast-forward whenever the active meeting changes. */
-  useEffect(() => {
-    setLiveTestOffsetMs(0);
-  }, [upcomingMeeting?.id]);
 
   const upcomingMeetingSummary = useMemo(() => {
     if (!upcomingMeeting) return null;
@@ -348,16 +328,6 @@ export default function MeetingPage() {
     setPartnerCancelReason("");
   };
 
-  const handleCompleteMeetingForTest = async () => {
-    if (!upcomingMeeting) return;
-    try {
-      await completeMeetingForTest(upcomingMeeting.id).unwrap();
-      message.success("Meeting marked as completed (test)");
-    } catch (error: any) {
-      message.error(error?.data?.message || "Failed to complete meeting");
-    }
-  };
-
   const noAdvisor = !isProfileLoading && !advisor;
 
   return (
@@ -424,32 +394,6 @@ export default function MeetingPage() {
                               : "Cancel meeting",
                             disabled: isCancelingMeeting,
                             onClick: handleOpenPartnerCancelFromCard,
-                          });
-                        }
-                        if (SHOW_PARTNER_MEETING_TEST_BUTTON) {
-                          if (
-                            (partnerMeetingTimeline?.msUntilStart ?? 0) > 0
-                          ) {
-                            items.push({
-                              key: "skip",
-                              label: "Test: skip to session start",
-                              onClick: () => {
-                                if (!partnerMeetingTimeline) return;
-                                const jumpBy = Math.max(
-                                  0,
-                                  partnerMeetingTimeline.msUntilStart,
-                                );
-                                setLiveTestOffsetMs((prev) => prev + jumpBy);
-                              },
-                            });
-                          }
-                          items.push({
-                            key: "finish",
-                            label: isCompletingMeetingTest
-                              ? "Finishing…"
-                              : "Test: session finished",
-                            disabled: isCompletingMeetingTest,
-                            onClick: handleCompleteMeetingForTest,
                           });
                         }
                         if (items.length === 0) return null;
