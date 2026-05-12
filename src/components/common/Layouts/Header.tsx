@@ -80,6 +80,7 @@ const Header: React.FC = () => {
     pathname === "/" ||
     pathname.startsWith("/onboarding") ||
     pathname.startsWith("/contract") ||
+    pathname.startsWith("/meeting") ||
     [
       "/programs-schools",
       "/students",

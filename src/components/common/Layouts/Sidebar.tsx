@@ -36,11 +36,6 @@ const SidebarItems: NavItem[] = [
 const SignedSidebarItems: NavItem[] = [
   { icon: <i className="fa-solid fa-house"></i>, name: "Home", path: "/" },
   {
-    icon: <i className="fa-solid fa-video"></i>,
-    name: "Meeting",
-    path: "/meeting",
-  },
-  {
     icon: <i className="fa-solid fa-magnifying-glass"></i>,
     name: "Programs & Schools",
     path: "/programs-schools",
