@@ -33,26 +33,24 @@ const Step3Modal: React.FC<Step3ModalProps> = ({
       className="book-session-modal"
       styles={{ content: { padding: "24px", borderRadius: "12px" } }}
     >
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="whitesapce-nowrap text-[20px] font-semibold text-[#20242A]">
-            Book a session
-          </h2>
+      <div className="space-y-5">
+        <div className="flex items-center justify-end">
           <button
             onClick={onClose}
             className="rounded-full p-2 transition-colors hover:bg-gray-100"
+            aria-label="Close"
           >
             <IoClose size={24} className="text-gray-500" />
           </button>
         </div>
 
-        <div className="space-y-6 text-center">
-          <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-gray-900">
-              Session Confirmed
+        <div className="space-y-5 text-center">
+          <div className="space-y-1">
+            <h2 className="text-xl font-semibold text-gray-900">
+              Booked
             </h2>
-            <p className="text-gray-600">
-              The link to join the session will be emailed to you
+            <p className="text-sm text-gray-600">
+              We’ll email you the join link.
             </p>
           </div>
 
@@ -72,7 +70,7 @@ const Step3Modal: React.FC<Step3ModalProps> = ({
               </div>
               <div className="flex-1 text-left">
                 <p className="text-lg font-semibold text-gray-900">
-                  Counselling Session
+                  Session
                 </p>
                 <div className="mt-1 flex items-center gap-2">
                   <ClockCircleOutlined className="text-gray-500" />

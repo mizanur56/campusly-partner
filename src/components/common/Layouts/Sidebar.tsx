@@ -25,6 +25,11 @@ import { LogOutIcon } from "lucide-react";
 
 const SidebarItems: NavItem[] = [
   { icon: <i className="fa-solid fa-house"></i>, name: "Home", path: "/" },
+  {
+    icon: <i className="fa-solid fa-video"></i>,
+    name: "Meeting",
+    path: "/meeting",
+  },
 ];
 
 /** Full partner sidebar (PARTNER role). */
@@ -265,7 +270,7 @@ const Sidebar: React.FC = () => {
   /* Sidebar mode by context:
    * - STUDENT: /students/:id/* → only student card + Activity/Profile/Applications/Tasks
    * - APPLICATION DETAIL: /applications/:id/* → student card (from application) + Activity/Profile/Applications/Tasks
-   * - UNSIGNED (onboarding): / or /onboarding or /contract → partner card + Home
+   * - UNSIGNED (onboarding): / or /onboarding or /contract or /meeting (pre-unlock) → advisor card + Home (+ Meeting on /meeting)
    * - SIGNED: dashboard routes → partner card + full nav
    */
   const isStudentContext = /^\/students\/[^/]+(\/|$)/.test(location.pathname);
@@ -290,10 +295,14 @@ const Sidebar: React.FC = () => {
   );
 
   const studentNavItems = useMemo(() => STUDENT_NAV, []);
+  /** Same idea as Header onboarding branding: pre-unlock partners see advisor card on /meeting too. */
   const isOnboardingContext =
     (location.pathname === "/" && previewMode === "onboarding") ||
     location.pathname.startsWith("/onboarding") ||
-    location.pathname.startsWith("/contract");
+    location.pathname.startsWith("/contract") ||
+    (location.pathname.startsWith("/meeting") &&
+      !hasUnlockedPortal &&
+      !isTeamMember);
   const signedPaths = isTeamMember
     ? TEAM_MEMBER_ROUTE_PATHS
     : SIGNED_ROUTE_PATHS;
@@ -1007,7 +1016,7 @@ const Sidebar: React.FC = () => {
           </div>
         )}
 
-        {/* Sidebar preview nav: UNSIGNED → Home only | SIGNED → full partner nav | STUDENT/APPLICATION → hidden (handled by student sidebar above) */}
+        {/* Sidebar preview nav: UNSIGNED → Home (+ Meeting on /meeting) | SIGNED → full partner nav | STUDENT/APPLICATION → hidden */}
         <div className="flex flex-col">
           {isApplicationDetailLoading && (
             <div className="px-3 py-4">
