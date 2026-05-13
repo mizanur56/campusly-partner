@@ -10,6 +10,7 @@ import PrimaryButton from "../../../components/common/Button/PrimaryButton";
 import { CloseOutlined } from "@ant-design/icons";
 import { Modal, Select } from "antd";
 import { config } from "../../../config";
+import { downloadFile } from "../../../utils/downloadFile";
 import { useApplicationDocumentUploadMutation } from "../../../redux/features/application/applicationApi";
 
 import { FaPlusSquare } from "react-icons/fa";
@@ -164,30 +165,6 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
     [],
   );
 
-  const downloadDocument = React.useCallback(
-    async (url: string, name?: string) => {
-      try {
-        const res = await fetch(url, { credentials: "include" });
-        if (!res.ok) throw new Error(`${res.status}`);
-        const blob = await res.blob();
-        const objectUrl = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = objectUrl;
-        a.download = name?.trim() || "download";
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(objectUrl);
-      } catch {
-        try {
-          window.open(url, "_blank");
-        } catch {
-          /* ignore */
-        }
-      }
-    },
-    [],
-  );
 
   /* ================= Fetch File Sizes ================= */
   React.useEffect(() => {
@@ -615,7 +592,7 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    downloadDocument(doc.url ?? "", doc.name);
+                                    downloadFile(doc.url ?? "", doc.name);
                                   }}
                                   className="text-[#4B5563] cursor-pointer hover:text-[#237D3B]"
                                 >

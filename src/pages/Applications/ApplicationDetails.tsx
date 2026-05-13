@@ -3,7 +3,10 @@ import { Image, Spin } from "antd";
 import React, { useEffect } from "react";
 import { FaCircleCheck, FaCircleXmark } from "react-icons/fa6";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { useGetApplicationByIdQuery } from "../../redux/features/application/applicationApi";
+import {
+  useGetAllInvoicePaymentsQuery,
+  useGetApplicationByIdQuery,
+} from "../../redux/features/application/applicationApi";
 
 import { RefreshCw } from "lucide-react";
 import { config } from "../../config";
@@ -40,6 +43,8 @@ const ApplicationDetails = () => {
     useGetApplicationByIdQuery(id, {
       skip: !id,
     });
+  const { refetch: paymentRefetch, isFetching: isPaymentFetching } =
+    useGetAllInvoicePaymentsQuery([]);
   const applicationApiData = data?.data;
 
   /** Partner profile API uses student record id (see Admission.tsx), not auth userId. */
@@ -199,9 +204,15 @@ const ApplicationDetails = () => {
     const _invoices: any[] = applicationApiData?.invoices ?? [];
     const _appFeeInv = _invoices.find((inv) => inv.type === "APPLICATION_FEE");
     const _tuitionFeeInv = _invoices.find((inv) =>
-      ["TUITION_FEE_HALF_BEFORE", "TUITION_FEE_FULL", "TUITION_FEE_FULL_BEFORE", "TUITION_FEE_FULL_AFTER_VISA"].includes(inv.type),
+      [
+        "TUITION_FEE_HALF_BEFORE",
+        "TUITION_FEE_FULL",
+        "TUITION_FEE_FULL_BEFORE",
+        "TUITION_FEE_FULL_AFTER_VISA",
+      ].includes(inv.type),
     );
-    const _appFeeComplete = !_appFeeInv || _appFeeInv.status === "PAID" || _appFeeInv.amount === 0;
+    const _appFeeComplete =
+      !_appFeeInv || _appFeeInv.status === "PAID" || _appFeeInv.amount === 0;
     const _tuitionFeeComplete =
       !!_tuitionFeeInv &&
       (_tuitionFeeInv.status === "PAID" || _tuitionFeeInv.amount === 0);
@@ -341,13 +352,13 @@ const ApplicationDetails = () => {
 
           <div className="shrink-0">
             <button
-              onClick={refetch}
+              onClick={() => { refetch(); paymentRefetch(); }}
               className="px-3 sm:px-4 py-3 text-sm bg-primary-600 text-white rounded-xl hover:bg-primary-700 flex items-center gap-2 transition-all disabled:opacity-70"
-              disabled={isFetching}
+              disabled={isFetching || isPaymentFetching}
             >
               <RefreshCw
                 size={18}
-                className={`${isFetching ? "animate-spin" : ""}`}
+                className={`${isFetching || isPaymentFetching ? "animate-spin" : ""}`}
               />
               <span className="hidden sm:inline">Refresh</span>
             </button>

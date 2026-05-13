@@ -13,6 +13,7 @@ import PrimaryButton from "../../../components/common/Button/PrimaryButton";
 import Collapsible from "../../../components/common/Shared/Collapsible";
 
 import { config } from "../../../config";
+import { downloadFile } from "../../../utils/downloadFile";
 import {
   useGetAllInvoicePaymentsQuery,
   useSubmitPaymentReceiptMutation,
@@ -38,45 +39,23 @@ interface Section {
 }
 
 /* ================= Document Card ================= */
-const DocumentCard: React.FC<{ doc: Document }> = ({ doc }) => {
-  const handleDownload = async () => {
-    if (!doc?.url) return;
-    const fileName = doc.name || doc.url.split("/").pop() || "download";
-    try {
-      const res = await fetch(doc.url, { credentials: "include" });
-      if (!res.ok) throw new Error(`${res.status}`);
-      const blob = await res.blob();
-      const objectUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = objectUrl;
-      link.setAttribute("download", fileName);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(objectUrl);
-    } catch {
-      window.open(doc.url, "_blank");
-    }
-  };
-
-  return (
-    <div className="flex items-center justify-between border border-primary-border rounded-lg p-4">
-      <div className="flex items-center gap-3">
-        <BsFileEarmarkBarGraph className="text-[20px]" />
-        <div>
-          <p className="text-[14px] font-medium text-[#20242A]">{doc?.name}</p>
-          <p className="text-[12px] text-[#6B7280]">{doc?.size}</p>
-        </div>
+const DocumentCard: React.FC<{ doc: Document }> = ({ doc }) => (
+  <div className="flex items-center justify-between border border-primary-border rounded-lg p-4">
+    <div className="flex items-center gap-3">
+      <BsFileEarmarkBarGraph className="text-[20px]" />
+      <div>
+        <p className="text-[14px] font-medium text-[#20242A]">{doc?.name}</p>
+        <p className="text-[12px] text-[#6B7280]">{doc?.size}</p>
       </div>
-      <button
-        onClick={handleDownload}
-        className="text-[#4B5563] hover:text-[#237D3B] cursor-pointer transition-colors"
-      >
-        <DownloadOutlined style={{ fontSize: 18 }} />
-      </button>
     </div>
-  );
-};
+    <button
+      onClick={() => downloadFile(doc?.url ?? "", doc?.name)}
+      className="text-[#4B5563] hover:text-[#237D3B] cursor-pointer transition-colors"
+    >
+      <DownloadOutlined style={{ fontSize: 18 }} />
+    </button>
+  </div>
+);
 
 export type ApplyStepProps = {
   applicationApiData: any;
@@ -197,6 +176,8 @@ export const ApplyStep: React.FC<ApplyStepProps> = ({
     tuitionPaymentDoc?.paymentReceipt,
   ]);
 
+  console.log(applicationFee);
+
   const sections: Section[] = useMemo(
     () => [
       {
@@ -243,12 +224,11 @@ export const ApplyStep: React.FC<ApplyStepProps> = ({
             </span>
           )
         ) : (
-          "Great news! You don't need to pay the application fee—it's fully waived."
+          "Awaiting application fee details from admin."
         ),
         isCompleted:
-          !applicationFee ||
-          applicationFee.status === "PAID" ||
-          applicationFee.amount === 0,
+          !!applicationFee &&
+          (applicationFee.status === "PAID" || applicationFee.amount === 0),
         hasUpload: !!applicationFee,
         documents: [
           applicationFee?.invoiceFile
@@ -282,7 +262,7 @@ export const ApplyStep: React.FC<ApplyStepProps> = ({
             </span>
           )
         ) : (
-          "Great news! You don't need to pay the tuition fee—it's fully waived."
+          "Awaiting Tuition fee details from admin."
         ),
         isCompleted:
           !!tuitionFee &&

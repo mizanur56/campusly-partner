@@ -63,7 +63,7 @@ const getUpcomingStartDates = (rawDates: string[]) => {
   results.sort((a, b) =>
     a.year === b.year ? a.monthIndex - b.monthIndex : a.year - b.year,
   );
-  return results.slice(0, 2);
+  return results;
 };
 
 export default function ApplyPreferenceModal({
@@ -73,6 +73,7 @@ export default function ApplyPreferenceModal({
   data,
   showStudentSelect = false,
 }: ApplyPreferenceModalProps) {
+  // console.log("data", data);
   const user = useSelector(selectCurrentUser);
   const [selectedStudentId, setSelectedStudentId] = useState<
     string | undefined
@@ -162,16 +163,20 @@ export default function ApplyPreferenceModal({
 
   const [createApplication, { isLoading }] = useCreateApplicationMutation();
   const navigate = useNavigate();
+  console.log("data", data.startDates);
   const rawStartDates = Array.isArray(data?.startDates)
     ? data.startDates
     : data.startDates
       ? [data.startDates]
       : [];
 
+  console.log("rawStartDates", rawStartDates);
+
   const startDates = useMemo(
     () => getUpcomingStartDates(rawStartDates),
     [rawStartDates],
   );
+  console.log("startDates", startDates);
 
   const defaultDate = startDates[0]?.label ?? `Mar ${new Date().getFullYear()}`;
   const [selectedStartDate, setSelectedStartDate] = useState<string | null>(
@@ -228,7 +233,7 @@ export default function ApplyPreferenceModal({
     startDates.length > 0
       ? startDates
       : [{ label: defaultDate, year: new Date().getFullYear(), monthIndex: 2 }];
-
+  console.log("datesToShow", datesToShow);
   return (
     <Modal open={open} onCancel={onClose} footer={null} centered width={600}>
       <div className="space-y-6">
@@ -273,6 +278,7 @@ export default function ApplyPreferenceModal({
           </p>
           <div className="flex flex-wrap gap-2">
             {datesToShow.map((item) => {
+              // console.log(item);
               const isSelected = selectedStartDate === item.label;
               return (
                 <button
