@@ -23,13 +23,9 @@ import { useGetStudentProfileQuery } from "../../../redux/features/profile/stude
 import { NavItem, SubMenuItem } from "../../../types/interfaces";
 import { LogOutIcon } from "lucide-react";
 
+/** Minimal nav while partner is still in onboarding (unsigned / pre-unlock). */
 const SidebarItems: NavItem[] = [
   { icon: <i className="fa-solid fa-house"></i>, name: "Home", path: "/" },
-  {
-    icon: <i className="fa-solid fa-video"></i>,
-    name: "Meeting",
-    path: "/meeting",
-  },
 ];
 
 /** Full partner sidebar (PARTNER role). */
@@ -270,7 +266,7 @@ const Sidebar: React.FC = () => {
   /* Sidebar mode by context:
    * - STUDENT: /students/:id/* → only student card + Activity/Profile/Applications/Tasks
    * - APPLICATION DETAIL: /applications/:id/* → student card (from application) + Activity/Profile/Applications/Tasks
-   * - UNSIGNED (onboarding): / or /onboarding or /contract or /meeting (pre-unlock) → advisor card + Home (+ Meeting on /meeting)
+   * - UNSIGNED (onboarding): / or /onboarding or /contract or /meeting (pre-unlock) → advisor card + Home only
    * - SIGNED: dashboard routes → partner card + full nav
    */
   const isStudentContext = /^\/students\/[^/]+(\/|$)/.test(location.pathname);
@@ -1016,7 +1012,7 @@ const Sidebar: React.FC = () => {
           </div>
         )}
 
-        {/* Sidebar preview nav: UNSIGNED → Home (+ Meeting on /meeting) | SIGNED → full partner nav | STUDENT/APPLICATION → hidden */}
+        {/* Sidebar preview nav: UNSIGNED → Home only | SIGNED → full partner nav | STUDENT/APPLICATION → hidden */}
         <div className="flex flex-col">
           {isApplicationDetailLoading && (
             <div className="px-3 py-4">

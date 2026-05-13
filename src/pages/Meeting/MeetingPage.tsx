@@ -596,6 +596,8 @@ export default function MeetingPage() {
         open={isMeetingModalOpen && meetingStep === 1}
         onClose={() => setIsMeetingModalOpen(false)}
         slots={slotsForBooking}
+        availabilityTemplates={partnerProfile?.advisorAvailability || []}
+        isLoadingSlots={isProfileLoading && !partnerProfile}
         onNext={handleStep1Next}
       />
       <Step2MeetingModal

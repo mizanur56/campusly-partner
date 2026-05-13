@@ -117,8 +117,11 @@ export default function ContractPage() {
     useGetOnboardingStatusQuery();
 
   // Fetch partner profile for advisor info
-  const { data: partnerProfile, refetch: refetchPartnerProfile } =
-    useGetPartnerProfileQuery();
+  const {
+    data: partnerProfile,
+    refetch: refetchPartnerProfile,
+    isLoading: isPartnerProfileLoading,
+  } = useGetPartnerProfileQuery();
   const onboardingAdvisor = (onboardingStatus?.advisor ?? null) as {
     id?: string;
     name?: string | null;
@@ -135,7 +138,8 @@ export default function ContractPage() {
     : null;
 
   const availableSlots = partnerProfile?.advisorAvailableSlots || [];
-  const isLoadingSlots = false;
+  const isLoadingSlots =
+    isPartnerProfileLoading && !partnerProfile;
 
   const [bookMeeting, { isLoading: isBookingMeeting }] =
     useBookMeetingMutation();
