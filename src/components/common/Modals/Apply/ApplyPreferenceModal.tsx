@@ -2,13 +2,12 @@
 import { Modal } from "antd";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import {
   useCreateApplicationMutation,
   useGetSingleStudentApplicationsQuery,
 } from "../../../../redux/features/application/applicationApi";
-import { toast } from "react-toastify";
 import StudentSelectBlock from "../../../courses/StudentSelectBlock";
-import type { SelectedStudent } from "../../../courses/SelectedStudentCard";
 
 interface ApplyPreferenceModalProps {
   open: boolean;
@@ -68,23 +67,15 @@ export default function ApplyPreferenceModal({
   showStudentSelect = false,
 }: ApplyPreferenceModalProps) {
   // console.log("data", data);
-  const user = useSelector(selectCurrentUser);
-  const [selectedStudentId, setSelectedStudentId] = useState<
-    string | undefined
-  >();
-  const { data: allStudents } = useGetAllStudentsByPartnerIdQuery(
-    { partnerId: user?.id as string },
-    { skip: !user?.id },
-  );
 
-  useEffect(() => {
-    if (!open) setPickedStudent(null);
-  }, [open]);
-
+  const [pickedStudent, setPickedStudent] = useState<any | null>(null);
   const { data: applicationsData } = useGetSingleStudentApplicationsQuery(
     { studentId: pickedStudent?.id || studentId },
     { skip: !(pickedStudent?.id || studentId) },
   );
+  useEffect(() => {
+    if (!open) setPickedStudent(null);
+  }, [open]);
 
   const appliedMap = useMemo(() => {
     const map = new Set<string>();
