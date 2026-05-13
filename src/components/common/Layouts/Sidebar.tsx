@@ -23,6 +23,7 @@ import { useGetStudentProfileQuery } from "../../../redux/features/profile/stude
 import { NavItem, SubMenuItem } from "../../../types/interfaces";
 import { LogOutIcon } from "lucide-react";
 
+/** Minimal nav while partner is still in onboarding (unsigned / pre-unlock). */
 const SidebarItems: NavItem[] = [
   { icon: <i className="fa-solid fa-house"></i>, name: "Home", path: "/" },
 ];
@@ -133,12 +134,6 @@ const STUDENT_NAV = [
     label: "Applications",
     icon: "fa-solid fa-file-lines",
     path: "applications",
-  },
-  {
-    key: "tasks",
-    label: "Tasks",
-    icon: "fa-solid fa-list-check",
-    path: "tasks",
   },
 ];
 
@@ -271,7 +266,7 @@ const Sidebar: React.FC = () => {
   /* Sidebar mode by context:
    * - STUDENT: /students/:id/* → only student card + Activity/Profile/Applications/Tasks
    * - APPLICATION DETAIL: /applications/:id/* → student card (from application) + Activity/Profile/Applications/Tasks
-   * - UNSIGNED (onboarding): / or /onboarding or /contract → partner card + Home
+   * - UNSIGNED (onboarding): / or /onboarding or /contract or /meeting (pre-unlock) → advisor card + Home only
    * - SIGNED: dashboard routes → partner card + full nav
    */
   const isStudentContext = /^\/students\/[^/]+(\/|$)/.test(location.pathname);
@@ -296,10 +291,14 @@ const Sidebar: React.FC = () => {
   );
 
   const studentNavItems = useMemo(() => STUDENT_NAV, []);
+  /** Same idea as Header onboarding branding: pre-unlock partners see advisor card on /meeting too. */
   const isOnboardingContext =
     (location.pathname === "/" && previewMode === "onboarding") ||
     location.pathname.startsWith("/onboarding") ||
-    location.pathname.startsWith("/contract");
+    location.pathname.startsWith("/contract") ||
+    (location.pathname.startsWith("/meeting") &&
+      !hasUnlockedPortal &&
+      !isTeamMember);
   const signedPaths = isTeamMember
     ? TEAM_MEMBER_ROUTE_PATHS
     : SIGNED_ROUTE_PATHS;
@@ -359,6 +358,12 @@ const Sidebar: React.FC = () => {
       if (path.startsWith("/payments")) {
         // Single "Payments" menu should stay active for Purchase/Commission tabs
         return location.pathname.startsWith("/payments");
+      }
+      if (path === "/academy") {
+        return location.pathname.startsWith("/academy");
+      }
+      if (path === "/programs-schools") {
+        return location.pathname.startsWith("/programs-schools");
       }
       return location.pathname === path;
     },
@@ -1007,7 +1012,7 @@ const Sidebar: React.FC = () => {
           </div>
         )}
 
-        {/* Sidebar preview nav: UNSIGNED → Home only | SIGNED → full partner nav | STUDENT/APPLICATION → hidden (handled by student sidebar above) */}
+        {/* Sidebar preview nav: UNSIGNED → Home only | SIGNED → full partner nav | STUDENT/APPLICATION → hidden */}
         <div className="flex flex-col">
           {isApplicationDetailLoading && (
             <div className="px-3 py-4">

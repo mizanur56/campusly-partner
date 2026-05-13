@@ -5,29 +5,31 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { useGetFilterOptionsQuery } from "../../redux/features/search/searchApi";
+import type { ProgramsSchoolFilterOptionsBundle } from "../../hooks/useProgramsSchoolFilterOptions";
+import { START_YEARS } from "../../utils/filterConstants";
 import { KeywordGroup } from "../common/Tabs";
+import { createDefaultFilterState, type FilterState } from "./filterTypes";
+
+export type { FilterState } from "./filterTypes";
 
 interface StudyPreferenceFiltersProps {
-  onFilterChange?: (filters: FilterState) => void;
-}
-
-export interface FilterState {
-  studyDestination: string;
-  studyLevel: string[];
-  startYear: string[];
-  startMonth: string[];
-  subjects: string[];
-  duration: string[];
-  institution: string;
-  feeRange: {
-    min: number;
-    max: number;
-  };
+  /** Lifted state — single source for sidebar + GET /search/filter-options + search */
+  filters: FilterState;
+  onFilterChange: (filters: FilterState) => void;
+  /** Populated once on Programs Schools page via `useProgramsSchoolFilterOptions` */
+  filterOptions: ProgramsSchoolFilterOptionsBundle;
+  /** Clear sidebar filters + URL (e.g. universityId from "View courses") */
+  onRequestReset?: () => void;
+  /** When URL scopes results (e.g. `universityId`), reset clears it — show prominent Reset */
+  urlScopeActive?: boolean;
 }
 
 const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
+  filters,
   onFilterChange,
+  filterOptions,
+  onRequestReset,
+  urlScopeActive = false,
 }) => {
   const [isStudyPreferenceExpanded, setIsStudyPreferenceExpanded] =
     useState(true);
@@ -39,33 +41,25 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
     useState(false);
   const [showInstitutionDropdown, setShowInstitutionDropdown] = useState(false);
 
-  // Initialize filters state first
-  const [filters, setFilters] = useState<FilterState>({
-    studyDestination: "",
-    studyLevel: [],
-    startYear: [],
-    startMonth: [],
-    subjects: [],
-    duration: [],
-    institution: "",
-    feeRange: {
-      min: 0,
-      max: 100000,
-    },
-  });
+  const {
+    baseFilterOptions,
+    filterOptionsResponse,
+    isLoadingFilterOptions,
+    isLoadingBaseFilterOptions,
+  } = filterOptions;
 
-  // Fetch data from single filter-options API
-  const { data: filterOptionsResponse, isLoading: isLoadingFilterOptions } =
-    useGetFilterOptionsQuery();
+  const hasDestinationSelected = Boolean(
+    filters.studyDestinationCountryId || filters.studyDestination?.trim(),
+  );
 
-  // Extract data from filter-options API
+  // Extract data from filter-options API (countries always from base so the picker stays populated while scoped loads)
   const studyDestinations = useMemo(() => {
-    const countries = filterOptionsResponse?.data?.countries || [];
+    const countries = baseFilterOptions?.data?.countries || [];
     return countries.map((country) => ({
-      value: country.name,
+      value: country.id,
       label: country.name,
     }));
-  }, [filterOptionsResponse?.data?.countries]);
+  }, [baseFilterOptions?.data?.countries]);
 
   const availableSubjects = useMemo(() => {
     const courses = filterOptionsResponse?.data?.courses || [];
@@ -74,20 +68,44 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
 
   const institutions = useMemo(() => {
     const universities = filterOptionsResponse?.data?.universities || [];
-    const selectedCountry = filters.studyDestination;
-    if (!selectedCountry) return [];
+    const filtered = filters.studyDestinationCountryId
+      ? universities.filter(
+          (u) => u.countryId === filters.studyDestinationCountryId
+        )
+      : (() => {
+          const selectedCountry = filters.studyDestination?.trim();
+          if (!selectedCountry) return [];
+          const needle = selectedCountry.toLowerCase();
+          return universities.filter(
+            (u) => u.countryName.trim().toLowerCase() === needle
+          );
+        })();
 
-    return universities
-      .filter((u) => u.countryName === selectedCountry)
-      .map((u) => u.name)
-      .sort();
-  }, [filterOptionsResponse?.data?.universities, filters.studyDestination]);
+    const seen = new Set<string>();
+    const names: string[] = [];
+    for (const u of filtered) {
+      if (seen.has(u.id)) continue;
+      seen.add(u.id);
+      names.push(u.name);
+    }
+    return names.sort((a, b) => a.localeCompare(b));
+  }, [
+    filterOptionsResponse?.data?.universities,
+    filters.studyDestinationCountryId,
+    filters.studyDestination,
+  ]);
 
-  // Extract study levels - Only show Postgraduate and Undergraduate
+  /**
+   * Study levels are global (same for every destination). Use the unscoped payload so
+   * changing country does not clear levels or flash “Loading…” while the scoped request runs.
+   */
   const studyLevels = useMemo(() => {
-    const levels = filterOptionsResponse?.data?.studyLevels || [];
+    const raw =
+      baseFilterOptions?.data?.studyLevels?.length ?
+        baseFilterOptions.data.studyLevels
+      : (filterOptionsResponse?.data?.studyLevels ?? []);
 
-    return levels
+    return raw
       .filter(
         (level) =>
           level.description === "Postgraduate" ||
@@ -95,7 +113,14 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
       )
       .map((level) => level.description)
       .sort((a, b) => a.localeCompare(b));
-  }, [filterOptionsResponse?.data?.studyLevels]);
+  }, [
+    baseFilterOptions?.data?.studyLevels,
+    filterOptionsResponse?.data?.studyLevels,
+  ]);
+
+  /** Only while base options have not returned study levels yet — not when switching country */
+  const isLoadingStudyLevels =
+    studyLevels.length === 0 && Boolean(isLoadingBaseFilterOptions);
 
   // Extract fee ranges from API response
   const feeRangeFromApi = useMemo(() => {
@@ -106,6 +131,68 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
     };
   }, [filterOptionsResponse?.data?.ranges?.fee]);
 
+  /**
+   * Fee sent to parent/search: until the user moves off the default UI scale (0–100000),
+   * use the scoped API band so we don't fire universities/courses twice (0–100000 then real range).
+   */
+  const outgoingFilters = useMemo((): FilterState => {
+    let fee = filters.feeRange;
+    if (hasDestinationSelected && feeRangeFromApi.max > 0) {
+      const atDefaultUiScale =
+        Math.abs(filters.feeRange.min - 0) <= 1 &&
+        Math.abs(filters.feeRange.max - 100000) <= 1;
+      if (atDefaultUiScale) {
+        fee = {
+          min: feeRangeFromApi.min,
+          max: feeRangeFromApi.max,
+        };
+      }
+    }
+    return { ...filters, feeRange: fee };
+  }, [filters, hasDestinationSelected, feeRangeFromApi]);
+
+  /** How many distinct filter choices are active (shown on Reset — incl. university URL scope) */
+  const appliedFilterCount = useMemo(() => {
+    let n = 0;
+    if (hasDestinationSelected) n += 1;
+    n += filters.studyLevel.length;
+    if (
+      filters.startYear.length > 0 &&
+      !(filters.startYear.length === 1 && filters.startYear[0] === "Any")
+    ) {
+      n += 1;
+    }
+    if (filters.startMonth.length > 0) n += 1;
+    n += filters.subjects.length;
+    n += filters.duration.length;
+    if (filters.institution) n += 1;
+    /** Match outgoing fee logic: only count fee drift when a destination is selected */
+    if (
+      hasDestinationSelected &&
+      feeRangeFromApi.max > 0
+    ) {
+      const tol = 1;
+      if (
+        Math.abs(outgoingFilters.feeRange.min - feeRangeFromApi.min) > tol ||
+        Math.abs(outgoingFilters.feeRange.max - feeRangeFromApi.max) > tol
+      ) {
+        n += 1;
+      }
+    }
+    if (urlScopeActive) n += 1;
+    return n;
+  }, [
+    filters,
+    outgoingFilters,
+    feeRangeFromApi,
+    urlScopeActive,
+    hasDestinationSelected,
+  ]);
+
+  const resetButtonHighlighted = appliedFilterCount > 0;
+  /** No-op reset when nothing applied — avoids parent remount / extra RTK requests */
+  const canReset = appliedFilterCount > 0;
+
   const [isDraggingMin, setIsDraggingMin] = useState(false);
   const [isDraggingMax, setIsDraggingMax] = useState(false);
   const sliderRef = useRef<HTMLDivElement>(null);
@@ -115,6 +202,8 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
 
   // Debounce timer for filter changes to prevent infinite search loops while dragging range slider
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Skip redundant parent updates when local state catches up to outgoingFilters (same JSON). */
+  const lastEmittedFiltersJsonRef = useRef<string>("");
 
   // Debounced callback for filter changes - only trigger when NOT dragging
   useEffect(() => {
@@ -129,13 +218,26 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
       return;
     }
 
+    // Avoid pushing default fee (0–100000) before scoped filter-options finish — second request with real fee band.
+    if (hasDestinationSelected && isLoadingFilterOptions) {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      return;
+    }
+
     // Only proceed if not dragging
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
 
     debounceTimerRef.current = setTimeout(() => {
-      onFilterChange?.(filters);
+      const json = JSON.stringify(outgoingFilters);
+      if (json === lastEmittedFiltersJsonRef.current) {
+        return;
+      }
+      lastEmittedFiltersJsonRef.current = json;
+      onFilterChange(outgoingFilters);
     }, 300);
 
     return () => {
@@ -143,23 +245,23 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [filters, onFilterChange, isDraggingMin, isDraggingMax]);
+  }, [
+    outgoingFilters,
+    onFilterChange,
+    isDraggingMin,
+    isDraggingMax,
+    hasDestinationSelected,
+    isLoadingFilterOptions,
+  ]);
 
-  // Initialize fee range when API data arrives
   useEffect(() => {
-    if (feeRangeFromApi.max > 0) {
-      setFilters((prev) => ({
-        ...prev,
-        feeRange: {
-          min: feeRangeFromApi.min,
-          max: feeRangeFromApi.max,
-        },
-      }));
+    if (!hasDestinationSelected) {
+      lastEmittedFiltersJsonRef.current = "";
     }
-  }, [feeRangeFromApi.min, feeRangeFromApi.max]);
+  }, [hasDestinationSelected]);
 
   // Tabs options
-  const startMonths = [
+  const startMonthLabels = [
     "January",
     "February",
     "March",
@@ -173,7 +275,12 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
     "November",
     "December",
   ];
-  const startYears = ["Any", "2025", "2026", "2027", "2028"];
+  /** Values 1–12 for API / backend month filter */
+  const startMonths = startMonthLabels.map((label, i) => ({
+    value: String(i + 1),
+    label,
+  }));
+  const startYears = START_YEARS;
   const durations = [
     "Less than 1 year",
     "1 - 2 years",
@@ -185,8 +292,8 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
 
   const updateFilter = (key: keyof FilterState, value: any) => {
     const newFilters = { ...filters, [key]: value };
-    setFilters(newFilters);
-    // onFilterChange will be called by debounced useEffect
+    onFilterChange(newFilters);
+    // Outgoing fee-band sync still applied via debounced useEffect → onFilterChange(outgoingFilters)
   };
 
   const handleSubjectRemove = (subjectToRemove: string) => {
@@ -206,21 +313,8 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
   };
 
   const handleSelectChange = (key: keyof FilterState, value: string) => {
-    // If changing study destination, reset subjects and institution
-    if (key === "studyDestination") {
-      setFilters({
-        ...filters,
-        studyDestination: value,
-        subjects: [], // Reset subjects when country changes
-        institution: "", // Reset institution when country changes
-      });
-      // onFilterChange will be called by debounced useEffect
-      setShowStudyDestinationDropdown(false);
-    } else {
-      updateFilter(key, value);
-      // Close dropdown after selection
-      if (key === "institution") setShowInstitutionDropdown(false);
-    }
+    updateFilter(key, value);
+    if (key === "institution") setShowInstitutionDropdown(false);
   };
 
   const getFilteredSubjects = () => {
@@ -342,7 +436,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
       <div className="bg-white border border-primary-border rounded-2xl p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
         {/* Header with toggle */}
         <div
-          className="flex items-center justify-between mb-4 sm:mb-5 cursor-pointer"
+          className="flex items-center justify-between mb-4 sm:mb-5 cursor-pointer gap-2"
           onClick={() =>
             setIsStudyPreferenceExpanded(!isStudyPreferenceExpanded)
           }
@@ -350,21 +444,97 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
           <h2 className="text-lg font-semibold text-gray-900">
             Study Preference
           </h2>
-          <svg
-            className={`w-4 h-4 sm:w-5 sm:h-5 text-gray-500 transition-transform ${
-              isStudyPreferenceExpanded ? "rotate-180" : ""
-            }`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M5 15l7-7 7 7"
-            />
-          </svg>
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {onRequestReset ? (
+              <button
+                type="button"
+                disabled={!canReset}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!canReset) return;
+                  onRequestReset();
+                }}
+                title={
+                  canReset
+                    ? `Clear ${appliedFilterCount} active filter${appliedFilterCount === 1 ? "" : "s"}`
+                    : "No filters to clear"
+                }
+                aria-label={
+                  canReset
+                    ? `Reset filters, ${appliedFilterCount} active`
+                    : "Reset unavailable — no filters selected"
+                }
+                className={[
+                  // No active:scale — scaling made the count badge feel jittery on click
+                  "group inline-flex min-w-[8.25rem] shrink-0 select-none items-center justify-start gap-1.5 rounded-full border py-1.5 pl-2.5 pr-3 text-xs font-medium transition-colors duration-200",
+                  "touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:brightness-[0.97]",
+                  !canReset &&
+                    "cursor-not-allowed opacity-60 shadow-none hover:border-primary-200/70 hover:bg-white/90 hover:shadow-none",
+                  resetButtonHighlighted
+                    ? "relative border-primary-300/90 bg-gradient-to-b from-primary-50 via-white to-primary-100/80 text-primary-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_2px_10px_-3px_rgba(37,99,235,0.35)] ring-1 ring-primary-400/35 hover:border-primary-400 hover:from-primary-100 hover:to-primary-50 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_4px_14px_-4px_rgba(37,99,235,0.4)] active:brightness-[0.94]"
+                    : "border-primary-200/70 bg-white/90 text-primary-600 shadow-sm hover:border-primary-300 hover:bg-primary-50/90 hover:text-primary-700 hover:shadow",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                <span
+                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors ${
+                    resetButtonHighlighted
+                      ? "bg-primary-600 text-white shadow-sm group-hover:bg-primary-700"
+                      : "bg-primary-50 text-primary-600 group-hover:bg-primary-100 group-hover:text-primary-700"
+                  }`}
+                  aria-hidden
+                >
+                  <svg
+                    className="h-3.5 w-3.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                  </svg>
+                </span>
+                <span className="flex items-center gap-1.5 pr-0.5 tracking-wide">
+                  Reset
+                  {/* Count >0: solid chip. Count 0: invisible slot (same w/h) so layout stable — no fake “empty pill” */}
+                  <span
+                    className={`inline-flex h-[1.125rem] w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold tabular-nums leading-none transition-none ${
+                      appliedFilterCount > 0
+                        ? "bg-primary-600 text-white shadow-sm ring-2 ring-inset ring-white/25 group-hover:bg-primary-700"
+                        : "border-0 bg-transparent text-transparent shadow-none ring-0"
+                    }`}
+                    aria-hidden
+                  >
+                    {appliedFilterCount > 0
+                      ? appliedFilterCount > 99
+                        ? "99+"
+                        : appliedFilterCount
+                      : "\u00a0"}
+                  </span>
+                </span>
+              </button>
+            ) : null}
+            <svg
+              className={`w-4 h-4 sm:w-5 sm:h-5 text-gray-500 transition-transform ${
+                isStudyPreferenceExpanded ? "rotate-180" : ""
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 15l7-7 7 7"
+              />
+            </svg>
+          </div>
         </div>
 
         {isStudyPreferenceExpanded && (
@@ -385,13 +555,15 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
               >
                 <div className="flex items-center justify-between px-3 py-2 border border-primary-border rounded-lg bg-white min-h-[38px]">
                   <span
-                    className={`text-sm ${!filters.studyDestination ? "text-gray-400" : "text-gray-700"}`}
+                    className={`text-sm ${!filters.studyDestinationCountryId && !filters.studyDestination ? "text-gray-400" : "text-gray-700"}`}
                   >
-                    {isLoadingFilterOptions
+                    {isLoadingBaseFilterOptions
                       ? "Loading destinations..."
-                      : filters.studyDestination
+                      : filters.studyDestinationCountryId ||
+                          filters.studyDestination
                         ? studyDestinations.find(
-                            (d) => d.value === filters.studyDestination,
+                            (d) =>
+                              d.value === filters.studyDestinationCountryId,
                           )?.label || filters.studyDestination
                         : "Select a destination"}
                   </span>
@@ -416,7 +588,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
                 {showStudyDestinationDropdown && (
                   <div className="absolute z-20 mt-1 w-full bg-white border border-primary-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     <div className="p-2">
-                      {isLoadingFilterOptions ? (
+                      {isLoadingBaseFilterOptions ? (
                         <div className="px-4 py-2.5 text-sm text-gray-500 text-center">
                           Loading destinations...
                         </div>
@@ -429,20 +601,25 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
                           <div
                             key={destination.value}
                             className={`px-4 py-2.5 hover:bg-gray-50 cursor-pointer rounded-md transition-colors ${
-                              filters.studyDestination === destination.value
+                              filters.studyDestinationCountryId ===
+                              destination.value
                                 ? "bg-primary-50"
                                 : ""
                             }`}
-                            onClick={() =>
-                              handleSelectChange(
-                                "studyDestination",
-                                destination.value,
-                              )
-                            }
+                            onClick={() => {
+                              /** New country → reset course filters; only destination carries over */
+                              onFilterChange({
+                                ...createDefaultFilterState(),
+                                studyDestination: destination.label,
+                                studyDestinationCountryId: destination.value,
+                              });
+                              setShowStudyDestinationDropdown(false);
+                            }}
                           >
                             <span
                               className={`text-sm ${
-                                filters.studyDestination === destination.value
+                                filters.studyDestinationCountryId ===
+                                destination.value
                                   ? "text-primary-700 font-medium"
                                   : "text-gray-700"
                               }`}
@@ -463,7 +640,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Study level
               </label>
-              {isLoadingFilterOptions ? (
+              {isLoadingStudyLevels ? (
                 <div className="text-sm text-gray-400">
                   Loading study levels...
                 </div>
@@ -514,8 +691,8 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
               </label>
               <KeywordGroup
                 options={startMonths.map((month) => ({
-                  value: month,
-                  label: month,
+                  value: month.value,
+                  label: month.label,
                 }))}
                 value={filters.startMonth}
                 onChange={(value) => {
@@ -580,7 +757,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
                       <span className="text-sm text-gray-400">
                         {isLoadingFilterOptions
                           ? "Loading subjects..."
-                          : !filters.studyDestination
+                          : !hasDestinationSelected
                             ? "Select a destination first"
                             : "Select subjects..."}
                       </span>
@@ -613,7 +790,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
                         <div className="px-4 py-2.5 text-sm text-gray-500 text-center">
                           Loading subjects...
                         </div>
-                      ) : !filters.studyDestination ? (
+                      ) : !hasDestinationSelected ? (
                         <div className="px-4 py-2.5 text-sm text-gray-500 text-center">
                           Please select a destination first
                         </div>
@@ -712,7 +889,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
                   >
                     {isLoadingFilterOptions
                       ? "Loading institutions..."
-                      : !filters.studyDestination
+                      : !hasDestinationSelected
                         ? "Select a destination first"
                         : filters.institution || "Select an institution"}
                   </span>
@@ -741,7 +918,7 @@ const StudyPreferenceFilters: React.FC<StudyPreferenceFiltersProps> = ({
                         <div className="px-4 py-2.5 text-sm text-gray-500 text-center">
                           Loading institutions...
                         </div>
-                      ) : !filters.studyDestination ? (
+                      ) : !hasDestinationSelected ? (
                         <div className="px-4 py-2.5 text-sm text-gray-500 text-center">
                           Please select a destination first
                         </div>

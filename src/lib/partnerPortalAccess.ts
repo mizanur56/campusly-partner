@@ -16,6 +16,10 @@ export function isPathAllowedBeforePartnerPortalUnlock(pathname: string): boolea
   if (p === "/") return true;
   if (p.startsWith("/onboarding")) return true;
   if (p.startsWith("/contract")) return true;
+  // Meeting page is intentionally accessible at every onboarding stage so
+  // partners can book / view / cancel a session with their advisor even
+  // before final approval (mirrors student behaviour).
+  if (p.startsWith("/meeting")) return true;
   if (p === "/change-password") return true;
   return false;
 }

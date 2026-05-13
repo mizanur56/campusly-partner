@@ -67,9 +67,11 @@ const Header: React.FC = () => {
   const isSignedMode =
     (pathname === "/" && previewMode === "signed") ||
     SIGNED_HEADER_PATHS.includes(pathname) ||
+    pathname.startsWith("/programs-schools") ||
     pathname.startsWith("/payments") ||
     pathname.startsWith("/students/") ||
-    pathname.startsWith("/applications/");
+    pathname.startsWith("/applications/") ||
+    pathname.startsWith("/academy");
   const [isCoursesOpen, setIsCoursesOpen] = useState(false);
   const [isCountriesOpen, setIsCountriesOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
@@ -79,6 +81,7 @@ const Header: React.FC = () => {
     pathname === "/" ||
     pathname.startsWith("/onboarding") ||
     pathname.startsWith("/contract") ||
+    pathname.startsWith("/meeting") ||
     [
       "/programs-schools",
       "/students",
@@ -95,7 +98,8 @@ const Header: React.FC = () => {
     pathname.startsWith("/programs-schools") ||
     pathname.startsWith("/payments") ||
     pathname.startsWith("/students/") ||
-    pathname.startsWith("/applications/");
+    pathname.startsWith("/applications/") ||
+    pathname.startsWith("/academy");
 
   const countries = mockCountries;
   const countryOptions = countries;
@@ -443,39 +447,30 @@ const Header: React.FC = () => {
             </nav>
           )}
 
-          {/* Signed mode: only announcements + notifications */}
+          {/* Signed mode extras: fullscreen + announcements */}
           {isSignedMode && (
-            <>
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={handleFullscreen}
-                  className="
-      hidden lg:inline-flex relative group items-center justify-center
-      w-10 h-10 rounded-xl
-      border border-primary-border
-      bg-white
-      text-gray-600
-      transition-all duration-300 ease-in-out
-      hover:border-primary-500
-      hover:text-primary-600
-      hover:shadow-md
-    "
-                >
-                  <AiOutlineFullscreen
-                    size={22}
-                    className="
-        transition-colors duration-300
-        group-hover:text-primary-600
-      "
-                  />
-                </button>
-                <div className="hidden lg:block">
-                  <AnnouncementDropdown />
-                </div>
-                <NotificationDropdown />
-                <UserDropdown />
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleFullscreen}
+                className="hidden lg:inline-flex relative group items-center justify-center w-10 h-10 rounded-xl border border-primary-border bg-white text-gray-600 transition-all duration-300 ease-in-out hover:border-primary-500 hover:text-primary-600 hover:shadow-md"
+              >
+                <AiOutlineFullscreen
+                  size={22}
+                  className="transition-colors duration-300 group-hover:text-primary-600"
+                />
+              </button>
+              <div className="hidden lg:block">
+                <AnnouncementDropdown />
               </div>
-            </>
+            </div>
+          )}
+
+          {/* Notification + User — shown on all authenticated pages (onboarding, contract, signed) */}
+          {isDashboardOrOnboarding && (
+            <div className="flex items-center gap-2">
+              <NotificationDropdown />
+              <UserDropdown />
+            </div>
           )}
         </div>
       </div>

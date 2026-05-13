@@ -9,16 +9,20 @@ import CoursesResultsView from "../../components/courses/CoursesResultsView";
 import InstitutionsResultsView from "../../components/courses/InstitutionsResultsView";
 import type { SelectedStudent } from "../../components/courses/SelectedStudentCard";
 import StudentSelectBlock from "../../components/courses/StudentSelectBlock";
-import StudyPreferenceFilters, {
-  FilterState,
-} from "../../components/courses/StudyPreferenceFilters";
+import StudyPreferenceFilters from "../../components/courses/StudyPreferenceFilters";
+import {
+  createDefaultFilterState,
+  type FilterState,
+} from "../../components/courses/filterTypes";
+import { useProgramsSchoolFilterOptions } from "../../hooks/useProgramsSchoolFilterOptions";
 import { useAppSelector } from "../../redux/features/hooks";
 import { useGetSingleStudentApplicationsQuery } from "../../redux/features/application/applicationApi";
 
 export default function ProgramsSchoolsPage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const qFromUrl = searchParams.get("q") || "";
   const tabFromUrl = searchParams.get("tab") || "courses";
+  const universityIdFromUrl = searchParams.get("universityId") || "";
 
   const [activeTab, setActiveTab] = useState<"courses" | "institutions">(
     tabFromUrl === "institutions" ? "institutions" : "courses",
@@ -26,7 +30,19 @@ export default function ProgramsSchoolsPage() {
   // const {data}=useGetSingleStudentApplicationsQuery({studentId:1})
 
   const [searchQuery, setSearchQuery] = useState(qFromUrl);
-  const [filters, setFilters] = useState<FilterState | undefined>(undefined);
+  const [filters, setFilters] = useState<FilterState>(createDefaultFilterState());
+
+  const filterOpts = useProgramsSchoolFilterOptions(filters);
+
+  const programsSchoolFilterOptions = useMemo(
+    () => ({
+      apiResponsesForTransform: filterOpts.apiResponsesForTransform,
+      filtersReady: filterOpts.filtersReady,
+    }),
+    [filterOpts.apiResponsesForTransform, filterOpts.filtersReady],
+  );
+  /** Remount StudyPreferenceFilters (desktop + drawer) so both stay in sync after reset */
+  const [filterPanelKey, setFilterPanelKey] = useState(0);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] =
     useState<SelectedStudent | null>(null);
@@ -65,6 +81,37 @@ export default function ProgramsSchoolsPage() {
     setFilters(newFilters);
   }, []);
 
+  const resetStudyPreferences = useCallback(() => {
+    setFilters(createDefaultFilterState());
+    setFilterPanelKey((k) => k + 1);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("universityId");
+        next.delete("university");
+        /** Keep the tab user was on (URL defaulted `tab` to courses otherwise). */
+        next.set("tab", activeTab);
+        return next;
+      },
+      { replace: true },
+    );
+  }, [setSearchParams, activeTab]);
+
+  const setTabInUrl = useCallback(
+    (tab: "courses" | "institutions") => {
+      setActiveTab(tab);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("tab", tab);
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
+
   return (
     <div className="min-h-screen">
       <div className="">
@@ -79,7 +126,14 @@ export default function ProgramsSchoolsPage() {
                 selectedStudent={selectedStudent}
                 onSelect={setSelectedStudent}
               />
-              <StudyPreferenceFilters onFilterChange={handleFilterChange} />
+              <StudyPreferenceFilters
+                key={`study-filters-desktop-${filterPanelKey}`}
+                filters={filters}
+                onFilterChange={handleFilterChange}
+                filterOptions={filterOpts}
+                onRequestReset={resetStudyPreferences}
+                urlScopeActive={Boolean(universityIdFromUrl)}
+              />
             </div>
           </div>
 
@@ -119,7 +173,14 @@ export default function ProgramsSchoolsPage() {
                     selectedStudent={selectedStudent}
                     onSelect={setSelectedStudent}
                   />
-                  <StudyPreferenceFilters onFilterChange={handleFilterChange} />
+                  <StudyPreferenceFilters
+                    key={`study-filters-mobile-${filterPanelKey}`}
+                    filters={filters}
+                    onFilterChange={handleFilterChange}
+                    filterOptions={filterOpts}
+                    onRequestReset={resetStudyPreferences}
+                    urlScopeActive={Boolean(universityIdFromUrl)}
+                  />
                 </div>
                 <div className="p-4 border-t border-primary-border bg-gray-50">
                   <Button
@@ -188,13 +249,13 @@ export default function ProgramsSchoolsPage() {
 
             <div className="mb-4 sm:mb-5 flex flex-row gap-2 sm:gap-3">
               <Button
-                onClick={() => setActiveTab("courses")}
+                onClick={() => setTabInUrl("courses")}
                 type={activeTab === "courses" ? "primary" : "default"}
               >
                 Courses <span className="opacity-90">({coursesCount})</span>
               </Button>
               <Button
-                onClick={() => setActiveTab("institutions")}
+                onClick={() => setTabInUrl("institutions")}
                 type={activeTab === "institutions" ? "primary" : "default"}
               >
                 Institutions{" "}
@@ -206,6 +267,8 @@ export default function ProgramsSchoolsPage() {
               <CoursesResultsView
                 searchQuery={searchQuery}
                 filters={filters}
+                programsSchoolFilterOptions={programsSchoolFilterOptions}
+                forcedUniversityId={universityIdFromUrl || undefined}
                 onStartApplication={handleStartApplication}
                 appliedCourseIds={appliedCourseIds}
               />
@@ -214,6 +277,7 @@ export default function ProgramsSchoolsPage() {
               <InstitutionsResultsView
                 searchQuery={searchQuery}
                 filters={filters}
+                programsSchoolFilterOptions={programsSchoolFilterOptions}
               />
             )}
           </div>

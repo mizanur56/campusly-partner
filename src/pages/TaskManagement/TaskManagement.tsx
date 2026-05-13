@@ -2,6 +2,7 @@ import {
   AppstoreOutlined,
   ArrowDownOutlined,
   ArrowUpOutlined,
+  AuditOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   CloseCircleOutlined,
@@ -10,6 +11,7 @@ import {
   EditOutlined,
   EyeOutlined,
   MinusOutlined,
+  ThunderboltOutlined,
 } from "@ant-design/icons";
 import {
   Button,
@@ -20,12 +22,14 @@ import {
   Popconfirm,
   Select,
   Space,
+  Spin,
   Tag,
   Tooltip,
   Typography,
 } from "antd";
 import dayjs from "dayjs";
-import { useCallback, useMemo, useRef, useState } from "react";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PageCard from "../../components/common/Card/PageCard";
 import DateTimeHighlight from "../../components/common/DateTimeHighlight";
 import RichTextEditor from "../../components/common/Forms/RichTextEditor";
@@ -35,6 +39,7 @@ import "../../components/common/Tables/AntTable.css";
 import DataTable from "../../components/common/Tables/DataTable";
 import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 import { useAppSelector } from "../../redux/features/hooks";
+import type { PartnerTaskDetail } from "../../redux/features/tasks/partnerTasksApi";
 import {
   CreateTaskBody,
   PartnerTaskListItem,
@@ -46,6 +51,8 @@ import {
   useUpdateTaskMutation,
   useUpdateTaskStatusMutation,
 } from "../../redux/features/tasks/partnerTasksApi";
+
+dayjs.extend(customParseFormat);
 import "../MyTasks/MyTasks.css";
 
 type PartnerTaskStatus =
@@ -53,14 +60,20 @@ type PartnerTaskStatus =
   | "SUBMITTED"
   | "COMPLETED"
   | "CANCELLED";
-type PartnerTaskPriority = "LOW" | "MEDIUM" | "HIGH";
+type PartnerTaskPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
 
-const PRIORITY_OPTIONS: PartnerTaskPriority[] = ["LOW", "MEDIUM", "HIGH"];
+const PRIORITY_OPTIONS: PartnerTaskPriority[] = [
+  "LOW",
+  "MEDIUM",
+  "HIGH",
+  "URGENT",
+];
 
 const priorityColor: Record<PartnerTaskPriority, string> = {
   LOW: "default",
   MEDIUM: "blue",
   HIGH: "orange",
+  URGENT: "red",
 };
 
 const statusColor: Record<string, string> = {
@@ -69,6 +82,35 @@ const statusColor: Record<string, string> = {
   COMPLETED: "success",
   CANCELLED: "error",
 };
+
+/** Due date/time for the create/update modal — prefers GET-by-id response, falls back to list row. */
+function parsePartnerDueForForm(
+  detail: Pick<PartnerTaskDetail, "due_date" | "due_time"> | null | undefined,
+  listRow: PartnerTaskListItem | null,
+): dayjs.Dayjs | undefined {
+  const rawDate = detail?.due_date ?? listRow?.dueDate ?? null;
+  const rawTime = detail?.due_time ?? listRow?.dueTime ?? null;
+  if (!rawDate) return undefined;
+
+  const dateStr =
+    typeof rawDate === "string"
+      ? rawDate.length >= 10
+        ? rawDate.slice(0, 10)
+        : rawDate
+      : dayjs(rawDate).format("YYYY-MM-DD");
+
+  if (rawTime && String(rawTime).trim()) {
+    const parsed = dayjs(
+      `${dateStr} ${String(rawTime).trim()}`,
+      ["YYYY-MM-DD h:mm A", "YYYY-MM-DD hh:mm A", "YYYY-MM-DD HH:mm"],
+      true,
+    );
+    if (parsed.isValid()) return parsed;
+  }
+
+  const d = dayjs(rawDate);
+  return d.isValid() ? d : undefined;
+}
 
 function StatCardIcon({
   children,
@@ -133,10 +175,31 @@ export default function TaskManagement() {
     searchTerm: searchTerm || undefined,
   });
 
+  const taskDetailId = editingTask?.id ?? viewTask?.id ?? "";
   const { data: taskDetail, isLoading: detailLoading } = useGetTaskByIdQuery(
-    viewTask?.id ?? editingTask?.id ?? "",
-    { skip: !viewTask?.id && !editingTask?.id },
+    taskDetailId,
+    { skip: !taskDetailId },
   );
+
+  const editDetailPending =
+    editingTask != null &&
+    (!taskDetail || taskDetail.id !== editingTask.id);
+  const showEditDetailSpinner = editDetailPending && detailLoading;
+
+  useEffect(() => {
+    const row = editingTask;
+    if (!openFormModal || !row || !taskDetail) return;
+    if (taskDetail.id !== row.id) return;
+
+    const due = parsePartnerDueForForm(taskDetail, row);
+    form.setFieldsValue({
+      title: taskDetail.task_title,
+      priority: taskDetail.priority ?? undefined,
+      assignedToUserId: taskDetail.assignedTo?.id,
+      description: taskDetail.task_description ?? "",
+      dueDateTime: due?.isValid() ? due : undefined,
+    });
+  }, [openFormModal, editingTask?.id, taskDetail, form, editingTask]);
 
   const [createTask, { isLoading: creating }] = useCreateTaskMutation();
   const [updateTask, { isLoading: updating }] = useUpdateTaskMutation();
@@ -174,10 +237,12 @@ export default function TaskManagement() {
       return {
         total: (apiStats as any).total || 0,
         inProgress: (apiStats as any).inProgress || 0,
+        submitted: (apiStats as any).submitted || 0,
         completed: (apiStats as any).completed || 0,
         low: (apiStats as any).low || 0,
         medium: (apiStats as any).medium || 0,
         high: (apiStats as any).high || 0,
+        urgent: (apiStats as any).urgent || 0,
         cancelled: (apiStats as any).cancelled || 0,
       };
     }
@@ -185,11 +250,13 @@ export default function TaskManagement() {
       (acc, r) => {
         acc.total += 1;
         if (r.status === "IN_PROGRESS") acc.inProgress += 1;
+        if (r.status === "SUBMITTED") acc.submitted += 1;
         if (r.status === "COMPLETED") acc.completed += 1;
         if (r.status === "IN_PROGRESS") {
           if (r.priority === "LOW") acc.low += 1;
           if (r.priority === "MEDIUM") acc.medium += 1;
           if (r.priority === "HIGH") acc.high += 1;
+          if (r.priority === "URGENT") acc.urgent += 1;
         }
         if (r.status === "CANCELLED") acc.cancelled += 1;
         return acc;
@@ -197,16 +264,19 @@ export default function TaskManagement() {
       {
         total: 0,
         inProgress: 0,
+        submitted: 0,
         completed: 0,
         low: 0,
         medium: 0,
         high: 0,
+        urgent: 0,
         cancelled: 0,
       },
     );
   }, [allRows, tasksData?.meta?.stats]);
 
   const onOpenCreate = () => {
+    setViewTask(null);
     setEditingTask(null);
     form.resetFields();
     form.setFieldsValue({ priority: "MEDIUM" });
@@ -214,21 +284,14 @@ export default function TaskManagement() {
   };
 
   const onOpenEdit = (task: PartnerTaskListItem) => {
-    const mergedDue = task.dueDate
-      ? dayjs(
-          task.dueTime ? `${task.dueDate} ${task.dueTime}` : task.dueDate,
-          task.dueTime
-            ? ["YYYY-MM-DD h:mm A", "YYYY-MM-DD HH:mm"]
-            : ["YYYY-MM-DD"],
-        )
-      : undefined;
+    setViewTask(null);
     setEditingTask(task);
+    form.resetFields();
+    const quickDue = parsePartnerDueForForm(null, task);
     form.setFieldsValue({
       title: task.task_title,
-      priority: task.priority || undefined,
-      dueDateTime: mergedDue && mergedDue.isValid() ? mergedDue : undefined,
-      assignedToUserId: taskDetail?.assignedTo?.id || undefined,
-      description: taskDetail?.task_description || "",
+      priority: task.priority ?? undefined,
+      dueDateTime: quickDue?.isValid() ? quickDue : undefined,
     });
     setOpenFormModal(true);
   };
@@ -276,8 +339,14 @@ export default function TaskManagement() {
     {
       title: "Priority",
       dataIndex: "priority",
-      render: (p: PartnerTaskPriority | null) =>
-        p ? <Tag color={priorityColor[p]}>{p}</Tag> : "—",
+      render: (p: string | null | undefined) =>
+        p && p in priorityColor ? (
+          <Tag color={priorityColor[p as PartnerTaskPriority]}>{p}</Tag>
+        ) : p ? (
+          <Tag>{p}</Tag>
+        ) : (
+          "—"
+        ),
     },
     {
       title: "Status",
@@ -306,13 +375,15 @@ export default function TaskManagement() {
       width: 200,
       render: (_: unknown, row: PartnerTaskListItem) => (
         <Space>
-          <Tooltip title="Edit task">
-            <Button
-              type="default"
-              icon={<EditOutlined />}
-              onClick={() => onOpenEdit(row)}
-            />
-          </Tooltip>
+          {row.status === "IN_PROGRESS" && (
+            <Tooltip title="Edit task">
+              <Button
+                type="default"
+                icon={<EditOutlined />}
+                onClick={() => onOpenEdit(row)}
+              />
+            </Tooltip>
+          )}
           <Tooltip title="View details">
             <Button
               type="default"
@@ -408,15 +479,34 @@ export default function TaskManagement() {
               setStatus("IN_PROGRESS");
               setPage(1);
             }}
-            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-400 ${status === "IN_PROGRESS" ? "bg-sky-50" : "bg-white hover:bg-slate-50"}`}
+            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-400 ${lastActiveSection === "status" && status === "IN_PROGRESS" ? "bg-sky-50" : "bg-white hover:bg-slate-50"}`}
           >
             <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
               <ClockCircleOutlined className="text-[10px]" /> In Progress
             </span>
             <p
-              className={`text-2xl font-bold tabular-nums ${status === "IN_PROGRESS" ? "text-sky-600" : "text-slate-800"}`}
+              className={`text-2xl font-bold tabular-nums ${lastActiveSection === "status" && status === "IN_PROGRESS" ? "text-sky-600" : "text-slate-800"}`}
             >
               {stats.inProgress}
+            </p>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setPriority("");
+              setLastActiveSection("status");
+              setStatus("SUBMITTED");
+              setPage(1);
+            }}
+            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple-400 ${lastActiveSection === "status" && status === "SUBMITTED" ? "bg-purple-50" : "bg-white hover:bg-slate-50"}`}
+          >
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <AuditOutlined className="text-[10px]" /> Submitted
+            </span>
+            <p
+              className={`text-2xl font-bold tabular-nums ${lastActiveSection === "status" && status === "SUBMITTED" ? "text-purple-600" : "text-slate-800"}`}
+            >
+              {stats.submitted}
             </p>
           </button>
           <button
@@ -427,13 +517,13 @@ export default function TaskManagement() {
               setStatus("COMPLETED");
               setPage(1);
             }}
-            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 ${status === "COMPLETED" ? "bg-emerald-50" : "bg-white hover:bg-slate-50"}`}
+            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 ${lastActiveSection === "status" && status === "COMPLETED" ? "bg-emerald-50" : "bg-white hover:bg-slate-50"}`}
           >
             <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
               <CheckCircleOutlined className="text-[10px]" /> Completed
             </span>
             <p
-              className={`text-2xl font-bold tabular-nums ${status === "COMPLETED" ? "text-emerald-600" : "text-slate-800"}`}
+              className={`text-2xl font-bold tabular-nums ${lastActiveSection === "status" && status === "COMPLETED" ? "text-emerald-600" : "text-slate-800"}`}
             >
               {stats.completed}
             </p>
@@ -446,13 +536,13 @@ export default function TaskManagement() {
               setStatus("CANCELLED");
               setPage(1);
             }}
-            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-rose-400 ${status === "CANCELLED" ? "bg-rose-50" : "bg-white hover:bg-slate-50"}`}
+            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-rose-400 ${lastActiveSection === "status" && status === "CANCELLED" ? "bg-rose-50" : "bg-white hover:bg-slate-50"}`}
           >
             <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
               <CloseCircleOutlined className="text-[10px]" /> Cancelled
             </span>
             <p
-              className={`text-2xl font-bold tabular-nums ${status === "CANCELLED" ? "text-rose-600" : "text-slate-800"}`}
+              className={`text-2xl font-bold tabular-nums ${lastActiveSection === "status" && status === "CANCELLED" ? "text-rose-600" : "text-slate-800"}`}
             >
               {stats.cancelled}
             </p>
@@ -497,13 +587,13 @@ export default function TaskManagement() {
               setPriority("LOW");
               setPage(1);
             }}
-            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-400 ${priority === "LOW" ? "bg-slate-100" : "bg-white hover:bg-slate-50"}`}
+            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-400 ${lastActiveSection === "priority" && priority === "LOW" ? "bg-slate-100" : "bg-white hover:bg-slate-50"}`}
           >
             <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
               <ArrowDownOutlined className="text-[10px]" /> Low
             </span>
             <p
-              className={`text-2xl font-bold tabular-nums ${priority === "LOW" ? "text-slate-700" : "text-slate-800"}`}
+              className={`text-2xl font-bold tabular-nums ${lastActiveSection === "priority" && priority === "LOW" ? "text-slate-700" : "text-slate-800"}`}
             >
               {stats.low}
             </p>
@@ -516,13 +606,13 @@ export default function TaskManagement() {
               setPriority("MEDIUM");
               setPage(1);
             }}
-            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400 ${priority === "MEDIUM" ? "bg-blue-50" : "bg-white hover:bg-slate-50"}`}
+            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400 ${lastActiveSection === "priority" && priority === "MEDIUM" ? "bg-blue-50" : "bg-white hover:bg-slate-50"}`}
           >
             <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
               <MinusOutlined className="text-[10px]" /> Medium
             </span>
             <p
-              className={`text-2xl font-bold tabular-nums ${priority === "MEDIUM" ? "text-blue-600" : "text-slate-800"}`}
+              className={`text-2xl font-bold tabular-nums ${lastActiveSection === "priority" && priority === "MEDIUM" ? "text-blue-600" : "text-slate-800"}`}
             >
               {stats.medium}
             </p>
@@ -535,15 +625,34 @@ export default function TaskManagement() {
               setPriority("HIGH");
               setPage(1);
             }}
-            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-400 ${priority === "HIGH" ? "bg-amber-50" : "bg-white hover:bg-slate-50"}`}
+            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-400 ${lastActiveSection === "priority" && priority === "HIGH" ? "bg-amber-50" : "bg-white hover:bg-slate-50"}`}
           >
             <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
               <ArrowUpOutlined className="text-[10px]" /> High
             </span>
             <p
-              className={`text-2xl font-bold tabular-nums ${priority === "HIGH" ? "text-amber-600" : "text-slate-800"}`}
+              className={`text-2xl font-bold tabular-nums ${lastActiveSection === "priority" && priority === "HIGH" ? "text-amber-600" : "text-slate-800"}`}
             >
               {stats.high}
+            </p>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setStatus("");
+              setLastActiveSection("priority");
+              setPriority("URGENT");
+              setPage(1);
+            }}
+            className={`relative flex-1 px-3 py-4 text-center transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-red-400 ${lastActiveSection === "priority" && priority === "URGENT" ? "bg-red-50" : "bg-white hover:bg-slate-50"}`}
+          >
+            <span className="absolute right-2 top-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none">
+              <ThunderboltOutlined className="text-[10px]" /> Urgent
+            </span>
+            <p
+              className={`text-2xl font-bold tabular-nums ${lastActiveSection === "priority" && priority === "URGENT" ? "text-red-600" : "text-slate-800"}`}
+            >
+              {stats.urgent}
             </p>
           </button>
         </div>
@@ -595,13 +704,20 @@ export default function TaskManagement() {
         }}
         onOk={handleSubmit}
         confirmLoading={creating || updating}
+        okButtonProps={{ disabled: editDetailPending }}
         width={860}
         destroyOnClose
       >
         <Typography.Paragraph type="secondary" className="mb-4">
           Write full task details clearly, set priority, and deadline.
         </Typography.Paragraph>
-        <Form layout="vertical" form={form}>
+        <div className="relative min-h-[120px]">
+          {showEditDetailSpinner ? (
+            <div className="absolute inset-0 z-[1] flex items-center justify-center rounded-lg bg-white/85">
+              <Spin tip="Loading task…" />
+            </div>
+          ) : null}
+          <Form layout="vertical" form={form} className={showEditDetailSpinner ? "pointer-events-none opacity-50" : undefined}>
           <Form.Item
             name="title"
             label="Task title"
@@ -684,6 +800,7 @@ export default function TaskManagement() {
             />
           </Form.Item>
         </Form>
+        </div>
       </Modal>
 
       <Modal

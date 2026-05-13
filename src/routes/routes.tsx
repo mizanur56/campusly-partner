@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import MainLayout from "../layout/MainLayout";
 import Academy from "../pages/Academy/Academy";
+import AcademyCourseDetail from "../pages/Academy/AcademyCourseDetail";
 import ChangePassword from "../pages/Auth/ChangePassword";
 import ForgetPassword from "../pages/Auth/ForgetPassword";
 import Login from "../pages/Auth/Login";
@@ -17,6 +18,7 @@ import ResetPassword from "../pages/Auth/ResetPassword";
 import SetPasswordByInvite from "../pages/Auth/SetPasswordByInvite";
 import ContractPage from "../pages/Contract/ContractPage";
 import ContractSignedPage from "../pages/Contract/ContractSignedPage";
+import MeetingPage from "../pages/Meeting/MeetingPage";
 import Applications from "../pages/Applications/Applications";
 import ApplicationDetails from "../pages/Applications/ApplicationDetails";
 import VisaRejectPage from "../pages/Applications/ApplicationStep/VisaRejectPage";
@@ -42,6 +44,7 @@ import { selectCurrentUser } from "../redux/features/auth/authSlice";
 import GuestOnlyAuthRoute from "./GuestOnlyAuthRoute";
 import ProtectedRoute from "./ProtectedRoute";
 import CourseDetails from "../pages/courseDetails/CourseDetails.tsx";
+import UniversityDetails from "../pages/universityDetails/UniversityDetails.tsx";
 
 function StudentProfileRedirect() {
   const { id } = useParams();
@@ -136,11 +139,16 @@ function AppRoutes() {
           <Route path="onboarding" element={<OnboardingPage />} />
           <Route path="contract" element={<ContractPage />} />
           <Route path="contract/signed" element={<ContractSignedPage />} />
+          <Route path="meeting" element={<MeetingPage />} />
           <Route path="change-password" element={<ChangePassword />} />
           <Route path="programs-schools" element={<ProgramsSchools />} />
           <Route
             path="programs-schools/courses/:universitySlug/:courseSlug"
             element={<CourseDetails />}
+          />
+          <Route
+            path="programs-schools/universities/:slug"
+            element={<UniversityDetails />}
           />
 
           <Route path="students" element={<Students />} />
@@ -172,6 +180,7 @@ function AppRoutes() {
           <Route path="payments/commission" element={<Payments />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="academy" element={<Academy />} />
+          <Route path="academy/:courseId" element={<AcademyCourseDetail />} />
           <Route path="hot-offers" element={<HotOffers />} />
           <Route path="profile" element={<ProfileSettings />} />
           <Route path="chat" element={<Navigate to="/" replace />} />

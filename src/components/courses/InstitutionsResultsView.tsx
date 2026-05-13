@@ -3,25 +3,27 @@ import { useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import type { SearchUniversityItem } from "../../data/searchResultsTypes";
 import { useInfiniteScrollPagination } from "../../hooks/useInfiniteScrollPagination";
-import { useGetCitiesQuery } from "../../redux/features/cities/citiesApi";
-import { useGetCountriesQuery } from "../../redux/features/countries/countriesApi";
+import type { ProgramsSchoolFilterOptionsBundle } from "../../hooks/useProgramsSchoolFilterOptions";
 import { useAppDispatch } from "../../redux/features/hooks";
 import { useLazySearchUniversitiesQuery } from "../../redux/features/search/searchApi";
 import { updateUniversitiesMeta } from "../../redux/features/search/searchMetaSlice";
-import { useGetStudyLevelsQuery } from "../../redux/features/studyLevels/studyLevelsApi";
-import { useGetUniversityCoursesQuery } from "../../redux/features/universityCourses/universityCoursesApi";
 import { transformSearchUniversity } from "../../utils/searchTransform";
 import { transformFiltersToApi } from "../../utils/transformFiltersToApi";
 import Spinner from "../common/Loading/Spinner";
 import SkeletonInstitutionCard from "./SkeletonInstitutionCard";
-import type { FilterState } from "./StudyPreferenceFilters";
+import type { FilterState } from "./filterTypes";
 
 type InstitutionsResultsViewProps = {
   searchQuery: string;
   filters?: FilterState;
+  /** Same GET /search/filter-options bundle as Courses — no separate countries/cities/courses APIs */
+  programsSchoolFilterOptions: Pick<
+    ProgramsSchoolFilterOptionsBundle,
+    "apiResponsesForTransform" | "filtersReady"
+  >;
 };
 
-const INSTITUTIONS_LIMIT = 15;
+const INSTITUTIONS_LIMIT = 10;
 
 const transformToFilterFormData = (filters?: FilterState) => {
   if (!filters) return null;
@@ -48,68 +50,27 @@ const transformToFilterFormData = (filters?: FilterState) => {
 export default function InstitutionsResultsView({
   searchQuery,
   filters,
+  programsSchoolFilterOptions,
 }: InstitutionsResultsViewProps) {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [triggerUniversitiesSearch] = useLazySearchUniversitiesQuery();
 
-  const { data: countriesResponse } = useGetCountriesQuery({
-    page: 1,
-    limit: 100000,
-  });
-  const { data: citiesResponse } = useGetCitiesQuery({
-    page: 1,
-    limit: 10000000,
-  });
-  const { data: coursesResponse } = useGetUniversityCoursesQuery({
-    page: 1,
-    limit: 10000000,
-  });
-  const { data: studyLevelsResponse } = useGetStudyLevelsQuery({
-    page: 1,
-    limit: 100000,
-  });
-
-  const flatCoursesResponse = useMemo(() => {
-    if (!coursesResponse?.data) return undefined;
-    const seen = new Map<string, string>();
-    coursesResponse.data.forEach((c) => {
-      if (!seen.has(c.course.id)) seen.set(c.course.id, c.course.name);
-    });
-    return { data: Array.from(seen, ([id, name]) => ({ id, name })) };
-  }, [coursesResponse]);
-
-  const flatUniversitiesResponse = useMemo(() => {
-    if (!coursesResponse?.data) return undefined;
-    const seen = new Map<string, string>();
-    coursesResponse.data.forEach((c) => {
-      if (!seen.has(c.university.id))
-        seen.set(c.university.id, c.university.name);
-    });
-    return { data: Array.from(seen, ([id, name]) => ({ id, name })) };
-  }, [coursesResponse]);
+  const { apiResponsesForTransform, filtersReady } = programsSchoolFilterOptions;
 
   const apiFilters = useMemo(() => {
     const filterFormData = transformToFilterFormData(filters);
-    if (!filterFormData) return undefined;
+    if (!filterFormData || !apiResponsesForTransform) return undefined;
     return transformFiltersToApi(
       filterFormData,
       searchQuery || "",
-      countriesResponse,
-      citiesResponse,
-      flatCoursesResponse,
-      studyLevelsResponse,
-      flatUniversitiesResponse,
+      apiResponsesForTransform.countriesResponse,
+      apiResponsesForTransform.citiesResponse,
+      apiResponsesForTransform.coursesResponse,
+      apiResponsesForTransform.studyLevelsResponse,
+      apiResponsesForTransform.universitiesResponse,
     );
-  }, [
-    filters,
-    searchQuery,
-    countriesResponse,
-    citiesResponse,
-    flatCoursesResponse,
-    studyLevelsResponse,
-    flatUniversitiesResponse,
-  ]);
+  }, [filters, searchQuery, apiResponsesForTransform]);
 
   const fetchUniversities = useCallback(
     async (page: number) => {
@@ -136,9 +97,14 @@ export default function InstitutionsResultsView({
     [searchQuery, triggerUniversitiesSearch, apiFilters, dispatch],
   );
 
+  /** Include search so merged pagination hook refetches when only the search box changes */
   const filtersKey = useMemo(
-    () => (apiFilters ? JSON.stringify(apiFilters) : ""),
-    [apiFilters],
+    () =>
+      JSON.stringify({
+        search: searchQuery || "",
+        filters: apiFilters ?? null,
+      }),
+    [apiFilters, searchQuery],
   );
 
   const {
@@ -147,11 +113,12 @@ export default function InstitutionsResultsView({
     isLoadingMore,
     hasMore,
     sentinelRef,
+    initialFetchDone,
   } = useInfiniteScrollPagination<SearchUniversityItem>({
-    searchQuery: searchQuery || "",
     fetchFn: fetchUniversities,
     limit: INSTITUTIONS_LIMIT,
     filtersKey,
+    enabled: filtersReady,
   });
 
   const handleViewDetails = (universityId: string) => {
@@ -164,14 +131,16 @@ export default function InstitutionsResultsView({
   const handleViewCourses = (universityId: string) => {
     const university = universities.find((u) => u.id === universityId);
     if (university?.slug) {
-      navigate(`/programs-schools?tab=courses&university=${university.slug}`);
+      navigate(
+        `/programs-schools?tab=courses&university=${university.slug}&universityId=${university.id}`,
+      );
     }
   };
 
-  if (isLoading) {
+  if (!filtersReady || isLoading || !initialFetchDone) {
     return (
       <div className="space-y-4">
-        {Array.from({ length: 6 }).map((_, index) => (
+        {Array.from({ length: INSTITUTIONS_LIMIT }).map((_, index) => (
           <SkeletonInstitutionCard key={`skeleton-institution-${index}`} />
         ))}
       </div>

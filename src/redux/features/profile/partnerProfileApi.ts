@@ -29,6 +29,8 @@ export interface AdvisorAvailableSlot {
   slot: string;
   label: string;
   date: string;
+  slotMinutes?: number;
+  status?: "OPEN" | "BOOKED";
 }
 
 export interface PartnerProfileResponse {

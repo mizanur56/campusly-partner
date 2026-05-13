@@ -94,7 +94,7 @@ export type CreateTaskBody = {
   studentId?: string;
   applicationId?: string;
   taskType?: "TO_DO" | "FOLLOW_UP" | "REMINDER" | "INTERNAL_TASK";
-  priority?: "LOW" | "MEDIUM" | "HIGH";
+  priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
   dueDate?: string;
   dueTime?: string;
 };
