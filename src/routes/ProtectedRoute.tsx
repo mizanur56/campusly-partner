@@ -46,8 +46,15 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       }
     };
     check();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") check();
+    };
     window.addEventListener("focus", check);
-    return () => window.removeEventListener("focus", check);
+    window.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", check);
+      window.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [dispatch]);
 
   const hasToken = clientHasBearerToken(token);

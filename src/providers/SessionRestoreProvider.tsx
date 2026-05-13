@@ -104,7 +104,6 @@ export default function SessionRestoreProvider({
 
     const restore = async () => {
       try {
-        let sessionRestoredVia401Refresh = false;
         let bearer = (token ?? localStorage.getItem("token") ?? "").trim();
 
         // ── 1) /auth/me (cookie-only session uses empty Authorization) ──
@@ -134,7 +133,6 @@ export default function SessionRestoreProvider({
             goLoginOrStayOnPublicAuth();
             return;
           }
-          sessionRestoredVia401Refresh = true;
         } else if (!meRes.ok) {
           goLoginOrStayOnPublicAuth();
           return;
@@ -149,22 +147,8 @@ export default function SessionRestoreProvider({
         }
 
         const userData = buildUserData(rawUser as Record<string, unknown>);
-        let sessionToken = bearer;
-
-        // Even when access token still works, verify refresh cookie is still valid.
-        // This ensures main-website logout is reflected in portals on later visits.
-        if (!sessionRestoredVia401Refresh) {
-          const refreshProof = await callRefresh();
-          if (!refreshProof.ok) {
-            goLoginOrStayOnPublicAuth();
-            return;
-          }
-          const proofJson = await refreshProof.json().catch(() => null);
-          const rotated = extractAccessTokenFromRefreshJson(proofJson);
-          if (rotated?.trim()) {
-            sessionToken = rotated.trim();
-          }
-        }
+        /** Bearer already worked for /auth/me — avoid extra refresh-token on every visit. */
+        let sessionToken = bearer.trim();
 
         if (!sessionToken) {
           const refreshRes = await callRefresh();
