@@ -4,7 +4,7 @@ import {
   LeftOutlined,
   RightOutlined,
 } from "@ant-design/icons";
-import { Button, Calendar, Modal, Skeleton } from "antd";
+import { Button, Calendar, Modal, Spin } from "antd";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -249,6 +249,12 @@ const Step1Modal: React.FC<Step1ModalProps> = ({
   const nextAvailableDate = sortedAvailableDates[0];
   const hasAvailableDates = sortedAvailableDates.length > 0;
 
+  /** Match student: avoid blocking the whole calendar/right pane once we have any slot map data. */
+  const isCalendarWaitingForFirstData =
+    isLoadingSlots && availableSlotsByDate.size === 0;
+  const showTimeColumnLoading =
+    isLoadingSlots && availableSlotsByDate.size === 0;
+
   const weekdaysWithBookableSlots = useMemo(() => {
     const s = new Set<number>();
     const today = dayjs().startOf("day");
@@ -360,7 +366,7 @@ const Step1Modal: React.FC<Step1ModalProps> = ({
               <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
                 <button
                   type="button"
-                  disabled={!hasAvailableDates || isLoadingSlots}
+                  disabled={!hasAvailableDates || isCalendarWaitingForFirstData}
                   onClick={() => {
                     if (!nextAvailableDate) return;
                     const d = dayjs(nextAvailableDate, "YYYY-MM-DD");
@@ -373,7 +379,7 @@ const Step1Modal: React.FC<Step1ModalProps> = ({
                   Next opening →
                 </button>
               </div>
-              {!isLoadingSlots ? (
+              {!isCalendarWaitingForFirstData ? (
                 <div className="mb-3 rounded-xl border border-[#E4E7EC] bg-linear-to-b from-[#FAFBFC] to-[#F4F6F8] p-3 shadow-inner">
                   <div className="mb-2 flex flex-wrap items-center justify-end gap-2">
                     <span className="inline-flex items-center gap-1.5 text-[10px] font-medium text-[#64748B]">
@@ -418,8 +424,7 @@ const Step1Modal: React.FC<Step1ModalProps> = ({
                 disabledDate={(current) => {
                   const isPast = isLocalCalendarDayBeforeToday(current);
                   if (isPast) return true;
-                  if (isLoadingSlots && availableSlotsByDate.size === 0)
-                    return true;
+                  if (isCalendarWaitingForFirstData) return true;
                   // Always allow today to be selected so the user can see it
                   // (even if it currently has no openings). The right pane
                   // shows a clear "No slots this day" message in that case.
@@ -433,8 +438,7 @@ const Step1Modal: React.FC<Step1ModalProps> = ({
                   const key = dayjs(current).startOf("day").format("YYYY-MM-DD");
                   const isPast = isLocalCalendarDayBeforeToday(current);
                   const isToday = dayjs(current).isSame(dayjs(), "day");
-                  const loadingBlock =
-                    isLoadingSlots && availableSlotsByDate.size === 0;
+                  const loadingBlock = isCalendarWaitingForFirstData;
                   const hasSlots =
                     availableSlotsByDate.has(key) && !isPast && !loadingBlock;
                   // Today stays clickable even with zero openings.
@@ -533,15 +537,13 @@ const Step1Modal: React.FC<Step1ModalProps> = ({
                 </p>
               </div>
               <div className="step1-time-slots grid flex-1 grid-cols-2 gap-2.5 overflow-y-auto">
-                {isLoadingSlots ? (
-                  Array.from({ length: 8 }).map((_, idx) => (
-                    <div
-                      key={`slot-skeleton-${idx}`}
-                      className="rounded-lg border border-primary-border px-3 py-2"
-                    >
-                      <Skeleton.Input active size="small" block />
-                    </div>
-                  ))
+                {showTimeColumnLoading ? (
+                  <div className="col-span-2 flex flex-1 flex-col items-center justify-center gap-3 py-10">
+                    <Spin size="large" />
+                    <p className="text-center text-sm text-[#64748B]">
+                      Loading available times…
+                    </p>
+                  </div>
                 ) : !hasAnyAvailableInSelectedDate ? (
                   <div className="col-span-2 flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[#CBD5E1] bg-[#FAFBFC] p-4 text-center">
                     <p className="text-sm font-medium text-[#475569]">
