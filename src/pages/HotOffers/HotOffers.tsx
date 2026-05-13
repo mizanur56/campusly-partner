@@ -1,8 +1,12 @@
-import { useMemo, useState } from "react";
+import { Modal } from "antd";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import PageMeta from "../../components/common/Meta/PageMeta";
 import PageHeader from "../../components/common/Navigation/PageHeader";
-import { useGetHotOffersQuery } from "../../redux/features/hotOffers/hotOffersApi";
+import {
+  HotOfferServiceItem,
+  useGetHotOffersQuery,
+} from "../../redux/features/hotOffers/hotOffersApi";
 import { getApiImageUrl } from "../../utils/getApiImageUrl";
 import "./HotOffers.css";
 import HotOffersSkeleton from "./HotOffersSkeleton";
@@ -23,24 +27,20 @@ export default function HotOffers() {
   const [selectedIntakeId, setSelectedIntakeId] = useState<string | undefined>(
     undefined,
   );
+  const [serviceModalItem, setServiceModalItem] =
+    useState<HotOfferServiceItem | null>(null);
 
-  const { data, isLoading, isFetching } =
-    useGetHotOffersQuery(selectedCountryId);
-  const isPageLoading = isLoading || isFetching;
+  const { data, isLoading, isFetching } = useGetHotOffersQuery({
+    countryId: selectedCountryId,
+    intakeId: selectedIntakeId,
+  });
+  const isPageLoading = isLoading;
 
   const countryTabs = data?.countryTabs ?? [];
   const focusInstitutions = data?.focusInstitutions ?? [];
   const upcomingIntakes = data?.upcomingIntakes;
   const intakes = upcomingIntakes?.intakes ?? [];
-  const intakeUniversities = useMemo(() => {
-    if (
-      selectedIntakeId &&
-      upcomingIntakes?.selectedIntakeId === selectedIntakeId
-    ) {
-      return upcomingIntakes.universities ?? [];
-    }
-    return upcomingIntakes?.universities ?? [];
-  }, [upcomingIntakes, selectedIntakeId]);
+  const intakeUniversities = upcomingIntakes?.universities ?? [];
   const programSpotlight = data?.programSpotlight ?? [];
   const servicesSection = data?.servicesSection;
   const banner = data?.banner;
@@ -108,7 +108,11 @@ export default function HotOffers() {
                 {focusInstitutions.map((inst) => (
                   <Link
                     key={inst.id}
-                    to="/programs-schools"
+                    to={
+                      inst.universitySlug
+                        ? `/programs-schools/universities/${inst.universitySlug}`
+                        : "/programs-schools"
+                    }
                     className="group flex flex-col rounded-[24px] border border-primary-border bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)] overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
                   >
                     <div className="relative aspect-[3/2] w-full overflow-hidden bg-neutral-100 flex items-center justify-center">
@@ -167,11 +171,17 @@ export default function HotOffers() {
                   </button>
                 ))}
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div
+                className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 transition-opacity duration-200 ${isFetching ? "opacity-50 pointer-events-none" : ""}`}
+              >
                 {intakeUniversities.map((u) => (
                   <Link
                     key={u.id}
-                    to="/programs-schools"
+                    to={
+                      u.universitySlug
+                        ? `/programs-schools/universities/${u.universitySlug}`
+                        : "/programs-schools"
+                    }
                     className="group flex items-center gap-4 rounded-lg border border-primary-border bg-white p-4 md:p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
                   >
                     <div className="relative flex h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-primary-border bg-neutral-50">
@@ -338,12 +348,12 @@ export default function HotOffers() {
                           {item.intro}
                         </p>
                       )}
-                      <Link
-                        to={item.slug ? `/academy/${item.slug}` : "/academy"}
+                      <button
+                        onClick={() => setServiceModalItem(item)}
                         className="mt-3 w-full rounded-lg border border-primary-500 py-2 text-sm font-medium text-primary-600 hover:bg-primary-50 transition-colors text-center"
                       >
                         Learn More
-                      </Link>
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -433,6 +443,48 @@ export default function HotOffers() {
             )}
         </div>
       )}
+      <Modal
+        open={serviceModalItem !== null}
+        onCancel={() => setServiceModalItem(null)}
+        footer={null}
+        centered
+        width={600}
+        styles={{
+          content: { padding: 0, borderRadius: 16, overflow: "hidden" },
+        }}
+      >
+        {serviceModalItem && (
+          <div>
+            {serviceModalItem.imageUrl && (
+              <div className="w-full aspect-[16/7] overflow-hidden bg-neutral-100">
+                <img
+                  src={getImageUrl(serviceModalItem.imageUrl)}
+                  alt={serviceModalItem.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+            <div className="p-6">
+              <p className="text-xs text-gray-400 mb-2">
+                {serviceModalItem.publishDate
+                  ? new Date(serviceModalItem.publishDate).toLocaleDateString(
+                      "en-GB",
+                      { day: "numeric", month: "long", year: "numeric" },
+                    )
+                  : ""}
+              </p>
+              <h2 className="text-xl font-bold text-gray-900 mb-3">
+                {serviceModalItem.title}
+              </h2>
+              {serviceModalItem.intro && (
+                <p className="text-sm text-gray-600 leading-relaxed mb-5">
+                  {serviceModalItem.intro}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </Modal>
     </>
   );
 }

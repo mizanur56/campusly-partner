@@ -14,6 +14,7 @@ export interface HotOfferFocusInstitution {
   logoUrl?: string | null;
   countryName: string;
   totalCourses: number;
+  universitySlug?: string | null;
 }
 
 export interface HotOfferIntake {
@@ -28,6 +29,7 @@ export interface HotOfferIntakeUniversity {
   name: string;
   logoUrl?: string | null;
   countryName: string;
+  universitySlug?: string | null;
 }
 
 export interface HotOfferProgramSpotlight {
@@ -80,13 +82,22 @@ export interface HotOffersAggregateResponse {
   } | null;
 }
 
+export interface HotOffersQueryParams {
+  countryId?: string;
+  intakeId?: string;
+}
+
 export const hotOffersApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getHotOffers: builder.query<HotOffersAggregateResponse, string | undefined>({
-      query: (countryId) => ({
+    getHotOffers: builder.query<HotOffersAggregateResponse, HotOffersQueryParams | undefined>({
+      query: (params) => ({
         url: "/hot-offers",
         method: "GET",
-        params: countryId ? { countryId } : undefined,
+        params: params
+          ? Object.fromEntries(
+              Object.entries(params).filter(([, v]) => v !== undefined),
+            )
+          : undefined,
       }),
       transformResponse: (response: { data?: HotOffersAggregateResponse }) =>
         response?.data ?? ({} as HotOffersAggregateResponse),
