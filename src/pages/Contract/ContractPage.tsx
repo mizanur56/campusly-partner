@@ -117,7 +117,8 @@ export default function ContractPage() {
     useGetOnboardingStatusQuery();
 
   // Fetch partner profile for advisor info
-  const { data: partnerProfile } = useGetPartnerProfileQuery();
+  const { data: partnerProfile, refetch: refetchPartnerProfile } =
+    useGetPartnerProfileQuery();
   const onboardingAdvisor = (onboardingStatus?.advisor ?? null) as {
     id?: string;
     name?: string | null;
@@ -307,6 +308,8 @@ export default function ContractPage() {
   };
 
   const handleOpenMeetingModal = () => {
+    void refetchMeetings();
+    void refetchPartnerProfile();
     if (upcomingMeeting) {
       setExistingMeetingModalOpen(true);
       return;
@@ -319,6 +322,8 @@ export default function ContractPage() {
   };
 
   const openNewBookingAfterCancel = () => {
+    void refetchMeetings();
+    void refetchPartnerProfile();
     setIsMeetingModalOpen(true);
     setMeetingStep(1);
     setSelectedSlot(undefined);
