@@ -17,6 +17,7 @@ import {
   buildMatchSourceFromEducationData,
   buildStudyLevelMismatchMessage,
   getAcademicDocFields,
+  getAcademicDocMatchFields,
   mapAiExtractedToEducationData,
   mergeEducationDataWithoutOverride,
   toBase64WithoutPrefix,
@@ -220,6 +221,7 @@ const ModalContent = ({
       const expectedDocumentType =
         type === "marksheet" ? "marksheet" : "certificate";
       const requestedFields = getAcademicDocFields(type, selectedStudyLevelLabel);
+      const matchFieldKeys = getAcademicDocMatchFields(type, selectedStudyLevelLabel);
 
       /** After file delete, education row may still hold old institute/result — do not send those as match targets. */
       const hasStoredFileForActiveType =
@@ -234,12 +236,24 @@ const ModalContent = ({
       const canUseEducationRowForMatch =
         !postDeleteClearInputs &&
         (hasStoredFileForActiveType || hasHistoryMatchContext);
-      const existingEducationForMatch = canUseEducationRowForMatch
-        ? { ...(selectedEducation || {}), ...aiExtractedEducationData }
-        : {};
+      const profileFullName =
+        [profileData?.firstName, profileData?.lastName]
+          .map((p: unknown) => String(p ?? "").trim())
+          .filter(Boolean)
+          .join(" ")
+          .trim() || "";
+      const existingEducationForMatch = {
+        profileFullName,
+        ...(canUseEducationRowForMatch
+          ? { ...(selectedEducation || {}), ...aiExtractedEducationData }
+          : {}),
+      };
 
       const { matchSource, matchFields } =
-        buildMatchSourceFromEducationData(existingEducationForMatch, requestedFields);
+        buildMatchSourceFromEducationData(
+          existingEducationForMatch,
+          matchFieldKeys,
+        );
       const validationRes: any = await validateDocumentWithAI({
         documentBase64: base64,
         mimeType: file.type || "image/jpeg",
@@ -278,13 +292,13 @@ const ModalContent = ({
       const isAiTypeMatch = aiPayload?.data?.isDocumentTypeMatch === true;
       const fieldMatches = aiPayload?.matchCheck?.fieldMatches || {};
       const mismatchedFields = Object.entries(fieldMatches)
-        .filter(
-          ([field, value]: any) =>
-            field !== "study_level" &&
-            value?.matched === false &&
-            String(value?.expected ?? "").trim() !== "" &&
-            String(value?.extracted ?? "").trim() !== "",
-        )
+        .filter(([field, value]: any) => {
+          if (field === "study_level") return false;
+          if (value?.matched !== false) return false;
+          if (String(value?.expected ?? "").trim() === "") return false;
+          if (field === "full_name") return true;
+          return String(value?.extracted ?? "").trim() !== "";
+        })
         .map(([field]) => field);
       const isStudyLevelMatched =
         fieldMatches?.study_level?.matched !== false &&

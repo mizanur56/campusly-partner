@@ -8,6 +8,7 @@ export type ValidationState = {
 const BASE_ACADEMIC_DOC_FIELDS: Record<UploadDocType, string[]> = {
   marksheet: [
     "study_level",
+    "full_name",
     "institute_name",
     "country",
     "subject_group",
@@ -18,6 +19,7 @@ const BASE_ACADEMIC_DOC_FIELDS: Record<UploadDocType, string[]> = {
   ],
   certificate: [
     "study_level",
+    "full_name",
     "institute_name",
     "country",
     "subject_group",
@@ -30,6 +32,7 @@ type StudyLevelFieldOverride = Partial<Record<UploadDocType, string[]>>;
 
 const DOCTORAL_STYLE_CERTIFICATE_FIELDS = [
   "study_level",
+  "full_name",
   "institute_name",
   "country",
   "subject_group",
@@ -76,6 +79,23 @@ export const getAcademicDocFields = (
   const resolved = override?.[type] || BASE_ACADEMIC_DOC_FIELDS[type];
   return Array.from(new Set(resolved));
 };
+
+/** Fields used only for AI extraction / autofill — not sent as match/compare targets. */
+const ACADEMIC_MATCH_EXCLUDED_FIELDS = new Set([
+  "start_date",
+  "end_date",
+  "out_of_grade",
+  "result",
+]);
+
+/** Subset of extraction fields used for `matchSource` / `matchFields` on validate-document. */
+export const getAcademicDocMatchFields = (
+  type: UploadDocType,
+  studyLevelLabel?: string,
+) =>
+  getAcademicDocFields(type, studyLevelLabel).filter(
+    (f) => !ACADEMIC_MATCH_EXCLUDED_FIELDS.has(f),
+  );
 
 export const toBase64WithoutPrefix = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
@@ -165,15 +185,23 @@ export const buildMatchSourceFromEducationData = (
     return { matchSource: {}, matchFields: [] as string[] };
   }
 
+  const profileFull =
+    typeof educationData?.profileFullName === "string"
+      ? educationData.profileFullName.trim()
+      : "";
+  const fromParts = [educationData?.firstName, educationData?.lastName]
+    .map((p: unknown) => String(p ?? "").trim())
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  const fullName = profileFull || fromParts;
+
   const candidate: Record<string, any> = {
     institute_name: educationData.instituteName,
     country: educationData.country,
-    start_date: educationData.startYear,
-    end_date: educationData.endYear,
     subject_group: educationData.subject,
-    out_of_grade: educationData.outOfGrade,
-    result: educationData.result,
   };
+  if (fullName) candidate.full_name = fullName;
 
   const matchSource: Record<string, any> = {};
   const allowed = new Set((allowedFields || []).map((field) => field.trim()));
@@ -209,4 +237,3 @@ export const mergeEducationDataWithoutOverride = (
   });
   return merged;
 };
-
