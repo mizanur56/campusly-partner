@@ -1,3 +1,23 @@
+/* Intake universities marquee */
+.intake-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: intake-scroll 20s linear infinite;
+}
+
+.intake-marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes intake-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
 /* Hero: smooth convex curve between green panel and photo (desktop only) */
 .hot-offers-hero__green {
   clip-path: none;
