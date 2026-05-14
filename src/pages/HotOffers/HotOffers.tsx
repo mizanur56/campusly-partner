@@ -104,7 +104,7 @@ export default function HotOffers() {
               <p className="text-sm text-gray-500 mb-4">
                 Relevant options that meet your students&apos; needs.
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
                 {focusInstitutions.map((inst) => (
                   <Link
                     key={inst.id}
@@ -154,17 +154,17 @@ export default function HotOffers() {
               </h2>
               <p className="text-sm text-gray-500 mb-4">
                 These universities and colleges are currently accepting
-                applications.
+                applications - submit yours now
               </p>
-              <div className="flex gap-2 mb-6">
+              <div className="flex border-b border-gray-200 mb-6">
                 {intakes.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setSelectedIntakeId(tab.id)}
-                    className={`px-5 py-2.5 rounded-full text-sm font-medium border transition-colors ${
+                    className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
                       effectiveIntakeId === tab.id
-                        ? "bg-primary-600 border-primary-600 text-white"
-                        : "bg-white border-neutral-200 text-gray-500 hover:text-gray-700 hover:border-primary-200"
+                        ? "border-primary-600 text-gray-900"
+                        : "border-transparent text-gray-400 hover:text-gray-600"
                     }`}
                   >
                     {tab.name}
@@ -172,36 +172,37 @@ export default function HotOffers() {
                 ))}
               </div>
               <div
-                className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 transition-opacity duration-200 ${isFetching ? "opacity-50 pointer-events-none" : ""}`}
+                className={`overflow-hidden transition-opacity duration-200 ${isFetching ? "opacity-50 pointer-events-none" : ""}`}
               >
-                {intakeUniversities.map((u) => (
-                  <Link
-                    key={u.id}
-                    to={
-                      u.universitySlug
-                        ? `/programs-schools/universities/${u.universitySlug}`
-                        : "/programs-schools"
-                    }
-                    className="group flex items-center gap-4 rounded-lg border border-primary-border bg-white p-4 md:p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
-                  >
-                    <div className="relative flex h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-primary-border bg-neutral-50">
-                      {u.logoUrl ? (
-                        <img
-                          src={getImageUrl(u.logoUrl)}
-                          alt={u.name}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <span className="flex h-full w-full items-center justify-center bg-primary-50 text-sm font-bold text-primary-700">
-                          {u.name.slice(0, 2)}
-                        </span>
-                      )}
-                    </div>
-                    <span className="font-semibold text-gray-900 text-sm md:text-base group-hover:text-primary-700 transition-colors line-clamp-2">
-                      {u.name}
-                    </span>
-                  </Link>
-                ))}
+                <div className="intake-marquee-track">
+                  {[...intakeUniversities, ...intakeUniversities].map(
+                    (u, i) => (
+                      <Link
+                        key={`${u.id}-${i}`}
+                        to={
+                          u.universitySlug
+                            ? `/programs-schools/universities/${u.universitySlug}`
+                            : "/programs-schools"
+                        }
+                        className="group mx-3 flex w-40 shrink-0 items-center justify-center py-4"
+                      >
+                        <div className="flex h-20 w-full items-center justify-center">
+                          {u.logoUrl ? (
+                            <img
+                              src={getImageUrl(u.logoUrl)}
+                              alt={u.name}
+                              className="h-full w-full object-contain"
+                            />
+                          ) : (
+                            <span className="flex h-full w-full items-center justify-center bg-primary-50 text-sm font-bold text-primary-700">
+                              {u.name.slice(0, 2)}
+                            </span>
+                          )}
+                        </div>
+                      </Link>
+                    ),
+                  )}
+                </div>
               </div>
             </section>
           )}
@@ -213,98 +214,217 @@ export default function HotOffers() {
                 This Week&apos;s Program Spotlight
               </h2>
               <p className="text-sm text-gray-500 mb-4">
-                Your students will love this up and coming program.
+                Your students will love this up-and-coming program. Claim their
+                seats before it&apos;s too late
               </p>
               {programSpotlight.map((spot) => (
                 <div
                   key={spot.id}
-                  className="rounded-[24px] border border-primary-border bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)] overflow-hidden mb-4 last:mb-0"
+                  className="rounded-[24px] border border-primary-border bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)] overflow-hidden mb-4 last:mb-0 p-5 md:p-6"
                 >
-                  <div className="p-5 md:p-6">
-                    <div className="flex items-start gap-3 mb-4">
-                      <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-neutral-100">
-                        {spot.institutionLogo ? (
-                          <img
-                            src={getImageUrl(spot.institutionLogo)}
-                            alt={spot.institutionName}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <span className="flex h-full w-full items-center justify-center text-lg font-bold text-primary-600">
-                            {spot.institutionName.slice(0, 2)}
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900 text-base md:text-lg">
-                          {spot.courseName}
-                        </h3>
-                        <p className="text-sm text-gray-600 mt-0.5">
-                          {spot.institutionName}, {spot.countryName}
+                  {/* Institution header */}
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 bg-neutral-100">
+                      {spot.institutionLogo ? (
+                        <img
+                          src={getImageUrl(spot.institutionLogo)}
+                          alt={spot.institutionName}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="flex h-full w-full items-center justify-center text-lg font-bold text-primary-600">
+                          {spot.institutionName.slice(0, 2)}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 text-base md:text-lg">
+                        {spot.courseName}
+                      </h3>
+                      <p className="text-sm text-gray-500 mt-0.5">
+                        {spot.countryName}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Info box */}
+                  <div className="rounded-2xl bg-[#EBF5EC] p-4 mb-4">
+                    {spot.tuitionFee != null && (
+                      <div className="mb-4">
+                        <p className="text-xs text-gray-500 mb-0.5">
+                          Tuition Fee
+                        </p>
+                        <p className="text-xl font-bold text-primary-600">
+                          {spot.tuitionFee}
                         </p>
                       </div>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 rounded-xl bg-primary-50/50 mb-4">
-                      {spot.tuitionFee != null && (
-                        <div>
-                          <p className="text-xs text-gray-500">Tuition Fee</p>
-                          <p className="font-semibold text-gray-900">
-                            {spot.tuitionFee}
-                          </p>
-                        </div>
-                      )}
-                      {spot.startDate && (
+                    )}
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                      <div className="flex items-start gap-2">
+                        <svg
+                          className="w-5 h-5 text-gray-500 shrink-0 mt-0.5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <rect
+                            x="3"
+                            y="4"
+                            width="18"
+                            height="18"
+                            rx="2"
+                            strokeWidth="1.5"
+                          />
+                          <line
+                            x1="16"
+                            y1="2"
+                            x2="16"
+                            y2="6"
+                            strokeWidth="1.5"
+                          />
+                          <line x1="8" y1="2" x2="8" y2="6" strokeWidth="1.5" />
+                          <line
+                            x1="3"
+                            y1="10"
+                            x2="21"
+                            y2="10"
+                            strokeWidth="1.5"
+                          />
+                        </svg>
                         <div>
                           <p className="text-xs text-gray-500">Start date</p>
-                          <p className="font-semibold text-gray-900">
-                            {spot.startDate}
+                          <p className="text-sm font-semibold text-gray-900">
+                            {spot.startDate || "-"}
                           </p>
                         </div>
-                      )}
+                      </div>
+
                       {spot.duration && (
-                        <div>
-                          <p className="text-xs text-gray-500">Duration</p>
-                          <p className="font-semibold text-gray-900">
-                            {spot.duration}
-                          </p>
+                        <div className="flex items-start gap-2">
+                          <svg
+                            className="w-5 h-5 text-gray-500 shrink-0 mt-0.5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle cx="12" cy="12" r="10" strokeWidth="1.5" />
+                            <polyline
+                              points="12 6 12 12 16 14"
+                              strokeWidth="1.5"
+                            />
+                          </svg>
+                          <div>
+                            <p className="text-xs text-gray-500">Duration</p>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {spot.duration} Year
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {spot.campusAddress && (
+                        <div className="flex items-start gap-2">
+                          <svg
+                            className="w-5 h-5 text-gray-500 shrink-0 mt-0.5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              d="M3 21h18M9 21V7l9-4v18"
+                              strokeWidth="1.5"
+                              strokeLinejoin="round"
+                            />
+                            <path d="M3 7l6-4" strokeWidth="1.5" />
+                            <rect
+                              x="9"
+                              y="11"
+                              width="4"
+                              height="4"
+                              strokeWidth="1.5"
+                            />
+                          </svg>
+                          <div>
+                            <p className="text-xs text-gray-500">Campus</p>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {spot.campusAddress}
+                            </p>
+                          </div>
                         </div>
                       )}
                       {spot.modeOfStudy && (
-                        <div>
-                          <p className="text-xs text-gray-500">Mode of study</p>
-                          <p className="font-semibold text-gray-900">
-                            {spot.modeOfStudy}
-                          </p>
+                        <div className="flex items-start gap-2">
+                          <svg
+                            className="w-5 h-5 text-gray-500 shrink-0 mt-0.5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"
+                              strokeWidth="1.5"
+                            />
+                            <path
+                              d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"
+                              strokeWidth="1.5"
+                            />
+                          </svg>
+                          <div>
+                            <p className="text-xs text-gray-500">
+                              Mode of study
+                            </p>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {spot.modeOfStudy}
+                            </p>
+                          </div>
                         </div>
                       )}
+
+                      <div className="flex items-start gap-2">
+                        <svg
+                          className="w-5 h-5 text-gray-500 shrink-0 mt-0.5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                            strokeWidth="1.5"
+                          />
+                          <polyline points="14 2 14 8 20 8" strokeWidth="1.5" />
+                          <line
+                            x1="9"
+                            y1="13"
+                            x2="15"
+                            y2="13"
+                            strokeWidth="1.5"
+                          />
+                          <line
+                            x1="9"
+                            y1="17"
+                            x2="15"
+                            y2="17"
+                            strokeWidth="1.5"
+                          />
+                        </svg>
+                        <div>
+                          <p className="text-xs text-gray-500">
+                            English Requirement
+                          </p>
+                          <p className="text-sm font-semibold text-gray-900">
+                            {spot.englishRequirement || "-"}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="space-y-2 mb-5">
-                      {spot.campusAddress && (
-                        <p className="text-sm">
-                          <span className="text-gray-500">Campus: </span>
-                          <span className="text-gray-900">
-                            {spot.campusAddress}
-                          </span>
-                        </p>
-                      )}
-                      {spot.englishRequirement && (
-                        <p className="text-sm">
-                          <span className="text-gray-500">
-                            English Requirement:{" "}
-                          </span>
-                          <span className="text-gray-900">
-                            {spot.englishRequirement}
-                          </span>
-                        </p>
-                      )}
-                    </div>
-                    <Link
-                      to="/programs-schools"
-                      className="inline-flex items-center justify-center rounded-lg bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 transition-colors"
-                    >
-                      Apply Now
-                    </Link>
                   </div>
+
+                  {/* Apply Now - full width outlined */}
+                  <Link
+                    to="/programs-schools"
+                    className="block w-full rounded-lg border border-primary-600 py-2.5 text-sm font-semibold text-primary-600 hover:bg-primary-50 transition-colors text-center"
+                  >
+                    Apply Now
+                  </Link>
                 </div>
               ))}
             </section>
