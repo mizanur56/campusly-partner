@@ -79,6 +79,8 @@ export default function Students() {
       name: u.user?.name ?? "—",
       email: u.email ?? "—",
       phone: u.phone ?? "—",
+      passportNo: u.passportNo ?? "—",
+      AssignedTo: u.advisor?.name ?? "—",
       status: u.status ?? "—",
       lastLogin: u.lastLogin ?? null,
     }));
@@ -92,18 +94,18 @@ export default function Students() {
     );
   }, [allStudents, searchText]);
 
-  const assignedTableData: AssignedStudentRecord[] = useMemo(() => {
-    if (!isTeamMember) return [];
-    const rows = assignedStudents.map((s) => ({
-      key: s.studentId,
-      studentId: s.studentId,
-      studentName: s.studentName,
-      activeTaskCount: s.activeTaskCount,
-    }));
-    if (!searchText.trim()) return rows;
-    const q = searchText.toLowerCase();
-    return rows.filter((row) => row.studentName.toLowerCase().includes(q));
-  }, [assignedStudents, searchText, isTeamMember]);
+  // const assignedTableData: AssignedStudentRecord[] = useMemo(() => {
+  //   if (!isTeamMember) return [];
+  //   const rows = assignedStudents.map((s) => ({
+  //     key: s.studentId,
+  //     studentId: s.studentId,
+  //     studentName: s.studentName,
+  //     activeTaskCount: s.activeTaskCount,
+  //   }));
+  //   if (!searchText.trim()) return rows;
+  //   const q = searchText.toLowerCase();
+  //   return rows.filter((row) => row.studentName.toLowerCase().includes(q));
+  // }, [assignedStudents, searchText, isTeamMember]);
 
   const columns: ColumnsType<StudentRecord> = [
     {
@@ -111,21 +113,34 @@ export default function Students() {
       dataIndex: "name",
       key: "name",
       sorter: (a, b) => a.name.localeCompare(b.name),
-      width: 180,
+      width: 250,
+      render: (name: string, record: StudentRecord) => (
+        <span
+          onClick={() =>
+            navigate(`/students/${record.id}/profile`, {
+              state: { student: record },
+            })
+          }
+          style={{ cursor: "pointer" }}
+          className="hover:underline whitespace-nowrap hover:text-primary-500"
+        >
+          {name}
+        </span>
+      ),
     },
-    { title: "Email", dataIndex: "email", key: "email", width: 220 },
+    { title: "Email", dataIndex: "email", key: "email", width: 200 },
     { title: "Phone", dataIndex: "phone", key: "phone", width: 140 },
     {
       title: "Passport No",
       dataIndex: "passportNo",
       key: "passportNo",
-      width: 140,
+      width: 100,
     },
     {
       title: "Assigned To",
       dataIndex: "AssignedTo",
       key: "AssignedTo",
-      width: 140,
+      width: 160,
     },
   ];
 
@@ -207,13 +222,7 @@ export default function Students() {
           limit={pageSize}
           setLimit={setPageSize}
           showSizeChanger
-          onRow={(record: StudentRecord) => ({
-            onClick: () =>
-              navigate(`/students/${record.id}/profile`, {
-                state: { student: record },
-              }),
-            style: { cursor: "pointer" },
-          })}
+          onRow={() => ({})}
           pagination={{
             pageSizeOptions: ["10", "20", "50"],
             showTotal: (total: number) => `Total ${total} students`,
