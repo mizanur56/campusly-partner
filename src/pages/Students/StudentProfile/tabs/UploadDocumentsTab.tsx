@@ -1,446 +1,29 @@
-// import { useState, useRef, useMemo } from "react";
-// import { FileTextOutlined, LoadingOutlined } from "@ant-design/icons";
-// import { toast } from "react-toastify";
-// import { FaCircleCheck } from "react-icons/fa6";
-// import { FaPlusSquare } from "react-icons/fa";
-// import {
-//   useGetStudentProfileQuery,
-//   useUpdateStudentProfileMutation,
-//   useUpdateEducationMutation,
-//   useGetDocumentsByCategoryQuery,
-//   useGetEligibleStudyLevelsByCountryQuery,
-// } from "../../../../redux/features/profile/studentProfileApi";
-// import { useCreateMediaMutation } from "../../../../redux/features/media/mediaApi";
-// import { config } from "../../../../config";
-// import PrimaryButton from "../../../../components/common/Button/PrimaryButton";
-// import { useGetCountriesQuery } from "../../../../redux/features/countries/countriesApi";
-
-// interface DocumentItem {
-//   id: string;
-//   name: string;
-//   status: "pending" | "submitted";
-//   category: string;
-//   educationId?: string;
-//   icon?: React.ReactNode;
-// }
-
-// interface DocumentGroup {
-//   label: string;
-//   items: DocumentItem[];
-// }
-
-// interface DocumentSection {
-//   id: string;
-//   title: string;
-//   description: string;
-//   items?: DocumentItem[];
-//   groups?: DocumentGroup[];
-// }
-
-// interface UploadDocumentsTabProps {
-//   studentId: string;
-//   profile: {
-//     imageId?: string;
-//     passportNo?: string;
-//     cv?: string;
-//     statementOfPurpose?: string;
-//     educations?: {
-//       id: string;
-//       studyLevel?: { description?: string };
-//       marksheet?: string;
-//       certificate?: string;
-//     }[];
-//     documents?: {
-//       documentId: string;
-//       documentRelation?: { category?: { name?: string }; name?: string };
-//     }[];
-//   };
-//   canEdit: boolean;
-//   onUpdated?: () => void;
-// }
-
-// export default function UploadDocumentsTab({
-//   studentId,
-//   profile,
-//   canEdit,
-//   onUpdated,
-// }: UploadDocumentsTabProps) {
-//   const [activeItemId, setActiveItemId] = useState<string | null>(null);
-
-//   const { data: profileData, refetch } = useGetStudentProfileQuery(studentId);
-//   const { data: backgroundData } = useGetDocumentsByCategoryQuery(
-//     { studentId, slug: "background-information" },
-//     { skip: !studentId },
-//   );
-//   const { data: countriesData } = useGetCountriesQuery({
-//     page: 1,
-//     limit: 1000,
-//   });
-
-//   console.log(profileData);
-//   console.log(studentId);
-//   console.log(backgroundData);
-
-//   const countryName = profileData?.country as any;
-
-//   const selectedCountryId = useMemo(() => {
-//     if (!countryName || !countriesData?.data) return null;
-
-//     const c = (countriesData.data as { id: string; name: string }[]).find(
-//       (x) => x.name.toLowerCase() === countryName.toLowerCase(),
-//     );
-
-//     return c?.id ?? null;
-//   }, [countryName, countriesData?.data]);
-
-//   const userId = profileData?.userId as string;
-
-//   const { data: studyLevelsRes } = useGetEligibleStudyLevelsByCountryQuery(
-//     {
-//       countryId: selectedCountryId,
-//       studentId: userId,
-//     },
-//     {
-//       refetchOnMountOrArgChange: true,
-//       skip: !selectedCountryId || !studentId,
-//     },
-//   );
-
-//   const [createMedia, { isLoading: createMediaLoading }] =
-//     useCreateMediaMutation();
-//   const [updateProfile, { isLoading: profileUpdating }] =
-//     useUpdateStudentProfileMutation();
-//   const [updateEducation, { isLoading: educationUpdating }] =
-//     useUpdateEducationMutation();
-
-//   const documents = (profileData as { documents?: unknown[] })?.documents ?? [];
-//   const backgroundInformationData = useMemo(() => {
-//     const raw = Array.isArray(backgroundData)
-//       ? backgroundData
-//       : ((backgroundData as { data?: unknown[] })?.data ?? []);
-//     return raw as { id: string; name?: string }[];
-//   }, [backgroundData]);
-
-//   const backgroundInfoItems: DocumentItem[] = useMemo(() => {
-//     return backgroundInformationData.map(
-//       (doc: { id: string; name?: string }) => {
-//         const isSubmitted = (documents as { documentId?: string }[]).some(
-//           (d) => d.documentId === doc.id,
-//         );
-//         return {
-//           id: doc.id,
-//           name: doc.name ?? "Document",
-//           status: isSubmitted ? "submitted" : "pending",
-//           category: "document",
-//           icon: <FileTextOutlined />,
-//         };
-//       },
-//     );
-//   }, [backgroundInformationData, documents]);
-
-//   const submittedEnglishTestDocs = (
-//     documents as { documentRelation?: { category?: { name?: string } } }[]
-//   ).filter(
-//     (item) =>
-//       item?.documentRelation?.category?.name === "English Language Tests",
-//   );
-
-//   const englishTestItems: DocumentItem[] = (
-//     submittedEnglishTestDocs as {
-//       documentId: string;
-//       documentRelation?: { name?: string };
-//     }[]
-//   ).map((doc) => ({
-//     id: doc.documentId,
-//     name: doc?.documentRelation?.name ?? "English Test",
-//     status: "submitted" as const,
-//     category: "english-test",
-//     icon: <FileTextOutlined />,
-//   }));
-
-//   // eslint-disable-next-line react-hooks/exhaustive-deps
-//   const educations =
-//     (
-//       profileData as {
-//         educations?: {
-//           id: string;
-//           studyLevelId?: string;
-//           studyLevel?: { description?: string };
-//           marksheet?: string;
-//           certificate?: string;
-//         }[];
-//       }
-//     )?.educations ?? [];
-//   const studyLevelData = studyLevelsRes?.data ?? [];
-//   const academicGroups: DocumentGroup[] = useMemo(() => {
-//     return studyLevelData.map((level: any) => {
-//       const edu = educations?.find((e: any) => e.studyLevelId === level.id);
-
-//       return {
-//         label: level.countryStudyLevelName,
-//         studyLevelId: level.id,
-//         educationData: edu,
-//         items: [
-//           {
-//             id: `${level.id}_marksheet`,
-//             name: "Marksheet",
-//             status: edu?.marksheet ? "submitted" : "pending",
-//             category: "marksheet",
-//           },
-//           {
-//             id: `${level.id}_certificate`,
-//             name: "Certificate",
-//             status: edu?.certificate ? "submitted" : "pending",
-//             category: "certificate",
-//           },
-//         ],
-//       };
-//     });
-//   }, [studyLevelData, educations]);
-
-//   const sections: DocumentSection[] = useMemo(() => {
-//     const s: DocumentSection[] = [];
-//     const p = profileData as {
-//       imageId?: string;
-//       passportNo?: string;
-//       cv?: string;
-//       statementOfPurpose?: string;
-//     } | null;
-//     s.push({
-//       id: "personal",
-//       title: "Personal Documents",
-//       description: "Submit a valid ID proof to enrol in courses",
-//       items: [
-//         {
-//           id: "photo",
-//           name: "Photo",
-//           status: p?.imageId ? "submitted" : "pending",
-//           category: "profile",
-//           icon: <FileTextOutlined />,
-//         },
-//         {
-//           id: "passport",
-//           name: "Passport",
-//           status: p?.passportNo ? "submitted" : "pending",
-//           category: "passport",
-//           icon: <FileTextOutlined />,
-//         },
-//         {
-//           id: "resume",
-//           name: "Resume",
-//           status: p?.cv ? "submitted" : "pending",
-//           category: "cv",
-//           icon: <FileTextOutlined />,
-//         },
-//       ],
-//     });
-//     if (academicGroups.length > 0) {
-//       s.push({
-//         id: "academic",
-//         title: "Academic Certificates",
-//         description: "Upload your marksheets and certificates",
-//         groups: academicGroups,
-//       });
-//     }
-//     if (englishTestItems.length > 0) {
-//       s.push({
-//         id: "english-test",
-//         title: "English Language Tests",
-//         description: "Submitted English language proficiency tests",
-//         items: englishTestItems,
-//       });
-//     }
-//     s.push({
-//       id: "additional",
-//       title: "Additional Documents",
-//       description: "Upload any additional documents",
-//       items: [
-//         ...backgroundInfoItems,
-//         {
-//           id: "sop",
-//           name: "Statement of Purpose",
-//           status: (profileData as { statementOfPurpose?: string })
-//             ?.statementOfPurpose
-//             ? "submitted"
-//             : "pending",
-//           category: "statement-of-purpose",
-//           icon: <FileTextOutlined />,
-//         },
-//       ],
-//     });
-//     return s;
-//   }, [profileData, academicGroups, englishTestItems, backgroundInfoItems]);
-
-//   const handleFileUpload = async (item: DocumentItem, file: File) => {
-//     if (!canEdit) return;
-//     try {
-//       setActiveItemId(item.id);
-//       const formData = new FormData();
-//       formData.append("file", file);
-//       formData.append("category", item.category);
-//       const response = await createMedia(formData as FormData).unwrap();
-//       const documentUrl = (response as { data?: { url?: string; id?: string } })
-//         ?.data?.url;
-//       const imageId = (response as { data?: { id?: string } })?.data?.id;
-//       const baseUrl = config.image_access_url ?? "";
-//       const fullUrl = documentUrl
-//         ? documentUrl.startsWith("http")
-//           ? documentUrl
-//           : `${baseUrl}${documentUrl}`
-//         : "";
-
-//       if (imageId && item.category === "profile") {
-//         await updateProfile({ studentId, body: { imageId } }).unwrap();
-//       }
-
-//       const profilePayload: Record<string, string> = {};
-//       if (item.category === "cv") profilePayload.cv = fullUrl;
-//       else if (item.category === "passport")
-//         profilePayload.passportNo = fullUrl;
-//       else if (item.category === "statement-of-purpose")
-//         profilePayload.statementOfPurpose = fullUrl;
-
-//       if (Object.keys(profilePayload).length > 0) {
-//         await updateProfile({ studentId, body: profilePayload }).unwrap();
-//       }
-
-//       if (
-//         (item.category === "marksheet" || item.category === "certificate") &&
-//         item.educationId
-//       ) {
-//         await updateEducation({
-//           studentId,
-//           educationId: item.educationId,
-//           body: { [item.category]: fullUrl },
-//         }).unwrap();
-//       }
-
-//       toast.success(`${item.name} uploaded successfully`);
-//       refetch();
-//       onUpdated?.();
-//     } catch (err: unknown) {
-//       const e = err as { data?: { message?: string } };
-//       toast.error(e?.data?.message ?? "Upload failed");
-//     }
-//     setActiveItemId(null);
-//   };
-
-//   const DocumentItemComponent = ({ item }: { item: DocumentItem }) => {
-//     const fileInputRef = useRef<HTMLInputElement>(null);
-//     const isLoading =
-//       activeItemId === item.id &&
-//       (createMediaLoading || profileUpdating || educationUpdating);
-
-//     const onFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-//       const file = e.target.files?.[0];
-//       if (file) await handleFileUpload(item, file);
-//       e.target.value = "";
-//     };
-
-//     return (
-//       <div className="flex items-center justify-between p-4 bg-white border border-primary-border rounded-lg hover:border-[#237D3B] transition-all group">
-//         <div className="flex items-center gap-3 flex-1">
-//           <span className="text-[#4B5563] text-xl group-hover:text-[#237D3B] transition-colors">
-//             {item.icon}
-//           </span>
-//           <div className="flex-1">
-//             <p className="text-[14px] font-medium text-[#20242A]">
-//               {item.name}
-//             </p>
-//             {item.status === "submitted" && (
-//               <p className="text-[12px] text-[#00B561] font-medium">
-//                 Submitted
-//               </p>
-//             )}
-//           </div>
-//         </div>
-//         <div className="flex items-center gap-2">
-//           {item.status === "submitted" ? (
-//             <FaCircleCheck className="text-[24px] text-[#00B561]" />
-//           ) : canEdit ? (
-//             <div className="relative">
-//               <input
-//                 type="file"
-//                 ref={fileInputRef}
-//                 onChange={onFileSelect}
-//                 className="hidden"
-//                 accept=".pdf,.jpg,.jpeg,.png"
-//               />
-//               {isLoading ? (
-//                 <LoadingOutlined className="text-[22px] text-[#237D3B]" />
-//               ) : (
-//                 <FaPlusSquare
-//                   className="text-[24px] text-[#237D3B] hover:text-primary-400 cursor-pointer transition-transform"
-//                   onClick={() => fileInputRef.current?.click()}
-//                 />
-//               )}
-//             </div>
-//           ) : null}
-//         </div>
-//       </div>
-//     );
-//   };
-
-//   return (
-//     <div className="space-y-8 pb-10">
-//       {sections.map((section) => (
-//         <div
-//           key={section.id}
-//           id={section.id}
-//           className="animate-in fade-in duration-500"
-//         >
-//           <div className="mb-4">
-//             <h3 className="text-[18px] font-bold text-[#20242A]">
-//               {section.title}
-//             </h3>
-//             <p className="text-[14px] text-gray-500">{section.description}</p>
-//           </div>
-//           <div className="space-y-6">
-//             {section.groups ? (
-//               section.groups.map((group) => (
-//                 <div key={group.label} className="mt-4">
-//                   <h4 className="text-[14px] font-semibold text-[#4B5563] mb-3 uppercase tracking-wider">
-//                     {group.label}
-//                   </h4>
-//                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//                     {group.items.map((item) => (
-//                       <DocumentItemComponent key={item.id} item={item} />
-//                     ))}
-//                   </div>
-//                 </div>
-//               ))
-//             ) : (
-//               <div className="grid grid-cols-1 gap-4">
-//                 {section.items?.map((item) => (
-//                   <DocumentItemComponent key={item.id} item={item} />
-//                 ))}
-//               </div>
-//             )}
-//           </div>
-//         </div>
-//       ))}
-
-//       <div className="flex justify-end pt-6 border-t">
-//         <PrimaryButton
-//           text="Next"
-//           size="large"
-//           className="h-12 px-10 rounded-lg shadow-md"
-//           to={`/students/${studentId}/profile?tab=apply-now`}
-//         />
-//       </div>
-//     </div>
-//   );
-// }
-
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { Modal } from "antd";
-import { useMemo, useRef, useState } from "react";
+﻿/* eslint-disable @typescript-eslint/no-unused-vars */
+import { LoadingOutlined } from "@ant-design/icons";
+import { Modal, Spin } from "antd";
+import dayjs from "dayjs";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FaPlusSquare } from "react-icons/fa";
 import { FaCircleCheck } from "react-icons/fa6";
+import {
+  FiAlertCircle,
+  FiCheckCircle,
+  FiEdit,
+  FiEye,
+  FiTrash2,
+  FiUploadCloud,
+} from "react-icons/fi";
 import { toast } from "react-toastify";
 
-import { FiEdit, FiEye, FiTrash2 } from "react-icons/fi";
+import StatementOfPurposeAiModal from "../../../../components/ProfileTab/StatementOfPurposeAiModal";
+import WorkExperienceCertificateAiModal from "../../../../components/ProfileTab/WorkExperienceCertificateAiModal";
 import PrimaryButton from "../../../../components/common/Button/PrimaryButton";
+import Uploader from "../../../../components/common/Shared/Uploader";
+import {
+  SUPPORTED_DOCUMENT_ACCEPT,
+  SUPPORTED_DOCUMENT_EXTENSIONS,
+  SUPPORTED_DOCUMENT_MIME_TYPES,
+} from "../../../../constants/documentTypes";
 import { useGetCountriesQuery } from "../../../../redux/features/countries/countriesApi";
 import { useCreateMediaMutation } from "../../../../redux/features/media/mediaApi";
 import {
@@ -452,7 +35,9 @@ import {
   useUpdateEducationMutation,
   useUpdateStudentProfileMutation,
   useUpsertDocumentMutation,
+  useValidateDocumentWithAIMutation,
 } from "../../../../redux/features/profile/studentProfileApi";
+import { toBase64WithoutPrefix } from "../utils/academicDocumentValidation";
 import {
   buildPersonalDocumentsUploadRows,
   resolvePassportDocumentTemplateId,
@@ -490,6 +75,11 @@ interface PendingDeleteState {
 /** Partner student profile fields used in this tab (RTK unwraps `response.data`). */
 export interface StudentProfileUploadShape {
   userId?: string;
+  firstName?: string;
+  lastName?: string;
+  gender?: string;
+  dateOfBirth?: string;
+  passportExpDate?: string;
   country?: string;
   data?: { country?: string };
   imageId?: string;
@@ -534,12 +124,66 @@ function isImageFile(file: File): boolean {
   return IMAGE_EXTENSIONS.some((ext) => lowerName.endsWith(ext));
 }
 
+/** RTK / API may return the list at root `data` or nested. */
+function unwrapBackgroundDocuments(payload: unknown): any[] {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload;
+  if (typeof payload === "object" && payload !== null) {
+    const p = payload as { data?: unknown };
+    if (Array.isArray(p.data)) return p.data as any[];
+    const nested = (p.data as { data?: unknown } | null | undefined)?.data;
+    if (Array.isArray(nested)) return nested as any[];
+  }
+  return [];
+}
+
+function isWorkExperienceDocName(name: unknown): boolean {
+  const n = String(name ?? "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!n) return false;
+  if (n.includes("work experience")) return true;
+  if (n.includes("experience") && (n.includes("certificate") || n.includes("letter")))
+    return true;
+  if (n.includes("employment") && n.includes("experience")) return true;
+  return false;
+}
+
+const PASSPORT_UPLOAD_AREA_CLASS = "min-h-[238px]";
+
+const isPdfFile = (file: File) =>
+  file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+
+function isSupportedDocumentFile(file: File): boolean {
+  const mime = (file.type || "").toLowerCase();
+  if (
+    SUPPORTED_DOCUMENT_MIME_TYPES.includes(
+      mime as (typeof SUPPORTED_DOCUMENT_MIME_TYPES)[number],
+    )
+  ) {
+    return true;
+  }
+  const lowerName = file.name.toLowerCase();
+  return SUPPORTED_DOCUMENT_EXTENSIONS.some((ext) => lowerName.endsWith(ext));
+}
+
+interface PassportValidationState {
+  item: DocumentItem | null;
+  file: File | null;
+  status: "idle" | "processing" | "success" | "error";
+  open: boolean;
+  message: string;
+}
+
 const UploadDocuments = ({
   studentId,
   profile: _profile,
   canEdit: _canEdit,
   onUpdated: _onUpdated,
 }: UploadDocumentsTabProps) => {
+  const canEdit = _canEdit !== false;
+  const onUpdated = _onUpdated;
   const {
     data: profileDataRaw,
     refetch,
@@ -559,14 +203,14 @@ const UploadDocuments = ({
   const { data: countries } = useGetCountriesQuery({ page: 1, limit: 1000 });
 
   const selectedCountryId = useMemo(() => {
-    // ১. ডাটা এখনো লোড হচ্ছে কি না তা চেক করুন (প্রোফাইল অবজেক্টের ভেতর ডাটা আছে কি না)
+    // à§§. à¦¡à¦¾à¦Ÿà¦¾ à¦à¦–à¦¨à§‹ à¦²à§‹à¦¡ à¦¹à¦šà§à¦›à§‡ à¦•à¦¿ à¦¨à¦¾ à¦¤à¦¾ à¦šà§‡à¦• à¦•à¦°à§à¦¨ (à¦ªà§à¦°à§‹à¦«à¦¾à¦‡à¦² à¦…à¦¬à¦œà§‡à¦•à§à¦Ÿà§‡à¦° à¦­à§‡à¦¤à¦° à¦¡à¦¾à¦Ÿà¦¾ à¦†à¦›à§‡ à¦•à¦¿ à¦¨à¦¾)
     const profileCountryName =
       profileData?.data?.country || profileData?.country;
     const countryList = countries?.data;
 
     if (!profileCountryName || !countryList) return null;
 
-    // ২. ট্রিম এবং লোয়ারকেস করে ম্যাচ খুঁজুন
+    // à§¨. à¦Ÿà§à¦°à¦¿à¦® à¦à¦¬à¦‚ à¦²à§‹à§Ÿà¦¾à¦°à¦•à§‡à¦¸ à¦•à¦°à§‡ à¦®à§à¦¯à¦¾à¦š à¦–à§à¦à¦œà§à¦¨
     // const matchedCountry = countryList.find(
     //   (c) =>
     //     c.name.trim().toLowerCase() === profileCountryName.trim().toLowerCase(),
@@ -583,6 +227,29 @@ const UploadDocuments = ({
 
     return matchedCountry ? matchedCountry.id : null;
   }, [profileData, countries]);
+
+  /** Profile may store country as id; passport AI match expects a human-readable country name. */
+  const passportMatchCountryName = useMemo(() => {
+    const raw = profileData?.data?.country ?? profileData?.country;
+    if (raw == null || String(raw).trim() === "") return null;
+    const str = String(raw).trim();
+    const countryList = countries?.data as
+      | { id?: string; name?: string }[]
+      | undefined;
+    if (countryList?.length) {
+      const input = str.toLowerCase();
+      const matched = countryList.find(
+        (c) =>
+          c.id?.toString() === str ||
+          (c.name && c.name.trim().toLowerCase() === input),
+      );
+      if (matched?.name?.trim()) return matched.name.trim();
+    }
+    // Do not send opaque DB ids to the validator when we cannot resolve a name
+    if (/^c[a-z0-9]{20,}$/i.test(str)) return null;
+    if (str.length >= 20 && /^[a-z0-9]+$/i.test(str)) return null;
+    return str;
+  }, [profileData, countries?.data]);
 
   const userId = profileData?.userId as string;
 
@@ -644,6 +311,26 @@ const UploadDocuments = ({
     useUpdateStudentProfileMutation();
   const [upsertStudentDocument] = useUpsertDocumentMutation();
   const [deleteDocument] = useDeleteDocumentMutation();
+  const [validateDocumentWithAI] = useValidateDocumentWithAIMutation();
+
+  const backgroundDataUnwrapped = useMemo(
+    () => unwrapBackgroundDocuments(backgroundData),
+    [backgroundData],
+  );
+
+  const workExpTemplateDoc = useMemo(() => {
+    const fromProfile = documents.find(
+      (d: any) =>
+        d?.documentRelation?.name && isWorkExperienceDocName(d.documentRelation.name),
+    );
+    if (fromProfile?.documentId) {
+      const byId = backgroundDataUnwrapped.find(
+        (x: any) => x.id === fromProfile.documentId,
+      );
+      if (byId) return byId;
+    }
+    return backgroundDataUnwrapped.find((d: any) => isWorkExperienceDocName(d?.name));
+  }, [backgroundDataUnwrapped, documents]);
 
   const [activeModal, setActiveModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<DocumentGroup | null>(
@@ -664,8 +351,61 @@ const UploadDocuments = ({
   const [pendingDelete, setPendingDelete] = useState<PendingDeleteState | null>(
     null,
   );
+  const [passportValidation, setPassportValidation] =
+    useState<PassportValidationState>({
+      item: null,
+      file: null,
+      status: "idle",
+      open: false,
+      message: "",
+    });
+  const [passportPreviewUrl, setPassportPreviewUrl] = useState("");
+  const [passportUploaderReset, setPassportUploaderReset] = useState(0);
+  const [weAiModalOpen, setWeAiModalOpen] = useState(false);
+  const [weAiModalDoc, setWeAiModalDoc] = useState<any>(null);
+  const [sopAiModalOpen, setSopAiModalOpen] = useState(false);
 
-  // /* ================= Academic Groups ================= */
+  const isAdditionalWorkExperienceItem = useCallback(
+    (item: DocumentItem) => {
+      if (item.category !== "document" || !item.documentId) return false;
+      if (workExpTemplateDoc && item.documentId === workExpTemplateDoc.id)
+        return true;
+      return isWorkExperienceDocName(item.name);
+    },
+    [workExpTemplateDoc],
+  );
+
+  const openWorkExperienceUploadModal = useCallback(
+    (item: DocumentItem) => {
+      const template = backgroundDataUnwrapped.find(
+        (d: any) => String(d.id) === String(item.documentId),
+      );
+      if (!template?.fields?.length) {
+        toast.error(
+          "Could not load the work experience form. Wait for the page to finish loading or refresh.",
+        );
+        return;
+      }
+      setWeAiModalDoc(template);
+      setWeAiModalOpen(true);
+    },
+    [backgroundDataUnwrapped],
+  );
+
+  const closeWorkExperienceModal = useCallback(() => {
+    setWeAiModalOpen(false);
+    setWeAiModalDoc(null);
+  }, []);
+
+  useEffect(() => {
+    if (!passportValidation.file) {
+      setPassportPreviewUrl("");
+      return;
+    }
+    const objectUrl = URL.createObjectURL(passportValidation.file);
+    setPassportPreviewUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [passportValidation.file]);
   const academicGroups: DocumentGroup[] = useMemo(() => {
     return studyLevelData.map((level: any) => {
       const edu = profileData?.educations?.find(
@@ -682,12 +422,14 @@ const UploadDocuments = ({
             name: "Marksheet",
             status: edu?.marksheet ? "submitted" : "pending",
             category: "marksheet",
+            educationId: edu?.id,
           },
           {
             id: `${level.id}_certificate`,
             name: "Certificate",
             status: edu?.certificate ? "submitted" : "pending",
             category: "certificate",
+            educationId: edu?.id,
           },
         ],
       };
@@ -712,10 +454,6 @@ const UploadDocuments = ({
 
   // /* ================= Section Logic ================= */
   const sections = useMemo(() => {
-    const backgroundDocList = Array.isArray(backgroundData)
-      ? backgroundData
-      : ((backgroundData as { data?: unknown[] } | null | undefined)?.data ??
-        []);
     const s: any[] = [];
     s.push({
       id: "personal",
@@ -746,7 +484,7 @@ const UploadDocuments = ({
         desc: "Provide one of the listed certificates to determine your course eligibility.",
         items: submittedEnglishTestDocs.map((doc: any) => ({
           id: doc.id,
-          // ৫-৬ লেটার দেখানোর লজিক
+          // à§«-à§¬ à¦²à§‡à¦Ÿà¦¾à¦° à¦¦à§‡à¦–à¦¾à¦¨à§‹à¦° à¦²à¦œà¦¿à¦•
           name:
             doc.documentRelation?.name?.length > 8
               ? `${doc.documentRelation.name.slice(0, 6)}...`
@@ -762,27 +500,19 @@ const UploadDocuments = ({
       title: "Additional Documents",
       desc: "Provide one of the listed certificates to determine your course eligibility.",
       items: [
-        ...backgroundDocList
-          .map((doc: any) => {
-            const isSubmitted = Boolean(
-              profileData?.documents?.some((d: any) => d.documentId === doc.id),
-            );
+        ...backgroundDataUnwrapped.map((doc: any) => {
+          const isSubmitted = Boolean(
+            profileData?.documents?.some((d: any) => d.documentId === doc.id),
+          );
 
-            // Work experience should only appear here after it has been filled/submitted.
-            const isWorkExperience = String(doc?.name ?? "")
-              .toLowerCase()
-              .includes("work experience");
-            if (isWorkExperience && !isSubmitted) return null;
-
-            return {
-              id: doc.id,
-              documentId: doc.id,
-              name: doc.name,
-              status: isSubmitted ? "submitted" : "pending",
-              category: "document",
-            };
-          })
-          .filter(Boolean),
+          return {
+            id: doc.id,
+            documentId: doc.id,
+            name: doc.name,
+            status: isSubmitted ? "submitted" : "pending",
+            category: "document",
+          };
+        }),
         {
           id: "sop",
           name: "Statement of Purpose",
@@ -795,7 +525,7 @@ const UploadDocuments = ({
   }, [
     profileData,
     academicGroups,
-    backgroundData,
+    backgroundDataUnwrapped,
     submittedEnglishTestDocs,
     personalSectionItems,
     selectedCountryId,
@@ -805,7 +535,7 @@ const UploadDocuments = ({
 
   // /* ================= Upload Handler ================= */
   const handleFileUpload = async (file: File, item: DocumentItem) => {
-    // const toastId = toast.loading(`Uploading ${item.name}...`);
+    if (!canEdit) return;
     setUploadingItemId(item.id);
     try {
       if (item.category === "profile" && !isImageFile(file)) {
@@ -821,7 +551,6 @@ const UploadDocuments = ({
       );
 
       const res = await createMedia(formData).unwrap();
-      // const url = `${config.image_access_url}${res.data.url}`;
       const url = res.data.url;
 
       if (item.category === "profile")
@@ -849,28 +578,144 @@ const UploadDocuments = ({
         item.category === "marksheet" ||
         item.category === "certificate"
       ) {
+        if (!item.educationId) {
+          toast.error("Missing education record for this study level.");
+          return;
+        }
         await updateEducation({
           studentId,
-          educationId: item.educationId!,
+          educationId: item.educationId,
           body: { [item.category]: url },
         }).unwrap();
       }
 
-      // toast.update(toastId, {
-      //   render: `${item.name} uploaded!`,
-      //   type: "success",
-      //   isLoading: false,
-      //   autoClose: 3000,
-      // });
-      refetch();
-    } catch {
-      toast.error("Upload failed");
+      toast.success(`${item.name} uploaded successfully`);
+      await refetch();
+      onUpdated?.();
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Upload failed");
     } finally {
       setUploadingItemId((prev) => (prev === item.id ? null : prev));
     }
   };
 
+  const formatFileSize = (sizeInBytes: number): string => {
+    if (!sizeInBytes) return "0 KB";
+    const sizeInMb = sizeInBytes / (1024 * 1024);
+    if (sizeInMb >= 1) return `${sizeInMb.toFixed(2)} MB`;
+    return `${(sizeInBytes / 1024).toFixed(0)} KB`;
+  };
+
+  const openPassportValidationModal = (item: DocumentItem) => {
+    setPassportUploaderReset((n) => n + 1);
+    setPassportValidation({
+      item,
+      file: null,
+      status: "idle",
+      open: true,
+      message: "",
+    });
+  };
+
+  const closePassportValidationModal = () => {
+    if (passportValidation.status === "processing") return;
+    setPassportValidation({
+      item: null,
+      file: null,
+      status: "idle",
+      open: false,
+      message: "",
+    });
+  };
+
+  const handleValidateAndUploadPassport = async () => {
+    const item = passportValidation.item;
+    const file = passportValidation.file;
+    if (!item || !file) {
+      toast.error("Please select passport document first.");
+      return;
+    }
+    if (!isSupportedDocumentFile(file)) {
+      toast.error(
+        "Unsupported file type. Allowed: JPG, JPEG, JFIF, PNG, WEBP, GIF, PDF.",
+      );
+      return;
+    }
+
+    setPassportValidation((prev) => ({
+      ...prev,
+      status: "processing",
+      message: "We are progressing and validating your data....",
+    }));
+
+    try {
+      const base64 = await toBase64WithoutPrefix(file);
+      const fullName =
+        [profileData?.firstName, profileData?.lastName]
+          .filter(Boolean)
+          .join(" ")
+          .trim() || null;
+
+      const validationRes: any = await validateDocumentWithAI({
+        documentBase64: base64,
+        mimeType: file.type || "image/jpeg",
+        expectedDocumentType: "passport",
+        fields: [
+          "full_name",
+          "country",
+          "gender",
+          "passport_no",
+          "date_of_birth",
+          "passport_expiry_date",
+        ],
+        matchSource: {
+          full_name: fullName,
+          country: passportMatchCountryName,
+          gender: profileData?.gender || null,
+          passport_no: profileData?.passportNo || null,
+          date_of_birth: profileData?.dateOfBirth || null,
+          passport_expiry_date: profileData?.passportExpDate || null,
+        },
+      }).unwrap();
+
+      const aiPayload = validationRes?.data || {};
+      const typeMatched = !!aiPayload?.data?.isDocumentTypeMatch;
+      const matchCheck = aiPayload?.matchCheck;
+      const allMatched =
+        matchCheck?.isChecked === true ? matchCheck?.allMatched !== false : true;
+
+      if (!typeMatched || !allMatched) {
+        setPassportValidation((prev) => ({
+          ...prev,
+          status: "error",
+          message: "Please submit your own document.",
+        }));
+        toast.error("Please submit your own document.");
+        return;
+      }
+
+      await handleFileUpload(file, item);
+      setPassportValidation((prev) => ({
+        ...prev,
+        status: "success",
+        message: "Validation successful. Passport uploaded.",
+      }));
+    } catch (err: any) {
+      setPassportValidation((prev) => ({
+        ...prev,
+        status: "error",
+        message: "Validation failed. Please try again.",
+      }));
+      toast.error(
+        err?.data?.message ||
+          err?.data?.error?.message ||
+          "Passport validation failed",
+      );
+    }
+  };
+
   const triggerDirectUpload = (item: DocumentItem) => {
+    if (!canEdit) return;
     setActiveItem(item);
     fileInputRef.current?.click();
   };
@@ -878,6 +723,8 @@ const UploadDocuments = ({
   const resolveItemViewUrl = (item: DocumentItem): string => {
     if (item.category === "profile") return getApiImageUrl(profileData?.image?.url);
     if (item.category === "cv") return getApiImageUrl(profileData?.cv);
+    if (item.category === "statement-of-purpose")
+      return getApiImageUrl(profileData?.statementOfPurpose);
     if (item.category === "document" && item.documentId) {
       const matchedDoc = (profileData?.documents ?? []).find(
         (d) => d.documentId === item.documentId,
@@ -897,8 +744,17 @@ const UploadDocuments = ({
   };
 
   const requestDeletePersonalItem = (item: DocumentItem) => {
+    if (!canEdit) return;
     if (item.category === "profile") {
       toast.info("Photo delete is not available here.");
+      return;
+    }
+    if (item.category === "statement-of-purpose") {
+      setPendingDelete({
+        id: item.id,
+        name: item.name,
+        category: "statement-of-purpose",
+      });
       return;
     }
     setPendingDelete({
@@ -911,23 +767,56 @@ const UploadDocuments = ({
 
   const handleConfirmDeletePersonalItem = async () => {
     if (!pendingDelete) return;
-    setDeletingItemId(pendingDelete.id);
+    const deleted = { ...pendingDelete };
+    setDeletingItemId(deleted.id);
     try {
-      if (pendingDelete.category === "cv") {
+      if (deleted.category === "cv") {
         await updateProfile({ studentId, body: { cv: "" } }).unwrap();
-      } else if (pendingDelete.category === "document" && pendingDelete.documentId) {
+      } else if (deleted.category === "statement-of-purpose") {
+        await updateProfile({ studentId, body: { statementOfPurpose: "" } }).unwrap();
+      } else if (deleted.category === "document" && deleted.documentId) {
         await deleteDocument({
           studentId,
-          documentId: pendingDelete.documentId,
+          documentId: deleted.documentId,
         }).unwrap();
       } else {
         toast.error("Delete is not supported for this item.");
         return;
       }
       await refetch();
-      toast.success(`${pendingDelete.name} removed.`);
-    } catch {
-      toast.error("Delete failed");
+
+      if (
+        deleted.category === "document" &&
+        deleted.documentId &&
+        passportTemplateId &&
+        deleted.documentId === passportTemplateId
+      ) {
+        setPassportUploaderReset((n) => n + 1);
+        setPassportValidation({
+          item: null,
+          file: null,
+          status: "idle",
+          open: false,
+          message: "",
+        });
+      }
+      if (deleted.category === "statement-of-purpose") {
+        setSopAiModalOpen(false);
+      }
+      if (
+        deleted.category === "document" &&
+        deleted.documentId &&
+        workExpTemplateDoc &&
+        deleted.documentId === workExpTemplateDoc.id
+      ) {
+        setWeAiModalOpen(false);
+        setWeAiModalDoc(null);
+      }
+
+      toast.success(`${deleted.name} removed.`);
+      onUpdated?.();
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Delete failed");
     } finally {
       setDeletingItemId(null);
       setPendingDelete(null);
@@ -941,6 +830,7 @@ const UploadDocuments = ({
         type="file"
         className="hidden"
         ref={fileInputRef}
+        disabled={uploadingItemId !== null}
         accept={
           activeItem?.category === "profile"
             ? "image/jpeg,image/jpg,image/png,image/webp,image/gif"
@@ -996,39 +886,39 @@ const UploadDocuments = ({
                       </div>
                       {item.status === "submitted" ? (
                         <div className="flex items-center gap-1.5">
-                          {/* Compact action icons for academic section */}
-                          <button
-                            type="button"
-                            className="border border-primary-border cursor-pointer p-1 flex items-center hover:border-primary hover:text-primary rounded-md"
-                            onClick={() => {
-                              setSelectedStudyLevelId(group.studyLevelId);
-                              setActiveField(
-                                item.category as "marksheet" | "certificate",
-                              );
-                              setActiveModal(true);
-                            }}
-                            aria-label={`Edit ${item.name}`}
-                          >
-                            <FiEdit className="text-primary text-base" />
-                          </button>
+                          {canEdit && (
+                            <button
+                              type="button"
+                              className="border border-primary-border cursor-pointer p-1 flex items-center hover:border-primary hover:text-primary rounded-md"
+                              onClick={() => {
+                                setSelectedGroup(group);
+                                setSelectedStudyLevelId(group.studyLevelId);
+                                setActiveField(
+                                  item.category as "marksheet" | "certificate",
+                                );
+                                setActiveModal(true);
+                              }}
+                              aria-label={`Edit ${item.name}`}
+                            >
+                              <FiEdit className="text-primary text-base" />
+                            </button>
+                          )}
                           <FaCircleCheck className="text-green-500 text-base" />
                         </div>
-                      ) : (
+                      ) : canEdit ? (
                         <FaPlusSquare
                           className="text-primary text-lg cursor-pointer hover:scale-110 transition-transform"
                           onClick={() => {
-                            // setSelectedGroup(group);
-                            // setSelectedStudyLevelId(group.studyLevelId);
-
-                            // setActiveModal(true);
-
+                            setSelectedGroup(group);
                             setSelectedStudyLevelId(group.studyLevelId);
                             setActiveField(
                               item.category as "marksheet" | "certificate",
-                            ); // এখানে ক্যাটাগরি সেট হচ্ছে
+                            );
                             setActiveModal(true);
                           }}
                         />
+                      ) : (
+                        <FaCircleCheck className="text-gray-300 text-base" />
                       )}
                     </div>
                   ))}
@@ -1066,7 +956,7 @@ const UploadDocuments = ({
                         >
                           <FiEye className="text-primary text-base" />
                         </button>
-                        {item.category !== "profile" && (
+                        {item.category !== "profile" && canEdit && (
                           <button
                             type="button"
                             disabled={deletingItemId === item.id}
@@ -1075,7 +965,74 @@ const UploadDocuments = ({
                             aria-label={`Delete ${item.name}`}
                           >
                             {deletingItemId === item.id ? (
-                              <div className="h-4 w-4 rounded-full border-2 border-red-500 border-t-transparent animate-spin" />
+                              <Spin
+                                size="small"
+                                indicator={
+                                  <LoadingOutlined
+                                    style={{ fontSize: 16, color: "#EF4444" }}
+                                    spin
+                                  />
+                                }
+                              />
+                            ) : (
+                              <FiTrash2 className="text-red-500 text-base" />
+                            )}
+                          </button>
+                        )}
+                        <FaCircleCheck className="text-green-500 text-base" />
+                      </div>
+                    ) : section.id === "additional" &&
+                      isAdditionalWorkExperienceItem(item) ? (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          className="border border-[#CFCACF] p-1 rounded-md hover:border-primary hover:text-primary"
+                          onClick={() => handleViewPersonalItem(item)}
+                          aria-label={`View ${item.name}`}
+                        >
+                          <FiEye className="text-primary text-base" />
+                        </button>
+                        <FaCircleCheck className="text-green-500 text-base" />
+                      </div>
+                    ) : section.id === "additional" &&
+                      item.category === "statement-of-purpose" ? (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          className="border border-[#CFCACF] p-1 rounded-md hover:border-primary hover:text-primary"
+                          onClick={() => handleViewPersonalItem(item)}
+                          aria-label={`View ${item.name}`}
+                        >
+                          <FiEye className="text-primary text-base" />
+                        </button>
+                        {canEdit && (
+                          <button
+                            type="button"
+                            className="border border-[#CFCACF] cursor-pointer p-1 flex items-center hover:border-primary hover:text-primary rounded-md"
+                            onClick={() => setSopAiModalOpen(true)}
+                            aria-label={`Edit ${item.name}`}
+                          >
+                            <FiEdit className="text-primary text-base" />
+                          </button>
+                        )}
+                        {canEdit && (
+                          <button
+                            type="button"
+                            disabled={deletingItemId === item.id}
+                            className="border border-[#CFCACF] p-1 rounded-md hover:border-red-500 hover:text-red-500 disabled:opacity-50"
+                            onClick={() => requestDeletePersonalItem(item)}
+                            aria-label={`Delete ${item.name}`}
+                          >
+                            {deletingItemId === item.id ? (
+                              <Spin
+                                size="small"
+                                indicator={
+                                  <LoadingOutlined
+                                    style={{ fontSize: 16, color: "#EF4444" }}
+                                    spin
+                                  />
+                                }
+                              />
                             ) : (
                               <FiTrash2 className="text-red-500 text-base" />
                             )}
@@ -1087,13 +1044,45 @@ const UploadDocuments = ({
                       <FaCircleCheck className="text-green-500 text-base" />
                     )
                   ) : uploadingItemId === item.id ? (
-                    <div className="h-5 w-5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-                  ) : (
-                    <FaPlusSquare
-                      className="text-primary text-lg cursor-pointer hover:scale-110 transition-transform"
-                      onClick={() => triggerDirectUpload(item)}
+                    <Spin
+                      size="small"
+                      indicator={
+                        <LoadingOutlined
+                          style={{ fontSize: 20, color: "#237D3B" }}
+                          spin
+                        />
+                      }
                     />
-                  )}
+                  ) : canEdit ? (
+                    <button
+                      type="button"
+                      className="inline-flex items-center justify-center p-0 m-0 border-0 bg-transparent cursor-pointer text-primary text-lg hover:scale-110 transition-transform"
+                      onClick={() => {
+                        const isPassportPersonalItem =
+                          section.id === "personal" &&
+                          item.category === "document" &&
+                          item.documentId === passportTemplateId;
+                        if (isPassportPersonalItem) {
+                          openPassportValidationModal(item);
+                          return;
+                        }
+                        if (section.id === "additional") {
+                          if (isAdditionalWorkExperienceItem(item)) {
+                            openWorkExperienceUploadModal(item);
+                            return;
+                          }
+                          if (item.category === "statement-of-purpose") {
+                            setSopAiModalOpen(true);
+                            return;
+                          }
+                        }
+                        triggerDirectUpload(item);
+                      }}
+                      aria-label={`Upload ${item.name}`}
+                    >
+                      <FaPlusSquare className="pointer-events-none" />
+                    </button>
+                  ) : null}
                 </div>
               ))}
             </div>
@@ -1104,23 +1093,41 @@ const UploadDocuments = ({
       <Modal
         open={activeModal}
         footer={null}
-        onCancel={() => setActiveModal(false)}
+        onCancel={() => {
+          setActiveModal(false);
+          setActiveField(null);
+          setSelectedStudyLevelId(null);
+          setSelectedGroup(null);
+        }}
         width={800}
         destroyOnClose
         centered
       >
-        {selectedStudyLevelId && (
+        {selectedStudyLevelId && activeField && (
           <ModalContent
+            studentId={studentId}
             selectedStudyLevelId={selectedStudyLevelId}
             profileData={profileData}
             refetch={refetch}
             createMedia={createMedia}
+            createEducation={createEducation}
             updateEducation={updateEducation}
             isCreatingMedia={isCreatingMedia}
             isUpdatingEducation={isUpdatingEducation}
             isUpdatingProfile={isUpdatingProfile}
-            // selectedStudyLevelId={selectedStudyLevelId}
             activeField={activeField}
+            selectedStudyLevelLabel={
+              selectedGroup?.label ||
+              academicGroups.find((g) => g.studyLevelId === selectedStudyLevelId)
+                ?.label ||
+              ""
+            }
+            onClose={() => {
+              setActiveModal(false);
+              setActiveField(null);
+              setSelectedStudyLevelId(null);
+              setSelectedGroup(null);
+            }}
           />
         )}
       </Modal>
@@ -1140,6 +1147,200 @@ const UploadDocuments = ({
             : ""}
         </p>
       </Modal>
+
+      <Modal
+        open={passportValidation.open}
+        title="Passport Document Validation"
+        onCancel={closePassportValidationModal}
+        footer={null}
+        width={800}
+        centered
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="text-xs font-bold text-gray-500 uppercase italic">
+              Passport Document
+            </div>
+            {!passportValidation.file ? (
+              <div className={PASSPORT_UPLOAD_AREA_CLASS}>
+                <Uploader
+                  key={`passport-uploader-${passportUploaderReset}`}
+                  label="Upload Passport"
+                  buttonLabel="Choose file"
+                  helperText="Supported formats: PDF, JPG, JPEG, JFIF, PNG, WEBP, GIF"
+                  accept={SUPPORTED_DOCUMENT_ACCEPT}
+                  disabled={passportValidation.status === "processing"}
+                  onChange={(f: any) => {
+                    const selectedFile = Array.isArray(f) ? f[0] : f;
+                    const file = selectedFile?.originFileObj || selectedFile || null;
+                    if (file && !isSupportedDocumentFile(file)) {
+                      toast.error(
+                        "Unsupported file type. Allowed: JPG, JPEG, JFIF, PNG, WEBP, GIF, PDF.",
+                      );
+                      return;
+                    }
+                    setPassportValidation((prev) => ({
+                      ...prev,
+                      file,
+                      status: "idle",
+                      message: "",
+                    }));
+                  }}
+                />
+              </div>
+            ) : (
+              <div
+                key={`${passportValidation.file.name}-${passportValidation.file.size}-${passportValidation.file.lastModified}`}
+                className={`relative ${PASSPORT_UPLOAD_AREA_CLASS} flex flex-col rounded-2xl border-2 border-dashed border-primary/30 bg-white shadow-sm overflow-hidden`}
+              >
+                <button
+                  type="button"
+                  disabled={passportValidation.status === "processing"}
+                  className="absolute top-3 right-3 z-10 inline-flex items-center gap-1 rounded-md border border-red-200 bg-white px-2.5 py-1.5 text-xs font-medium text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-50"
+                  onClick={() => {
+                    setPassportUploaderReset((n) => n + 1);
+                    setPassportValidation((prev) => ({
+                      ...prev,
+                      file: null,
+                      status: "idle",
+                      message: "",
+                    }));
+                  }}
+                  aria-label="Remove selected file"
+                >
+                  <FiTrash2 className="text-sm" />
+                  Delete
+                </button>
+
+                <div className="flex flex-1 flex-col min-h-0 pt-12 px-3 pb-2">
+                  <div className="flex flex-1 min-h-[140px] items-center justify-center rounded-lg bg-gray-50 border border-gray-100 overflow-hidden">
+                    {passportPreviewUrl && passportValidation.file && !isPdfFile(passportValidation.file) ? (
+                      <img
+                        src={passportPreviewUrl}
+                        alt={passportValidation.file.name}
+                        className="max-h-[180px] w-full object-contain"
+                      />
+                    ) : passportPreviewUrl && passportValidation.file && isPdfFile(passportValidation.file) ? (
+                      <iframe
+                        title="Passport PDF preview"
+                        src={passportPreviewUrl}
+                        className="h-[180px] w-full border-0 bg-white"
+                      />
+                    ) : (
+                      <div className="px-4 text-center text-sm text-gray-500">
+                        Preview is loading or not available for this file type.
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-2 shrink-0 border-t border-gray-100 pt-2 text-center">
+                    <p className="truncate text-xs font-semibold text-gray-700">
+                      {passportValidation.file.name}
+                    </p>
+                    <p className="text-[11px] font-medium text-primary">
+                      {formatFileSize(passportValidation.file.size)} · selected
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {passportValidation.message && (
+            <div
+              className={`rounded-lg p-3 text-sm font-medium flex items-start gap-2 ${
+                passportValidation.status === "error"
+                  ? "bg-red-50 text-red-600 border border-red-200"
+                  : passportValidation.status === "success"
+                    ? "bg-green-50 text-green-700 border border-green-200"
+                    : "bg-primary/10 text-primary border border-primary/20"
+              }`}
+            >
+              {passportValidation.status === "success" ? (
+                <FiCheckCircle className="mt-0.5" />
+              ) : passportValidation.status === "error" ? (
+                <FiAlertCircle className="mt-0.5" />
+              ) : (
+                <LoadingOutlined style={{ fontSize: 14 }} spin />
+              )}
+              <span>{passportValidation.message}</span>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-2 pt-1">
+            <button
+              type="button"
+              className="px-4 py-2 rounded-md border border-gray-300 text-sm hover:bg-gray-100 disabled:opacity-50"
+              onClick={closePassportValidationModal}
+              disabled={passportValidation.status === "processing"}
+            >
+              {passportValidation.status === "success" ? "Close" : "Cancel"}
+            </button>
+            {passportValidation.status !== "success" && (
+              <button
+                type="button"
+                className="px-4 py-2 rounded-md bg-primary text-white text-sm hover:opacity-90 disabled:opacity-50 inline-flex items-center gap-1.5"
+                onClick={handleValidateAndUploadPassport}
+                disabled={
+                  !passportValidation.file || passportValidation.status === "processing"
+                }
+              >
+                <FiUploadCloud />
+                Upload
+              </button>
+            )}
+          </div>
+        </div>
+      </Modal>
+
+      {weAiModalOpen && weAiModalDoc && (
+        <WorkExperienceCertificateAiModal
+          open={weAiModalOpen}
+          onClose={closeWorkExperienceModal}
+          document={weAiModalDoc as any}
+          createMedia={createMedia}
+          onComplete={async ({ serverUrl, extractedStrings }) => {
+            try {
+              const fieldResults = (weAiModalDoc as any).fields.map((field: any) => {
+                const raw = extractedStrings[field.id];
+                const isDate = field.name.toLowerCase().includes("date");
+                let result = String(raw ?? "").trim();
+                if (isDate && raw) {
+                  const d = dayjs(raw, ["YYYY-MM-DD", "DD-MM-YYYY", "DD/MM/YYYY"], true);
+                  result = d.isValid() ? d.format("DD-MM-YYYY") : result;
+                }
+                return { fieldId: field.id, result };
+              });
+              await upsertStudentDocument({
+                studentId,
+                body: {
+                  documentId: weAiModalDoc.id,
+                  document: serverUrl,
+                  fields: fieldResults,
+                },
+              }).unwrap();
+              await refetch();
+              closeWorkExperienceModal();
+              toast.success("Work experience saved from upload.");
+              onUpdated?.();
+            } catch (e: any) {
+              toast.error(e?.data?.message || "Failed to save work experience");
+            }
+          }}
+        />
+      )}
+
+      <StatementOfPurposeAiModal
+        open={sopAiModalOpen}
+        onClose={() => setSopAiModalOpen(false)}
+        profileData={profileData}
+        createMedia={createMedia}
+        updateProfile={(body) => updateProfile({ studentId, body })}
+        onSuccess={() => {
+          void refetch();
+          setSopAiModalOpen(false);
+          onUpdated?.();
+        }}
+      />
 
       <div className="flex justify-end mt-6">
         <PrimaryButton

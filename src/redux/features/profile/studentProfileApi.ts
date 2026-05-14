@@ -264,6 +264,14 @@ export const partnerStudentProfileApi = baseApi.injectEndpoints({
       ],
     }),
 
+    validateDocumentWithAI: builder.mutation({
+      query: (payload: Record<string, unknown>) => ({
+        url: "/ai/validate-document",
+        method: "POST",
+        body: payload,
+      }),
+    }),
+
     deleteDocument: builder.mutation({
       query: ({
         studentId,
@@ -334,6 +342,7 @@ export const {
   useGetEligibleStudyLevelsQuery,
   useGetStudentApplicationsQuery,
   useUpsertDocumentMutation,
+  useValidateDocumentWithAIMutation,
   useDeleteDocumentMutation,
   useGetEligibleStudyLevelsByCountryQuery,
   useGetAllStudentsByPartnerIdQuery,

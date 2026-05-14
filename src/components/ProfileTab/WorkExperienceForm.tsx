@@ -4,26 +4,49 @@ import {
   FilePdfOutlined,
   FileTextOutlined,
   FileWordOutlined,
+  LoadingOutlined,
 } from "@ant-design/icons";
-import { Button, Form, Switch, Tooltip } from "antd";
+import { Form, Switch, Tooltip } from "antd";
 import dayjs from "dayjs";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
 import { FaRegEdit } from "react-icons/fa";
 import { config } from "../../config";
+import {
+  SUPPORTED_DOCUMENT_ACCEPT,
+  SUPPORTED_DOCUMENT_EXTENSIONS,
+  SUPPORTED_DOCUMENT_MIME_TYPES,
+} from "../../constants/documentTypes";
 import { useCreateMediaMutation } from "../../redux/features/media/mediaApi";
 import {
   useGetStudentProfileQuery,
   useUpsertDocumentMutation,
+  useValidateDocumentWithAIMutation,
 } from "../../redux/features/profile/studentProfileApi";
+import { toBase64WithoutPrefix } from "../../pages/Students/StudentProfile/utils/academicDocumentValidation";
+import {
+  mapWorkExperienceExtractedToFormValues,
+  WORK_EXPERIENCE_AI_FIELDS,
+  WORK_EXPERIENCE_EXPECTED_TYPE,
+} from "../../pages/Students/StudentProfile/utils/workExperienceAiUtils";
+
+import type { BackgroundDocument } from "./type";
 import PrimaryButton from "../common/Button/PrimaryButton";
+import Uploader from "../common/Shared/Uploader";
 import { FormDatePicker, FormInput } from "../common/Forms";
 
-type BackgroundDocument = {
-  id: string;
-  name: string;
-  fields?: { id: string; name: string; type?: string }[];
+const isSupportedDocumentFile = (file: File) => {
+  const mime = (file.type || "").toLowerCase();
+  if (
+    SUPPORTED_DOCUMENT_MIME_TYPES.includes(
+      mime as (typeof SUPPORTED_DOCUMENT_MIME_TYPES)[number],
+    )
+  ) {
+    return true;
+  }
+  const lowerName = file.name.toLowerCase();
+  return SUPPORTED_DOCUMENT_EXTENSIONS.some((ext) => lowerName.endsWith(ext));
 };
 
 const WorkExperienceForm = ({
@@ -38,54 +61,169 @@ const WorkExperienceForm = ({
   onUpdated?: () => void;
 }) => {
   const [form] = Form.useForm();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [upsertDocument] = useUpsertDocumentMutation();
   const [createMedia] = useCreateMediaMutation();
+  const [validateDocumentWithAI] = useValidateDocumentWithAIMutation();
   const { data: profile, refetch } = useGetStudentProfileQuery(studentId, {
     skip: !studentId,
   });
 
-  const [certificate, setCertificate] = useState<{
-    url: string;
-    name: string;
-    file?: File;
-  } | null>(null);
+  const [certificate, setCertificate] = useState<any | null>(null);
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  // Default OFF when no saved work-experience document exists.
   const [hasExperience, setHasExperience] = useState(false);
+  const [certProcessing, setCertProcessing] = useState(false);
+  const [certUploaderKey, setCertUploaderKey] = useState(0);
 
-  const workExperienceDoc = (
-    profile as {
-      documents?: {
-        documentRelation?: { name?: string };
-        document?: string;
-        studentDocumentFields?: {
-          fieldId: string;
-          result: string;
-          documentField?: { name?: string };
-        }[];
-      }[];
+  const startDateField = document.fields.find((f) =>
+    f.name.toLowerCase().includes("start"),
+  );
+  const endDateField = document.fields.find((f) =>
+    f.name.toLowerCase().includes("end"),
+  );
+  const durationField = document.fields.find((f) =>
+    f.name.toLowerCase().includes("duration"),
+  );
+
+  const startDate = Form.useWatch(startDateField?.id, form);
+  const endDate = Form.useWatch(endDateField?.id, form);
+
+  const calculateDuration = (start: any, end: any) => {
+    if (!start || !end) return "";
+    const s = dayjs(start);
+    const e = dayjs(end);
+    if (e.isBefore(s)) return "";
+    const years = e.diff(s, "year");
+    const months = e.diff(s.add(years, "year"), "month");
+    const days = e.diff(s.add(years, "year").add(months, "month"), "day");
+    const parts: string[] = [];
+    if (years) parts.push(`${years} year${years > 1 ? "s" : ""}`);
+    if (months) parts.push(`${months} month${months > 1 ? "s" : ""}`);
+    if (days) parts.push(`${days} day${days > 1 ? "s" : ""}`);
+    return parts.join(" ");
+  };
+
+  useEffect(() => {
+    if (!startDate || !endDate || !durationField) return;
+    if (dayjs(endDate).isBefore(dayjs(startDate))) {
+      form.setFields([
+        {
+          name: endDateField?.id,
+          errors: ["End date cannot be before start date"],
+        },
+      ]);
+      return;
     }
-  )?.documents?.find((d: any) =>
+    const duration = calculateDuration(startDate, endDate);
+    form.setFieldValue(durationField.id, duration);
+  }, [startDate, endDate, durationField, form, endDateField?.id]);
+
+  const applyExtractedStringsToForm = (strings: Record<string, string>) => {
+    for (const [fieldId, val] of Object.entries(strings)) {
+      if (!val) continue;
+      const field = document.fields.find((f) => f.id === fieldId);
+      if (!field) continue;
+      if (field.name.toLowerCase().includes("date")) {
+        const d = dayjs(val, ["YYYY-MM-DD", "DD-MM-YYYY", "DD/MM/YYYY"], true);
+        if (d.isValid()) {
+          form.setFieldValue(fieldId, d);
+        }
+      } else {
+        form.setFieldValue(fieldId, val);
+      }
+    }
+  };
+
+  const runCertUploadAndFill = async (file: File) => {
+    setCertProcessing(true);
+    try {
+      const base64 = await toBase64WithoutPrefix(file);
+      const validationRes: any = await validateDocumentWithAI({
+        documentBase64: base64,
+        mimeType: file.type || "image/jpeg",
+        expectedDocumentType: WORK_EXPERIENCE_EXPECTED_TYPE,
+        fields: [...WORK_EXPERIENCE_AI_FIELDS],
+        matchSource: {},
+        matchFields: [],
+      }).unwrap();
+
+      const aiPayload = validationRes?.data || {};
+      const typeMatched = !!aiPayload?.data?.isDocumentTypeMatch;
+      const matchCheck = aiPayload?.matchCheck;
+      const allMatched =
+        matchCheck?.isChecked === true ? matchCheck?.allMatched !== false : true;
+
+      if (!typeMatched || !allMatched) {
+        toast.error("Please upload a valid work experience certificate.");
+        setCertUploaderKey((k) => k + 1);
+        return;
+      }
+
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("category", "document");
+      const res = await createMedia(fd).unwrap();
+      if (!res?.success || !res?.data?.url) {
+        throw new Error("Upload failed");
+      }
+      const serverUrl = res.data.url;
+      const extracted =
+        (aiPayload?.data?.extractedData as Record<string, unknown>) || {};
+      const extractedStrings = mapWorkExperienceExtractedToFormValues(
+        document,
+        extracted,
+      );
+
+      const cert = {
+        url: serverUrl,
+        name: "Work Experience Certificate",
+        isExisting: true,
+      };
+      setCertificate(cert);
+      form.setFieldsValue({ work_experience_certificate: cert });
+      applyExtractedStringsToForm(extractedStrings);
+      setIsEditing(true);
+      toast.success(
+        "Certificate attached and fields updated. Review below and click Save.",
+      );
+    } catch (e: any) {
+      toast.error(e?.data?.message || "Could not process the certificate.");
+      setCertUploaderKey((k) => k + 1);
+    } finally {
+      setCertProcessing(false);
+    }
+  };
+
+  const workExperienceDoc = (profile as any)?.documents?.find((d: any) =>
     d.documentRelation?.name?.toLowerCase().includes("work experience"),
   );
 
-  const fields = document.fields ?? [];
+  const hasExperienceStorageKey = `workExperience_hasExperience_${studentId}_${document.id}`;
 
   useEffect(() => {
     if (workExperienceDoc) {
       setHasExperience(true);
       setIsEditing(false);
-      if (workExperienceDoc.document) {
-        setCertificate({
-          url: workExperienceDoc.document.startsWith("http")
-            ? workExperienceDoc.document
-            : `${config?.image_access_url ?? ""}${workExperienceDoc.document}`,
-          name: "Work Experience Certificate",
-        });
+      try {
+        localStorage.setItem(hasExperienceStorageKey, "true");
+      } catch {
+        // ignore
       }
-      const initialValues: Record<string, unknown> = {};
+
+      if (workExperienceDoc.document) {
+        const url = workExperienceDoc.document.startsWith("http")
+          ? workExperienceDoc.document
+          : `${config?.image_access_url ?? ""}${workExperienceDoc.document}`;
+        const existingCert = {
+          url,
+          name: "Work Experience Certificate",
+          isExisting: true,
+        };
+        setCertificate(existingCert);
+        form.setFieldsValue({ work_experience_certificate: existingCert });
+      }
+
+      const initialValues: any = {};
       workExperienceDoc.studentDocumentFields?.forEach((f: any) => {
         const isDate = f.documentField?.name?.toLowerCase().includes("date");
         initialValues[f.fieldId] = isDate
@@ -94,24 +232,24 @@ const WorkExperienceForm = ({
       });
       form.setFieldsValue(initialValues);
     } else {
-      setHasExperience(false);
-      setIsEditing(false);
-      setCertificate(null);
-      form.resetFields();
+      try {
+        const stored = localStorage.getItem(hasExperienceStorageKey);
+        const nextHasExperience = stored === null ? false : stored === "true";
+        setHasExperience(nextHasExperience);
+        setIsEditing(nextHasExperience);
+      } catch {
+        setHasExperience(false);
+        setIsEditing(false);
+      }
     }
-  }, [workExperienceDoc, form, canEdit]);
+  }, [form, workExperienceDoc, hasExperienceStorageKey]);
 
-  // If user enables the section manually (no saved doc), start in edit mode.
   useEffect(() => {
     if (workExperienceDoc) return;
-    if (!hasExperience) {
-      setIsEditing(false);
-      return;
-    }
-    if (canEdit) setIsEditing(true);
-  }, [canEdit, hasExperience, workExperienceDoc]);
+    setIsEditing(hasExperience);
+  }, [hasExperience, workExperienceDoc]);
 
-  const getFileType = (file: { url?: string; name?: string }) => {
+  const getFileType = (file: any) => {
     const url = file?.url || file?.name || "";
     const lower = url.toLowerCase();
     if (lower.match(/\.(jpg|jpeg|png|gif|webp)$/)) return "image";
@@ -120,7 +258,7 @@ const WorkExperienceForm = ({
     return "other";
   };
 
-  const resolveUrl = (file: { url?: string }) => {
+  const resolveUrl = (file: any) => {
     if (!file?.url) return "";
     if (file.url.startsWith("http") || file.url.startsWith("blob:"))
       return file.url;
@@ -130,26 +268,33 @@ const WorkExperienceForm = ({
   const save = async () => {
     try {
       const values = await form.validateFields();
-      if (!certificate) {
+      setSaving(true);
+
+      const certValue = values.work_experience_certificate ?? certificate;
+
+      if (!certValue) {
         toast.warning("Please upload work experience certificate");
         return;
       }
-      setSaving(true);
-      let documentPath = certificate.url;
-      if (certificate.file) {
+
+      let documentPath = certValue.url;
+
+      if (String(documentPath).startsWith("blob:")) {
         const formData = new FormData();
-        formData.append("file", certificate.file);
+        const fileToUpload = certValue.originFileObj || certValue.file || certValue;
+        formData.append("file", fileToUpload);
         formData.append("category", "document");
         const mediaRes = await createMedia(formData).unwrap();
-        documentPath =
-          (mediaRes as { data?: { url?: string } })?.data?.url ?? documentPath;
+        documentPath = (mediaRes as { data?: { url?: string } })?.data?.url ?? documentPath;
       }
-      const fieldResults = fields.map((field) => ({
+
+      const fieldResults = document.fields.map((field) => ({
         fieldId: field.id,
         result: field.name.toLowerCase().includes("date")
           ? dayjs(values[field.id]).format("DD-MM-YYYY")
-          : String(values[field.id] ?? ""),
+          : String(values[field.id] || ""),
       }));
+
       await upsertDocument({
         studentId,
         body: {
@@ -158,13 +303,13 @@ const WorkExperienceForm = ({
           fields: fieldResults,
         },
       }).unwrap();
+
       toast.success("Work experience saved successfully");
       await refetch();
       onUpdated?.();
       setIsEditing(false);
-    } catch (err: unknown) {
-      const e = err as { data?: { message?: string } };
-      toast.error(e?.data?.message ?? "Failed to save");
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Failed to save");
     } finally {
       setSaving(false);
     }
@@ -179,27 +324,30 @@ const WorkExperienceForm = ({
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}
-                className="p-2 cursor-pointer text-[#237D3B] rounded-full transition-all"
+                className="p-2 cursor-pointer text-[#237D3B] hover:bg-green-50 rounded-full transition-all"
               >
-                <FaRegEdit
-                  style={{
-                    fontSize: "20px",
-                    color: "#237D3B",
-                    cursor: "pointer",
-                  }}
-                />
+                <FaRegEdit size={20} />
               </button>
             </Tooltip>
           )
         ) : canEdit ? (
-          <div className="flex items-center gap-2">
-            <Switch
-              size="default"
-              checked={hasExperience}
-              onChange={(checked) => setHasExperience(checked)}
-              className={hasExperience ? "bg-[#237D3B]" : ""}
-            />
-          </div>
+          <Switch
+            size="default"
+            checked={hasExperience}
+            onChange={(checked) => {
+              setHasExperience(checked);
+              try {
+                localStorage.setItem(hasExperienceStorageKey, String(checked));
+              } catch {
+                // ignore
+              }
+              if (!checked) {
+                setCertificate(null);
+                form.resetFields();
+              }
+            }}
+            className={hasExperience ? "bg-[#237D3B]" : ""}
+          />
         ) : null}
       </div>
 
@@ -209,86 +357,55 @@ const WorkExperienceForm = ({
       </p>
 
       {hasExperience && (
-        <Form form={form} layout="vertical" disabled={!isEditing}>
+        <Form form={form} layout="vertical" disabled={!isEditing || !canEdit}>
+          <Form.Item
+            name="work_experience_certificate"
+            rules={[
+              {
+                required: true,
+                message: "Work experience certificate is required",
+              },
+            ]}
+            hidden
+          >
+            <input />
+          </Form.Item>
+
           <div className="mt-4 animate-in fade-in duration-500">
             {!certificate ? (
-              <div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                  className="hidden"
-                  style={{ display: "none" }}
-                  tabIndex={-1}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file)
-                      setCertificate({
-                        url: URL.createObjectURL(file),
-                        name: file.name,
-                        file,
-                      });
-                    e.target.value = "";
-                  }}
-                />
-                <div
-                  className={`w-full rounded-2xl border border-dashed p-10 text-center transition-colors ${
-                    !canEdit || !isEditing
-                      ? "border-primary-border bg-gray-50/30 opacity-70"
-                      : "border-primary-border bg-white hover:border-[#237D3B]/40 hover:bg-[#F4FBF6]"
-                  }`}
-                >
-                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#EAF7EE]">
-                    <svg
-                      width="22"
-                      height="22"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M12 3v10m0-10 4 4m-4-4-4 4"
-                        stroke="#237D3B"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M4 14v4a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-4"
-                        stroke="#237D3B"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-
-                  <p className="text-[16px] font-semibold text-[#237D3B]">
-                    Upload Work Experience Certificate
-                  </p>
-                  <p className="mt-1 text-sm text-gray-500">
-                    or click to browse
-                  </p>
-
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={!canEdit || !isEditing}
-                    className={`mt-5 inline-flex items-center justify-center rounded-lg px-6 py-2 text-sm font-semibold transition-colors ${
-                      !canEdit || !isEditing
-                        ? "cursor-not-allowed bg-gray-200 text-gray-500"
-                        : "cursor-pointer bg-[#237D3B] text-white hover:bg-[#19592A]"
-                    }`}
-                  >
-                    Choose file
-                  </button>
-
-                  <p className="mt-4 text-xs text-gray-500">
-                    Supported formats: PDF, JPG, PNG (max. 10MB)
-                  </p>
+              isEditing &&
+              canEdit && (
+                <div className="rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 p-4">
+                  {certProcessing && (
+                    <div className="mb-3 flex items-center gap-2 text-sm font-medium text-primary">
+                      <LoadingOutlined spin />
+                      <span>Processing your certificate…</span>
+                    </div>
+                  )}
+                  <Uploader
+                    key={certUploaderKey}
+                    label="Upload work experience certificate"
+                    buttonLabel="Choose file"
+                    helperText="Supported formats: PDF, JPG, JPEG, JFIF, PNG, WEBP, GIF"
+                    accept={SUPPORTED_DOCUMENT_ACCEPT}
+                    disabled={certProcessing}
+                    onChange={(f: any) => {
+                      if (!f) return;
+                      const selected = Array.isArray(f) ? f[0] : f;
+                      const actualFile = selected?.originFileObj as File | undefined;
+                      if (!actualFile) return;
+                      if (!isSupportedDocumentFile(actualFile)) {
+                        toast.error(
+                          "Unsupported file type. Allowed: JPG, JPEG, JFIF, PNG, WEBP, GIF, PDF.",
+                        );
+                        setCertUploaderKey((k) => k + 1);
+                        return;
+                      }
+                      void runCertUploadAndFill(actualFile);
+                    }}
+                  />
                 </div>
-              </div>
+              )
             ) : (
               <div className="border rounded-lg p-4 bg-gray-50 flex items-center gap-4">
                 {getFileType(certificate) === "image" ? (
@@ -310,39 +427,52 @@ const WorkExperienceForm = ({
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <Button
-                    type="text"
-                    icon={<EyeOutlined />}
-                    onClick={() =>
-                      window.open(resolveUrl(certificate), "_blank")
-                    }
-                  />
+                  <button
+                    type="button"
+                    onClick={() => window.open(resolveUrl(certificate), "_blank")}
+                    className="p-2 hover:bg-gray-200 rounded cursor-pointer"
+                  >
+                    <EyeOutlined />
+                  </button>
                   {canEdit && isEditing && (
-                    <Button
-                      type="text"
-                      danger
-                      icon={<DeleteOutlined />}
-                      onClick={() => setCertificate(null)}
-                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCertificate(null);
+                        form.setFieldsValue({
+                          work_experience_certificate: null,
+                        });
+                      }}
+                      className="p-2 hover:bg-red-100 text-red-500 rounded cursor-pointer"
+                    >
+                      <DeleteOutlined />
+                    </button>
                   )}
                 </div>
               </div>
             )}
 
             <div className="grid md:grid-cols-2 gap-x-4 mt-3">
-              {fields.map((field) =>
+              {document.fields.map((field) =>
                 field.name.toLowerCase().includes("date") ? (
                   <FormDatePicker
                     key={field.id}
                     name={field.id}
                     label={field.name}
                     format="DD/MM/YYYY"
+                    rules={[
+                      { required: true, message: `${field.name} is required` },
+                    ]}
                   />
                 ) : (
                   <FormInput
                     key={field.id}
                     name={field.id}
                     label={field.name}
+                    disabled={field.id === durationField?.id || !isEditing}
+                    rules={[
+                      { required: true, message: `${field.name} is required` },
+                    ]}
                   />
                 ),
               )}
@@ -351,7 +481,13 @@ const WorkExperienceForm = ({
             {canEdit && isEditing && (
               <div className="flex justify-end mt-6 gap-3">
                 {workExperienceDoc && (
-                  <Button onClick={() => setIsEditing(false)}>Discard</Button>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(false)}
+                    className="px-4 cursor-pointer py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+                  >
+                    Cancel
+                  </button>
                 )}
                 <PrimaryButton
                   text={saving ? "Saving..." : "Save"}
