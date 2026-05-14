@@ -577,7 +577,7 @@
 
 import { Button, Form, InputNumber, Tooltip } from "antd";
 import dayjs from "dayjs";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 
 import { FaRegEdit } from "react-icons/fa";
@@ -598,6 +598,8 @@ interface QualificationFormProps {
   refetch: () => void;
   studentId?: any;
   onUpdated?: () => void;
+  /** Called after a successful save (e.g. close academic upload modal). */
+  onSaveSuccess?: () => void;
   canEdit?: boolean;
   hideHeader?: boolean; // এই প্রপসটি দিয়ে আমরা কন্ট্রোল করব
 }
@@ -611,6 +613,31 @@ const gradeOptions = [
   { label: "Percentage (1-100)", value: 100 },
 ];
 
+/** Normalize API / form values so we never put NaN into the grading scale field. */
+const parseGradeScale = (value: unknown): number | null => {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "number" && !Number.isNaN(value)) return value;
+  const raw = String(value).trim();
+  if (!raw || raw.toLowerCase() === "nan") return null;
+
+  const direct = Number(raw);
+  if (!Number.isNaN(direct)) return direct;
+  const match = raw.match(/(\d+(\.\d+)?)/);
+  if (!match) return null;
+  const parsed = Number(match[1]);
+  return Number.isNaN(parsed) ? null : parsed;
+};
+
+/** API often returns result as string; InputNumber needs number | undefined (never ""). */
+const parseResultForForm = (value: unknown): number | undefined => {
+  if (value === null || value === undefined) return undefined;
+  if (typeof value === "number" && !Number.isNaN(value)) return value;
+  const s = String(value).trim();
+  if (!s || s.toLowerCase() === "nan") return undefined;
+  const n = parseFloat(s);
+  return Number.isNaN(n) ? undefined : n;
+};
+
 const QualificationForm: React.FC<QualificationFormProps> = ({
   profileData,
   title,
@@ -619,6 +646,7 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
   refetch,
   studentId,
   onUpdated,
+  onSaveSuccess,
   canEdit,
   hideHeader = false, // ডিফল্টভাবে false যাতে অন্য জায়গায় ব্রেক না করে
 }) => {
@@ -629,6 +657,17 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
 
   const [form] = Form.useForm();
   const selectedGrade = Form.useWatch("outOfGrade", form);
+  const gradeScale = parseGradeScale(selectedGrade);
+  const prevGradeScaleRef = useRef<number | null | undefined>(undefined);
+
+  useEffect(() => {
+    const prevVal = prevGradeScaleRef.current;
+    prevGradeScaleRef.current = gradeScale ?? null;
+    if (gradeScale == null && prevVal !== undefined && prevVal != null) {
+      form.setFieldsValue({ result: undefined });
+      form.setFields([{ name: "result", errors: [] }]);
+    }
+  }, [gradeScale, form]);
 
   const [createEducation] = useCreateEducationMutation();
   const [updateEducation] = useUpdateEducationMutation();
@@ -650,10 +689,8 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
       const formValues: Record<string, any> = {
         instituteName: educationData.instituteName || "",
         country: educationData.country || "",
-        outOfGrade: educationData.outOfGrade
-          ? Number(educationData.outOfGrade)
-          : "",
-        result: educationData.result || "",
+        outOfGrade: parseGradeScale(educationData.outOfGrade) ?? "",
+        result: parseResultForForm(educationData.result),
         subject: educationData.subject || "",
       };
 
@@ -677,6 +714,7 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
     try {
       setIsSaving(true);
       const values = await form.validateFields();
+      const parsedOutOfGrade = parseGradeScale(values.outOfGrade);
       const payload: Record<string, any> = {
         studyLevelId,
         instituteName: values.instituteName,
@@ -687,8 +725,12 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
         endYear: values.endYear
           ? dayjs(values.endYear).format("YYYY-MM-DD")
           : null,
-        outOfGrade: values.outOfGrade ? String(values.outOfGrade) : null,
-        result: values.result ? String(values.result) : null,
+        outOfGrade:
+          parsedOutOfGrade === null ? null : String(parsedOutOfGrade),
+        result: (() => {
+          const n = parseResultForForm(values.result);
+          return n === undefined ? null : String(n);
+        })(),
         subject: values.subject || "",
         // ফাইল ইউআরএলগুলো পেলোডে যোগ করা হচ্ছে (যা প্রপস থেকে আসছে)
         marksheet: educationData?.marksheet || "",
@@ -717,6 +759,8 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
           educationData?.id ? "Education updated!" : "Education saved!",
         );
         if (!hideHeader) setIsEditing(false);
+        onSaveSuccess?.();
+        onUpdated?.();
       }
     } catch (error: any) {
       toast.error(error?.data?.message || "Error occurred");
@@ -826,9 +870,8 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
             <FormSelect
               name="outOfGrade"
               label="Out of Grade"
-              placeholder="Select grading scale"
+              placeholder="Select grading scale (optional)"
               options={gradeOptions}
-              rules={[{ required: true, message: "Grading scale is required" }]}
             />
             <Form.Item
               name="result"
@@ -836,18 +879,30 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
               rules={[
                 {
                   validator: (_: any, value: any) => {
-                    if (!selectedGrade) {
+                    const maxGrade = parseGradeScale(selectedGrade);
+                    const isEmpty =
+                      value === undefined ||
+                      value === null ||
+                      value === "" ||
+                      (typeof value === "string" &&
+                        !String(value).trim()) ||
+                      (typeof value === "number" && Number.isNaN(value));
+
+                    if (maxGrade == null) {
+                      if (isEmpty) return Promise.resolve();
                       return Promise.reject(
-                        new Error("Please select grading scale first"),
+                        new Error(
+                          "Select Out of Grade before entering a result",
+                        ),
                       );
                     }
-                    if (value === undefined || value === null || value === "") {
+
+                    if (isEmpty) {
                       return Promise.reject(new Error("Result is required"));
                     }
 
                     const numericValue =
                       typeof value === "number" ? value : parseFloat(value);
-                    const maxGrade = parseFloat(String(selectedGrade));
 
                     if (Number.isNaN(numericValue)) {
                       return Promise.reject(
@@ -857,7 +912,7 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
                     if (numericValue < 1 || numericValue > maxGrade) {
                       return Promise.reject(
                         new Error(
-                          `Result must be between 1 and ${selectedGrade}`,
+                          `Result must be between 1 and ${maxGrade}`,
                         ),
                       );
                     }
@@ -868,12 +923,16 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
             >
               <InputNumber
                 className="w-full"
-                placeholder="Enter result"
+                placeholder={
+                  gradeScale == null
+                    ? "Select Out of Grade first"
+                    : "Enter result"
+                }
                 min={1}
-                max={selectedGrade ? Number(selectedGrade) : undefined}
+                max={gradeScale ?? undefined}
                 precision={2}
                 step={0.01}
-                disabled={!selectedGrade || !isEditing}
+                disabled={gradeScale == null || !isEditing}
               />
             </Form.Item>
           </div>
