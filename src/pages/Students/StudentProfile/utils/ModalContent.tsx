@@ -224,7 +224,17 @@ const ModalContent = ({
       /** After file delete, education row may still hold old institute/result — do not send those as match targets. */
       const hasStoredFileForActiveType =
         type === "marksheet" ? Boolean(marksheetUrl) : Boolean(certificateUrl);
-      const existingEducationForMatch = hasStoredFileForActiveType
+      const hasFilledEducationText = (v: unknown) =>
+        String(v ?? "").trim() !== "";
+      /** Match to Education History when institute/subject already saved, or when replacing an existing file. */
+      const hasHistoryMatchContext =
+        hasFilledEducationText(selectedEducation?.instituteName) ||
+        hasFilledEducationText(selectedEducation?.subject) ||
+        hasFilledEducationText(selectedEducation?.country);
+      const canUseEducationRowForMatch =
+        !postDeleteClearInputs &&
+        (hasStoredFileForActiveType || hasHistoryMatchContext);
+      const existingEducationForMatch = canUseEducationRowForMatch
         ? { ...(selectedEducation || {}), ...aiExtractedEducationData }
         : {};
 
