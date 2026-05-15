@@ -35,6 +35,7 @@ export default function HotOffers() {
     intakeId: selectedIntakeId,
   });
   const isPageLoading = isLoading;
+  const isContentLoading = isFetching && !isLoading;
 
   const countryTabs = data?.countryTabs ?? [];
   const focusInstitutions = data?.focusInstitutions ?? [];
@@ -95,6 +96,10 @@ export default function HotOffers() {
             </div>
           )}
 
+          {isContentLoading && <HotOffersSkeleton hideCountryTabs />}
+
+          {!isContentLoading && (
+            <>
           {/* Focus Institutions */}
           {focusInstitutions.length > 0 && (
             <section>
@@ -561,6 +566,8 @@ export default function HotOffers() {
                 No hot offers configured yet. Check back later.
               </div>
             )}
+            </>
+          )}
         </div>
       )}
       <Modal

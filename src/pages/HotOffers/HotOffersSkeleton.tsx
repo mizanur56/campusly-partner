@@ -1,18 +1,24 @@
 import { Skeleton } from "antd";
 
-export default function HotOffersSkeleton() {
+export default function HotOffersSkeleton({
+  hideCountryTabs = false,
+}: {
+  hideCountryTabs?: boolean;
+}) {
   return (
     <div className="space-y-8 pb-8">
       {/* Country tabs */}
-      <div className="flex flex-wrap gap-2">
-        {[1, 2, 3, 4].map((i) => (
-          <Skeleton.Button
-            key={i}
-            active
-            className="!h-10 !w-28 !rounded-full"
-          />
-        ))}
-      </div>
+      {!hideCountryTabs && (
+        <div className="flex flex-wrap gap-2">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton.Button
+              key={i}
+              active
+              className="!h-10 !w-28 !rounded-full"
+            />
+          ))}
+        </div>
+      )}
 
       {/* Focus Institution */}
       <section>
