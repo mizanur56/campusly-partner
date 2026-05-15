@@ -1013,8 +1013,8 @@ export default function StudentProfile() {
                 subtitle="View student profile and personal information."
               />
 
-              <div className="border-b border-gray-300 overflow-hidden">
-                <div className="flex gap-3 sm:gap-6 min-w-max sm:min-w-0">
+              <div className="border-b border-gray-300 overflow-x-auto scrollbar-hide">
+                <div className="flex gap-3 sm:gap-6 min-w-max">
                   {profileTabs.map((tab) =>
                     (() => {
                       const locked = !isTabUnlocked(tab.key);
