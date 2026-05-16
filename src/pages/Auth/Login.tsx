@@ -6,6 +6,7 @@ import PageMeta from "../../components/common/Meta/PageMeta";
 import AuthIllustration from "../../components/auth/AuthIllustration";
 import { Button } from "../../components/ui/button";
 import { persistAuthLocalStorage } from "../../lib/authLocalStorage";
+import { clearLogoutCookie } from "../../lib/logoutCookie";
 import { useLoginMutation } from "../../redux/features/auth/authApi";
 import { setUser } from "../../redux/features/auth/authSlice";
 import { useAppDispatch } from "../../redux/features/hooks";
@@ -37,6 +38,8 @@ const Login = () => {
     const data = {
       email: values.email,
       password: values.password,
+      loginPortal: "partner" as const,
+      role: "PARTNER" as const,
     };
 
     try {
@@ -55,6 +58,7 @@ const Login = () => {
           toast.error(getPortalRoleMismatchMessage(userFromResponse?.role));
           return;
         }
+        clearLogoutCookie();
         persistAuthLocalStorage(userData, accessToken);
         dispatch(setUser({ user: userData, token: accessToken }));
         if (redirectToCorrectPortalIfNeeded(userData)) return;

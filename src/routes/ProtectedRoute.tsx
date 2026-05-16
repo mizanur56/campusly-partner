@@ -60,6 +60,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const hasToken = clientHasBearerToken(token);
 
   if (!hasToken || !user) {
+    if (hasLogoutCookie()) {
+      clearLogoutCookie();
+      clearAuthLocalStorage();
+      dispatch(logout());
+      window.location.href = getPortalLoginUrl();
+      return null;
+    }
     if (redirectFromPortalRoleCookieIfNeeded()) return null;
     window.location.href = getPortalLoginUrl();
     return null;
