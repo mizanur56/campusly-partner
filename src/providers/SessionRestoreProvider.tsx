@@ -19,6 +19,7 @@ import {
 import {
   getPortalLoginUrl,
   isPartnerPortalSession,
+  redirectFromLatestLoginSignalIfNeeded,
   redirectFromPortalRoleCookieIfNeeded,
   redirectToCorrectPortalIfNeeded,
 } from "../lib/portalRouting";
@@ -85,6 +86,7 @@ export default function SessionRestoreProvider({
       }
       return;
     }
+    if (redirectFromLatestLoginSignalIfNeeded()) return;
     if (isPublicAuthPath()) return;
     if (redirectFromPortalRoleCookieIfNeeded()) return;
   }, [dispatch]);

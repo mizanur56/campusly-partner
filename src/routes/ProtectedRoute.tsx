@@ -15,6 +15,7 @@ import {
   getPortalLoginUrl,
   inferCurrentPortal,
   isPartnerPortalSession,
+  redirectFromLatestLoginSignalIfNeeded,
   redirectFromPortalRoleCookieIfNeeded,
   redirectToCorrectPortalIfNeeded,
 } from "../lib/portalRouting";
@@ -67,10 +68,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       window.location.href = getPortalLoginUrl();
       return null;
     }
+    if (redirectFromLatestLoginSignalIfNeeded()) return null;
     if (redirectFromPortalRoleCookieIfNeeded()) return null;
     window.location.href = getPortalLoginUrl();
     return null;
   }
+
+  if (redirectFromLatestLoginSignalIfNeeded()) return null;
 
   if (inferCurrentPortal() === "partner" && !isPartnerPortalSession(user)) {
     clearAuthLocalStorage();

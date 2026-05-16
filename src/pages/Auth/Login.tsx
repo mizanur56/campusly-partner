@@ -14,6 +14,7 @@ import {
   getPortalRoleMismatchMessage,
   isPartnerPortalSession,
   redirectToCorrectPortalIfNeeded,
+  setPortalLoginCookie,
 } from "../../lib/portalRouting";
 
 interface LoginFormValues {
@@ -59,6 +60,7 @@ const Login = () => {
           return;
         }
         clearLogoutCookie();
+        setPortalLoginCookie(userFromResponse?.role);
         persistAuthLocalStorage(userData, accessToken);
         dispatch(setUser({ user: userData, token: accessToken }));
         if (redirectToCorrectPortalIfNeeded(userData)) return;

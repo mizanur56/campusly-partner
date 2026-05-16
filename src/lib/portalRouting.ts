@@ -15,6 +15,9 @@ export type PortalKind = "admin" | "student" | "partner";
 
 export const PORTAL_ROLE_COOKIE =
   import.meta.env.VITE_PORTAL_ROLE_COOKIE ?? "role_msbhh";
+const PORTAL_LOGIN_COOKIE = "ct_login";
+const PORTAL_LOGIN_HANDLED_STORAGE_KEY = "ct_login_handled";
+const PORTAL_LOGIN_SIGNAL_TTL_SECONDS = 60 * 60 * 24;
 
 const PROTOCOL = import.meta.env.VITE_DASHBOARD_PROTOCOL ?? "https";
 
@@ -104,6 +107,66 @@ export function readPortalRoleCookie(): string | null {
     }
   }
   return value;
+}
+
+function getRootDomain(): string {
+  const h = window.location.hostname.toLowerCase();
+  if (h === "localhost" || h === "127.0.0.1" || /^\d+\.\d+\.\d+\.\d+$/.test(h)) {
+    return h;
+  }
+  const parts = h.split(".").filter(Boolean);
+  return parts.length >= 2 ? "." + parts.slice(-2).join(".") : h;
+}
+
+function readPortalLoginSignal(): { signal: string; role: string } | null {
+  if (typeof document === "undefined") return null;
+  const prefix = `${PORTAL_LOGIN_COOKIE}=`;
+  let signal: string | null = null;
+  for (const part of document.cookie.split(";")) {
+    const c = part.trim();
+    if (c.startsWith(prefix)) {
+      signal = decodeURIComponent(c.slice(prefix.length));
+    }
+  }
+  if (!signal) return null;
+  const role = signal.split(":").slice(1).join(":").trim();
+  return role ? { signal, role } : null;
+}
+
+export function setPortalLoginCookie(role: string): void {
+  if (typeof document === "undefined") return;
+  const normalizedRole = String(role || "").trim().toUpperCase();
+  if (!normalizedRole) return;
+  const domain = getRootDomain();
+  const domainAttr = domain.startsWith(".") ? `; domain=${domain}` : "";
+  const rawSignal = `${Date.now()}:${normalizedRole}`;
+  document.cookie = `${PORTAL_LOGIN_COOKIE}=${encodeURIComponent(rawSignal)}; path=/${domainAttr}; max-age=${PORTAL_LOGIN_SIGNAL_TTL_SECONDS}; SameSite=Lax`;
+  localStorage.setItem(PORTAL_LOGIN_HANDLED_STORAGE_KEY, rawSignal);
+}
+
+export function redirectFromLatestLoginSignalIfNeeded(): boolean {
+  if (typeof window === "undefined") return false;
+  const loginSignal = readPortalLoginSignal();
+  if (!loginSignal) return false;
+  if (localStorage.getItem(PORTAL_LOGIN_HANDLED_STORAGE_KEY) === loginSignal.signal) {
+    return false;
+  }
+  localStorage.setItem(PORTAL_LOGIN_HANDLED_STORAGE_KEY, loginSignal.signal);
+  const home = homePortalForRole(loginSignal.role);
+  if (!home) return false;
+  if (home === inferCurrentPortal()) {
+    if (hasClientAuthEvidence()) {
+      clearAuthLocalStorage();
+      window.location.replace(window.location.href);
+      return true;
+    }
+    return false;
+  }
+  const target = getPortalOrigin(home, config.app_domain);
+  if (!target) return false;
+  clearAuthLocalStorage();
+  window.location.replace(`${target}/`);
+  return true;
 }
 
 function hasClientAuthEvidence(): boolean {
