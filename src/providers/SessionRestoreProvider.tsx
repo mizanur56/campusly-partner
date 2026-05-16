@@ -75,6 +75,7 @@ export default function SessionRestoreProvider({
 
   useLayoutEffect(() => {
     if (typeof window === "undefined") return;
+    if (isPublicAuthPath()) return;
     if (redirectFromPortalRoleCookieIfNeeded()) return;
   }, []);
 

@@ -12,6 +12,7 @@ import AcademyCourseDetail from "../pages/Academy/AcademyCourseDetail";
 import ChangePassword from "../pages/Auth/ChangePassword";
 import ForgetPassword from "../pages/Auth/ForgetPassword";
 import Login from "../pages/Auth/Login";
+import LoginPortalRedirect from "../pages/Auth/LoginPortalRedirect";
 import Register from "../pages/Auth/Register";
 import RegistrationWelcomePage from "../pages/Auth/RegistrationWelcomePage";
 import ResetPassword from "../pages/Auth/ResetPassword";
@@ -77,7 +78,7 @@ function AppRoutes() {
           path="/login"
           element={
             <GuestOnlyAuthRoute>
-              <Login />
+              <LoginPortalRedirect />
             </GuestOnlyAuthRoute>
           }
         />

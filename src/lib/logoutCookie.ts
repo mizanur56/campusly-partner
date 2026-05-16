@@ -1,6 +1,7 @@
 import { config } from "../config";
 
 const COOKIE_NAME = "ct_logout";
+const HANDLED_STORAGE_KEY = "ct_logout_handled";
 const LOGOUT_SIGNAL_TTL_SECONDS = 60 * 60 * 24; // 24h
 
 function getRootDomain(): string {
@@ -22,15 +23,28 @@ function buildCookieStr(value: string, maxAgeSeconds: number): string {
 }
 
 export function setLogoutCookie(): void {
-  document.cookie = buildCookieStr("1", LOGOUT_SIGNAL_TTL_SECONDS);
+  const signal = String(Date.now());
+  document.cookie = buildCookieStr(signal, LOGOUT_SIGNAL_TTL_SECONDS);
+  localStorage.setItem(HANDLED_STORAGE_KEY, signal);
 }
 
 export function clearLogoutCookie(): void {
-  document.cookie = buildCookieStr("", 0);
+  const signal = getLogoutSignal();
+  if (signal) localStorage.setItem(HANDLED_STORAGE_KEY, signal);
 }
 
 export function hasLogoutCookie(): boolean {
-  return document.cookie.split(";").some((c) => c.trim().startsWith(`${COOKIE_NAME}=1`));
+  const signal = getLogoutSignal();
+  return Boolean(signal && localStorage.getItem(HANDLED_STORAGE_KEY) !== signal);
+}
+
+function getLogoutSignal(): string | null {
+  const prefix = `${COOKIE_NAME}=`;
+  const found = document.cookie
+    .split(";")
+    .map((c) => c.trim())
+    .find((c) => c.startsWith(prefix));
+  return found ? decodeURIComponent(found.slice(prefix.length)) : null;
 }
 
 export async function callLogoutApi(): Promise<void> {

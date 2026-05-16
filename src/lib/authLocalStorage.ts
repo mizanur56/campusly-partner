@@ -16,4 +16,6 @@ export function persistAuthLocalStorage(user: unknown, token: string): void {
 export function clearAuthLocalStorage(): void {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
+  localStorage.removeItem("refreshToken");
+  localStorage.removeItem("persist:auth");
 }

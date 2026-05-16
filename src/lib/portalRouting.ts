@@ -92,17 +92,18 @@ export function homePortalForRole(
 export function readPortalRoleCookie(): string | null {
   if (typeof document === "undefined") return null;
   const prefix = `${PORTAL_ROLE_COOKIE}=`;
+  let value: string | null = null;
   for (const part of document.cookie.split(";")) {
     const c = part.trim();
     if (c.startsWith(prefix)) {
       try {
-        return decodeURIComponent(c.slice(prefix.length));
+        value = decodeURIComponent(c.slice(prefix.length));
       } catch {
-        return c.slice(prefix.length);
+        value = c.slice(prefix.length);
       }
     }
   }
-  return null;
+  return value;
 }
 
 function hasClientAuthEvidence(): boolean {
@@ -152,10 +153,10 @@ export function resolvePortalRoleForRedirect(user: {
     return "EMPLOYEE";
   }
   if (user?.type === "employee") return "EMPLOYEE";
-  const fromCookie = readPortalRoleCookie();
-  if (fromCookie && fromCookie.trim()) return fromCookie.trim();
   const redux = user?.role ? String(user.role).trim() : "";
   if (redux) return redux;
+  const fromCookie = readPortalRoleCookie();
+  if (fromCookie && fromCookie.trim()) return fromCookie.trim();
   return null;
 }
 
