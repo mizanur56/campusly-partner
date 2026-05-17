@@ -97,9 +97,13 @@ export default function AnnouncementsDetailsPage() {
   const [searchText, setSearchText] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [readIds, setReadIds] = useState<string[]>([]);
+  const announcementQueryParams = useMemo(
+    () => ({ page: 1, limit: 100, isActive: true }),
+    [],
+  );
 
-  const { data, isLoading, isFetching } = useGetAnnouncementsQuery(
-    { page: 1, limit: 100, isActive: true },
+  const { data, isLoading } = useGetAnnouncementsQuery(
+    announcementQueryParams,
     { refetchOnMountOrArgChange: true },
   );
 
@@ -230,7 +234,7 @@ export default function AnnouncementsDetailsPage() {
     ];
   }, [categories]);
 
-  const loading = isLoading || isFetching;
+  const showInitialLoading = isLoading && !data;
 
   return (
     <div className="announcements-details-page -mx-4 md:-mx-6 lg:-mx-8 -mt-4 md:-mt-6 lg:-mt-8">
@@ -275,7 +279,7 @@ export default function AnnouncementsDetailsPage() {
 
           {/* List */}
           <div className="max-h-[420px] flex-1 overflow-y-auto no-scrollbar lg:max-h-none">
-            {loading ? (
+            {showInitialLoading ? (
               <div className="flex justify-center py-16">
                 <Spin />
               </div>
@@ -347,7 +351,7 @@ export default function AnnouncementsDetailsPage() {
 
         {/* Right — detail */}
         <main className="flex min-w-0 flex-1 flex-col">
-          {loading && !selected ? (
+          {showInitialLoading && !selected ? (
             <div className="flex flex-1 items-center justify-center p-12">
               <Spin size="large" />
             </div>

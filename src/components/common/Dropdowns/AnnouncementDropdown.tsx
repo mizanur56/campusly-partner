@@ -25,6 +25,18 @@ const formatTime = (date?: string) => {
   return parsed.toLocaleDateString("en-GB");
 };
 
+const toPlainText = (value?: string) => {
+  if (!value) return "";
+  if (typeof window === "undefined") {
+    return value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  }
+  const element = document.createElement("div");
+  element.innerHTML = value;
+  return (element.textContent || element.innerText || "")
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
 export default function AnnouncementDropdown() {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
@@ -161,7 +173,7 @@ export default function AnnouncementDropdown() {
                     )}
                   </div>
                   <p className="mt-1 line-clamp-2 text-xs text-gray-600">
-                    {announcement.body || ""}
+                    {toPlainText(announcement.body)}
                   </p>
                   <p className="mt-1 text-[11px] text-gray-500">
                     {formatTime(announcement.createdAt)}

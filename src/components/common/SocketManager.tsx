@@ -178,8 +178,36 @@ const SocketManager = () => {
       window.dispatchEvent(event);
     };
 
-    const handleAnnouncementChanged = () => {
+    const handleAnnouncementChanged = (payload: any) => {
       dispatch(announcementsApi.util.invalidateTags(["announcements"]));
+      const visibility = String(payload?.visibility || "").toUpperCase();
+      const isPartnerVisible =
+        visibility === "PARTNERS" || visibility === "BOTH";
+      if (payload?.action === "CREATED" && payload?.isActive !== false && isPartnerVisible) {
+        playNotificationSound();
+        toast.info(
+          <div className="flex flex-col gap-1">
+            <div className="font-semibold text-sm text-white">
+              New announcement
+            </div>
+            <div className="text-xs text-white/90">
+              {payload?.title || "A new announcement is available."}
+            </div>
+          </div>,
+          {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            style: {
+              background: "#237D3B",
+              color: "#FFFFFF",
+            },
+          },
+        );
+      }
     };
 
     const handleConnectError = (error: Error) => {
