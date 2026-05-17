@@ -38,5 +38,4 @@ export const config = {
   /** Same origin as HTTP API unless VITE_SOCKET_URL is set */
   socketUrl: getSocketUrl(),
   image_access_url: getImageAccessUrl(),
-  tiny_api_key: import.meta.env.VITE_PUBLIC_TINY_API_KEY,
 } as const;

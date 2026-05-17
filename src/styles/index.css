@@ -677,3 +677,13 @@ button:disabled,
 .book-session-cal .ant-picker-cell-disabled {
   cursor: not-allowed !important;
 }
+
+/* TinyMCE Styles */
+.tox-tinymce {
+  border: 1px solid #d9d9d9 !important;
+}
+
+.tox .tox-edit-area::before {
+  border: 0.5px solid var(--color-primary) !important;
+  border-radius: 0 !important;
+}
