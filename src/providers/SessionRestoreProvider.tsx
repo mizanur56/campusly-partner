@@ -19,9 +19,11 @@ import {
 import {
   getPortalLoginUrl,
   isPartnerPortalSession,
+  redirectFromLatestLoginSignalIfNeeded,
   redirectFromPortalRoleCookieIfNeeded,
   redirectToCorrectPortalIfNeeded,
 } from "../lib/portalRouting";
+import { clearLogoutCookie, hasLogoutCookie } from "../lib/logoutCookie";
 const apiBase = (config.api ?? "").replace(/\/$/, "");
 
 const PUBLIC_AUTH_PATHS = [
@@ -75,8 +77,19 @@ export default function SessionRestoreProvider({
 
   useLayoutEffect(() => {
     if (typeof window === "undefined") return;
+    if (hasLogoutCookie()) {
+      clearLogoutCookie();
+      clearAuthLocalStorage();
+      dispatch(logout());
+      if (!isPublicAuthPath()) {
+        window.location.replace(getPortalLoginUrl());
+      }
+      return;
+    }
+    if (redirectFromLatestLoginSignalIfNeeded()) return;
+    if (isPublicAuthPath()) return;
     if (redirectFromPortalRoleCookieIfNeeded()) return;
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     if (attempted.current) return;
@@ -96,6 +109,11 @@ export default function SessionRestoreProvider({
       dispatch(logout());
       if (isPublicAuthPath()) {
         setStatus("done");
+        return;
+      }
+      if (hasLogoutCookie()) {
+        clearLogoutCookie();
+        window.location.href = getPortalLoginUrl();
         return;
       }
       if (redirectFromPortalRoleCookieIfNeeded()) return;
