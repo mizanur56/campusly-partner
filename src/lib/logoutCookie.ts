@@ -1,6 +1,7 @@
 import { config } from "../config";
 
 const COOKIE_NAME = "ct_logout";
+const LOGIN_COOKIE_NAME = "ct_login";
 const HANDLED_STORAGE_KEY = "ct_logout_handled";
 const LOGOUT_SIGNAL_TTL_SECONDS = 60 * 60 * 24; // 24h
 
@@ -16,21 +17,31 @@ function getRootDomain(): string {
   return h;
 }
 
-function buildCookieStr(value: string, maxAgeSeconds: number): string {
+function buildCookieStr(
+  name: string,
+  value: string,
+  maxAgeSeconds: number,
+): string {
   const domain = getRootDomain();
   const domainAttr = domain.startsWith(".") ? `; domain=${domain}` : "";
-  return `${COOKIE_NAME}=${value}; path=/${domainAttr}; max-age=${maxAgeSeconds}; SameSite=Lax`;
+  return `${name}=${value}; path=/${domainAttr}; max-age=${maxAgeSeconds}; SameSite=Lax`;
+}
+
+function clearCookie(name: string): void {
+  document.cookie = buildCookieStr(name, "", 0);
 }
 
 export function setLogoutCookie(): void {
   const signal = String(Date.now());
-  document.cookie = buildCookieStr(signal, LOGOUT_SIGNAL_TTL_SECONDS);
+  clearCookie(LOGIN_COOKIE_NAME);
+  document.cookie = buildCookieStr(COOKIE_NAME, signal, LOGOUT_SIGNAL_TTL_SECONDS);
   localStorage.setItem(HANDLED_STORAGE_KEY, signal);
 }
 
 export function clearLogoutCookie(): void {
   const signal = getLogoutSignal();
   if (signal) localStorage.setItem(HANDLED_STORAGE_KEY, signal);
+  clearCookie(LOGIN_COOKIE_NAME);
 }
 
 export function hasLogoutCookie(): boolean {
