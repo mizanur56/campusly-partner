@@ -6,6 +6,8 @@ import { useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import PageMeta from "../../components/common/Meta/PageMeta";
 import {
+  PARTNER_ANNOUNCEMENT_READ_IDS_EVENT,
+  PARTNER_ANNOUNCEMENT_READ_IDS_KEY,
   getStoredAnnouncementReadIds,
   persistAnnouncementReadIds,
 } from "../../lib/partnerAnnouncementReadIds";
@@ -111,7 +113,29 @@ export default function AnnouncementsDetailsPage() {
   }, [data]);
 
   useEffect(() => {
-    setReadIds(getStoredAnnouncementReadIds());
+    const syncReadIds = () => setReadIds(getStoredAnnouncementReadIds());
+    syncReadIds();
+
+    const onReadIdsUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<string[]>).detail;
+      setReadIds(Array.isArray(detail) ? detail : getStoredAnnouncementReadIds());
+    };
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === PARTNER_ANNOUNCEMENT_READ_IDS_KEY) syncReadIds();
+    };
+
+    window.addEventListener(PARTNER_ANNOUNCEMENT_READ_IDS_EVENT, onReadIdsUpdated);
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", syncReadIds);
+
+    return () => {
+      window.removeEventListener(
+        PARTNER_ANNOUNCEMENT_READ_IDS_EVENT,
+        onReadIdsUpdated,
+      );
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("focus", syncReadIds);
+    };
   }, []);
 
   const categories = useMemo(() => {
@@ -170,11 +194,16 @@ export default function AnnouncementsDetailsPage() {
 
   const markAcknowledged = useCallback(() => {
     if (!selected?.id) return;
+    if (readIds.includes(selected.id)) return;
     const merged = Array.from(new Set([...readIds, selected.id]));
     setReadIds(merged);
     persistAnnouncementReadIds(merged);
     toast.success("Acknowledged");
   }, [readIds, selected?.id]);
+
+  const isSelectedAcknowledged = Boolean(
+    selected?.id && readIds.includes(selected.id),
+  );
 
   const filterMenuItems: MenuProps["items"] = useMemo(() => {
     if (!categories.length) {
@@ -400,9 +429,14 @@ export default function AnnouncementsDetailsPage() {
                 <button
                   type="button"
                   onClick={markAcknowledged}
-                  className="rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary/90 focus:outline-none"
+                  disabled={isSelectedAcknowledged}
+                  className={`rounded-xl px-6 py-2.5 text-sm font-semibold transition-colors focus:outline-none ${
+                    isSelectedAcknowledged
+                      ? "cursor-not-allowed bg-gray-200 text-gray-500"
+                      : "bg-primary text-white hover:bg-primary/90"
+                  }`}
                 >
-                  Acknowledge
+                  {isSelectedAcknowledged ? "Acknowledged" : "Acknowledge"}
                 </button>
               </div>
             </div>

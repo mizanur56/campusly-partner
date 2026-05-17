@@ -1,6 +1,8 @@
 /** localStorage key — keep in sync with announcement UIs that mark items read. */
 export const PARTNER_ANNOUNCEMENT_READ_IDS_KEY =
   "partner_announcements_read_ids_v1";
+export const PARTNER_ANNOUNCEMENT_READ_IDS_EVENT =
+  "partner-announcement-read-ids-updated";
 
 export function getStoredAnnouncementReadIds(): string[] {
   try {
@@ -16,9 +18,15 @@ export function getStoredAnnouncementReadIds(): string[] {
 
 export function persistAnnouncementReadIds(ids: string[]): void {
   try {
+    const uniqueIds = Array.from(new Set(ids));
     window.localStorage.setItem(
       PARTNER_ANNOUNCEMENT_READ_IDS_KEY,
-      JSON.stringify(ids),
+      JSON.stringify(uniqueIds),
+    );
+    window.dispatchEvent(
+      new CustomEvent(PARTNER_ANNOUNCEMENT_READ_IDS_EVENT, {
+        detail: uniqueIds,
+      }),
     );
   } catch {
     // ignore

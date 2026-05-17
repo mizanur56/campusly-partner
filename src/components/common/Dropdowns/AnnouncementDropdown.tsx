@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { RiCheckDoubleLine } from "react-icons/ri";
 import { useNavigate } from "react-router-dom";
 import {
+  PARTNER_ANNOUNCEMENT_READ_IDS_EVENT,
+  PARTNER_ANNOUNCEMENT_READ_IDS_KEY,
   getStoredAnnouncementReadIds,
   persistAnnouncementReadIds,
 } from "../../../lib/partnerAnnouncementReadIds";
@@ -51,7 +53,29 @@ export default function AnnouncementDropdown() {
   );
 
   useEffect(() => {
-    setReadIds(getStoredAnnouncementReadIds());
+    const syncReadIds = () => setReadIds(getStoredAnnouncementReadIds());
+    syncReadIds();
+
+    const onReadIdsUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<string[]>).detail;
+      setReadIds(Array.isArray(detail) ? detail : getStoredAnnouncementReadIds());
+    };
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === PARTNER_ANNOUNCEMENT_READ_IDS_KEY) syncReadIds();
+    };
+
+    window.addEventListener(PARTNER_ANNOUNCEMENT_READ_IDS_EVENT, onReadIdsUpdated);
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", syncReadIds);
+
+    return () => {
+      window.removeEventListener(
+        PARTNER_ANNOUNCEMENT_READ_IDS_EVENT,
+        onReadIdsUpdated,
+      );
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("focus", syncReadIds);
+    };
   }, []);
 
   const persistReadIds = (ids: string[]) => {
@@ -122,9 +146,6 @@ export default function AnnouncementDropdown() {
                 <div
                   className="p-3 cursor-pointer border-b border-primary-border hover:bg-primary-50 transition-all duration-300"
                   onClick={() => {
-                    if (!readIds.includes(announcement.id)) {
-                      persistReadIds([...readIds, announcement.id]);
-                    }
                     setIsOpen(false);
                     navigate(
                       `/announcements?id=${encodeURIComponent(announcement.id)}`,

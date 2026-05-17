@@ -5,6 +5,7 @@ import {
   selectCurrentUser,
   useCurrentToken,
 } from "../../redux/features/auth/authSlice";
+import { announcementsApi } from "../../redux/features/announcements/announcementsApi";
 import { chatApi } from "../../redux/features/chat/chatApi";
 import { notificationApi } from "../../redux/features/notifications/notificationApi";
 import { getSocket } from "../../services/socket";
@@ -177,6 +178,10 @@ const SocketManager = () => {
       window.dispatchEvent(event);
     };
 
+    const handleAnnouncementChanged = () => {
+      dispatch(announcementsApi.util.invalidateTags(["announcements"]));
+    };
+
     const handleConnectError = (error: Error) => {
       console.error("❌ Socket connection error:", error.message);
       isConnectingRef.current = false;
@@ -199,6 +204,7 @@ const SocketManager = () => {
     socket.on("notification", handleNotification);
     socket.on("notification:unreadCount", handleUnreadCount);
     socket.on("application:notesChanged", handleApplicationNotesChanged);
+    socket.on("announcement:changed", handleAnnouncementChanged);
     socket.on("connect_error", handleConnectError);
     socket.on("disconnect", handleDisconnect);
     socket.on("reconnect", handleReconnect);
@@ -214,6 +220,7 @@ const SocketManager = () => {
       socket.off("notification", handleNotification);
       socket.off("notification:unreadCount", handleUnreadCount);
       socket.off("application:notesChanged", handleApplicationNotesChanged);
+      socket.off("announcement:changed", handleAnnouncementChanged);
       socket.off("connect_error", handleConnectError);
       socket.off("disconnect", handleDisconnect);
       socket.off("reconnect", handleReconnect);
