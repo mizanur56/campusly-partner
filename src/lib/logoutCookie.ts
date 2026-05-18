@@ -1,5 +1,7 @@
 import { config } from "../config";
 
+import { getAuthSyncHeaders } from "./authSessionSync";
+
 const COOKIE_NAME = "ct_logout";
 const LOGIN_COOKIE_NAME = "ct_login";
 const HANDLED_STORAGE_KEY = "ct_logout_handled";
@@ -68,6 +70,7 @@ export async function callLogoutApi(): Promise<void> {
       credentials: "include",
       headers: {
         "Content-Type": "application/json",
+        ...getAuthSyncHeaders(),
         ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       },
       body: JSON.stringify({
