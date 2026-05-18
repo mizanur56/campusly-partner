@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import PageMeta from "../../components/common/Meta/PageMeta";
+import { decodeHtmlEntities, looksLikeHtml } from "../../lib/htmlContent";
 import {
   PARTNER_ANNOUNCEMENT_READ_IDS_EVENT,
   PARTNER_ANNOUNCEMENT_READ_IDS_KEY,
@@ -74,18 +75,19 @@ function AnnouncementBody({ body }: { body: string }) {
       <p className="text-sm text-gray-500 dark:text-gray-400">No content.</p>
     );
   }
-  const looksHtml = /<[a-z][\s\S]*>/i.test(trimmed);
+  const html = decodeHtmlEntities(trimmed);
+  const looksHtml = looksLikeHtml(html);
   if (looksHtml) {
     return (
       <div
         className="announcement-html max-w-none text-[15px] leading-relaxed text-[#20242A] dark:text-gray-200 [&_strong]:font-semibold [&_p]:mb-3 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-1 [&_h1]:mb-2 [&_h1]:text-lg [&_h1]:font-bold [&_h2]:mb-2 [&_h2]:text-base [&_h2]:font-semibold"
-        dangerouslySetInnerHTML={{ __html: trimmed }}
+        dangerouslySetInnerHTML={{ __html: html }}
       />
     );
   }
   return (
     <div className="whitespace-pre-wrap text-[15px] leading-relaxed text-[#20242A] dark:text-gray-200">
-      {trimmed}
+      {html}
     </div>
   );
 }

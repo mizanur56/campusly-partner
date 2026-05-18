@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useGetAnnouncementsQuery } from "../../../../redux/features/announcements/announcementsApi";
 import { config } from "../../../../config";
+import { stripHtmlTags } from "../../../../lib/htmlContent";
 import CardShell from "./CardShell";
 
 type Announcement = {
@@ -51,7 +52,11 @@ export default function RecentAnnouncementsCard() {
       }
     >
       <div className="space-y-3">
-        {displayAnnouncements?.map((a: any) => (
+        {displayAnnouncements?.map((a: any) => {
+          const rawPreview = a.body ?? a.description ?? a.subtitle ?? "";
+          const previewText = stripHtmlTags(rawPreview);
+
+          return (
           <div
             key={a.id}
             className="flex items-start justify-between gap-4 rounded-xl px-1 py-2"
@@ -74,7 +79,7 @@ export default function RecentAnnouncementsCard() {
                   {a.title}
                 </p>
                 <p className="truncate text-xs text-gray-500 dark:text-gray-400">
-                  {a.body.slice(0, 100)}...
+                  {`${previewText.slice(0, 100)}${previewText.length > 100 ? "..." : ""}`}
                 </p>
               </div>
             </div>
@@ -87,7 +92,8 @@ export default function RecentAnnouncementsCard() {
               </p>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </CardShell>
   );

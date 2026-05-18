@@ -2,6 +2,7 @@ import { BellOutlined } from "@ant-design/icons";
 import { Button, Dropdown, Empty, Spin } from "antd";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { stripHtmlTags } from "../../../lib/htmlContent";
 import {
   INotification,
   useGetNotificationsQuery,
@@ -152,7 +153,7 @@ const NotificationDropdown = () => {
                           </div>
 
                           <p className="text-xs block mt-1 line-clamp-1 text-gray-600">
-                            {notification.message}
+                            {stripHtmlTags(notification.message)}
                           </p>
                         </div>
 
