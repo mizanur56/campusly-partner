@@ -35,12 +35,17 @@ export type CreateStudentPayload = {
   imageId?: string;
 };
 
-export type CreateStudentResponse = {
-  studentId: string;
-  userId: string;
-  email: string;
-  fullName: string;
+export type CreateStudentData = {
+  studentId?: string;
+  userId?: string;
+  email?: string;
+  fullName?: string;
+  student?: { id: string; userId?: string; email?: string };
   temporaryPassword?: string;
+};
+
+export type CreateStudentResponse = CreateStudentData & {
+  data?: CreateStudentData;
 };
 
 export const partnerStudentProfileApi = baseApi.injectEndpoints({

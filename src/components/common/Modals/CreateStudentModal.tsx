@@ -142,7 +142,6 @@ import {
   useCreateStudentMutation,
   useLazyGetDocumentsByCategoryQuery,
   useUpsertDocumentMutation,
-  useUpdateStudentProfileMutation,
   useValidateDocumentWithAIMutation,
 } from "../../../redux/features/profile/studentProfileApi";
 import { useGetStudyLevelsByCountryQuery } from "../../../redux/features/studyLevels/studyLevelsApi";
@@ -176,7 +175,6 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
     }
   >();
   const [createStudent, { isLoading }] = useCreateStudentMutation();
-  const [updateStudentProfile] = useUpdateStudentProfileMutation();
   const [upsertStudentDocument] = useUpsertDocumentMutation();
   const [getDocumentsByCategory] = useLazyGetDocumentsByCategoryQuery();
   const [createMedia, { isLoading: isPassportUploading }] =
@@ -530,47 +528,10 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
       }
 
       const result = await createStudent(profilePayload as any).unwrap();
+      const createdStudentData = result?.data ?? result;
 
-      // 2) Update profile: countryId + qualificationId + other form fields
-      const studentId = result?.studentId;
-      if (studentId) {
-        const profileBody: Record<string, unknown> = {
-          firstName: firstName || null,
-          lastName: lastName || null,
-          gender: String(values.gender ?? "").trim() || null,
-          countryId: String(values.country ?? "").trim() || null,
-          passportNo: String(values.passportNo ?? "").trim() || null,
-          phone: String(values.phone ?? "").trim() || null,
-          email: email || null,
-          lastEducationId: String(values.qualifications ?? "").trim() || null,
-        };
-
-        try {
-          profileBody.dateOfBirth = values.dateOfBirth
-            ? dayjs(values.dateOfBirth).format("YYYY-MM-DD")
-            : null;
-        } catch {
-          profileBody.dateOfBirth = null;
-        }
-
-        try {
-          profileBody.passportExpDate = values.passportExpiryDate
-            ? dayjs(values.passportExpiryDate).format("YYYY-MM-DD")
-            : null;
-        } catch {
-          profileBody.passportExpDate = null;
-        }
-
-        try {
-          profileBody.lastEducationPassingYear = values.passingYear
-            ? dayjs(values.passingYear).startOf("year").format("YYYY-MM-DD")
-            : null;
-        } catch {
-          profileBody.lastEducationPassingYear = null;
-        }
-
-        await updateStudentProfile({ studentId, body: profileBody }).unwrap();
-      }
+      const studentId =
+        createdStudentData?.studentId || createdStudentData?.student?.id;
 
       const passportAttached = await attachPassportToStudentDocuments(studentId);
       if (!passportAttached) {
@@ -578,8 +539,8 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
       }
 
       toast.success(
-        result.temporaryPassword
-          ? `Student created. Temporary password: ${result.temporaryPassword}`
+        createdStudentData?.temporaryPassword
+          ? `Student created. Temporary password: ${createdStudentData.temporaryPassword}`
           : "Student created successfully.",
       );
       form.resetFields();
