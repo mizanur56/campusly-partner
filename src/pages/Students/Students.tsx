@@ -1,7 +1,7 @@
 import { PlusOutlined } from "@ant-design/icons";
 import { Button, Input } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { Search } from "lucide-react";
+import { Eye, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -22,29 +22,29 @@ interface StudentRecord {
   name: string;
   email: string;
   phone: string;
+  passportNo: string;
+  assignedTo: string;
   status: string;
   lastLogin: string;
 }
 
 interface AssignedStudentRecord {
   key: string;
+  id: string;
   studentId: string;
   studentName: string;
   activeTaskCount: number;
 }
 
 function formatDate(iso: string | null): string {
-  if (!iso) return "—";
-  try {
-    const d = new Date(iso);
-    return d.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  } catch {
-    return "—";
-  }
+  if (!iso) return "-";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "-";
+  return d.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 export default function Students() {
@@ -62,50 +62,71 @@ export default function Students() {
       isTeamMember ? { assignedToMe: true } : undefined,
       { skip: !isTeamMember },
     );
+
   const {
     data: allStudents,
     isLoading: isPartnerStudentsLoading,
     isFetching: isPartnerStudentsFetching,
   } = useGetAllStudentsByPartnerIdQuery(
     { partnerId: user?.id as string },
-    { skip: !user?.id },
+    { skip: !user?.id || isTeamMember },
   );
 
   const tableData: StudentRecord[] = useMemo(() => {
-    if (!allStudents?.data) return [];
-    const rows: StudentRecord[] = allStudents.data.map((u: any) => ({
-      key: u.id,
-      id: u.id,
-      name: u.user?.name ?? "—",
-      email: u.email ?? "—",
-      phone: u.phone ?? "—",
-      passportNo: u.passportNo ?? "—",
-      AssignedTo: u.advisor?.name ?? "—",
-      status: u.status ?? "—",
-      lastLogin: u.lastLogin ?? null,
-    }));
+    const rows: StudentRecord[] = ((allStudents?.data as any[]) ?? []).map(
+      (student: any) => ({
+        key: student.id,
+        id: student.id,
+        name:
+          [student.firstName, student.lastName].filter(Boolean).join(" ").trim() ||
+          student.user?.name ||
+          student.email ||
+          "-",
+        email: student.email ?? student.user?.email ?? "-",
+        phone: student.phone ?? student.user?.phone ?? "-",
+        passportNo: student.passportNo ?? "-",
+        assignedTo: student.advisor?.name ?? "-",
+        status:
+          student.user?.isActive === false
+            ? "Inactive"
+            : student.status ?? "Active",
+        lastLogin: formatDate(student.lastLogin ?? null),
+      }),
+    );
+
     if (!searchText.trim()) return rows;
     const q = searchText.toLowerCase();
     return rows.filter(
       (row) =>
         row.name.toLowerCase().includes(q) ||
         row.email.toLowerCase().includes(q) ||
-        row.phone.includes(searchText),
+        row.phone.toLowerCase().includes(q) ||
+        row.passportNo.toLowerCase().includes(q) ||
+        row.assignedTo.toLowerCase().includes(q) ||
+        row.status.toLowerCase().includes(q),
     );
-  }, [allStudents, searchText]);
+  }, [allStudents?.data, searchText]);
 
-  // const assignedTableData: AssignedStudentRecord[] = useMemo(() => {
-  //   if (!isTeamMember) return [];
-  //   const rows = assignedStudents.map((s) => ({
-  //     key: s.studentId,
-  //     studentId: s.studentId,
-  //     studentName: s.studentName,
-  //     activeTaskCount: s.activeTaskCount,
-  //   }));
-  //   if (!searchText.trim()) return rows;
-  //   const q = searchText.toLowerCase();
-  //   return rows.filter((row) => row.studentName.toLowerCase().includes(q));
-  // }, [assignedStudents, searchText, isTeamMember]);
+  const assignedTableData: AssignedStudentRecord[] = useMemo(() => {
+    const rows = assignedStudents.map((student) => ({
+      key: student.studentId,
+      id: student.studentId,
+      studentId: student.studentId,
+      studentName: student.studentName,
+      activeTaskCount: student.activeTaskCount,
+    }));
+
+    if (!searchText.trim()) return rows;
+    const q = searchText.toLowerCase();
+    return rows.filter((row) => row.studentName.toLowerCase().includes(q));
+  }, [assignedStudents, searchText]);
+
+  const handleViewProfile = (record: StudentRecord | AssignedStudentRecord) => {
+    const studentId = "studentId" in record ? record.studentId : record.id;
+    navigate(`/students/${studentId}/profile`, {
+      state: { student: record },
+    });
+  };
 
   const columns: ColumnsType<StudentRecord> = [
     {
@@ -116,31 +137,33 @@ export default function Students() {
       width: 250,
       render: (name: string, record: StudentRecord) => (
         <span
-          onClick={() =>
-            navigate(`/students/${record.id}/profile`, {
-              state: { student: record },
-            })
-          }
-          style={{ cursor: "pointer" }}
-          className="hover:underline whitespace-nowrap hover:text-primary-500"
+          onClick={() => handleViewProfile(record)}
+          className="hover:underline whitespace-nowrap hover:text-primary-500 cursor-pointer"
         >
           {name}
         </span>
       ),
     },
-    { title: "Email", dataIndex: "email", key: "email", width: 200 },
-    { title: "Phone", dataIndex: "phone", key: "phone", width: 140 },
+    { title: "Email", dataIndex: "email", key: "email", width: 220 },
+    { title: "Phone", dataIndex: "phone", key: "phone", width: 150 },
     {
       title: "Passport No",
       dataIndex: "passportNo",
       key: "passportNo",
-      width: 100,
+      width: 130,
     },
     {
       title: "Assigned To",
-      dataIndex: "AssignedTo",
-      key: "AssignedTo",
+      dataIndex: "assignedTo",
+      key: "assignedTo",
       width: 160,
+    },
+    { title: "Status", dataIndex: "status", key: "status", width: 120 },
+    {
+      title: "Last Login",
+      dataIndex: "lastLogin",
+      key: "lastLogin",
+      width: 140,
     },
   ];
 
@@ -150,6 +173,14 @@ export default function Students() {
       dataIndex: "studentName",
       key: "studentName",
       width: 280,
+      render: (name: string, record: AssignedStudentRecord) => (
+        <span
+          onClick={() => handleViewProfile(record)}
+          className="hover:underline whitespace-nowrap hover:text-primary-500 cursor-pointer"
+        >
+          {name}
+        </span>
+      ),
     },
     {
       title: "Active tasks",
@@ -164,6 +195,8 @@ export default function Students() {
     },
   ];
 
+  const activeColumns = isTeamMember ? assignedColumns : columns;
+  const activeTableData = isTeamMember ? assignedTableData : tableData;
   const loading = isTeamMember
     ? isFetchingAssigned
     : Boolean(user?.id) &&
@@ -179,13 +212,15 @@ export default function Students() {
         title="Students"
         subtitle="Easily manage every student in your team."
         extra={
-          <Button
-            type="primary"
-            onClick={() => setCreateStudentOpen(true)}
-            icon={<PlusOutlined />}
-          >
-            Add student
-          </Button>
+          !isTeamMember ? (
+            <Button
+              type="primary"
+              onClick={() => setCreateStudentOpen(true)}
+              icon={<PlusOutlined />}
+            >
+              Add student
+            </Button>
+          ) : null
         }
         breadcrumbs={[{ title: "Dashboard", path: "/" }, { title: "Students" }]}
       />
@@ -210,10 +245,18 @@ export default function Students() {
         </div>
 
         <DataTable
-          data={tableData}
-          columns={columns}
+          data={activeTableData}
+          columns={activeColumns}
           rowKey="key"
           loading={loading}
+          actions={[
+            {
+              key: "view-profile",
+              label: "View Profile",
+              icon: <Eye size={16} />,
+              onClick: handleViewProfile,
+            },
+          ]}
           showHeader
           isPaginate
           noInnerBorder

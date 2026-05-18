@@ -339,6 +339,7 @@ export const {
   useUpdateVisaRejectionMutation,
   useDeleteVisaRejectionMutation,
   useGetDocumentsByCategoryQuery,
+  useLazyGetDocumentsByCategoryQuery,
   useGetEligibleStudyLevelsQuery,
   useGetStudentApplicationsQuery,
   useUpsertDocumentMutation,
