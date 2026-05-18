@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 import { config } from "../../config";
 import { clearAuthLocalStorage } from "../../lib/authLocalStorage";
 import { refreshAuthSession } from "../../lib/authSessionRefresh";
+import { getAuthSyncHeaders } from "../../lib/authSessionSync";
 import { getPortalLoginUrl } from "../../lib/portalRouting";
 import { logout } from "../features/auth/authSlice";
 import { RootState } from "../features/store";
@@ -93,6 +94,9 @@ const rawBaseQuery = fetchBaseQuery({
 
     const clientDetails = await getClientDetails();
     headers.set("X-Client-Details", JSON.stringify(clientDetails));
+    Object.entries(getAuthSyncHeaders()).forEach(([key, value]) => {
+      headers.set(key, value);
+    });
 
     // Optional: send current action name
     headers.set("X-Action", endpoint);

@@ -9,6 +9,7 @@ import {
   useMarkAsReadMutation,
 } from "../../redux/features/notifications/notificationApi";
 import { formatTime } from "../../utils/formatTime";
+import { stripHtmlTags } from "../../lib/htmlContent";
 
 const { Text } = Typography;
 
@@ -183,7 +184,7 @@ const Notifications = () => {
                     </Text>
                   </div>
                   <Text type="secondary" className="text-sm block">
-                    {notification.message}
+                    {stripHtmlTags(notification.message)}
                   </Text>
                 </div>
               </div>

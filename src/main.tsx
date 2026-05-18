@@ -10,6 +10,7 @@ import { PersistGate } from "redux-persist/integration/react";
 import { persistor, store } from "./redux/features/store";
 import AppRoutes from "./routes/routes";
 import SessionRestoreProvider from "./providers/SessionRestoreProvider";
+import AuthSessionSyncProvider from "./providers/AuthSessionSyncProvider";
 import SocketManager from "./components/common/SocketManager";
 import "./styles/index.css";
 
@@ -27,22 +28,24 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <HelmetProvider>
         <Provider store={store}>
           <PersistGate loading={null} persistor={persistor}>
-            <SessionRestoreProvider>
-              <SocketManager />
-              <ToastContainer
-                position="bottom-right"
-                autoClose={5000}
-                hideProgressBar={false}
-                newestOnTop={false}
-                closeOnClick
-                rtl={false}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-                theme="colored"
-              />
-              <AppRoutes />
-            </SessionRestoreProvider>
+            <AuthSessionSyncProvider>
+              <SessionRestoreProvider>
+                <SocketManager />
+                <ToastContainer
+                  position="bottom-right"
+                  autoClose={5000}
+                  hideProgressBar={false}
+                  newestOnTop={false}
+                  closeOnClick
+                  rtl={false}
+                  pauseOnFocusLoss
+                  draggable
+                  pauseOnHover
+                  theme="colored"
+                />
+                <AppRoutes />
+              </SessionRestoreProvider>
+            </AuthSessionSyncProvider>
           </PersistGate>
         </Provider>
       </HelmetProvider>
