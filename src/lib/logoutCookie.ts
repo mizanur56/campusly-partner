@@ -61,9 +61,19 @@ function getLogoutSignal(): string | null {
 export async function callLogoutApi(): Promise<void> {
   try {
     const apiBase = String(config.api ?? "").replace(/\/$/, "");
+    const accessToken = localStorage.getItem("token")?.trim() || "";
+    const refreshToken = localStorage.getItem("refreshToken")?.trim() || "";
     await fetch(`${apiBase}/auth/logout`, {
       method: "POST",
       credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
+      body: JSON.stringify({
+        accessToken,
+        refreshToken,
+      }),
     });
   } catch {
     // ignore
