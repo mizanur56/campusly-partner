@@ -131,18 +131,25 @@ import {
 } from "antd";
 import dayjs from "dayjs";
 import React from "react";
+import { useSelector } from "react-redux";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { selectCurrentUser } from "../../../redux/features/auth/authSlice";
 import { useGetCountriesQuery } from "../../../redux/features/countries/countriesApi";
 import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
 import type { CreateStudentPayload } from "../../../redux/features/profile/studentProfileApi";
 import {
   useCreateStudentMutation,
-  useUpdateStudentProfileMutation,
+  useLazyGetAllStudentsByPartnerIdQuery,
+  useLazyGetDocumentsByCategoryQuery,
+  useUpsertDocumentMutation,
+  useValidateDocumentWithAIMutation,
 } from "../../../redux/features/profile/studentProfileApi";
 import { useGetStudyLevelsByCountryQuery } from "../../../redux/features/studyLevels/studyLevelsApi";
+import { toBase64WithoutPrefix } from "../../../pages/Students/StudentProfile/utils/academicDocumentValidation";
+import { resolvePassportDocumentTemplateId } from "../../../pages/Students/StudentProfile/profileUploadShared";
 
 interface CreateStudentModalProps {
   open: boolean;
@@ -170,14 +177,39 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
       passingYear?: unknown;
     }
   >();
+  const currentUser = useSelector(selectCurrentUser);
   const [createStudent, { isLoading }] = useCreateStudentMutation();
-  const [updateStudentProfile] = useUpdateStudentProfileMutation();
+  const [checkStudentsByPartner] = useLazyGetAllStudentsByPartnerIdQuery();
+  const [upsertStudentDocument] = useUpsertDocumentMutation();
+  const [getDocumentsByCategory] = useLazyGetDocumentsByCategoryQuery();
   const [createMedia, { isLoading: isPassportUploading }] =
     useCreateMediaMutation();
+  const [validateDocumentWithAI, { isLoading: isPassportExtracting }] =
+    useValidateDocumentWithAIMutation();
   const [passportFileName, setPassportFileName] = React.useState<string | null>(
     null,
   );
   const [passportUrl, setPassportUrl] = React.useState<string | null>(null);
+  const isPassportProcessing = isPassportUploading || isPassportExtracting;
+  const normalizePassportNo = (value?: string | null) =>
+    String(value ?? "").trim().toUpperCase();
+
+  const hasDuplicatePassportNo = async (passportNo: string) => {
+    const normalized = normalizePassportNo(passportNo);
+    if (!normalized || !currentUser?.id) return false;
+
+    const res = await checkStudentsByPartner({
+      partnerId: currentUser.id,
+      search: normalized,
+      page: 1,
+      limit: 50,
+    }).unwrap();
+
+    const students = (res?.data as Array<{ passportNo?: string | null }>) ?? [];
+    return students.some(
+      (student) => normalizePassportNo(student.passportNo) === normalized,
+    );
+  };
 
   const { data: countriesData } = useGetCountriesQuery({
     page: 1,
@@ -239,6 +271,238 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
     }
   }, [form, hasSelectedQualification]);
 
+  const normalizeExtractedValue = (value: unknown): string | null => {
+    if (value === undefined || value === null) return null;
+    if (typeof value === "object" && "extracted" in (value as any)) {
+      return normalizeExtractedValue((value as any).extracted);
+    }
+    const normalized = String(value).trim();
+    if (!normalized || normalized.toLowerCase() === "null") return null;
+    return normalized;
+  };
+
+  const pickExtracted = (
+    extracted: Record<string, unknown>,
+    keys: string[],
+  ): string | null => {
+    for (const key of keys) {
+      const value = normalizeExtractedValue(extracted[key]);
+      if (value) return value;
+    }
+    return null;
+  };
+
+  const parsePassportDate = (value: string | null) => {
+    if (!value) return undefined;
+    const trimmed = value.trim();
+    const isoMatch = trimmed.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
+    const dayFirstMatch = trimmed.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+
+    const parsed = isoMatch
+      ? dayjs(
+          `${isoMatch[1]}-${isoMatch[2].padStart(2, "0")}-${isoMatch[3].padStart(2, "0")}`,
+        )
+      : dayFirstMatch
+        ? dayjs(
+            `${dayFirstMatch[3]}-${dayFirstMatch[2].padStart(2, "0")}-${dayFirstMatch[1].padStart(2, "0")}`,
+          )
+        : dayjs(trimmed);
+
+    return parsed.isValid() ? parsed : undefined;
+  };
+
+  const splitFullName = (fullName: string | null) => {
+    if (!fullName) return { firstName: null, lastName: null };
+    const parts = fullName.split(/\s+/).filter(Boolean);
+    return {
+      firstName: parts[0] ?? null,
+      lastName: parts.slice(1).join(" ") || null,
+    };
+  };
+
+  const applyPassportExtractedData = (
+    extracted: Record<string, unknown>,
+  ): boolean => {
+    const givenNames = pickExtracted(extracted, [
+      "given_names",
+      "given_name",
+      "first_name",
+      "forenames",
+    ]);
+    const surname = pickExtracted(extracted, [
+      "surname",
+      "last_name",
+      "family_name",
+    ]);
+    const fullName = pickExtracted(extracted, [
+      "full_name",
+      "name",
+      "student_name",
+      "holder_name",
+    ]);
+    const splitName = splitFullName(fullName);
+    const gender = pickExtracted(extracted, ["gender", "sex"]);
+    const country = pickExtracted(extracted, [
+      "country",
+      "nationality",
+      "issuing_country",
+      "country_of_issue",
+    ]);
+    const passportNo = pickExtracted(extracted, [
+      "passport_no",
+      "passport_number",
+      "document_number",
+      "passport",
+    ]);
+    const dateOfBirth = parsePassportDate(
+      pickExtracted(extracted, ["date_of_birth", "dob", "birth_date"]),
+    );
+    const passportExpiryDate = parsePassportDate(
+      pickExtracted(extracted, [
+        "passport_expiry_date",
+        "expiry_date",
+        "date_of_expiry",
+        "expiration_date",
+      ]),
+    );
+
+    const normalizedGender = gender?.toLowerCase();
+    const matchedCountry = country
+      ? countriesOptions.find(
+          (item) => item.label.toLowerCase() === country.toLowerCase(),
+        )?.value
+      : undefined;
+
+    const nextValues: Record<string, unknown> = {};
+    if (givenNames || splitName.firstName) {
+      nextValues.firstName = givenNames || splitName.firstName;
+    }
+    if (surname || splitName.lastName) {
+      nextValues.lastName = surname || splitName.lastName;
+    }
+    if (normalizedGender) {
+      nextValues.gender = normalizedGender === "f" ||
+        normalizedGender === "female"
+        ? "female"
+        : normalizedGender === "m" || normalizedGender === "male"
+          ? "male"
+          : "other";
+    }
+    if (matchedCountry || country) nextValues.country = matchedCountry || country;
+    if (passportNo) nextValues.passportNo = passportNo;
+    if (dateOfBirth) nextValues.dateOfBirth = dateOfBirth;
+    if (passportExpiryDate) nextValues.passportExpiryDate = passportExpiryDate;
+
+    if (!Object.keys(nextValues).length) return false;
+    form.setFieldsValue(nextValues as any);
+    return true;
+  };
+
+  const extractPassportNumber = (extracted: Record<string, unknown>) =>
+    pickExtracted(extracted, [
+      "passport_no",
+      "passport_number",
+      "document_number",
+      "passport",
+    ]);
+
+  const handlePassportAutofill = async (file: File) => {
+    try {
+      const base64 = await toBase64WithoutPrefix(file);
+      const validationRes: any = await validateDocumentWithAI({
+        documentBase64: base64,
+        mimeType: file.type || "image/jpeg",
+        expectedDocumentType: "passport",
+        fields: [
+          "full_name",
+          "given_names",
+          "surname",
+          "country",
+          "gender",
+          "passport_no",
+          "date_of_birth",
+          "passport_expiry_date",
+        ],
+        matchSource: {},
+        matchFields: [],
+      }).unwrap();
+
+      const aiPayload = validationRes?.data || {};
+      const typeMatched = aiPayload?.data?.isDocumentTypeMatch !== false;
+      if (!typeMatched) {
+        toast.error("Please upload a valid passport document.");
+        return;
+      }
+
+      const extracted =
+        (aiPayload?.data?.extractedData as Record<string, unknown>) || {};
+
+      const passportNo = extractPassportNumber(extracted);
+      if (passportNo && (await hasDuplicatePassportNo(passportNo))) {
+        toast.error(
+          "A student with this passport number already exists. Please use a different passport.",
+        );
+        return;
+      }
+
+      const hasAutofilled = applyPassportExtractedData(extracted);
+
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("category", "document");
+      const res: any = await createMedia(fd).unwrap();
+      const url = res?.data?.url || res?.data?.path || res?.url;
+      if (!url) throw new Error("Upload failed");
+
+      setPassportFileName(file.name);
+      setPassportUrl(String(url));
+      toast.success(
+        hasAutofilled
+          ? "Passport info extracted and filled."
+          : "Passport uploaded. No readable info found to autofill.",
+      );
+    } catch (err: any) {
+      console.error(err);
+      toast.error(
+        err?.data?.message ||
+          err?.data?.error?.message ||
+          "Failed to process passport",
+      );
+    }
+  };
+
+  const attachPassportToStudentDocuments = async (studentId?: string) => {
+    if (!studentId || !passportUrl) return true;
+
+    try {
+      const [passportCategory, identityCategory] = await Promise.all([
+        getDocumentsByCategory({ studentId, slug: "passport" }).unwrap(),
+        getDocumentsByCategory({ studentId, slug: "identity" }).unwrap(),
+      ]);
+      const passportTemplateId = resolvePassportDocumentTemplateId(
+        passportCategory,
+        identityCategory,
+      );
+
+      if (!passportTemplateId) {
+        throw new Error("Passport document setup was not found.");
+      }
+
+      await upsertStudentDocument({
+        studentId,
+        body: { documentId: passportTemplateId, document: passportUrl },
+      }).unwrap();
+      return true;
+    } catch (err: any) {
+      toast.error(
+        err?.data?.message ||
+          err?.message ||
+          "Student created, but passport document could not be attached.",
+      );
+      return false;
+    }
+  };
+
   const handleSubmit = async (
     values: CreateStudentPayload & {
       confirmPassword?: string;
@@ -274,7 +538,7 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
         lastEducationPassingYear: null,
         dateOfBirth: null,
         passportExpDate: null,
-        imageId: passportUrl || null,
+        imageId: null,
       };
 
       // Passing year: YYYY only
@@ -305,51 +569,19 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
       }
 
       const result = await createStudent(profilePayload as any).unwrap();
+      const createdStudentData = result?.data ?? result;
 
-      // 2) Update profile: countryId + qualificationId + other form fields
-      const studentId = result?.studentId;
-      if (studentId) {
-        const profileBody: Record<string, unknown> = {
-          firstName: firstName || null,
-          lastName: lastName || null,
-          gender: String(values.gender ?? "").trim() || null,
-          countryId: String(values.country ?? "").trim() || null,
-          passportNo: String(values.passportNo ?? "").trim() || null,
-          phone: String(values.phone ?? "").trim() || null,
-          email: email || null,
-          lastEducationId: String(values.qualifications ?? "").trim() || null,
-        };
+      const studentId =
+        createdStudentData?.studentId || createdStudentData?.student?.id;
 
-        try {
-          profileBody.dateOfBirth = values.dateOfBirth
-            ? dayjs(values.dateOfBirth).format("YYYY-MM-DD")
-            : null;
-        } catch {
-          profileBody.dateOfBirth = null;
-        }
-
-        try {
-          profileBody.passportExpDate = values.passportExpiryDate
-            ? dayjs(values.passportExpiryDate).format("YYYY-MM-DD")
-            : null;
-        } catch {
-          profileBody.passportExpDate = null;
-        }
-
-        try {
-          profileBody.lastEducationPassingYear = values.passingYear
-            ? dayjs(values.passingYear).startOf("year").format("YYYY-MM-DD")
-            : null;
-        } catch {
-          profileBody.lastEducationPassingYear = null;
-        }
-
-        await updateStudentProfile({ studentId, body: profileBody }).unwrap();
+      const passportAttached = await attachPassportToStudentDocuments(studentId);
+      if (!passportAttached) {
+        return;
       }
 
       toast.success(
-        result.temporaryPassword
-          ? `Student created. Temporary password: ${result.temporaryPassword}`
+        createdStudentData?.temporaryPassword
+          ? `Student created. Temporary password: ${createdStudentData.temporaryPassword}`
           : "Student created successfully.",
       );
       form.resetFields();
@@ -400,28 +632,15 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
           multiple={false}
           showUploadList={false}
           accept=".pdf,.jpg,.jpeg,.png"
-          disabled={isPassportUploading}
+          disabled={isPassportProcessing}
           beforeUpload={async (file) => {
-            try {
-              const fd = new FormData();
-              fd.append("file", file);
-              fd.append("category", "document");
-              const res: any = await createMedia(fd).unwrap();
-              const url = res?.data?.url || res?.data?.path || res?.url;
-              if (!url) throw new Error("Upload failed");
-              setPassportFileName(file.name);
-              setPassportUrl(String(url));
-              toast.success("Passport uploaded");
-            } catch (err) {
-              console.error(err);
-              toast.error("Failed to upload passport");
-            }
+            await handlePassportAutofill(file);
             return false; // prevent antd auto upload
           }}
         >
           <div className="rounded-lg border border-dashed border-[#E5E7EB] bg-[#FFFFFF] p-6 text-center hover:bg-[#F9FAFB] transition-all duration-300">
             <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-[#E9F2EB] text-[#237D3B]">
-              {isPassportUploading ? (
+              {isPassportProcessing ? (
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#237D3B] border-t-transparent" />
               ) : (
                 <i className="fa-solid fa-cloud-arrow-up" />
