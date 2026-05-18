@@ -131,15 +131,18 @@ import {
 } from "antd";
 import dayjs from "dayjs";
 import React from "react";
+import { useSelector } from "react-redux";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { selectCurrentUser } from "../../../redux/features/auth/authSlice";
 import { useGetCountriesQuery } from "../../../redux/features/countries/countriesApi";
 import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
 import type { CreateStudentPayload } from "../../../redux/features/profile/studentProfileApi";
 import {
   useCreateStudentMutation,
+  useLazyGetAllStudentsByPartnerIdQuery,
   useLazyGetDocumentsByCategoryQuery,
   useUpsertDocumentMutation,
   useValidateDocumentWithAIMutation,
@@ -174,7 +177,9 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
       passingYear?: unknown;
     }
   >();
+  const currentUser = useSelector(selectCurrentUser);
   const [createStudent, { isLoading }] = useCreateStudentMutation();
+  const [checkStudentsByPartner] = useLazyGetAllStudentsByPartnerIdQuery();
   const [upsertStudentDocument] = useUpsertDocumentMutation();
   const [getDocumentsByCategory] = useLazyGetDocumentsByCategoryQuery();
   const [createMedia, { isLoading: isPassportUploading }] =
@@ -186,6 +191,25 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
   );
   const [passportUrl, setPassportUrl] = React.useState<string | null>(null);
   const isPassportProcessing = isPassportUploading || isPassportExtracting;
+  const normalizePassportNo = (value?: string | null) =>
+    String(value ?? "").trim().toUpperCase();
+
+  const hasDuplicatePassportNo = async (passportNo: string) => {
+    const normalized = normalizePassportNo(passportNo);
+    if (!normalized || !currentUser?.id) return false;
+
+    const res = await checkStudentsByPartner({
+      partnerId: currentUser.id,
+      search: normalized,
+      page: 1,
+      limit: 50,
+    }).unwrap();
+
+    const students = (res?.data as Array<{ passportNo?: string | null }>) ?? [];
+    return students.some(
+      (student) => normalizePassportNo(student.passportNo) === normalized,
+    );
+  };
 
   const { data: countriesData } = useGetCountriesQuery({
     page: 1,
@@ -374,6 +398,14 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
     return true;
   };
 
+  const extractPassportNumber = (extracted: Record<string, unknown>) =>
+    pickExtracted(extracted, [
+      "passport_no",
+      "passport_number",
+      "document_number",
+      "passport",
+    ]);
+
   const handlePassportAutofill = async (file: File) => {
     try {
       const base64 = await toBase64WithoutPrefix(file);
@@ -404,6 +436,15 @@ const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
 
       const extracted =
         (aiPayload?.data?.extractedData as Record<string, unknown>) || {};
+
+      const passportNo = extractPassportNumber(extracted);
+      if (passportNo && (await hasDuplicatePassportNo(passportNo))) {
+        toast.error(
+          "A student with this passport number already exists. Please use a different passport.",
+        );
+        return;
+      }
+
       const hasAutofilled = applyPassportExtractedData(extracted);
 
       const fd = new FormData();

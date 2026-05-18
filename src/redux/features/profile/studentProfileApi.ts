@@ -352,4 +352,5 @@ export const {
   useDeleteDocumentMutation,
   useGetEligibleStudyLevelsByCountryQuery,
   useGetAllStudentsByPartnerIdQuery,
+  useLazyGetAllStudentsByPartnerIdQuery,
 } = partnerStudentProfileApi;
