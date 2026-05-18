@@ -1,6 +1,9 @@
 import { config } from "../config";
 
-import { getAuthSyncHeaders } from "./authSessionSync";
+import {
+  broadcastLocalAuthSessionChange,
+  getAuthSyncHeaders,
+} from "./authSessionSync";
 
 const COOKIE_NAME = "ct_logout";
 const LOGIN_COOKIE_NAME = "ct_login";
@@ -80,5 +83,7 @@ export async function callLogoutApi(): Promise<void> {
     });
   } catch {
     // ignore
+  } finally {
+    broadcastLocalAuthSessionChange("logout");
   }
 }

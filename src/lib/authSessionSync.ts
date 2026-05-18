@@ -1,6 +1,7 @@
 import { config } from "../config";
 
 const BROWSER_ID_COOKIE = "ct_browser_id";
+const LOCAL_SESSION_EVENT_KEY = "ct_auth_session_changed";
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
 let pageClientId: string | null = null;
 
@@ -62,4 +63,19 @@ export function getAuthSyncSocketUrl(): string {
   if (configured) return configured;
   const api = String(config.api ?? "").replace(/\/$/, "");
   return api ? api.replace(/\/api$/i, "") : window.location.origin;
+}
+
+export function broadcastLocalAuthSessionChange(type: "login" | "logout"): void {
+  localStorage.setItem(
+    LOCAL_SESSION_EVENT_KEY,
+    JSON.stringify({
+      type,
+      sourceClientId: getAuthClientId(),
+      timestamp: Date.now(),
+    }),
+  );
+}
+
+export function getLocalAuthSessionEventKey(): string {
+  return LOCAL_SESSION_EVENT_KEY;
 }

@@ -6,6 +6,7 @@ import PageMeta from "../../components/common/Meta/PageMeta";
 import AuthIllustration from "../../components/auth/AuthIllustration";
 import { Button } from "../../components/ui/button";
 import { persistAuthLocalStorage } from "../../lib/authLocalStorage";
+import { broadcastLocalAuthSessionChange } from "../../lib/authSessionSync";
 import { clearLogoutCookie } from "../../lib/logoutCookie";
 import { useLoginMutation } from "../../redux/features/auth/authApi";
 import { setUser } from "../../redux/features/auth/authSlice";
@@ -61,6 +62,7 @@ const Login = () => {
         }
         clearLogoutCookie();
         setPortalLoginCookie(userFromResponse?.role);
+        broadcastLocalAuthSessionChange("login");
         persistAuthLocalStorage(userData, accessToken);
         dispatch(setUser({ user: userData, token: accessToken }));
         if (redirectToCorrectPortalIfNeeded(userData)) return;

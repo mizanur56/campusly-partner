@@ -3,6 +3,7 @@ import { io } from "socket.io-client";
 import {
   getAuthBrowserId,
   getAuthClientId,
+  getLocalAuthSessionEventKey,
   getAuthSyncSocketUrl,
 } from "../lib/authSessionSync";
 
@@ -31,13 +32,30 @@ export default function AuthSessionSyncProvider({ children }: Props) {
       window.location.reload();
     };
 
+    const handleLocalSessionChanged = (event: StorageEvent) => {
+      if (event.key !== getLocalAuthSessionEventKey() || !event.newValue) {
+        return;
+      }
+
+      try {
+        const payload = JSON.parse(event.newValue) as {
+          sourceClientId?: string | null;
+        };
+        handleSessionChanged(payload);
+      } catch {
+        window.location.reload();
+      }
+    };
+
     socket.on("connect", joinBrowserRoom);
     socket.on("auth:session-changed", handleSessionChanged);
+    window.addEventListener("storage", handleLocalSessionChanged);
     socket.connect();
 
     return () => {
       socket.off("connect", joinBrowserRoom);
       socket.off("auth:session-changed", handleSessionChanged);
+      window.removeEventListener("storage", handleLocalSessionChanged);
       socket.disconnect();
     };
   }, []);
