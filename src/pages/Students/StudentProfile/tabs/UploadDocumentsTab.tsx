@@ -1,5 +1,4 @@
-﻿/* eslint-disable @typescript-eslint/no-unused-vars */
-import { LoadingOutlined } from "@ant-design/icons";
+﻿import { LoadingOutlined } from "@ant-design/icons";
 import { Modal, Spin } from "antd";
 import dayjs from "dayjs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -48,6 +47,7 @@ import {
 } from "../profileUploadSkeletons";
 import ModalContent from "../utils/ModalContent";
 import { getApiImageUrl } from "../../../../utils/getApiImageUrl";
+import FileViewer from "../../../../utils/FileViewer";
 
 interface DocumentItem {
   id: string;
@@ -364,6 +364,7 @@ const UploadDocuments = ({
   const [weAiModalOpen, setWeAiModalOpen] = useState(false);
   const [weAiModalDoc, setWeAiModalDoc] = useState<any>(null);
   const [sopAiModalOpen, setSopAiModalOpen] = useState(false);
+  const [fileViewer, setFileViewer] = useState<{ url: string; title: string } | null>(null);
 
   const isAdditionalWorkExperienceItem = useCallback(
     (item: DocumentItem) => {
@@ -740,7 +741,7 @@ const UploadDocuments = ({
       toast.error("No file found to preview.");
       return;
     }
-    window.open(url, "_blank", "noopener,noreferrer");
+    setFileViewer({ url, title: item.name });
   };
 
   const requestDeletePersonalItem = (item: DocumentItem) => {
@@ -1340,6 +1341,13 @@ const UploadDocuments = ({
           setSopAiModalOpen(false);
           onUpdated?.();
         }}
+      />
+
+      <FileViewer
+        open={!!fileViewer}
+        url={fileViewer?.url ?? ""}
+        title={fileViewer?.title}
+        onClose={() => setFileViewer(null)}
       />
 
       <div className="flex justify-end mt-6">
