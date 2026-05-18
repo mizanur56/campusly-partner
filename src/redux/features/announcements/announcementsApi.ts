@@ -6,7 +6,7 @@ type AnnouncementQueryParams = {
   isActive?: boolean;
 };
 
-const announcementsApi = baseApi.injectEndpoints({
+export const announcementsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getAnnouncements: builder.query<
       { data: any[]; meta?: { total?: number; page?: number; limit?: number } },
