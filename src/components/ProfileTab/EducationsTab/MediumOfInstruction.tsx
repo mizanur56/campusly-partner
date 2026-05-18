@@ -1,16 +1,17 @@
-import React, { useEffect, useState } from "react";
-import { FaFileAlt, FaPlusSquare, FaRegTrashAlt } from "react-icons/fa"; // FaRegTrashAlt add kora hoyeche
-import { FiEye } from "react-icons/fi"; // View icon er jonno
+import { LoadingOutlined } from "@ant-design/icons";
+import { Modal, Spin } from "antd";
+import { useState } from "react";
+import { FaPlusSquare } from "react-icons/fa";
+import { FaCircleCheck } from "react-icons/fa6";
+import { FiEye, FiTrash2 } from "react-icons/fi";
 import { toast } from "react-toastify";
-import { config } from "../../../config";
-
-import { ExclamationCircleFilled } from "@ant-design/icons";
-import { Modal, Spin, Tooltip } from "antd";
 import { useCreateMediaMutation } from "../../../redux/features/media/mediaApi";
 import {
   useGetStudentProfileQuery,
   useUpdateStudentProfileMutation,
 } from "../../../redux/features/profile/studentProfileApi";
+import FileViewer from "../../../utils/FileViewer";
+import { getApiImageUrl } from "../../../utils/getApiImageUrl";
 
 interface PartnerStudentProfileMedium {
   mediumOfInstruction?: string | null;
@@ -27,106 +28,65 @@ const MediumOfInstruction = ({ studentId }: { studentId: string }) => {
     | undefined;
 
   const mediumOfInstruction = profileData?.mediumOfInstruction ?? null;
+  const isSubmitted = !!mediumOfInstruction;
+  const fileUrl = isSubmitted ? getApiImageUrl(mediumOfInstruction) : "";
 
-  const [mediumOfInstructionFile, setMediumOfInstructionFile] = useState<
-    string | null
-  >(mediumOfInstruction || null);
-
-  useEffect(() => {
-    setMediumOfInstructionFile(mediumOfInstruction || null);
-  }, [mediumOfInstruction]);
-
-  const [createMedia, { isLoading: isUploadingMediumOfInstruction }] =
-    useCreateMediaMutation();
+  const [createMedia, { isLoading: isUploading }] = useCreateMediaMutation();
   const [updateProfile] = useUpdateStudentProfileMutation();
+  const [deleting, setDeleting] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState(false);
+  const [fileViewerOpen, setFileViewerOpen] = useState(false);
 
-  const handleMediumOfInstructionUpload = async (file: File) => {
-    if (!file) return;
+  const handleUpload = async (file: File) => {
     try {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("category", "medium-of-instruction");
-
       const response = await createMedia(formData).unwrap();
-
       if (response?.success && response?.data) {
-        const imagePath = response.data.url;
         await updateProfile({
           studentId,
-          body: { mediumOfInstruction: imagePath },
+          body: { mediumOfInstruction: response.data.url },
         }).unwrap();
-        setMediumOfInstructionFile(imagePath);
-        toast.success(
-          "Medium of instruction certificate uploaded successfully!",
-        );
-        refetch(); // Latest data fetch korar jonno
+        toast.success("Medium of instruction uploaded successfully!");
+        refetch();
       }
     } catch (error: any) {
       toast.error(error?.data?.message || "Failed to upload file.");
     }
   };
 
-  // Delete handler
-  const handleDelete = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-
-    Modal.confirm({
-      title: "Are you sure you want to delete this file?",
-      icon: <ExclamationCircleFilled />,
-      content: "Once deleted, you will need to upload it again if required.",
-      okText: "Yes, Delete",
-      // okType: "danger",
-      okButtonProps: {
-        className: "!bg-[#237D3B] !border-[#237D3B] hover:!bg-[#19592a]",
-      },
-
-      // Cancel Button Style
-      cancelText: "No, Cancel",
-      cancelButtonProps: {
-        className: "hover:!text-[#237D3B] hover:!border-[#237D3B]",
-      },
-      onOk: async () => {
-        try {
-          // Backend jodi null reject kore, tobe "" (empty string) pathaben
-          await updateProfile({
-            studentId,
-            body: { mediumOfInstruction: "" },
-          }).unwrap();
-          setMediumOfInstructionFile(null);
-          toast.success("File removed successfully!");
-          refetch();
-        } catch (error: any) {
-          toast.error("Failed to remove file.");
-        }
-      },
-    });
-  };
-
-  const handleView = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const fileUrl = mediumOfInstructionFile?.startsWith("http")
-      ? mediumOfInstructionFile
-      : `${config.image_access_url}${mediumOfInstructionFile}`;
-    window.open(fileUrl, "_blank");
+  const handleConfirmDelete = async () => {
+    setDeleting(true);
+    try {
+      await updateProfile({
+        studentId,
+        body: { mediumOfInstruction: "" },
+      }).unwrap();
+      toast.success("File removed successfully!");
+      refetch();
+    } catch {
+      toast.error("Failed to remove file.");
+    } finally {
+      setDeleting(false);
+      setPendingDelete(false);
+    }
   };
 
   return (
     <div className="bg-[#FFFFFF] border border-primary-border rounded-lg p-6 overflow-hidden">
+      {/* Header — same as original */}
       <div className="flex items-center justify-between">
         <h1 className="text-[18px] font-semibold text-[#20242A]">
           Medium of instruction
         </h1>
         <div className="flex items-center">
-          {!mediumOfInstructionFile && (
+          {!isSubmitted && (
             <label
               htmlFor="medium-of-instruction-file-upload"
-              className={
-                isUploadingMediumOfInstruction
-                  ? "cursor-not-allowed opacity-60"
-                  : "cursor-pointer"
-              }
+              className={isUploading ? "cursor-not-allowed opacity-60" : "cursor-pointer"}
             >
-              {isUploadingMediumOfInstruction ? (
+              {isUploading ? (
                 <Spin size="small" />
               ) : (
                 <FaPlusSquare size={24} color="#237D3B" title="Upload file" />
@@ -140,56 +100,79 @@ const MediumOfInstruction = ({ studentId }: { studentId: string }) => {
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) handleMediumOfInstructionUpload(file);
+              if (file) handleUpload(file);
               e.target.value = "";
             }}
-            disabled={isUploadingMediumOfInstruction}
+            disabled={isUploading}
           />
         </div>
       </div>
 
-      {mediumOfInstructionFile && !isUploadingMediumOfInstruction && (
-        <div className="mt-4">
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-primary-border group">
-            <div className="flex items-center gap-3">
-              <FaFileAlt className="w-6 h-6 text-[#4B5563]" />
-              <p className="text-[16px] font-medium text-[#111827]">
-                Medium of Instruction Certificate
-              </p>
-            </div>
+      {/* Submitted row — Upload Documents style */}
+      {isSubmitted && (
+        <div className="mt-4 p-3 border flex justify-between items-center rounded-md hover:bg-gray-50 transition-colors">
+          <div className="flex flex-col">
+            <span className="text-gray-700 font-medium">
+              Medium of Instruction Certificate
+            </span>
+            <span className="text-[#237D3B] text-[14px]">Submitted</span>
+          </div>
 
-            {/* Action Icons Section */}
-            <div className="flex items-center gap-3">
-              <Tooltip title="View File">
-                <button
-                  onClick={handleView}
-                  className="cursor-pointer text-gray-500 hover:text-[#237D3B] transition-colors"
-                >
-                  <FiEye size={20} />
-                </button>
-              </Tooltip>
-
-              {/* <label
-                htmlFor="medium-of-instruction-file-upload"
-                className="cursor-pointer text-gray-500 hover:text-[#237D3B] transition-colors"
-              >
-                <Tooltip title="Edit File">
-                  <FaRegEdit size={18} />
-                </Tooltip>
-              </label> */}
-
-              <Tooltip title="Delete File">
-                <button
-                  onClick={handleDelete}
-                  className="cursor-pointer text-gray-500 hover:text-red-500 transition-colors"
-                >
-                  <FaRegTrashAlt size={18} />
-                </button>
-              </Tooltip>
-            </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              className="border border-[#CFCACF] p-1 rounded-md hover:border-primary hover:text-primary"
+              onClick={() => setFileViewerOpen(true)}
+              aria-label="View file"
+            >
+              <FiEye className="text-primary text-base" />
+            </button>
+            <button
+              type="button"
+              disabled={deleting}
+              className="border border-[#CFCACF] p-1 rounded-md hover:border-red-500 hover:text-red-500 disabled:opacity-50"
+              onClick={() => setPendingDelete(true)}
+              aria-label="Delete file"
+            >
+              {deleting ? (
+                <Spin
+                  size="small"
+                  indicator={
+                    <LoadingOutlined
+                      style={{ fontSize: 16, color: "#EF4444" }}
+                      spin
+                    />
+                  }
+                />
+              ) : (
+                <FiTrash2 className="text-red-500 text-base" />
+              )}
+            </button>
+            <FaCircleCheck className="text-green-500 text-base" />
           </div>
         </div>
       )}
+
+      <Modal
+        open={pendingDelete}
+        title="Delete document?"
+        okText="Delete"
+        okButtonProps={{ danger: true, loading: deleting }}
+        cancelButtonProps={{ disabled: deleting }}
+        onOk={handleConfirmDelete}
+        onCancel={() => (deleting ? null : setPendingDelete(false))}
+      >
+        <p className="text-sm text-gray-600">
+          Are you sure you want to delete the Medium of Instruction Certificate?
+        </p>
+      </Modal>
+
+      <FileViewer
+        open={fileViewerOpen}
+        url={fileUrl}
+        title="Medium of Instruction Certificate"
+        onClose={() => setFileViewerOpen(false)}
+      />
     </div>
   );
 };
