@@ -11,6 +11,8 @@ type Props = {
   children: ReactNode;
 };
 
+const RELOAD_GUARD_KEY = "ct_auth_session_reload_guard";
+
 export default function AuthSessionSyncProvider({ children }: Props) {
   useEffect(() => {
     const browserId = getAuthBrowserId();
@@ -25,11 +27,42 @@ export default function AuthSessionSyncProvider({ children }: Props) {
       socket.emit("auth:join-browser", { browserId });
     };
 
-    const handleSessionChanged = (payload: { sourceClientId?: string | null }) => {
+    const reloadOnceForSignal = (payload: {
+      type?: string | null;
+      sourceClientId?: string | null;
+      timestamp?: number | null;
+    }) => {
+      const signalKey = `${payload?.type || "auth"}:${payload?.timestamp || ""}:${payload?.sourceClientId || ""}`;
+      const now = Date.now();
+      try {
+        const previous = JSON.parse(
+          sessionStorage.getItem(RELOAD_GUARD_KEY) || "null",
+        ) as { signalKey?: string; reloadedAt?: number } | null;
+        if (
+          previous?.signalKey === signalKey ||
+          (previous?.reloadedAt && now - previous.reloadedAt < 3000)
+        ) {
+          return;
+        }
+        sessionStorage.setItem(
+          RELOAD_GUARD_KEY,
+          JSON.stringify({ signalKey, reloadedAt: now }),
+        );
+      } catch {
+        // If storage is unavailable, still allow a single browser reload attempt.
+      }
+      window.location.reload();
+    };
+
+    const handleSessionChanged = (payload: {
+      type?: string | null;
+      sourceClientId?: string | null;
+      timestamp?: number | null;
+    }) => {
       if (payload?.sourceClientId && payload.sourceClientId === clientId) {
         return;
       }
-      window.location.reload();
+      reloadOnceForSignal(payload);
     };
 
     const handleLocalSessionChanged = (event: StorageEvent) => {

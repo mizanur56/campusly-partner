@@ -1,6 +1,6 @@
-import { config } from "../../../config";
 import type { BreadcrumbItem, UniversityDetails, UniversityFaq } from "../../../types/course";
 import { getApiImageUrl } from "../../../utils/getApiImageUrl";
+import { buildPublicShareUrl } from "../../../utils/publicShareUrl";
 import UniversityAbout from "./UniversityAbout";
 import UniversityCourses from "./UniversityCourses";
 import UniversityFaqComponent from "./UniversityFaq";
@@ -73,7 +73,7 @@ export default function UniversityDetailsPage({ data, faqs }: { data: University
     { label: "Tuition Fee", value: tuition },
   ];
 
-  const shareUrl = data?.slug ? `${config.app_domain}/universities/${data.slug}` : "";
+  const shareUrl = data?.slug ? buildPublicShareUrl(`/universities/${data.slug}`) : "";
 
   const documents =
     data?.universityDocuments && Array.isArray(data.universityDocuments) && data.universityDocuments.length > 0
