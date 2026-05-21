@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import { config } from "../../config";
 import { getApiImageUrl } from "../../utils/getApiImageUrl";
 import { toast } from "react-toastify";
 import { Collapse } from "antd";
@@ -18,6 +17,7 @@ import CourseDetailsHeader from "./CourseDetailsHeader";
 import CourseSidebar from "./CourseSidebar";
 import RelatedCourses from "./RelatedCourses";
 import RequiredDocuments from "./RequiredDocuments";
+import { buildPublicShareUrl } from "../../utils/publicShareUrl";
 
 interface CourseDetailsPageProps {
   data: SingleUniversityCourse;
@@ -93,7 +93,7 @@ export default function CourseDetailsPage({ data }: CourseDetailsPageProps) {
   // Construct the share URL for social sharing
   const shareUrl =
     university?.slug && course?.slug
-      ? `${config.app_domain}/courses/${university.slug}/${course.slug}`
+      ? buildPublicShareUrl(`/courses/${university.slug}/${course.slug}`)
       : "";
 
   const relatedCourses: SearchCourseItem[] =
