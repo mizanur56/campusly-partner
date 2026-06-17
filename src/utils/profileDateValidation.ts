@@ -20,6 +20,14 @@ export const disableEndDate =
     return false;
   };
 
+/** Education end-date: allow future dates, only block values before startDate. */
+export const disableEducationEndDate =
+  (startDate?: Dayjs | null) => (current: Dayjs) => {
+    if (!current) return false;
+    if (startDate && current.isBefore(startDate, "day")) return true;
+    return false;
+  };
+
 export const disableFutureYears = (current: Dayjs) =>
   Boolean(current && current.year() > dayjs().year());
 
@@ -64,6 +72,23 @@ export const endDateRules = (getStartDate?: () => Dayjs | null | undefined): Rul
       if (value.isAfter(dayjs(), "day")) {
         return Promise.reject(new Error("End date cannot be in the future"));
       }
+      const startDate = getStartDate?.();
+      if (startDate && value.isBefore(startDate, "day")) {
+        return Promise.reject(new Error("End date cannot be before start date"));
+      }
+      return Promise.resolve();
+    },
+  },
+];
+
+/** Education end-date: allow future dates, only validate it's not before start. */
+export const educationEndDateRules = (
+  getStartDate?: () => Dayjs | null | undefined
+): Rule[] => [
+  { required: true, message: "End date is required" },
+  {
+    validator: (_rule, value: Dayjs) => {
+      if (!value) return Promise.resolve();
       const startDate = getStartDate?.();
       if (startDate && value.isBefore(startDate, "day")) {
         return Promise.reject(new Error("End date cannot be before start date"));
