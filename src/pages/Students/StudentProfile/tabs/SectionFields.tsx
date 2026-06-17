@@ -6,6 +6,7 @@ import { FaPencilAlt, FaTimes } from "react-icons/fa";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import PrimaryButton from "../../../../components/common/Button/PrimaryButton";
+import { disableFutureYears } from "../../../../utils/profileDateValidation";
 
 const { Option } = Select;
 
@@ -51,6 +52,8 @@ export const QualificationSection: React.FC<QualificationSectionProps> = ({
     }
     if (!editPassingYear?.trim()) {
       next.passingYear = "Passing year is required";
+    } else if (Number(editPassingYear) > dayjs().year()) {
+      next.passingYear = "Passing year cannot be in the future";
     }
     if (Object.keys(next).length > 0) {
       setFieldErrors(next);
@@ -236,6 +239,7 @@ export const InfoField: React.FC<InfoFieldProps> = ({
         <DatePicker
           value={dateValue}
           disabled={!isEditable || isLoading}
+          disabledDate={type === "year" ? disableFutureYears : undefined}
           onChange={(d) => {
             setDateValue(d);
             if (isEditable && d)
