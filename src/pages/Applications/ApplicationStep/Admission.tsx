@@ -82,6 +82,19 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
     useGetStudentProfileQuery(studentId!, { skip: !studentId });
   const studentProfile = profileApiData as any;
   const educationData = studentProfile?.educations;
+  const profilePassportFile = React.useMemo(() => {
+    const docs = (studentProfile?.documents ?? []) as any[];
+    const match = docs.find((d) => {
+      const relationName = String(d?.documentRelation?.name ?? "");
+      const relationCategory = String(d?.documentRelation?.category?.name ?? "");
+      return (
+        /\bpassport\b/i.test(relationName) ||
+        (/\bidentity\b/i.test(relationCategory) && /\bpassport\b/i.test(relationName))
+      );
+    });
+    const url = match?.document || match?.url || match?.file || match?.path;
+    return typeof url === "string" && url.trim() ? url : null;
+  }, [studentProfile?.documents]);
   const hasQualificationDocs = Array.isArray(educationData)
     ? educationData.some((edu: any) =>
         Boolean(edu?.marksheet || edu?.certificate),
@@ -175,8 +188,8 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
         sizes.registrationForm = await getFileSize(
           `${config.image_access_url}${applicationApiData.registrationForm}`,
         );
-      if (applicationApiData.passportFile)
-        sizes.passportFile = await getFileSize(applicationApiData.passportFile);
+      const passport = applicationApiData.passportFile || profilePassportFile;
+      if (passport) sizes.passportFile = await getFileSize(passport);
       if (applicationApiData.student?.cv)
         sizes.cv = await getFileSize(applicationApiData.student.cv);
       if (applicationApiData.student?.motivationLetter)
@@ -186,7 +199,7 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
       setFileSizes((prev) => ({ ...prev, ...sizes }));
     };
     fetchSizes();
-  }, [applicationApiData, getFileSize]);
+  }, [applicationApiData, getFileSize, profilePassportFile]);
 
   React.useEffect(() => {
     if (!Array.isArray(educationData)) return;
@@ -270,7 +283,9 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
     const reg =
       localUploads.registrationForm || applicationApiData?.registrationForm;
     const passport =
-      localUploads.passportFile || applicationApiData?.passportFile;
+      localUploads.passportFile ||
+      applicationApiData?.passportFile ||
+      profilePassportFile;
     const cv = localUploads.cv || applicationApiData?.student?.cv;
     const motivation =
       localUploads.motivationLetter ||
