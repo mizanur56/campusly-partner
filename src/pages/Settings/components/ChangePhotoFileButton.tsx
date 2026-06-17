@@ -22,8 +22,10 @@ export default function ChangePhotoFileButton({
     if (!file) return;
 
     const formData = new FormData();
+    if (uploadFolder.trim()) {
+      formData.append("folder", uploadFolder.trim());
+    }
     formData.append("files", file);
-    formData.append("folder", uploadFolder);
 
     try {
       const res: any = await uploadImage(formData).unwrap();

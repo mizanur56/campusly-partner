@@ -171,7 +171,7 @@ export default function TeamMembers() {
     if (!file) return;
     const formData = new FormData();
     formData.append("files", file);
-    formData.append("folder", "team-members");
+    // Upload to uploads/ root (same as admin payout receipts) — avoids subfolder rename on server.
     try {
       const res: any = await uploadImage(formData).unwrap();
       const uploaded = (

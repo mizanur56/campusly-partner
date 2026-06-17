@@ -12,11 +12,22 @@ const mediaApi = baseApi.injectEndpoints({
     }),
     // Media endpoints
     uploadImage: builder.mutation({
-      query: (payload: FormData) => ({
-        url: "/media/upload",
-        method: "POST",
-        body: payload,
-      }),
+      query: (payload: FormData) => {
+        const folderValue = payload.get("folder");
+        const folder =
+          typeof folderValue === "string" ? folderValue.trim() : "";
+        if (folder) {
+          payload.delete("folder");
+        }
+        const folderQuery = folder
+          ? `?folder=${encodeURIComponent(folder)}`
+          : "";
+        return {
+          url: `/media/upload${folderQuery}`,
+          method: "POST",
+          body: payload,
+        };
+      },
       invalidatesTags: ["media", "folders"],
     }),
 
