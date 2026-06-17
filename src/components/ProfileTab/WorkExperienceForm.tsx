@@ -35,6 +35,12 @@ import type { BackgroundDocument } from "./type";
 import PrimaryButton from "../common/Button/PrimaryButton";
 import Uploader from "../common/Shared/Uploader";
 import { FormDatePicker, FormInput } from "../common/Forms";
+import {
+  disableEndDate,
+  disableStartDate,
+  endDateRules,
+  startDateRules,
+} from "../../utils/profileDateValidation";
 
 const isSupportedDocumentFile = (file: File) => {
   const mime = (file.type || "").toLowerCase();
@@ -453,18 +459,43 @@ const WorkExperienceForm = ({
             )}
 
             <div className="grid md:grid-cols-2 gap-x-4 mt-3">
-              {document.fields.map((field) =>
-                field.name.toLowerCase().includes("date") ? (
-                  <FormDatePicker
-                    key={field.id}
-                    name={field.id}
-                    label={field.name}
-                    format="DD/MM/YYYY"
-                    rules={[
-                      { required: true, message: `${field.name} is required` },
-                    ]}
-                  />
-                ) : (
+              {document.fields.map((field) => {
+                const lowerName = field.name.toLowerCase();
+                const isDateField = lowerName.includes("date");
+                const isStartDateField = lowerName.includes("start");
+                const isEndDateField = lowerName.includes("end");
+
+                if (isDateField) {
+                  return (
+                    <FormDatePicker
+                      key={field.id}
+                      name={field.id}
+                      label={field.name}
+                      format="DD/MM/YYYY"
+                      disabledDate={
+                        isStartDateField
+                          ? disableStartDate(endDate)
+                          : isEndDateField
+                            ? disableEndDate(startDate)
+                            : undefined
+                      }
+                      rules={
+                        isStartDateField
+                          ? startDateRules(() => endDate)
+                          : isEndDateField
+                            ? endDateRules(() => startDate)
+                            : [
+                                {
+                                  required: true,
+                                  message: `${field.name} is required`,
+                                },
+                              ]
+                      }
+                    />
+                  );
+                }
+
+                return (
                   <FormInput
                     key={field.id}
                     name={field.id}
@@ -474,8 +505,8 @@ const WorkExperienceForm = ({
                       { required: true, message: `${field.name} is required` },
                     ]}
                   />
-                ),
-              )}
+                );
+              })}
             </div>
 
             {canEdit && isEditing && (

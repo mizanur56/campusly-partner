@@ -589,6 +589,12 @@ import {
 } from "../../../redux/features/profile/studentProfileApi";
 import PrimaryButton from "../../common/Button/PrimaryButton";
 import { FormDatePicker, FormInput, FormSelect } from "../../common/Forms";
+import {
+  disableEndDate,
+  disableStartDate,
+  endDateRules,
+  startDateRules,
+} from "../../../utils/profileDateValidation";
 
 interface QualificationFormProps {
   profileData?: any;
@@ -657,6 +663,8 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
 
   const [form] = Form.useForm();
   const selectedGrade = Form.useWatch("outOfGrade", form);
+  const watchedStartYear = Form.useWatch("startYear", form);
+  const watchedEndYear = Form.useWatch("endYear", form);
   const gradeScale = parseGradeScale(selectedGrade);
   const prevGradeScaleRef = useRef<number | null | undefined>(undefined);
 
@@ -848,16 +856,16 @@ const QualificationForm: React.FC<QualificationFormProps> = ({
             <FormDatePicker
               name="startYear"
               label="Start Date"
-              // picker="year"
               placeholder="Select start Date"
-              rules={[{ required: true, message: "Start Date is required" }]}
+              disabledDate={disableStartDate(watchedEndYear)}
+              rules={startDateRules(() => watchedEndYear)}
             />
             <FormDatePicker
               name="endYear"
               label="End Date"
-              // picker="year"
               placeholder="Select end Date"
-              rules={[{ required: true, message: "End Date is required" }]}
+              disabledDate={disableEndDate(watchedStartYear)}
+              rules={endDateRules(() => watchedStartYear)}
             />
             <FormInput
               name="subject"
