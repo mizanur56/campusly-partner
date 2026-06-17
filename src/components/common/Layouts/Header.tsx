@@ -227,86 +227,10 @@ const Header: React.FC = () => {
           </div>
         )}
 
-        {/* Right: About + Partners (dashboard/onboarding/signed), then 4 icons when signed, notification, user */}
+        {/* Right: signed icons, notification, user */}
         <div className="flex min-w-0 shrink items-center gap-2 sm:gap-3">
           {isDashboardOrOnboarding ? (
-            <nav className="hidden md:flex items-center gap-1">
-              <div className="relative group">
-                <button
-                  className="flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-2 text-[16px] font-medium text-[#20242A] transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
-                  type="button"
-                >
-                  About
-                  <svg
-                    className="h-4 w-4 transition-transform group-hover:rotate-180"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </button>
-                {/* pt-2 bridges the gap so hover is not lost moving from button to menu */}
-                <div className="pointer-events-none absolute left-0 top-full z-[100] w-44 pt-2 opacity-0 transition-all duration-200 group-hover:pointer-events-auto group-hover:visible group-hover:opacity-100 invisible">
-                  <div className="rounded-2xl border border-primary-border bg-white py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] dark:border-gray-800 dark:bg-gray-800">
-                    <Link
-                      to="/galleries"
-                      className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700/50 transition-colors duration-200"
-                    >
-                      Our story
-                    </Link>
-                    <Link
-                      to="/employees"
-                      className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700/50 transition-colors duration-200"
-                    >
-                      Our team
-                    </Link>
-                    <Link
-                      to="/offices"
-                      className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700/50 transition-colors duration-200"
-                    >
-                      Contact
-                    </Link>
-                  </div>
-                </div>
-              </div>
-              <div className="relative group">
-                <button
-                  className="flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-2 text-[16px] font-medium text-[#20242A] transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
-                  type="button"
-                >
-                  Partners
-                  <svg
-                    className="h-4 w-4 transition-transform group-hover:rotate-180"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </button>
-                <div className="pointer-events-none absolute left-0 top-full z-[100] w-44 pt-2 opacity-0 transition-all duration-200 group-hover:pointer-events-auto group-hover:visible group-hover:opacity-100 invisible">
-                  <div className="rounded-2xl border border-primary-border bg-white py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] dark:border-gray-800 dark:bg-gray-800">
-                    <Link
-                      to="#"
-                      className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700/50 transition-colors duration-200"
-                    >
-                      Partner resources
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </nav>
+            null
           ) : (
             /* Navigation Links with Dropdowns (non-dashboard, public site) */
             <nav className="hidden md:flex items-center gap-6">
@@ -398,52 +322,6 @@ const Header: React.FC = () => {
                 </div>
               </div>
 
-              {/* About Dropdown */}
-              <div className="relative group">
-                <button className="font-medium cursor-pointer flex items-center gap-1.5 text-gray-700 hover:text-gray-900 text-sm">
-                  About
-                  <svg
-                    className="w-4 h-4 transition-transform group-hover:rotate-180"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </button>
-
-                {/* Dropdown submenu */}
-                <div
-                  className="absolute top-full left-0 mt-2 w-48 bg-white rounded-2xl border border-primary-border py-2 shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.08),0px_4px_6px_-2px_rgba(16,24,40,0.03)] z-[100]
-                  opacity-0 invisible group-hover:visible group-hover:opacity-100
-                  max-h-0 group-hover:max-h-96 overflow-hidden
-                  transition-all duration-300 ease-in-out dark:border-gray-800 dark:bg-gray-800"
-                >
-                  <Link
-                    to="/galleries"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
-                  >
-                    Our Story
-                  </Link>
-                  <Link
-                    to="/employees"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
-                  >
-                    Team
-                  </Link>
-                  <Link
-                    to="/offices"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
-                  >
-                    Contact
-                  </Link>
-                </div>
-              </div>
             </nav>
           )}
 
