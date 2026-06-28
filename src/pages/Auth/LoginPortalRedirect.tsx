@@ -1,10 +1,14 @@
 import { useLayoutEffect } from "react";
 import { config } from "../../config";
-import { getPortalLoginUrl } from "../../lib/portalRouting";
+import { getPortalLoginUrl, isOnPrimaryAppDomain } from "../../lib/portalRouting";
 import Login from "./Login";
 
 export default function LoginPortalRedirect() {
-  const shouldRedirect = config.node_env === "production";
+  // Only redirect to the centralized login hub when actually on the primary
+  // app domain. On standalone deployments (e.g. *.vercel.app) or localhost,
+  // render this deployment's own login page instead of redirecting.
+  const shouldRedirect =
+    config.node_env === "production" && isOnPrimaryAppDomain();
   const loginHref = shouldRedirect ? getPortalLoginUrl() : "";
 
   useLayoutEffect(() => {
