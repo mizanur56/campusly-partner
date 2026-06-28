@@ -279,6 +279,8 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
     });
   }, [studyLevelData, studentProfile]);
 
+  
+
   const documentCategories: DocumentCategory[] = React.useMemo(() => {
     const reg =
       localUploads.registrationForm || applicationApiData?.registrationForm;
@@ -324,14 +326,15 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
         description:
           "Upload a clear copy of the student's passport biodata page (and any relevant pages).",
         isRequired: true,
-        isCompleted: !!passport,
-        documents: passport
+        // isCompleted: !!passport,
+        isCompleted: !!applicationApiData?.passportFile,
+        documents: applicationApiData?.passportFile
           ? [
               {
                 id: "pf-1",
                 name: "Passport",
                 size: fileSizes.passportFile || "—",
-                url: `${config.image_access_url}${passport}`,
+                url: `${config.image_access_url}${applicationApiData?.passportFile}`,
               },
             ]
           : [],
@@ -388,6 +391,8 @@ export const AdmissionStep: React.FC<AdmissionStepProps> = ({
     hasQualificationDocs,
     localUploads,
   ]);
+
+ 
 
   /* ================= Handlers ================= */
   const handleFileUpload = async (categoryId: string, file: File) => {

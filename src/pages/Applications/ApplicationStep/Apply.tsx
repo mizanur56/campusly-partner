@@ -176,7 +176,6 @@ export const ApplyStep: React.FC<ApplyStepProps> = ({
     tuitionPaymentDoc?.paymentReceipt,
   ]);
 
-  console.log(applicationFee);
 
   const sections: Section[] = useMemo(
     () => [

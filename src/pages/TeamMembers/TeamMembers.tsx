@@ -1,29 +1,32 @@
+import { PlusOutlined } from "@ant-design/icons";
+import { Button, Form, Input, message, Modal } from "antd";
+import clsx from "clsx";
 import {
-  DeleteOutlined,
-  EditOutlined,
-  LockOutlined,
-  PlusOutlined,
-  SendOutlined,
-} from "@ant-design/icons";
-import {
-  Button,
-  Form,
-  Input,
-  message,
-  Modal,
-  Select,
-  Space,
-  Tag,
-  Tooltip,
-} from "antd";
-import type { ColumnsType } from "antd/es/table";
-import React, { useRef, useState } from "react";
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Filter,
+  KeyRound,
+  Mail,
+  MoreVertical,
+  Pencil,
+  Phone,
+  Search,
+  Send,
+  ShieldCheck,
+  Trash2,
+  Users,
+  UserCheck,
+  UserX,
+  X,
+} from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { useSelector } from "react-redux";
-import PageCard from "../../components/common/Card/PageCard";
 import PageMeta from "../../components/common/Meta/PageMeta";
-import DataTable from "../../components/common/Tables/DataTable";
+import PageHeader from "../../components/common/Navigation/PageHeader";
 import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 import { useUploadImageMutation } from "../../redux/features/media/mediaApi";
 import {
@@ -40,6 +43,162 @@ import type { MediaImage } from "../../types/media";
 import { getApiImageUrl } from "../../utils/getApiImageUrl";
 import "./TeamMembers.css";
 
+const AVATAR_GRADIENTS = [
+  "from-[#95d66d] to-[#5fa836]",
+  "from-sky-400 to-blue-600",
+  "from-violet-400 to-purple-600",
+  "from-amber-400 to-orange-500",
+  "from-rose-400 to-pink-600",
+  "from-teal-400 to-cyan-600",
+];
+
+function gradientFor(seed: string): string {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash + seed.charCodeAt(i)) % 997;
+  }
+  return AVATAR_GRADIENTS[hash % AVATAR_GRADIENTS.length];
+}
+
+function getInitials(name?: string): string {
+  if (!name || name === "—") return "?";
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function formatDateTime(value?: string | null): string {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function statusBadge(status: PartnerTeamMember["status"]): {
+  dot: string;
+  pill: string;
+  label: string;
+} {
+  if (status === "ACTIVE")
+    return {
+      dot: "bg-emerald-500",
+      pill: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      label: "Active",
+    };
+  if (status === "PENDING")
+    return {
+      dot: "bg-amber-500",
+      pill: "bg-amber-50 text-amber-700 border-amber-200",
+      label: "Pending",
+    };
+  return {
+    dot: "bg-slate-400",
+    pill: "bg-slate-50 text-slate-600 border-slate-200",
+    label: status,
+  };
+}
+
+function getPageNumbers(current: number, total: number): (number | "...")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages: (number | "...")[] = [1];
+  if (current > 3) pages.push("...");
+  const start = Math.max(2, current - 1);
+  const end = Math.min(total - 1, current + 1);
+  for (let i = start; i <= end; i += 1) pages.push(i);
+  if (current < total - 2) pages.push("...");
+  pages.push(total);
+  return pages;
+}
+
+const SELECT_CLASS =
+  "h-11 w-full appearance-none rounded-md border border-slate-200 bg-white pl-3.5 pr-9 text-sm font-medium text-slate-700 outline-none transition-colors hover:border-slate-300 focus:border-[#7bc44e] focus:ring-2 focus:ring-[#95d66d]/30 sm:w-44";
+
+interface StatCardProps {
+  label: string;
+  value: number;
+  description: string;
+  icon: typeof Users;
+  iconClass: string;
+  accentClass: string;
+}
+
+function StatCard({
+  label,
+  value,
+  description,
+  icon: Icon,
+  iconClass,
+  accentClass,
+}: StatCardProps) {
+  return (
+      <div className="group relative overflow-hidden rounded-md border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+      <div
+        className={clsx(
+          "pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full opacity-20 blur-2xl transition-opacity group-hover:opacity-30",
+          accentClass,
+        )}
+      />
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+            {label}
+          </p>
+          <p className="mt-2 text-3xl font-bold tabular-nums tracking-tight text-slate-900">
+            {value}
+          </p>
+          <p className="mt-1 text-xs text-slate-400">{description}</p>
+        </div>
+        <div
+          className={clsx(
+            "flex h-11 w-11 shrink-0 items-center justify-center rounded-md",
+            iconClass,
+          )}
+        >
+          <Icon className="h-5 w-5" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface AvatarProps {
+  name: string;
+  image?: string | null;
+}
+
+function Avatar({ name, image }: AvatarProps) {
+  const [errored, setErrored] = useState(false);
+  const src = image ? getApiImageUrl(image) : "";
+  if (src && !errored) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        onError={() => setErrored(true)}
+        className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-slate-200"
+      />
+    );
+  }
+  return (
+    <span
+      className={clsx(
+        "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white",
+        gradientFor(name),
+      )}
+    >
+      {getInitials(name)}
+    </span>
+  );
+}
+
 export default function TeamMembers() {
   const user = useSelector(selectCurrentUser);
   const isTeamMember = user?.role === "PARTNER_TEAM_MEMBER";
@@ -47,6 +206,8 @@ export default function TeamMembers() {
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
+  const [roleFilter, setRoleFilter] = useState<string>("");
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<PartnerTeamMember | null>(
     null,
@@ -55,6 +216,8 @@ export default function TeamMembers() {
     useState<PartnerTeamMember | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<MediaImage | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
   const [passwordForm] = Form.useForm();
@@ -82,6 +245,12 @@ export default function TeamMembers() {
 
   const members: PartnerTeamMember[] = data?.data || [];
   const meta = data?.meta;
+
+  // Role is derived (backend exposes a single team-member role); filter client-side.
+  const roleOf = (_m: PartnerTeamMember) => "Team Member";
+  const displayedMembers = roleFilter
+    ? members.filter((m) => roleOf(m) === roleFilter)
+    : members;
 
   // Helper function to parse phone number from react-phone-input-2
   const parsePhoneNumber = (
@@ -257,103 +426,42 @@ export default function TeamMembers() {
     });
   };
 
-  const columns: ColumnsType<PartnerTeamMember> = [
-    {
-      title: "Name",
-      dataIndex: "firstName",
-      key: "name",
-      render: (_: unknown, record: PartnerTeamMember) =>
-        `${record.firstName || ""} ${record.lastName || ""}`.trim() ||
-        record.email,
-    },
-    {
-      title: "Email",
-      dataIndex: "email",
-      key: "email",
-    },
-    {
-      title: "Phone",
-      dataIndex: "contactNumber",
-      key: "contactNumber",
-      render: (value: string | null | undefined, record: PartnerTeamMember) =>
-        value ? `${record.countryCode || ""} ${value}`.trim() : "—",
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status: PartnerTeamMember["status"]) => {
-        const color =
-          status === "ACTIVE"
-            ? "green"
-            : status === "PENDING"
-              ? "orange"
-              : "default";
-        return <Tag color={color}>{status}</Tag>;
-      },
-    },
-    {
-      title: "Invited",
-      dataIndex: "invitedAt",
-      key: "invitedAt",
-      render: (value: string) =>
-        value ? new Date(value).toLocaleString() : "—",
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      width: 220,
-      render: (_: unknown, record: PartnerTeamMember) =>
-        isTeamMember ? null : (
-          <Space size="small" wrap onClick={(e) => e.stopPropagation()}>
-            <Tooltip title="Edit">
-              <Button
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openEditModal(record);
-                }}
-                icon={<EditOutlined />}
-              />
-            </Tooltip>
-            {record.status === "PENDING" && (
-              <Tooltip title="Resend invite">
-                <Button
-                  size="small"
-                  loading={isResending}
-                  onClick={(e) => handleResend(e, record)}
-                  icon={<SendOutlined />}
-                />
-              </Tooltip>
-            )}
-            {record.status === "ACTIVE" && (
-              <Tooltip title="Change password">
-                <Button
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setPasswordMember(record);
-                    passwordForm.resetFields();
-                  }}
-                  icon={<LockOutlined />}
-                />
-              </Tooltip>
-            )}
-            <Tooltip title="Remove member">
-              <Button
-                size="small"
-                danger
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleRemove(record);
-                }}
-                icon={<DeleteOutlined />}
-              />
-            </Tooltip>
-          </Space>
-        ),
-    },
-  ];
+  const hasActiveFilters = Boolean(
+    search.trim() || statusFilter || roleFilter,
+  );
+
+  const resetFilters = () => {
+    setSearch("");
+    setStatusFilter("");
+    setRoleFilter("");
+    setPage(1);
+  };
+
+  const total = meta?.total ?? 0;
+  const totalPages = Math.max(
+    1,
+    meta?.totalPages || Math.ceil(total / limit) || 1,
+  );
+  const rangeStart = total === 0 ? 0 : (page - 1) * limit + 1;
+  const rangeEnd = Math.min(page * limit, total);
+  const loading = isLoading || isFetching;
+
+  useEffect(() => {
+    function onClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null);
+      }
+    }
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
+
+  const inactiveCount = Math.max(
+    0,
+    (stats?.total ?? 0) - (stats?.active ?? 0) - (stats?.pending ?? 0),
+  );
+
+  const colSpan = isTeamMember ? 6 : 7;
 
   return (
     <div>
@@ -361,91 +469,436 @@ export default function TeamMembers() {
         title="Team Members - Campus Transfer Partner"
         description="Manage your partner team members, invitations, and roles."
       />
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
-            Team Members
-          </h1>
-          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-            Invite and manage your partner team.
-          </p>
-        </div>
-        {!isTeamMember && (
-          <Button
-            type="primary"
-            onClick={() => setIsInviteModalOpen(true)}
-            icon={<PlusOutlined />}
-          >
-            Create Team Member
-          </Button>
-        )}
-      </div>
+
+      <PageHeader
+        title="Team Members"
+        subtitle="Invite, organize, and manage everyone on your partner team."
+        extra={
+          !isTeamMember ? (
+            <Button
+              type="primary"
+              onClick={() => setIsInviteModalOpen(true)}
+              icon={<PlusOutlined />}
+            >
+              Create Team Member
+            </Button>
+          ) : null
+        }
+        breadcrumbs={[
+          { title: "Dashboard", path: "/" },
+          { title: "Team Members" },
+        ]}
+      />
 
       {/* Stats cards */}
-      <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="rounded-xl border border-primary-border bg-white p-4">
-          <div className="text-xs text-gray-500 mb-1">Total Members</div>
-          <div className="text-2xl font-semibold text-gray-900">
-            {stats?.total ?? 0}
-          </div>
-        </div>
-        <div className="rounded-xl border border-primary-border bg-white p-4">
-          <div className="text-xs text-gray-500 mb-1">Active Members</div>
-          <div className="text-2xl font-semibold text-emerald-600">
-            {stats?.active ?? 0}
-          </div>
-        </div>
+      <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          label="Total Members"
+          value={stats?.total ?? 0}
+          description="All team members"
+          icon={Users}
+          iconClass="bg-[#e8f7df] text-[#5fa836]"
+          accentClass="bg-[#95d66d]"
+        />
+        <StatCard
+          label="Active Members"
+          value={stats?.active ?? 0}
+          description="Currently active"
+          icon={UserCheck}
+          iconClass="bg-emerald-50 text-emerald-600"
+          accentClass="bg-emerald-400"
+        />
+        <StatCard
+          label="Inactive Members"
+          value={inactiveCount}
+          description="No active access"
+          icon={UserX}
+          iconClass="bg-rose-50 text-rose-600"
+          accentClass="bg-rose-400"
+        />
+        <StatCard
+          label="Pending Invitations"
+          value={stats?.pending ?? 0}
+          description="Awaiting acceptance"
+          icon={Clock}
+          iconClass="bg-amber-50 text-amber-600"
+          accentClass="bg-amber-400"
+        />
       </div>
-      <PageCard>
-        <div className="mb-6 flex flex-wrap items-center gap-3">
-          <div className="max-w-sm">
-            <Input
-              placeholder="Search by name or email"
-              allowClear
+
+      {/* Main card */}
+      <div className="rounded-md border border-slate-200 bg-white shadow-sm">
+        {/* Filters */}
+        <div className="flex flex-col gap-3 border-b border-slate-100 p-4 md:flex-row md:items-center">
+          <div className="relative flex-1">
+            <Search
+              size={18}
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+            />
+            <input
+              ref={searchRef}
+              type="text"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              size="large"
-              style={{ width: 200 }}
+              placeholder="Search by name or email"
+              className="h-11 w-full rounded-md border border-slate-200 bg-slate-50/60 pl-11 pr-10 text-sm text-slate-800 outline-none transition-colors placeholder:text-slate-400 hover:border-slate-300 focus:border-[#7bc44e] focus:bg-white focus:ring-2 focus:ring-[#95d66d]/30"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  setPage(1);
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                aria-label="Clear search"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+
+          <div className="relative">
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(1);
+              }}
+              className={SELECT_CLASS}
+            >
+              <option value="">All status</option>
+              <option value="ACTIVE">Active</option>
+              <option value="PENDING">Pending</option>
+            </select>
+            <ChevronDown
+              size={16}
+              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
             />
           </div>
-          <Select
-            placeholder="Filter by status"
-            allowClear
-            value={statusFilter || undefined}
-            onChange={(value) => {
-              setStatusFilter(value ?? "");
-              setPage(1);
-            }}
-            style={{ width: 200 }}
-            options={[
-              { value: "PENDING", label: "Pending" },
-              { value: "ACTIVE", label: "Active" },
-            ]}
-          />
+
+          <div className="relative">
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className={SELECT_CLASS}
+            >
+              <option value="">All roles</option>
+              <option value="Team Member">Team Member</option>
+            </select>
+            <ChevronDown
+              size={16}
+              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={() =>
+              hasActiveFilters ? resetFilters() : searchRef.current?.focus()
+            }
+            className={clsx(
+              "inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-md px-4 text-sm font-semibold transition-all",
+              hasActiveFilters
+                ? "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                : "bg-[#5fa836] text-white shadow-sm hover:bg-[#4f9762]",
+            )}
+          >
+            {hasActiveFilters ? (
+              <>
+                <X size={16} />
+                Clear
+              </>
+            ) : (
+              <>
+                <Filter size={16} />
+                Filter
+              </>
+            )}
+          </button>
         </div>
 
-        <DataTable
-          data={members}
-          columns={columns}
-          rowKey="id"
-          currentPage={page}
-          setCurrentPage={setPage}
-          limit={limit}
-          setLimit={setLimit}
-          total={meta?.total ?? 0}
-          loading={isLoading || isFetching}
-          isPaginate
-          showHeader
-          showSizeChanger
-          noInnerBorder
-          pagination={{
-            pageSizeOptions: ["10", "20", "50"],
-          }}
-        />
-      </PageCard>
+        {/* Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[860px] border-collapse text-left">
+            <thead className="sticky top-0 z-10 bg-slate-50">
+              <tr className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                <th className="px-4 py-3.5">Member</th>
+                <th className="px-4 py-3.5">Email</th>
+                <th className="px-4 py-3.5">Phone</th>
+                <th className="px-4 py-3.5">Role</th>
+                <th className="px-4 py-3.5">Status</th>
+                <th className="px-4 py-3.5">Invited</th>
+                {!isTeamMember && (
+                  <th className="w-16 px-4 py-3.5 text-right">Action</th>
+                )}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {loading ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={`sk-${i}`}>
+                    {Array.from({ length: colSpan }).map((__, j) => (
+                      <td key={j} className="px-4 py-4">
+                        <div className="h-4 w-full max-w-[140px] animate-pulse rounded bg-slate-100" />
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : displayedMembers.length === 0 ? (
+                <tr>
+                  <td colSpan={colSpan} className="px-4 py-16">
+                    <div className="flex flex-col items-center justify-center text-center">
+                      <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-md bg-slate-50">
+                        <Users className="h-6 w-6 text-slate-400" />
+                      </div>
+                      <p className="text-sm font-semibold text-slate-700">
+                        No team members found
+                      </p>
+                      <p className="mt-1 text-sm text-slate-400">
+                        {hasActiveFilters
+                          ? "Try adjusting your search or filters."
+                          : "Invite your first team member to get started."}
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                displayedMembers.map((record, idx) => {
+                  const name =
+                    `${record.firstName || ""} ${record.lastName || ""}`.trim() ||
+                    record.email;
+                  const phone = record.contactNumber
+                    ? `${record.countryCode || ""} ${record.contactNumber}`.trim()
+                    : "—";
+                  const sb = statusBadge(record.status);
+                  const isOpen = openMenuId === record.id;
+                  return (
+                    <tr
+                      key={record.id}
+                      className={clsx(
+                        "group transition-colors hover:bg-slate-50/70",
+                        idx % 2 === 1 && "bg-slate-50/30",
+                      )}
+                    >
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <Avatar name={name} image={record.profilePhoto} />
+                          <div className="min-w-0">
+                            <div className="truncate text-sm font-semibold text-slate-800">
+                              {name}
+                            </div>
+                            <div className="truncate text-xs text-slate-400">
+                              ID: {record.id.slice(0, 8)}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-1.5 text-sm text-slate-600">
+                          <Mail size={14} className="shrink-0 text-slate-400" />
+                          <span className="truncate">{record.email}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-1.5 text-sm text-slate-600">
+                          <Phone size={14} className="shrink-0 text-slate-400" />
+                          <span className="truncate">{phone}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+                          <ShieldCheck size={13} className="text-slate-400" />
+                          {roleOf(record)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <span
+                          className={clsx(
+                            "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold",
+                            sb.pill,
+                          )}
+                        >
+                          <span
+                            className={clsx("h-1.5 w-1.5 rounded-full", sb.dot)}
+                          />
+                          {sb.label}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5 text-sm text-slate-600">
+                        {formatDateTime(record.invitedAt)}
+                      </td>
+                      {!isTeamMember && (
+                        <td className="px-4 py-3.5 text-right">
+                          <div
+                            className="relative inline-block"
+                            ref={isOpen ? menuRef : undefined}
+                          >
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenMenuId(isOpen ? null : record.id);
+                              }}
+                              className={clsx(
+                                "flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600",
+                                isOpen && "bg-slate-100 text-slate-600",
+                              )}
+                              aria-label="Row actions"
+                            >
+                              <MoreVertical size={18} />
+                            </button>
+                            {isOpen && (
+                              <div className="absolute right-0 z-20 mt-1 w-48 overflow-hidden rounded-md border border-slate-200 bg-white py-1 shadow-lg">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenMenuId(null);
+                                    openEditModal(record);
+                                  }}
+                                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50"
+                                >
+                                  <Pencil size={16} className="text-slate-400" />
+                                  Edit
+                                </button>
+                                {record.status === "PENDING" && (
+                                  <button
+                                    type="button"
+                                    disabled={isResending}
+                                    onClick={(e) => {
+                                      setOpenMenuId(null);
+                                      handleResend(e, record);
+                                    }}
+                                    className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50"
+                                  >
+                                    <Send size={16} className="text-slate-400" />
+                                    Resend invite
+                                  </button>
+                                )}
+                                {record.status === "ACTIVE" && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setOpenMenuId(null);
+                                      setPasswordMember(record);
+                                      passwordForm.resetFields();
+                                    }}
+                                    className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50"
+                                  >
+                                    <KeyRound
+                                      size={16}
+                                      className="text-slate-400"
+                                    />
+                                    Change password
+                                  </button>
+                                )}
+                                <div className="my-1 h-px bg-slate-100" />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenMenuId(null);
+                                    handleRemove(record);
+                                  }}
+                                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-rose-600 transition-colors hover:bg-rose-50"
+                                >
+                                  <Trash2 size={16} className="text-rose-500" />
+                                  Remove
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination footer */}
+        <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-100 px-4 py-3.5 sm:flex-row">
+          <div className="flex items-center gap-3 text-sm text-slate-500">
+            <span className="hidden sm:inline">
+              {total === 0
+                ? "No members"
+                : `Showing ${rangeStart}-${rangeEnd} of ${total} members`}
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400">Rows</span>
+              <div className="relative">
+                <select
+                  value={limit}
+                  onChange={(e) => {
+                    setLimit(Number(e.target.value));
+                    setPage(1);
+                  }}
+                  className="h-9 appearance-none rounded-md border border-slate-200 bg-white pl-3 pr-8 text-sm font-medium text-slate-700 outline-none transition-colors hover:border-slate-300 focus:border-[#7bc44e] focus:ring-2 focus:ring-[#95d66d]/30"
+                >
+                  {[10, 20, 50].map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={14}
+                  className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+              className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label="Previous page"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            {getPageNumbers(page, totalPages).map((p, i) =>
+              p === "..." ? (
+                <span
+                  key={`e-${i}`}
+                  className="flex h-9 w-9 items-center justify-center text-sm text-slate-400"
+                >
+                  …
+                </span>
+              ) : (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPage(p)}
+                  className={clsx(
+                    "flex h-9 min-w-9 items-center justify-center rounded-md px-3 text-sm font-medium transition-colors",
+                    p === page
+                      ? "bg-[#5fa836] text-white shadow-sm"
+                      : "border border-slate-200 text-slate-600 hover:bg-slate-50",
+                  )}
+                >
+                  {p}
+                </button>
+              ),
+            )}
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              className="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label="Next page"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Invite modal */}
       <Modal

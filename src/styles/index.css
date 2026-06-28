@@ -47,7 +47,7 @@ layer(base);
 
   /* Added semantic color palette */
   /* Primary Colors */
-  --primary: #237d3b;
+  /* --primary: #237d3b;
   --primary-DEFAULT: #237d3b;
   --primary-50: #e9f2eb;
   --primary-100: #d4e5d7;
@@ -58,7 +58,29 @@ layer(base);
   --primary-600: #207236;
   --primary-700: #19592a;
   --primary-800: #134520;
-  --primary-900: #0f3519;
+  --primary-900: #0f3519; */
+
+  --primary: #4bb032;
+  --primary-DEFAULT: #95d66d;
+  --primary-50: #f4fbf0;
+  --primary-100: #e8f7df;
+  --primary-200: #d4efc4;
+  --primary-300: #b8e49a;
+  --primary-400: #a8dc82;
+  --primary-500: #95d66d;
+  --primary-600: #7bc44e;
+  --primary-700: #5fa836;
+  --primary-800: #0d2b21;
+  --primary-900: #0a2119;
+  --fynix-bg: #f5f6f8;
+  --fynix-sidebar: #f5f6f8;
+  --fynix-content: #f3f4f6;
+  --sidebar-menu-size: 15px;
+  --sidebar-menu-leading: 1.75;
+  --button-radius: var(--radius-sm);
+  --fynix-text: #1a1d1f;
+  --fynix-muted: #6f767e;
+  --font-family: "Poppins", sans-serif;
 
   /* Success Colors */
   --success-50: #e6f8ef;
@@ -363,7 +385,10 @@ layer(base);
   }
 
   body {
-    @apply bg-[#FAFAFA] text-foreground font-sans overflow-x-hidden;
+    @apply bg-[#FAFAFA] text-foreground font-sans;
+    /* `clip` prevents horizontal scroll without creating a scroll container,
+       which would otherwise break `position: sticky` on the header. */
+    overflow-x: clip;
     font-family: var(--font-inter), "Inter", sans-serif;
   }
 }
@@ -380,17 +405,20 @@ layer(base);
 }
 
 /* Existing utility classes for menu items */
+/* Sidebar nav — Fynix-style pill active state */
 @utility menu-item {
-  @apply relative flex items-center w-full gap-3 px-3 py-3 font-normal rounded-lg;
-  font-size: var(--font-size-body-base);
+  @apply relative flex items-center w-full gap-2.5 rounded-[6px] px-3 py-2 font-medium;
+  font-size: var(--sidebar-menu-size);
+  line-height: var(--sidebar-menu-leading);
 }
 
 @utility menu-item-active {
-  @apply bg-primary-50 text-primary-500;
+  @apply rounded-[6px] bg-white font-semibold text-[#1a1d1f] shadow-sm;
+  font-size: var(--sidebar-menu-size);
 }
 
 @utility menu-item-inactive {
-  @apply text-neutral-700 hover:bg-neutral-50 group-hover:text-neutral-700 dark:hover:bg-white/5 dark:hover:text-neutral-300;
+  @apply text-[#6f767e] hover:bg-white/60 hover:text-[#1a1d1f];
 }
 
 @utility menu-item-icon {
@@ -398,17 +426,21 @@ layer(base);
 }
 
 @utility menu-item-icon-active {
-  @apply text-primary-500;
+  @apply text-[#95d66d];
 }
 
 @utility menu-item-icon-size {
   & svg {
-    @apply !size-6;
+    @apply !size-5;
+  }
+
+  & i {
+    font-size: var(--sidebar-menu-size);
   }
 }
 
 @utility menu-item-icon-inactive {
-  @apply text-neutral-500 group-hover:text-neutral-700 dark:group-hover:text-neutral-300;
+  @apply text-[#9a9fa5] group-hover:text-[#6f767e];
 }
 
 @utility menu-item-arrow {
@@ -424,16 +456,18 @@ layer(base);
 }
 
 @utility menu-dropdown-item {
-  @apply relative flex items-center gap-3 rounded-lg px-3 py-2.5 font-normal;
-  font-size: var(--font-size-body-base);
+  @apply relative flex items-center gap-2.5 rounded-[6px] px-3 py-2 font-medium;
+  font-size: var(--sidebar-menu-size);
+  line-height: var(--sidebar-menu-leading);
 }
 
 @utility menu-dropdown-item-active {
-  @apply bg-primary-50 text-primary-500 font-medium;
+  @apply rounded-[6px] bg-white font-semibold text-[#1a1d1f] shadow-sm;
+  font-size: var(--sidebar-menu-size);
 }
 
 @utility menu-dropdown-item-inactive {
-  @apply text-neutral-700 hover:bg-neutral-100 dark:hover:bg-white/5;
+  @apply text-[#6f767e] hover:bg-white/60 hover:text-[#1a1d1f];
 }
 
 @utility menu-dropdown-badge {
@@ -446,17 +480,6 @@ layer(base);
 
 @utility menu-dropdown-badge-inactive {
   @apply bg-primary-50 group-hover:bg-primary-100 dark:group-hover:bg-primary-500/20;
-}
-
-/* ─── Root button styles (use .btn-* or <Button /> everywhere) ─── */
-@utility btn-base {
-  @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
-}
-@utility btn-primary {
-  @apply btn-base bg-primary-600 text-white shadow-md hover:bg-primary-700 hover:-translate-y-0.5 hover:shadow-lg active:bg-primary-800 active:translate-y-0 active:scale-[0.98];
-}
-@utility btn-secondary {
-  @apply btn-base border border-neutral-200 bg-white text-neutral-800 shadow-sm hover:bg-neutral-50 hover:border-neutral-300 hover:shadow active:bg-neutral-100 active:scale-[0.98] dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700/80;
 }
 
 /* Force pointer cursor for all buttons (even disabled) */

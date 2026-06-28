@@ -163,7 +163,7 @@ const Login = () => {
                   type="submit"
                   variant="primary"
                   disabled={isLoading}
-                  className="w-full h-10 text-sm font-semibold"
+                  className="w-full h-10 text-sm font-semibold bg-primary-600 hover:bg-primary-700 text-white"
                 >
                   {isLoading ? "Logging in..." : "Login"}
                 </Button>

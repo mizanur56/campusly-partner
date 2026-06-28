@@ -77,7 +77,7 @@ export default function HotOffers() {
                     setSelectedCountryId(c.countryId);
                     setSelectedIntakeId(undefined);
                   }}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full border transition-all ${
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-[6px] border transition-all ${
                     effectiveCountryId === c.countryId
                       ? "bg-primary-600 border-primary-600 text-white"
                       : "bg-white border-neutral-200 text-gray-700 hover:border-primary-300 hover:bg-primary-50"

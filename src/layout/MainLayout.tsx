@@ -88,34 +88,32 @@ const LayoutContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen lg:flex bg-[#fefefe] dark:bg-neutral-900 overflow-x-hidden">
-      <div>
-        <Sidebar />
-        <Backdrop />
-      </div>
-      <div
-        className={`flex min-h-screen flex-1 flex-col min-w-0 transition-all duration-300 ease-in-out ${
-          isExpanded ? "lg:ml-[280px]" : "lg:ml-[80px]"
-        } ${isMobileOpen ? "ml-0" : ""}`}
-      >
-        <Header />
-        <main className="flex-1 min-h-[calc(100vh-4rem)] pt-[4.5rem] bg-[#fefefe] dark:bg-neutral-900">
-          <div className="p-4 md:p-6 lg:p-8 bg-[#fefefe] dark:bg-neutral-900">
-            <Outlet key={location.key || location.pathname} />
-          </div>
-        </main>
+    <div className="min-h-screen bg-[var(--fynix-bg)] lg:flex">
+    <div>
+      <Sidebar />
+      <Backdrop />
+    </div>
+    <div
+      className={`flex flex-1 flex-col bg-[var(--fynix-bg)] transition-all duration-300 ease-in-out ${
+        isExpanded ? "lg:ml-[260px]" : "lg:ml-[72px]"
+      } ${isMobileOpen ? "ml-0" : ""}`}
+    >
+      <Header />
+      <main className="min-h-[calc(100vh-4.5rem)] bg-[var(--fynix-content)] shadow-[inset_6px_0_20px_-12px_rgba(26,29,31,0.05)]">
+        <div className="px-3 py-4 sm:px-4 sm:py-5 lg:px-4 lg:py-5">
+          <Outlet key={location.pathname} />
+        </div>
+      </main>
 
-        {/* Full-screen wipe: right → left, then left → right */}
-        {wipePhase && (
+       {/* Full-screen wipe: right → left, then left → right */}
+       {wipePhase && (
           <div
             className={`preview-wipe-panel fixed inset-0 z-[100] ${wipePhase === "enter" ? "preview-wipe-enter" : "preview-wipe-exit"}`}
             aria-hidden="true"
           />
         )}
-
-        {/* Preview switch button hidden for now */}
-      </div>
     </div>
+  </div>
   );
 };
 

@@ -12,12 +12,14 @@ import {
   selectCurrentUser,
 } from "../../../redux/features/auth/authSlice";
 import { useGetOnboardingStatusQuery } from "../../../redux/features/onboardingForm";
+import { getApiImageUrl } from "../../../utils/getApiImageUrl";
 import { Dropdown } from "../../ui/dropdown/Dropdown";
 import { DropdownItem } from "../../ui/dropdown/DropdownItem";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const user = useSelector(selectCurrentUser);
+  const avatarUrl = user?.profile?.url ? getApiImageUrl(user.profile.url) : "";
   const { data: onboardingStatus } = useGetOnboardingStatusQuery();
   const isTeamMember = user?.role === "PARTNER_TEAM_MEMBER";
   const hasUnlockedPortal = isPartnerPortalUnlocked(onboardingStatus);
@@ -40,16 +42,12 @@ export default function UserDropdown() {
     <div className="relative">
       <button
         onClick={toggleDropdown}
-        className="relative flex cursor-pointer items-center justify-center bg-primary hover:bg-primary-600 transition-all duration-300 ease-in-out text-white rounded-xl dropdown-toggle w-10 h-10"
+        className="relative flex cursor-pointer items-center justify-center bg-primary hover:bg-primary-600 transition-all duration-300 ease-in-out text-white rounded-[6px] dropdown-toggle w-10 h-10"
         aria-label="User menu"
       >
-        <span className="overflow-hidden rounded-xl h-8 w-8 flex items-center justify-center">
+        <span className="overflow-hidden rounded-[6px] h-10 w-10 flex items-center justify-center">
           <img
-            src={
-              user?.profile_photo
-                ? config.image_access_url + user?.profile_photo
-                : "/images/user/owner.jpg"
-            }
+            src={avatarUrl || "/images/user/owner.jpg"}
             alt={user?.name}
             className="h-full w-full object-cover"
             onError={(e) => {
@@ -81,11 +79,7 @@ export default function UserDropdown() {
         <div className="mb-3 flex items-center gap-3">
           <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-primary-border bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
             <img
-              src={
-                user?.profile_photo
-                  ? config.image_access_url + user.profile_photo
-                  : "/user.png"
-              }
+              src={avatarUrl || "/user.png"}
               alt=""
               className="h-full w-full object-cover"
               onError={(e) => {

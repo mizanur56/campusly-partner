@@ -23,6 +23,11 @@ import { useGetStudentProfileQuery } from "../../../redux/features/profile/stude
 import { NavItem, SubMenuItem } from "../../../types/interfaces";
 import { LogOutIcon } from "lucide-react";
 
+
+const SIDEBAR_WIDTH_EXPANDED = 260;
+const SIDEBAR_WIDTH_COLLAPSED = 72;
+const SIDEBAR_LOGO = `${import.meta.env.BASE_URL}HHjMp (1).png`;
+
 /** Minimal nav while partner is still in onboarding (unsigned / pre-unlock). */
 const SidebarItems: NavItem[] = [
   { icon: <i className="fa-solid fa-house"></i>, name: "Home", path: "/" },
@@ -419,182 +424,339 @@ const Sidebar: React.FC = () => {
     );
   };
 
-  const renderNestedMenuItems = (items: SubMenuItem[], level = 0) => (
-    <ul className={`space-y-1 ${level > 0 ? "ml-4" : ""}`}>
-      {items.map((item, index) => (
-        <li key={`${item.name}-${index}`}>
-          {item.subItems ? (
-            <div>
-              <button
-                className={`menu-dropdown-item w-full text-left text-[0.9375rem] font-medium ${
-                  isAnyNestedItemActive(item.subItems)
-                    ? "menu-dropdown-item-active"
-                    : "menu-dropdown-item-inactive"
-                }`}
-              >
-                {item.name}
-                <ChevronDownIcon className="ml-auto w-4 h-4" />
-              </button>
-              <div className="ml-4 mt-1">
-                {renderNestedMenuItems(item.subItems, level + 1)}
-              </div>
-            </div>
-          ) : (
-            <Link
-              to={item.path || "#"}
-              className={`menu-dropdown-item text-[0.9375rem] font-medium ${
-                item.path && isActive(item.path)
+  const sidebarWidth =
+  isExpanded || isMobileOpen
+    ? SIDEBAR_WIDTH_EXPANDED
+    : SIDEBAR_WIDTH_COLLAPSED;
+
+const renderNestedMenuItems = (items: SubMenuItem[], level: number = 0) => (
+  <ul className={`space-y-1.5 ${level > 0 ? "ml-3" : ""}`}>
+    {items.map((item, index) => (
+      <li key={`${item.name}-${index}`}>
+        {item.subItems ? (
+          <div>
+            <button
+              className={`menu-dropdown-item w-full text-left ${
+                isAnyNestedItemActive(item.subItems)
                   ? "menu-dropdown-item-active"
                   : "menu-dropdown-item-inactive"
               }`}
             >
               {item.name}
-              {item.new && (
-                <span className="ml-auto menu-dropdown-badge">new</span>
+              <ChevronDownIcon className="ml-auto w-4 h-4" />
+            </button>
+            <div className="ml-3 mt-1">
+              {renderNestedMenuItems(item.subItems, level + 1)}
+            </div>
+          </div>
+        ) : (
+          <Link
+            to={item.path || "#"}
+            className={`menu-dropdown-item ${
+              item.path && isActive(item.path)
+                ? "menu-dropdown-item-active"
+                : "menu-dropdown-item-inactive"
+            }`}
+          >
+            {item.name}
+            {item.new && (
+              <span className="ml-auto menu-dropdown-badge">new</span>
+            )}
+          </Link>
+        )}
+      </li>
+    ))}
+  </ul>
+);
+
+const menuItemRefs = useRef<Record<string, HTMLLIElement | null>>({});
+
+const renderMenuItems = (items: NavItem[], menuType: "main" | "others") => (
+  <ul className="relative flex flex-col gap-1.5">
+    {items.map((nav, index) => {
+      if (nav.action === "logout") return null;
+
+      const isSubmenuOpen =
+        openSubmenu?.type === menuType && openSubmenu?.index === index;
+      const isParentActive =
+        nav.path && isActive(nav.path)
+          ? true
+          : nav.subItems
+            ? isAnyNestedItemActive(nav.subItems)
+            : false;
+
+      return (
+        <li
+          key={nav.name}
+          className="relative"
+          ref={(el) => {
+            menuItemRefs.current[`${menuType}-${index}`] = el;
+          }}
+        >
+          {nav.subItems ? (
+            <button
+              onClick={() => handleSubmenuToggle(index, menuType)}
+              className={`menu-item group cursor-pointer ${
+                isSubmenuOpen || isParentActive
+                  ? "menu-item-active"
+                  : "menu-item-inactive"
+              }`}
+            >
+              <span
+                className={`menu-item-icon-size ${
+                  isSubmenuOpen || isParentActive
+                    ? "menu-item-icon-active"
+                    : "menu-item-icon-inactive"
+                }`}
+              >
+                {nav.icon}
+              </span>
+              {(isExpanded || isMobileOpen) &&
+                (nav.name.length > 15 ? (
+                  <Tooltip title={nav.name} placement="right">
+                    <span className="text-left truncate max-w-[150px]">
+                      {nav.name.substring(0, 15) + "..."}
+                    </span>
+                  </Tooltip>
+                ) : (
+                  <span className="text-left">{nav.name}</span>
+                ))}
+              {nav.subItems && (
+                <ChevronDownIcon
+                  className={`ml-auto w-4 h-4 transition-transform duration-200 ${
+                    isSubmenuOpen
+                      ? "rotate-180 text-[#95d66d]"
+                      : "text-[#9a9fa5]"
+                  }`}
+                />
+              )}
+            </button>
+          ) : nav.path ? (
+            <Link
+              to={nav.path}
+              className={`menu-item group ${
+                isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
+              }`}
+            >
+              <span
+                className={`menu-item-icon-size ${
+                  isActive(nav.path)
+                    ? "menu-item-icon-active"
+                    : "menu-item-icon-inactive"
+                }`}
+              >
+                {!isExpanded ? (
+                  <Tooltip title={nav.name} placement="right">
+                    <span>{nav.icon}</span>
+                  </Tooltip>
+                ) : (
+                  nav.icon
+                )}
+              </span>
+              {(isExpanded || isMobileOpen) && (
+                <span className="text-left">{nav.name}</span>
               )}
             </Link>
+          ) : null}
+
+          {nav.subItems && (
+            <div
+              ref={(el) => {
+                subMenuRefs.current[`${menuType}-${index}`] = el;
+              }}
+              className="ml-9 mt-1 overflow-hidden transition-all duration-300"
+              style={{
+                height: isSubmenuOpen
+                  ? `${subMenuHeight[`${menuType}-${index}`]}px`
+                  : "0px",
+              }}
+            >
+              {renderNestedMenuItems(nav.subItems)}
+            </div>
           )}
         </li>
-      ))}
-    </ul>
-  );
+      );
+    })}
+  </ul>
+);
 
-  const menuItemRefs = useRef<Record<string, HTMLLIElement | null>>({});
-  const renderMenuItems = (items: NavItem[], menuType: "main" | "others") => (
-    <ul className="flex flex-col gap-1 relative">
-      {items.map((nav, index) => {
-        if (nav.action === "logout") return null;
-        return (
-          <li
-            key={nav.name}
-            className="relative overflow-y-auto"
-            ref={(el) => {
-              menuItemRefs.current[`${menuType}-${index}`] = el;
-            }}
-          >
-            {nav.subItems ? (
-              <button
-                onClick={() => handleSubmenuToggle(index, menuType)}
-                className={`menu-item group cursor-pointer ${
-                  openSubmenu?.type === menuType && openSubmenu?.index === index
-                    ? "menu-item-active"
-                    : "menu-item-inactive"
-                }`}
-              >
-                <span className="menu-item-icon-size menu-item-icon-inactive">
-                  <span
-                    className={`menu-item-icon-size ${
-                      openSubmenu?.type === menuType &&
-                      openSubmenu?.index === index
-                        ? "text-primary-500"
-                        : "menu-item-icon-inactive"
-                    }`}
-                  >
-                    {nav.icon}
-                  </span>
-                </span>
-                {(isExpanded || isMobileOpen) &&
-                  (nav.name.length > 15 ? (
-                    <Tooltip title={nav.name} placement="right">
-                      <span
-                        className={`text-left truncate max-w-[150px] ${isSignedSidebar ? "text-sm font-medium" : "text-base font-semibold"}`}
-                      >
-                        {nav.name.substring(0, 15) + "..."}
-                      </span>
-                    </Tooltip>
-                  ) : (
-                    <span
-                      className={`text-left ${isSignedSidebar ? "text-sm font-medium" : "text-base font-medium"}`}
-                    >
-                      {nav.name}
-                    </span>
-                  ))}
-                {nav.subItems && (
-                  <ChevronDownIcon
-                    className={`ml-auto w-5 h-5 transition-transform duration-200 ${
-                      openSubmenu?.type === menuType &&
-                      openSubmenu?.index === index
-                        ? "rotate-180 text-primary-500"
-                        : ""
-                    }`}
-                  />
-                )}
-              </button>
-            ) : nav.path ? (
-              <Link
-                to={nav.path}
-                className={`menu-item group ${
-                  isActive(nav.path)
-                    ? "menu-item-active pl-5 transition-all duration-300"
-                    : "menu-item-inactive"
-                }`}
-              >
-                <span
-                  className={`menu-item-icon-size ${
-                    isActive(nav.path)
-                      ? "menu-item-icon-active"
-                      : "menu-item-icon-inactive"
-                  }`}
-                >
-                  <span
-                    className={`menu-item-icon-size ${
-                      isActive(nav.path)
-                        ? "menu-item-icon-active"
-                        : "menu-item-icon-inactive"
-                    }`}
-                  >
-                    {!isExpanded ? (
-                      <Tooltip title={nav.name} placement="right">
-                        <span>{nav.icon}</span>
-                      </Tooltip>
-                    ) : (
-                      nav.icon
-                    )}
-                  </span>
-                </span>
-                {(isExpanded || isMobileOpen) && (
-                  <span
-                    className={`flex min-w-0 flex-1 items-center gap-2 text-left ${isSignedSidebar ? "text-sm font-medium" : "text-base font-semibold"}`}
-                  >
-                    <span className="truncate">{nav.name}</span>
-                    {nav.badgeCount && nav.badgeCount > 0 ? (
-                      <span className="ml-auto inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary-600 px-1 text-[10px] font-semibold text-white">
-                        {nav.badgeCount > 99 ? "99+" : nav.badgeCount}
-                      </span>
-                    ) : null}
-                  </span>
-                )}
-              </Link>
-            ) : null}
-            {nav.subItems && (
-              <div
-                ref={(el) => {
-                  subMenuRefs.current[`${menuType}-${index}`] = el;
-                }}
-                className="overflow-hidden transition-all duration-300 ml-9 mt-1"
-                style={{
-                  height:
-                    openSubmenu?.type === menuType &&
-                    openSubmenu?.index === index
-                      ? `${subMenuHeight[`${menuType}-${index}`]}px`
-                      : "0px",
-                }}
-              >
-                {renderNestedMenuItems(nav.subItems)}
-              </div>
-            )}
-          </li>
-        );
-      })}
-    </ul>
-  );
+
+  // const renderNestedMenuItems = (items: SubMenuItem[], level = 0) => (
+  //   <ul className={`space-y-1 ${level > 0 ? "ml-4" : ""}`}>
+  //     {items.map((item, index) => (
+  //       <li key={`${item.name}-${index}`}>
+  //         {item.subItems ? (
+  //           <div>
+  //             <button
+  //               className={`menu-dropdown-item w-full text-left text-[0.9375rem] font-medium ${
+  //                 isAnyNestedItemActive(item.subItems)
+  //                   ? "menu-dropdown-item-active"
+  //                   : "menu-dropdown-item-inactive"
+  //               }`}
+  //             >
+  //               {item.name}
+  //               <ChevronDownIcon className="ml-auto w-4 h-4" />
+  //             </button>
+  //             <div className="ml-4 mt-1">
+  //               {renderNestedMenuItems(item.subItems, level + 1)}
+  //             </div>
+  //           </div>
+  //         ) : (
+  //           <Link
+  //             to={item.path || "#"}
+  //             className={`menu-dropdown-item text-[0.9375rem] font-medium ${
+  //               item.path && isActive(item.path)
+  //                 ? "menu-dropdown-item-active"
+  //                 : "menu-dropdown-item-inactive"
+  //             }`}
+  //           >
+  //             {item.name}
+  //             {item.new && (
+  //               <span className="ml-auto menu-dropdown-badge">new</span>
+  //             )}
+  //           </Link>
+  //         )}
+  //       </li>
+  //     ))}
+  //   </ul>
+  // );
+
+  // const menuItemRefs = useRef<Record<string, HTMLLIElement | null>>({});
+  // const renderMenuItems = (items: NavItem[], menuType: "main" | "others") => (
+  //   <ul className="flex flex-col gap-1 relative">
+  //     {items.map((nav, index) => {
+  //       if (nav.action === "logout") return null;
+  //       return (
+  //         <li
+  //           key={nav.name}
+  //           className="relative overflow-y-auto"
+  //           ref={(el) => {
+  //             menuItemRefs.current[`${menuType}-${index}`] = el;
+  //           }}
+  //         >
+  //           {nav.subItems ? (
+  //             <button
+  //               onClick={() => handleSubmenuToggle(index, menuType)}
+  //               className={`menu-item group cursor-pointer ${
+  //                 openSubmenu?.type === menuType && openSubmenu?.index === index
+  //                   ? "menu-item-active"
+  //                   : "menu-item-inactive"
+  //               }`}
+  //             >
+  //               <span className="menu-item-icon-size menu-item-icon-inactive">
+  //                 <span
+  //                   className={`menu-item-icon-size ${
+  //                     openSubmenu?.type === menuType &&
+  //                     openSubmenu?.index === index
+  //                       ? "text-primary-500"
+  //                       : "menu-item-icon-inactive"
+  //                   }`}
+  //                 >
+  //                   {nav.icon}
+  //                 </span>
+  //               </span>
+  //               {(isExpanded || isMobileOpen) &&
+  //                 (nav.name.length > 15 ? (
+  //                   <Tooltip title={nav.name} placement="right">
+  //                     <span
+  //                       className={`text-left truncate max-w-[150px] ${isSignedSidebar ? "text-sm font-medium" : "text-base font-semibold"}`}
+  //                     >
+  //                       {nav.name.substring(0, 15) + "..."}
+  //                     </span>
+  //                   </Tooltip>
+  //                 ) : (
+  //                   <span
+  //                     className={`text-left ${isSignedSidebar ? "text-sm font-medium" : "text-base font-medium"}`}
+  //                   >
+  //                     {nav.name}
+  //                   </span>
+  //                 ))}
+  //               {nav.subItems && (
+  //                 <ChevronDownIcon
+  //                   className={`ml-auto w-5 h-5 transition-transform duration-200 ${
+  //                     openSubmenu?.type === menuType &&
+  //                     openSubmenu?.index === index
+  //                       ? "rotate-180 text-primary-500"
+  //                       : ""
+  //                   }`}
+  //                 />
+  //               )}
+  //             </button>
+  //           ) : nav.path ? (
+  //             <Link
+  //               to={nav.path}
+  //               className={`menu-item group ${
+  //                 isActive(nav.path)
+  //                   ? "menu-item-active pl-5 transition-all duration-300"
+  //                   : "menu-item-inactive"
+  //               }`}
+  //             >
+  //               <span
+  //                 className={`menu-item-icon-size ${
+  //                   isActive(nav.path)
+  //                     ? "menu-item-icon-active"
+  //                     : "menu-item-icon-inactive"
+  //                 }`}
+  //               >
+  //                 <span
+  //                   className={`menu-item-icon-size ${
+  //                     isActive(nav.path)
+  //                       ? "menu-item-icon-active"
+  //                       : "menu-item-icon-inactive"
+  //                   }`}
+  //                 >
+  //                   {!isExpanded ? (
+  //                     <Tooltip title={nav.name} placement="right">
+  //                       <span>{nav.icon}</span>
+  //                     </Tooltip>
+  //                   ) : (
+  //                     nav.icon
+  //                   )}
+  //                 </span>
+  //               </span>
+  //               {(isExpanded || isMobileOpen) && (
+  //                 <span
+  //                   className={`flex min-w-0 flex-1 items-center gap-2 text-left ${isSignedSidebar ? "text-sm font-medium" : "text-base font-semibold"}`}
+  //                 >
+  //                   <span className="truncate">{nav.name}</span>
+  //                   {nav.badgeCount && nav.badgeCount > 0 ? (
+  //                     <span className="ml-auto inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary-600 px-1 text-[10px] font-semibold text-white">
+  //                       {nav.badgeCount > 99 ? "99+" : nav.badgeCount}
+  //                     </span>
+  //                   ) : null}
+  //                 </span>
+  //               )}
+  //             </Link>
+  //           ) : null}
+  //           {nav.subItems && (
+  //             <div
+  //               ref={(el) => {
+  //                 subMenuRefs.current[`${menuType}-${index}`] = el;
+  //               }}
+  //               className="overflow-hidden transition-all duration-300 ml-9 mt-1"
+  //               style={{
+  //                 height:
+  //                   openSubmenu?.type === menuType &&
+  //                   openSubmenu?.index === index
+  //                     ? `${subMenuHeight[`${menuType}-${index}`]}px`
+  //                     : "0px",
+  //               }}
+  //             >
+  //               {renderNestedMenuItems(nav.subItems)}
+  //             </div>
+  //           )}
+  //         </li>
+  //       );
+  //     })}
+  //   </ul>
+  // );
 
   return (
     <aside
-      className={`fixed top-0 left-0 z-50 mt-16 flex h-[calc(100vh-4rem)] lg:h-screen flex-col transition-all duration-300 ease-in-out lg:mt-0
-        border-r-[1px] border-primary-border bg-[#FFFFFF] dark:border-[#353646] dark:bg-[#20242A]
-        w-[280px] ${isExpanded ? "lg:w-[280px]" : "lg:w-[80px]"}
-        ${isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
+    className={`fixed top-0 left-0 z-50 flex h-screen flex-col bg-[var(--fynix-bg)] shadow-[4px_0_20px_-8px_rgba(26,29,31,0.06)] transition-all duration-300 ease-in-out
+      ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
+      lg:translate-x-0`}
+    style={{ width: sidebarWidth }}
     >
       {/* Logo / Back+Actions header */}
       {(isExpanded || isMobileOpen) && showStudentSidebar && studentId ? (
@@ -629,12 +791,12 @@ const Sidebar: React.FC = () => {
         >
           <Link to="/" className="flex items-center gap-3">
             <img
-              src="/images/logo/Frame1044.svg"
+              src={SIDEBAR_LOGO}
               alt="Campus Transfer"
               className={
                 isExpanded || isMobileOpen
-                  ? "h-20 w-auto max-w-[300px]"
-                  : "h-14 w-14 object-contain"
+                  ? `h-20 w-auto max-w-[${SIDEBAR_WIDTH_EXPANDED}px]`
+                  : `h-14 w-14 object-contain max-w-[${SIDEBAR_WIDTH_COLLAPSED}px]`
               }
             />
           </Link>
@@ -1066,7 +1228,7 @@ const Sidebar: React.FC = () => {
         <button
           type="button"
           onClick={handleLogout}
-          className={`relative flex items-center w-full gap-2 lg:gap-3 px-3 py-2 rounded-md bg-primary text-white hover:bg-primary/90 transition-colors group ${
+          className={`relative flex items-center w-full gap-2 lg:gap-3 px-3 py-2 rounded-[6px] bg-primary text-white hover:bg-primary/90 transition-colors group ${
             !isExpanded && !isMobileOpen ? "justify-center" : ""
           }`}
         >

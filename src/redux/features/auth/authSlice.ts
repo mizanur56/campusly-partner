@@ -7,6 +7,10 @@ export interface IUser {
   name: string;
   role: string;
   profile_photo?: string;
+  profile?: {
+    id?: string;
+    url?: string;
+  } | null;
   last_login: Date;
   is_active: boolean;
   designationId?: string;

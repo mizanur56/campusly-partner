@@ -1,12 +1,21 @@
 import { InboxOutlined } from "@ant-design/icons";
 import { Button, Input, Modal, Tag, Upload } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { Search } from "lucide-react";
+import {
+  ArrowDownToLine,
+  Banknote,
+  CheckCircle2,
+  Clock,
+  Coins,
+  CreditCard,
+  FileText,
+  Receipt,
+  Search,
+  Wallet,
+} from "lucide-react";
 import React, { useMemo, useState } from "react";
-import PageCard from "../../components/common/Card/PageCard";
 import PageMeta from "../../components/common/Meta/PageMeta";
 import { DataTable } from "../../components/common/Tables";
-import "../../components/common/Tables/AntTable.css";
 import { config } from "../../config";
 import {
   useGetActiveBankAccountQuery,
@@ -18,12 +27,25 @@ import {
   useGetPurchaseTransactionsQuery,
   usePaySelectedApplicationsMutation,
 } from "../../redux/features/payments/partnerPaymentsApi";
+import EarningsChart from "./components/EarningsChart";
+import PaymentStatCard from "./components/PaymentStatCard";
+import PaymentsEmptyState from "./components/PaymentsEmptyState";
 import "./Payments.css";
 
 const { Dragger } = Upload;
 
+type SectionKey = "purchases" | "commission";
 type PurchaseTabKey = "applications" | "history";
 type CommissionTabKey = "unpaid" | "history";
+
+const CURRENCY = "€";
+const ACCENT_GREEN = "#4bb032";
+
+const formatMoney = (value: unknown) =>
+  `${CURRENCY}${Number(value ?? 0).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 
 interface PurchaseApplicationRecord {
   key: string;
@@ -76,6 +98,7 @@ export default function Payments() {
     return `${base}${raw}`;
   };
 
+  const [section, setSection] = useState<SectionKey>("purchases");
   const [purchaseTab, setPurchaseTab] =
     useState<PurchaseTabKey>("applications");
   const [commissionTab, setCommissionTab] =
@@ -83,12 +106,10 @@ export default function Payments() {
   const [searchText, setSearchText] = useState("");
   const [isBankModalOpen, setIsBankModalOpen] = useState(false);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
-  const [selectedPurchaseKeys, setSelectedPurchaseKeys] = useState<React.Key[]>(
-    [],
-  );
   const [selectedPurchaseRecords, setSelectedPurchaseRecords] = useState<
     PurchaseApplicationRecord[]
   >([]);
+  const [clearSelection, setClearSelection] = useState(0);
 
   const [purchasePage, setPurchasePage] = useState(1);
   const [purchasePageSize, setPurchasePageSize] = useState(10);
@@ -132,9 +153,6 @@ export default function Payments() {
 
   const [paySelectedApplications, { isLoading: isPaying }] =
     usePaySelectedApplicationsMutation();
-  const handleResetSearchOnTabChange = () => {
-    setSearchText("");
-  };
 
   const purchaseApplications: PurchaseApplicationRecord[] = useMemo(() => {
     const items = purchaseApplicationsData?.data || [];
@@ -167,37 +185,6 @@ export default function Payments() {
 
   const purchaseTransactions: PurchaseTransactionRecord[] = useMemo(() => {
     const items = purchaseTransactionsData?.data || [];
-    if (!isPurchaseTxLoading && items.length === 0) {
-      return [
-        {
-          key: "static-ptx-1",
-          transactionId: "TXN-PUR-12001",
-          date: "2026-04-18",
-          applicationId: "APP-10234",
-          amount: 420,
-          status: "Completed",
-          raw: null,
-        },
-        {
-          key: "static-ptx-2",
-          transactionId: "TXN-PUR-12009",
-          date: "2026-04-20",
-          applicationId: "APP-10210",
-          amount: 300,
-          status: "Pending",
-          raw: null,
-        },
-        {
-          key: "static-ptx-3",
-          transactionId: "TXN-PUR-12015",
-          date: "2026-04-21",
-          applicationId: "APP-10198",
-          amount: 250,
-          status: "Completed",
-          raw: null,
-        },
-      ];
-    }
     return items.map((txn: any, index: number) => {
       const firstApp = txn.appFees?.[0]?.application;
       return {
@@ -214,7 +201,7 @@ export default function Payments() {
         raw: txn,
       };
     });
-  }, [purchaseTransactionsData, isPurchaseTxLoading]);
+  }, [purchaseTransactionsData]);
 
   const commissionEarned: CommissionEarnedRecord[] = useMemo(() => {
     const items = commissionEarnedData?.data || [];
@@ -268,12 +255,40 @@ export default function Payments() {
     [selectedPurchaseRecords],
   );
 
-  const handlePurchaseRowSelectionChange = (
-    newSelectedRowKeys: React.Key[],
-    selectedRows: PurchaseApplicationRecord[],
-  ) => {
-    setSelectedPurchaseKeys(newSelectedRowKeys);
-    setSelectedPurchaseRecords(selectedRows);
+  /* ---- Stats (defensive reads — preserve existing data shapes) ---- */
+  const pStats = purchaseStats || {};
+  const purchasePayable = Number(
+    pStats.payable ?? pStats.unpaid ?? pStats.totalPayable ?? 0,
+  );
+  const purchasePaid = Number(pStats.paid ?? pStats.totalPaid ?? 0);
+  const purchaseAppCount = Number(
+    purchaseApplicationsData?.meta?.total ?? purchaseApplications.length ?? 0,
+  );
+
+  const cStats = commissionStats || {};
+  const commissionUnpaid = Number(cStats.unpaid ?? 0);
+  const commissionPaid = Number(cStats.paid ?? 0);
+  const commissionUnpaidCount = Number(cStats?.counts?.unpaid ?? 0);
+  const commissionPaidCount = Number(cStats?.counts?.paid ?? 0);
+  const commissionTotal = commissionUnpaid + commissionPaid;
+
+  const handleSectionChange = (next: SectionKey) => {
+    setSection(next);
+    setSearchText("");
+  };
+
+  const handlePurchaseTabChange = (next: PurchaseTabKey) => {
+    setPurchaseTab(next);
+    setSearchText("");
+    if (next === "applications") setPurchasePage(1);
+    else setPurchaseHistoryPage(1);
+  };
+
+  const handleCommissionTabChange = (next: CommissionTabKey) => {
+    setCommissionTab(next);
+    setSearchText("");
+    if (next === "unpaid") setCommissionPage(1);
+    else setCommissionHistoryPage(1);
   };
 
   const handleConfirmBankPayment = async () => {
@@ -289,12 +304,22 @@ export default function Payments() {
       }).unwrap();
       setIsBankModalOpen(false);
       setReceiptFile(null);
-      setSelectedPurchaseKeys([]);
       setSelectedPurchaseRecords([]);
+      setClearSelection((n) => n + 1);
     } catch {
       // errors are handled globally by baseApi
     }
   };
+
+  /* ---------------------------- Columns ---------------------------- */
+  const statusTag = (
+    text: string,
+    tone: "success" | "warning" | "default",
+  ) => (
+    <Tag className="payments-status-tag" color={tone}>
+      {text}
+    </Tag>
+  );
 
   const purchaseApplicationsColumns: ColumnsType<PurchaseApplicationRecord> = [
     {
@@ -302,53 +327,53 @@ export default function Payments() {
       dataIndex: "applicationId",
       key: "applicationId",
       width: 140,
+      render: (value: string) => (
+        <span className="font-medium text-neutral-800 dark:text-neutral-100">
+          {value || "—"}
+        </span>
+      ),
     },
-    {
-      title: "Student Name",
-      dataIndex: "studentName",
-      key: "studentName",
-      width: 140,
-    },
+    { title: "Student Name", dataIndex: "studentName", key: "studentName", width: 160 },
     {
       title: "Fee",
       dataIndex: "fee",
       key: "fee",
       width: 100,
-      render: (value: number) => `€${value}`,
+      render: (value: number) => `${CURRENCY}${value}`,
     },
     {
       title: "Waiver",
       dataIndex: "waiverPercent",
       key: "waiverPercent",
-      width: 110,
+      width: 100,
       render: (value: number) => `${value}%`,
     },
     {
       title: "Payable",
       dataIndex: "payable",
       key: "payable",
-      width: 100,
-      render: (value: number) => `€${value}`,
+      width: 110,
+      render: (value: number) => (
+        <span className="font-semibold text-neutral-900 dark:text-white">
+          {CURRENCY}
+          {value}
+        </span>
+      ),
     },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      width: 100,
-      render: (status: PurchaseApplicationRecord["status"]) => (
-        <Tag
-          className="payments-status-tag"
-          color={
-            status === "Paid"
-              ? "success"
-              : status === "Under Review"
-                ? "warning"
-                : "default"
-          }
-        >
-          {status}
-        </Tag>
-      ),
+      width: 120,
+      render: (status: PurchaseApplicationRecord["status"]) =>
+        statusTag(
+          status,
+          status === "Paid"
+            ? "success"
+            : status === "Under Review"
+              ? "warning"
+              : "default",
+        ),
     },
   ];
 
@@ -358,8 +383,13 @@ export default function Payments() {
       dataIndex: "transactionId",
       key: "transactionId",
       ellipsis: true,
+      render: (value: string) => (
+        <span className="font-medium text-neutral-800 dark:text-neutral-100">
+          {value || "—"}
+        </span>
+      ),
     },
-    { title: "Date", dataIndex: "date", key: "date" },
+    { title: "Date", dataIndex: "date", key: "date", width: 130 },
     {
       title: "Application ID",
       dataIndex: "applicationId",
@@ -370,34 +400,38 @@ export default function Payments() {
       title: "Amount",
       dataIndex: "amount",
       key: "amount",
-      render: (value: number) => `€${value}`,
+      width: 120,
+      render: (value: number) => (
+        <span className="font-semibold text-neutral-900 dark:text-white">
+          {CURRENCY}
+          {value}
+        </span>
+      ),
     },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      render: (status: PurchaseTransactionRecord["status"]) => (
-        <Tag
-          className="payments-status-tag"
-          color={status === "Completed" ? "success" : "default"}
-        >
-          {status}
-        </Tag>
-      ),
+      width: 120,
+      render: (status: PurchaseTransactionRecord["status"]) =>
+        statusTag(status, status === "Completed" ? "success" : "default"),
     },
     {
       title: "Receipt",
       key: "receipt",
+      width: 110,
       render: (_: unknown, record) => {
         const fileUrl = resolveMediaUrl(record.raw?.receiptUrl);
-        if (!fileUrl) return <span className="text-xs text-gray-400">-</span>;
+        if (!fileUrl)
+          return <span className="text-xs text-neutral-400">—</span>;
         return (
           <a
             href={fileUrl}
             target="_blank"
             rel="noreferrer"
-            className="payments-link-button"
+            className="payments-link"
           >
+            <ArrowDownToLine className="h-3.5 w-3.5" />
             Download
           </a>
         );
@@ -411,41 +445,40 @@ export default function Payments() {
       dataIndex: "applicationId",
       key: "applicationId",
       width: 140,
+      render: (value: string) => (
+        <span className="font-medium text-neutral-800 dark:text-neutral-100">
+          {value || "—"}
+        </span>
+      ),
     },
-    {
-      title: "Student Name",
-      dataIndex: "studentName",
-      key: "studentName",
-      width: 180,
-    },
+    { title: "Student Name", dataIndex: "studentName", key: "studentName", width: 180 },
     {
       title: "Earned",
       dataIndex: "earned",
       key: "earned",
       width: 120,
-      render: (value: number) => `€${value}`,
+      render: (value: number) => (
+        <span className="font-semibold text-primary-700 dark:text-primary-300">
+          {CURRENCY}
+          {value}
+        </span>
+      ),
     },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
       width: 130,
-      render: (status: CommissionEarnedRecord["status"]) => (
-        <Tag
-          className="payments-status-tag"
-          color={
-            status === "Paid"
-              ? "success"
-              : status === "Pending"
-                ? "warning"
-                : "default"
-          }
-        >
-          {status}
-        </Tag>
-      ),
+      render: (status: CommissionEarnedRecord["status"]) =>
+        statusTag(
+          status,
+          status === "Paid"
+            ? "success"
+            : status === "Pending"
+              ? "warning"
+              : "default",
+        ),
     },
-    // Action column intentionally removed per updated requirements.
   ];
 
   const commissionTransactionsColumns: ColumnsType<CommissionTransactionRecord> =
@@ -454,9 +487,14 @@ export default function Payments() {
         title: "Transaction ID",
         dataIndex: "transactionId",
         key: "transactionId",
-        width: 140,
+        width: 150,
+        render: (value: string) => (
+          <span className="font-medium text-neutral-800 dark:text-neutral-100">
+            {value || "—"}
+          </span>
+        ),
       },
-      { title: "Date", dataIndex: "date", key: "date", width: 140 },
+      { title: "Date", dataIndex: "date", key: "date", width: 130 },
       {
         title: "Application ID",
         dataIndex: "applicationId",
@@ -468,35 +506,37 @@ export default function Payments() {
         dataIndex: "amount",
         key: "amount",
         width: 120,
-        render: (value: number) => `€${value}`,
+        render: (value: number) => (
+          <span className="font-semibold text-neutral-900 dark:text-white">
+            {CURRENCY}
+            {value}
+          </span>
+        ),
       },
       {
         title: "Status",
         dataIndex: "status",
         key: "status",
-        width: 130,
-        render: (status: CommissionTransactionRecord["status"]) => (
-          <Tag
-            className="payments-status-tag"
-            color={status === "Completed" ? "success" : "default"}
-          >
-            {status}
-          </Tag>
-        ),
+        width: 120,
+        render: (status: CommissionTransactionRecord["status"]) =>
+          statusTag(status, status === "Completed" ? "success" : "default"),
       },
       {
         title: "Receipt",
         key: "receipt",
+        width: 110,
         render: (_: unknown, record) => {
           const fileUrl = resolveMediaUrl(record.raw?.receiptUrl);
-          if (!fileUrl) return <span className="text-xs text-gray-400">-</span>;
+          if (!fileUrl)
+            return <span className="text-xs text-neutral-400">—</span>;
           return (
             <a
               href={fileUrl}
               target="_blank"
               rel="noreferrer"
-              className="payments-link-button"
+              className="payments-link"
             >
+              <ArrowDownToLine className="h-3.5 w-3.5" />
               Download
             </a>
           );
@@ -504,235 +544,411 @@ export default function Payments() {
       },
     ];
 
-  const renderPurchaseApplicationsToolbar = () => (
-    <div className="payments-toolbar">
-      <Input
-        placeholder="Search application ID, name"
-        prefix={<Search size={16} className="text-[#4B5563]" />}
-        allowClear
-        value={searchText}
-        onChange={(e) => {
-          setSearchText(e.target.value);
-          setPurchasePage(1);
-        }}
-        className="payments-search"
-        size="large"
-      />
-      <div className="payments-toolbar-actions">
-        <Button
-          type="primary"
-          disabled={
-            selectedPurchaseRecords.length === 0 || selectedTotalPayable <= 0
-          }
-          onClick={() => setIsBankModalOpen(true)}
+  /* ---------------------------- Sub-tabs ---------------------------- */
+  const renderSubTab = (
+    label: string,
+    active: boolean,
+    onClick: () => void,
+    count?: number,
+  ) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`payments-subtab ${active ? "payments-subtab--active" : ""}`}
+    >
+      {label}
+      {count != null ? (
+        <span
+          className={`ml-2 rounded-full px-2 py-0.5 text-[0.7rem] font-semibold ${
+            active
+              ? "bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300"
+              : "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400"
+          }`}
         >
-          {selectedTotalPayable > 0
-            ? `Pay Selected (€${selectedTotalPayable.toFixed(2)})`
-            : "Pay Selected"}
-        </Button>
-        <Button type="primary" disabled>
-          Download Invoice
-        </Button>
-      </div>
-    </div>
+          {count}
+        </span>
+      ) : null}
+    </button>
   );
 
-  const renderSimpleToolbar = (placeholder: string) => (
-    <div className="payments-toolbar">
-      <Input
-        placeholder={placeholder}
-        prefix={<Search size={16} className="text-[#4B5563]" />}
-        allowClear
-        value={searchText}
-        onChange={(e) => setSearchText(e.target.value)}
-        className="payments-search"
-        size="large"
-      />
-    </div>
+  /* --------------------------- Search bar -------------------------- */
+  const renderSearch = (placeholder: string, onChange?: () => void) => (
+    <Input
+      placeholder={placeholder}
+      prefix={<Search size={16} className="text-neutral-400" />}
+      allowClear
+      value={searchText}
+      onChange={(e) => {
+        setSearchText(e.target.value);
+        onChange?.();
+      }}
+      className="payments-search"
+      size="large"
+    />
   );
 
-  const renderTopCards = () => {
-    const stats = commissionStats || {};
-
-    if (commissionTab === "unpaid") {
-      return (
-        <div className="payments-kpi-grid payments-kpi-grid--1">
-          <div className="payments-kpi-card">
-            <div className="payments-kpi-row">
-              <img
-                src="/hourglass.png"
-                alt="Unpaid Commission"
-                className="h-7 w-7 object-contain"
-              />
-              <div>
-                <p className="payments-kpi-label">Unpaid</p>
-                <p className="payments-kpi-value">
-                  €{(stats.unpaid ?? 0).toFixed?.(2) ?? "0.00"}
-                </p>
-                <p className="payments-kpi-subtext">
-                  {stats?.counts?.unpaid ?? 0} applications
-                </p>
+  /* ----------------------------- Tables ---------------------------- */
+  const renderTable = () => {
+    if (section === "purchases") {
+      if (purchaseTab === "applications") {
+        const isEmpty = !isPurchaseAppsLoading && purchaseApplications.length === 0;
+        return (
+          <>
+            <div className="payments-toolbar">
+              {renderSearch("Search application ID, name", () =>
+                setPurchasePage(1),
+              )}
+              <div className="payments-toolbar-actions">
+                <Button
+                  type="primary"
+                  disabled={
+                    selectedPurchaseRecords.length === 0 ||
+                    selectedTotalPayable <= 0
+                  }
+                  onClick={() => setIsBankModalOpen(true)}
+                >
+                  {selectedTotalPayable > 0
+                    ? `Pay Selected (${formatMoney(selectedTotalPayable)})`
+                    : "Pay Selected"}
+                </Button>
+                <Button icon={<FileText className="h-4 w-4" />} disabled>
+                  Download Invoice
+                </Button>
               </div>
             </div>
+            {isEmpty ? (
+              <PaymentsEmptyState
+                icon={<Wallet className="h-7 w-7" />}
+                title="No applications to pay"
+                description="Applications with outstanding fees will appear here, ready for you to settle."
+              />
+            ) : (
+              <DataTable
+                data={purchaseApplications}
+                columns={purchaseApplicationsColumns}
+                rowKey="key"
+                loading={isPurchaseAppsLoading}
+                selectRow
+                onSelectRowsChange={(rows: PurchaseApplicationRecord[]) =>
+                  setSelectedPurchaseRecords(rows)
+                }
+                clearSelectionTrigger={clearSelection}
+                currentPage={purchasePage}
+                setCurrentPage={setPurchasePage}
+                limit={purchasePageSize}
+                setLimit={setPurchasePageSize}
+                total={purchaseApplicationsData?.meta?.total ?? 0}
+                isPaginate
+                showHeader
+                showSizeChanger
+                noInnerBorder
+                pagination={{
+                  showTotal: (total: number) => `Total ${total} applications`,
+                }}
+              />
+            )}
+          </>
+        );
+      }
+
+      // purchases / history
+      const isEmpty = !isPurchaseTxLoading && purchaseTransactions.length === 0;
+      return (
+        <>
+          <div className="payments-toolbar">
+            {renderSearch("Search application ID, transaction ID", () =>
+              setPurchaseHistoryPage(1),
+            )}
           </div>
-        </div>
+          {isEmpty ? (
+            <PaymentsEmptyState
+              icon={<Receipt className="h-7 w-7" />}
+              title="No purchase transactions"
+              description="Your completed and pending fee payments will be listed here."
+            />
+          ) : (
+            <DataTable
+              data={purchaseTransactions}
+              columns={purchaseTransactionsColumns}
+              rowKey="key"
+              loading={isPurchaseTxLoading}
+              currentPage={purchaseHistoryPage}
+              setCurrentPage={setPurchaseHistoryPage}
+              limit={purchaseHistoryPageSize}
+              setLimit={setPurchaseHistoryPageSize}
+              total={purchaseTransactionsData?.meta?.total ?? 0}
+              isPaginate
+              showHeader
+              showSizeChanger
+              noInnerBorder
+              pagination={{
+                showTotal: (total: number) => `Total ${total} transactions`,
+              }}
+            />
+          )}
+        </>
       );
     }
 
-    const paidAmount = Number(stats?.paid ?? 0);
-    const paidApplications = Number(stats?.counts?.paid ?? 0);
-
-    return (
-      <div className="payments-kpi-grid payments-kpi-grid--2">
-        <div className="payments-kpi-card">
-          <div className="payments-kpi-row">
-            <img
-              src="/dollar.png"
-              alt="Total Paid"
-              className="h-7 w-7 object-contain"
-            />
-            <div>
-              <p className="payments-kpi-label">Total Paid</p>
-              <p className="payments-kpi-value">€{paidAmount.toFixed(2)}</p>
-            </div>
-          </div>
-        </div>
-        <div className="payments-kpi-card">
-          <div className="payments-kpi-row">
-            <img
-              src="/money-bag.png"
-              alt="Paid Applications"
-              className="h-7 w-7 object-contain"
-            />
-            <div>
-              <p className="payments-kpi-label">Paid Applications</p>
-              <p className="payments-kpi-value">{paidApplications}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderInnerTabs = () => {
-    return (
-      <div className="payments-inner-tabs">
-        <button
-          type="button"
-          className={
-            commissionTab === "unpaid"
-              ? "payments-inner-tab payments-inner-tab--active"
-              : "payments-inner-tab"
-          }
-          onClick={() => {
-            setCommissionTab("unpaid");
-            handleResetSearchOnTabChange();
-            setCommissionPage(1);
-          }}
-        >
-          Unpaid Commission
-        </button>
-        <button
-          type="button"
-          className={
-            commissionTab === "history"
-              ? "payments-inner-tab payments-inner-tab--active"
-              : "payments-inner-tab"
-          }
-          onClick={() => {
-            setCommissionTab("history");
-            handleResetSearchOnTabChange();
-            setCommissionHistoryPage(1);
-          }}
-        >
-          Transaction History
-        </button>
-      </div>
-    );
-  };
-
-  const renderTableSection = () => {
+    // ---------------------------- Commission ------------------------
     if (commissionTab === "unpaid") {
+      const isEmpty =
+        !isCommissionEarnedLoading && commissionEarned.length === 0;
       return (
-        <PageCard>
-          <div className="flex items-center justify-between gap-2 mb-4">
-            {renderSimpleToolbar("Search application ID, name")}
+        <>
+          <div className="payments-toolbar">
+            {renderSearch("Search application ID, name", () =>
+              setCommissionPage(1),
+            )}
           </div>
+          {isEmpty ? (
+            <PaymentsEmptyState
+              icon={<Coins className="h-7 w-7" />}
+              title="No unpaid commission"
+              description="Commissions you've earned and are awaiting payout will show up here."
+            />
+          ) : (
+            <DataTable
+              data={commissionEarned}
+              columns={commissionEarnedColumns}
+              rowKey="key"
+              loading={isCommissionEarnedLoading}
+              currentPage={commissionPage}
+              setCurrentPage={setCommissionPage}
+              limit={commissionPageSize}
+              setLimit={setCommissionPageSize}
+              total={commissionEarnedData?.meta?.total ?? 0}
+              isPaginate
+              showHeader
+              showSizeChanger
+              noInnerBorder
+              pagination={{
+                showTotal: (total: number) => `Total ${total} records`,
+              }}
+            />
+          )}
+        </>
+      );
+    }
+
+    const isEmpty =
+      !isCommissionTxLoading && commissionTransactions.length === 0;
+    return (
+      <>
+        <div className="payments-toolbar">
+          {renderSearch("Search application ID, transaction ID", () =>
+            setCommissionHistoryPage(1),
+          )}
+        </div>
+        {isEmpty ? (
+          <PaymentsEmptyState
+            icon={<Receipt className="h-7 w-7" />}
+            title="No payout transactions"
+            description="Completed commission payouts will appear in this history."
+          />
+        ) : (
           <DataTable
-            data={commissionEarned}
-            columns={commissionEarnedColumns}
+            data={commissionTransactions}
+            columns={commissionTransactionsColumns}
             rowKey="key"
-            loading={isCommissionEarnedLoading}
-            currentPage={commissionPage}
-            setCurrentPage={setCommissionPage}
-            limit={commissionPageSize}
-            setLimit={setCommissionPageSize}
-            total={commissionEarnedData?.meta?.total ?? 0}
+            loading={isCommissionTxLoading}
+            currentPage={commissionHistoryPage}
+            setCurrentPage={setCommissionHistoryPage}
+            limit={commissionHistoryPageSize}
+            setLimit={setCommissionHistoryPageSize}
+            total={commissionTransactionsData?.meta?.total ?? 0}
             isPaginate
             showHeader
             showSizeChanger
             noInnerBorder
             pagination={{
-              showTotal: (total: number) => `Total ${total} records`,
+              showTotal: (total: number) => `Total ${total} transactions`,
             }}
           />
-        </PageCard>
-      );
-    }
-
-    // commission / history
-    return (
-      <PageCard>
-        <div className="flex items-center justify-between gap-2 mb-4">
-          {renderSimpleToolbar("Search application ID, transaction ID")}
-        </div>
-        <DataTable
-          data={commissionTransactions}
-          columns={commissionTransactionsColumns}
-          rowKey="key"
-          loading={isCommissionTxLoading}
-          currentPage={commissionHistoryPage}
-          setCurrentPage={setCommissionHistoryPage}
-          limit={commissionHistoryPageSize}
-          setLimit={setCommissionHistoryPageSize}
-          total={commissionTransactionsData?.meta?.total ?? 0}
-          isPaginate
-          showHeader
-          showSizeChanger
-          noInnerBorder
-          pagination={{
-            showTotal: (total: number) => `Total ${total} transactions`,
-          }}
-        />
-      </PageCard>
+        )}
+      </>
     );
   };
+
+  const isPurchases = section === "purchases";
 
   return (
     <div className="payments-page">
       <PageMeta
-        title="Commission - Payments | Campus Transfer Partner"
-        description="View earned commissions and commission transaction history."
+        title="Payments | Campus Transfer Partner"
+        description="Settle application fees and track your commission earnings."
       />
 
-      <header className="payments-header">
+      {/* Header */}
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="payments-title">Payments</h1>
-          <p className="payments-subtitle">
-            Manage commission status and transaction history.
+          <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">
+            Payments
+          </h1>
+          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+            Settle outstanding fees and track your commission earnings in one
+            place.
           </p>
+        </div>
+
+        {/* Section switch */}
+        <div className="payments-segment">
+          <button
+            type="button"
+            onClick={() => handleSectionChange("purchases")}
+            className={`payments-segment-btn ${
+              isPurchases ? "payments-segment-btn--active" : ""
+            }`}
+          >
+            <CreditCard className="h-4 w-4" />
+            Purchases
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSectionChange("commission")}
+            className={`payments-segment-btn ${
+              !isPurchases ? "payments-segment-btn--active" : ""
+            }`}
+          >
+            <Coins className="h-4 w-4" />
+            Commission
+          </button>
         </div>
       </header>
 
-      {/* Inner tabs: Applications / Transaction History or Earned Commissions / Transaction History */}
-      <div className="payments-inner-tabs-wrapper">{renderInnerTabs()}</div>
+      {/* Stats */}
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {isPurchases ? (
+          <>
+            <PaymentStatCard
+              label="Outstanding"
+              value={formatMoney(purchasePayable)}
+              sub={`${purchaseAppCount} application${purchaseAppCount === 1 ? "" : "s"} to pay`}
+              icon={<Wallet className="h-5 w-5" />}
+              accent="amber"
+            />
+            <PaymentStatCard
+              label="Total Paid"
+              value={formatMoney(purchasePaid)}
+              sub="Lifetime fee payments"
+              icon={<CheckCircle2 className="h-5 w-5" />}
+              accent="green"
+            />
+            <PaymentStatCard
+              label="Applications"
+              value={purchaseAppCount.toLocaleString()}
+              sub="Awaiting settlement"
+              icon={<FileText className="h-5 w-5" />}
+              accent="blue"
+            />
+            <PaymentStatCard
+              label="Selected"
+              value={formatMoney(selectedTotalPayable)}
+              sub={`${selectedPurchaseRecords.length} selected`}
+              icon={<Banknote className="h-5 w-5" />}
+              accent="violet"
+              highlight={selectedTotalPayable > 0}
+            />
+          </>
+        ) : (
+          <>
+            <PaymentStatCard
+              label="Unpaid Commission"
+              value={formatMoney(commissionUnpaid)}
+              sub={`${commissionUnpaidCount} pending`}
+              icon={<Clock className="h-5 w-5" />}
+              accent="amber"
+            />
+            <PaymentStatCard
+              label="Paid Commission"
+              value={formatMoney(commissionPaid)}
+              sub={`${commissionPaidCount} paid out`}
+              icon={<CheckCircle2 className="h-5 w-5" />}
+              accent="green"
+            />
+            <PaymentStatCard
+              label="Total Earned"
+              value={formatMoney(commissionTotal)}
+              sub="Unpaid + paid"
+              icon={<Coins className="h-5 w-5" />}
+              accent="blue"
+            />
+            <PaymentStatCard
+              label="Payout Rate"
+              value={
+                commissionTotal > 0
+                  ? `${Math.round((commissionPaid / commissionTotal) * 100)}%`
+                  : "0%"
+              }
+              sub="Of total earnings"
+              icon={<Wallet className="h-5 w-5" />}
+              accent="violet"
+            />
+          </>
+        )}
+      </section>
 
-      {/* KPI cards */}
-      {renderTopCards()}
+      {/* Chart */}
+      <section>
+        {isPurchases ? (
+          <EarningsChart
+            title="Spending overview"
+            subtitle="Application fee payments over time"
+            data={purchaseTransactions
+              .filter((t) => t.status === "Completed")
+              .map((t) => ({ date: t.date, amount: t.amount }))}
+            color="#3b82f6"
+          />
+        ) : (
+          <EarningsChart
+            title="Earnings overview"
+            subtitle="Commission payouts over time"
+            data={commissionTransactions
+              .filter((t) => t.status === "Completed")
+              .map((t) => ({ date: t.date, amount: t.amount }))}
+            color={ACCENT_GREEN}
+          />
+        )}
+      </section>
 
-      {/* Table + toolbar */}
-      <section className="payments-section">{renderTableSection()}</section>
+      {/* Table card */}
+      <section className="payments-table-wrap rounded-2xl bg-white shadow-sm ring-1 ring-neutral-100 dark:bg-neutral-900 dark:ring-neutral-800">
+        <div className="flex flex-wrap items-center gap-1 border-b border-neutral-100 px-4 pt-2 dark:border-neutral-800">
+          {isPurchases ? (
+            <>
+              {renderSubTab(
+                "Applications",
+                purchaseTab === "applications",
+                () => handlePurchaseTabChange("applications"),
+                purchaseApplicationsData?.meta?.total,
+              )}
+              {renderSubTab(
+                "Transaction History",
+                purchaseTab === "history",
+                () => handlePurchaseTabChange("history"),
+              )}
+            </>
+          ) : (
+            <>
+              {renderSubTab(
+                "Unpaid Commission",
+                commissionTab === "unpaid",
+                () => handleCommissionTabChange("unpaid"),
+                commissionUnpaidCount || undefined,
+              )}
+              {renderSubTab(
+                "Transaction History",
+                commissionTab === "history",
+                () => handleCommissionTabChange("history"),
+              )}
+            </>
+          )}
+        </div>
 
+        <div className="p-4">{renderTable()}</div>
+      </section>
+
+      {/* Bank transfer modal */}
       <Modal
         open={isBankModalOpen}
         title="Bank Transfer Payment"
@@ -742,57 +958,57 @@ export default function Payments() {
         cancelText="Cancel"
         centered
         width={600}
+        rootClassName="payments-modal"
         okButtonProps={{
           disabled:
             !receiptFile || selectedPurchaseRecords.length === 0 || isPaying,
         }}
       >
-        <div className="payments-bank-modal space-y-5 text-sm">
-          <section className="payments-bank-section payments-bank-section--highlight">
-            <p className="payments-bank-section-title">Bank Details</p>
-            <div className="payments-bank-grid">
-              <div>
-                <p className="payments-bank-label">Bank Name</p>
-                <p className="payments-bank-value">
-                  {bankAccount?.bankName || "—"}
-                </p>
-              </div>
-              <div>
-                <p className="payments-bank-label">Account Name</p>
-                <p className="payments-bank-value">
-                  {bankAccount?.accountName || "—"}
-                </p>
-              </div>
-              <div>
-                <p className="payments-bank-label">Account Number</p>
-                <p className="payments-bank-value">
-                  {bankAccount?.accountNumber || "—"}
-                </p>
-              </div>
+        <div className="mt-2 space-y-4 text-sm">
+          <section className="rounded-2xl bg-primary-50 p-4 ring-1 ring-primary-100 dark:bg-primary-500/10 dark:ring-primary-500/20">
+            <p className="mb-3 text-sm font-semibold text-neutral-900 dark:text-white">
+              Bank Details
+            </p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {[
+                { label: "Bank Name", value: bankAccount?.bankName },
+                { label: "Account Name", value: bankAccount?.accountName },
+                { label: "Account Number", value: bankAccount?.accountNumber },
+              ].map((item) => (
+                <div key={item.label}>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                    {item.label}
+                  </p>
+                  <p className="mt-0.5 font-medium text-neutral-900 dark:text-white">
+                    {item.value || "—"}
+                  </p>
+                </div>
+              ))}
             </div>
           </section>
 
-          <section className="payments-bank-section">
-            <p className="payments-bank-section-title">Payment Summary</p>
-            <div className="payments-bank-summary">
-              <div>
-                <p className="payments-bank-label">Student</p>
-                <p className="payments-bank-value">
-                  {selectedPurchaseRecords.length > 0
-                    ? `${selectedPurchaseRecords.length} application(s)`
-                    : "No applications selected"}
-                </p>
-              </div>
-              <div>
-                <p className="payments-bank-label">Total Amount</p>
-                <p className="payments-bank-value">
-                  €{selectedTotalPayable.toFixed(2)}
-                </p>
-              </div>
+          <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-neutral-50 p-4 ring-1 ring-neutral-100 dark:bg-neutral-800/50 dark:ring-neutral-800">
+            <div>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                Applications
+              </p>
+              <p className="mt-0.5 font-medium text-neutral-900 dark:text-white">
+                {selectedPurchaseRecords.length > 0
+                  ? `${selectedPurchaseRecords.length} application(s)`
+                  : "No applications selected"}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                Total Amount
+              </p>
+              <p className="mt-0.5 text-lg font-bold text-primary-700 dark:text-primary-300">
+                {formatMoney(selectedTotalPayable)}
+              </p>
             </div>
           </section>
 
-          <section className="payments-bank-section">
+          <section>
             <Dragger
               multiple={false}
               showUploadList={!!receiptFile}
@@ -800,9 +1016,7 @@ export default function Payments() {
                 setReceiptFile(file);
                 return false;
               }}
-              onRemove={() => {
-                setReceiptFile(null);
-              }}
+              onRemove={() => setReceiptFile(null)}
               className="payments-dragger"
             >
               <p className="ant-upload-drag-icon">

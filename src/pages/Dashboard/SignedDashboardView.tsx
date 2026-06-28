@@ -10,91 +10,96 @@ import {
   useGetPartnerDashboardQuery,
 } from "../../redux/features/profile/partnerProfileApi";
 
-import { PlusOutlined } from "@ant-design/icons";
-import { Button } from "antd";
-import DestinationCard from "./signed/components/DestinationCard";
-import KpiCards from "./signed/components/KpiCards";
-import RecentAnnouncementsCard from "./signed/components/RecentAnnouncementsCard";
+import AnnouncementsCenter from "./signed/dashboard/AnnouncementsCenter";
+import DiscoverRow from "./signed/dashboard/DiscoverRow";
+import KpiGrid from "./signed/dashboard/KpiGrid";
+import NotificationCenter from "./signed/dashboard/NotificationCenter";
+import PerformanceAnalytics from "./signed/dashboard/PerformanceAnalytics";
+import QuickActions from "./signed/dashboard/QuickActions";
+import RecentApplications from "./signed/dashboard/RecentApplications";
+import StatusDonut from "./signed/dashboard/StatusDonut";
+import TaskWidget from "./signed/dashboard/TaskWidget";
+import WelcomeHero from "./signed/dashboard/WelcomeHero";
 import SupportPanelCard from "./signed/components/SupportPanelCard";
-import TeamMembersCard from "./signed/components/TeamMembersCard";
-import TopSubjectsCard from "./signed/components/TopSubjectsCard";
-import UniversitiesCard from "./signed/components/UniversitiesCard";
 
 export default function SignedDashboardView() {
   const user = useSelector(selectCurrentUser);
   const userName = user?.name ?? "Partner User";
   const navigate = useNavigate();
   const [createStudentOpen, setCreateStudentOpen] = useState(false);
-  const { data: dashboard, isLoading } = useGetPartnerDashboardQuery(
-    undefined,
-    {
-      /** Refetch every time this view mounts (e.g. each navigation to dashboard). */
-      refetchOnMountOrArgChange: true,
-    },
-  );
 
-  const supportPanel = dashboard?.supportPanel ?? [];
+  const { data: dashboard, isLoading } = useGetPartnerDashboardQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
 
-  const teamMembers = dashboard?.teamMembers ?? [];
+
   const topDestinations: PartnerDashboardDestination[] =
     dashboard?.topDestinations ?? [];
   const topUniversities: PartnerDashboardUniversity[] =
     dashboard?.topUniversities ?? [];
   const topSubjects: PartnerDashboardSubject[] = dashboard?.topSubjects ?? [];
 
-  const handleCreateStudentSuccess = () => {
-    navigate("/students");
-  };
+  const handleCreateStudentSuccess = () => navigate("/students");
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] -mx-4 px-4 pb-8 pt-0 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8">
-      <div className="w-full">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white sm:text-3xl">
-            Welcome, {userName} !
-          </h1>
-          <Button
-            type="primary"
-            onClick={() => setCreateStudentOpen(true)}
-            icon={<PlusOutlined />}
-          >
-            Add Student
-          </Button>
-        </div>
-        <CreateStudentModal
-          open={createStudentOpen}
-          onClose={() => setCreateStudentOpen(false)}
-          onSuccess={handleCreateStudentSuccess}
+    <div className="-mx-4 min-h-[calc(100vh-4rem)] px-4 pb-10 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8">
+      <div className="mx-auto w-full max-w-[1600px] space-y-4 sm:space-y-5">
+        {/* 1. Welcome hero banner */}
+        <WelcomeHero
+          userName={userName}
+          topStats={dashboard?.topStats}
+          isLoading={isLoading}
+          onAddStudent={() => setCreateStudentOpen(true)}
+          onNewApplication={() => navigate("/applications")}
         />
 
-        <KpiCards topStats={dashboard?.topStats as any} isLoading={isLoading} />
+        {/* 2. KPI cards */}
+        <KpiGrid topStats={dashboard?.topStats} isLoading={isLoading} />
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-5">
-          <div className="lg:col-span-2 space-y-6">
-            <SupportPanelCard people={supportPanel} isLoading={isLoading} />
-            <TeamMembersCard teamMembers={teamMembers} isLoading={isLoading} />
+        {/* 3. Quick actions */}
+        <QuickActions onAddStudent={() => setCreateStudentOpen(true)} />
+         
+
+        {/* 4. Performance analytics + status breakdown */}
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-2">'
+          <SupportPanelCard people={dashboard?.supportPanel ?? []} isLoading={isLoading} />'
+            <PerformanceAnalytics />
+            
           </div>
-          <div className="lg:col-span-3">
-            <RecentAnnouncementsCard />
-          </div>
+          <StatusDonut topStats={dashboard?.topStats} isLoading={isLoading} />
         </div>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-3">
-          <DestinationCard
-            destinations={topDestinations}
-            isLoading={isLoading}
-          />
-          <UniversitiesCard
-            universities={topUniversities}
-            isLoading={isLoading}
-          />
-          <TopSubjectsCard subjects={topSubjects} isLoading={isLoading} />
+        {/* 5. Recent applications + task management */}
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <RecentApplications />
+          </div>
+          <TaskWidget />
         </div>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2"></div>
+        {/* 6. Popular universities, programs & destinations */}
+        <DiscoverRow
+          universities={topUniversities}
+          subjects={topSubjects}
+          destinations={topDestinations}
+          isLoading={isLoading}
+        />
+
+        {/* 7. Announcements + notifications */}
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <AnnouncementsCenter />
+          </div>
+          <NotificationCenter />
         </div>
       </div>
+
+      <CreateStudentModal
+        open={createStudentOpen}
+        onClose={() => setCreateStudentOpen(false)}
+        onSuccess={handleCreateStudentSuccess}
+      />
     </div>
   );
 }

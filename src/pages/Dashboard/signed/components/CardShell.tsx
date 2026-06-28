@@ -17,7 +17,7 @@ export default function CardShell({
 }) {
   return (
     <section
-      className={`rounded-[20px] border border-primary-border bg-white p-5  dark:border-gray-800 dark:bg-gray-900 ${className}`}
+      className={`rounded-[6px] border border-primary-border bg-white p-5  dark:border-gray-800 dark:bg-gray-900 ${className}`}
     >
       <div className="flex items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">

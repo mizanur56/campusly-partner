@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 
-const LOGO_SRC = "/images/logo/logo.svg";
+const LOGO_SRC = `${import.meta.env.BASE_URL}HHjMp (1).png`;
 
 type PageLoaderProps = {
   fullScreen?: boolean;

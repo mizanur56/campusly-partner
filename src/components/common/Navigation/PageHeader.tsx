@@ -49,7 +49,11 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           </Title>
           {subtitle && <p className="text-gray-500 text-sm mt-1">{subtitle}</p>}
         </div>
-        {extra && <div className="mt-4 sm:mt-0 flex gap-3">{extra}</div>}
+        {extra && (
+          <div className="mt-4 flex gap-3 sm:mt-0 [&_.ant-btn]:!rounded-[6px] [&_.ant-btn-primary]:!bg-primary [&_.ant-btn-primary:hover]:!bg-primary-700">
+            {extra}
+          </div>
+        )}
       </div>
       <Divider className="my-4" />
     </div>
