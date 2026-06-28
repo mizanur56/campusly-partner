@@ -94,7 +94,7 @@ const LayoutContent: React.FC = () => {
       <Backdrop />
     </div>
     <div
-      className={`flex flex-1 flex-col bg-[var(--fynix-bg)] transition-all duration-300 ease-in-out ${
+      className={`flex min-w-0 flex-1 flex-col bg-[var(--fynix-bg)] transition-all duration-300 ease-in-out ${
         isExpanded ? "lg:ml-[260px]" : "lg:ml-[72px]"
       } ${isMobileOpen ? "ml-0" : ""}`}
     >

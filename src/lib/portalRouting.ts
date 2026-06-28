@@ -34,9 +34,27 @@ export const PORTAL_LOGIN_PATH = "/auth/login/?tab=partner";
 /** Development: SPA-local login route (no /auth prefix, no tab query). */
 export const DEV_PORTAL_LOGIN_PATH = "/login";
 
+/**
+ * True when the app is running on the configured primary app domain
+ * (e.g. campustransfer.com or any of its subdomains). This is false for
+ * standalone deployments such as *.vercel.app or localhost, where the
+ * centralized login hub is not reachable and the app should use its own
+ * `/login` page instead.
+ */
+export function isOnPrimaryAppDomain(): boolean {
+  if (typeof window === "undefined") return false;
+  const domain = normalizeAppDomain(config.app_domain).toLowerCase();
+  if (!domain) return false;
+  const host = window.location.hostname.toLowerCase();
+  return host === domain || host.endsWith(`.${domain}`);
+}
+
 export function getPortalLoginUrl(): string {
   if (typeof window === "undefined") return PORTAL_LOGIN_PATH;
-  if (config.node_env === "production") {
+  // Only route to the centralized login hub when actually on the primary
+  // app domain. Otherwise (vercel.app preview, localhost, etc.) keep the
+  // user on this deployment's own login page.
+  if (config.node_env === "production" && isOnPrimaryAppDomain()) {
     const host = normalizeAppDomain(config.app_domain);
     return host ? `https://${host}${PORTAL_LOGIN_PATH}` : PORTAL_LOGIN_PATH;
   }
@@ -165,6 +183,12 @@ export function redirectFromLatestLoginSignalIfNeeded(): boolean {
   const target = getPortalOrigin(home, config.app_domain);
   if (!target) return false;
   clearAuthLocalStorage();
+  // On standalone deployments the sibling subdomains don't exist; keep the
+  // user on this deployment's own login page instead.
+  if (!isOnPrimaryAppDomain()) {
+    window.location.replace(DEV_PORTAL_LOGIN_PATH);
+    return true;
+  }
   window.location.replace(`${target}/`);
   return true;
 }
@@ -190,7 +214,7 @@ export function redirectFromPortalRoleCookieIfNeeded(): boolean {
   const home = homePortalForRole(raw.trim());
   const current = inferCurrentPortal();
   if (!home || home === current) return false;
-  if (config.node_env !== "production") {
+  if (config.node_env !== "production" || !isOnPrimaryAppDomain()) {
     clearClientAuthStorageForHardRedirect();
     window.location.replace(DEV_PORTAL_LOGIN_PATH);
     return true;
@@ -311,7 +335,7 @@ export function redirectToCorrectPortalIfNeeded(
 
   if (home === current) return false;
 
-  if (config.node_env !== "production") {
+  if (config.node_env !== "production" || !isOnPrimaryAppDomain()) {
     clearClientAuthStorageForHardRedirect();
     window.location.replace(DEV_PORTAL_LOGIN_PATH);
     return true;
