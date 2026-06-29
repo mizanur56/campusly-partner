@@ -993,7 +993,7 @@ const Dashboard = () => {
                     to="/onboarding"
                     variant="primary"
                     size="sm"
-                    className="rounded-md border-0 bg-[#15803D] px-4 py-2 text-white shadow-none hover:bg-[#166534] dark:bg-[#15803D] dark:hover:bg-[#166534]"
+                    className="rounded-md border-0 bg-primary-700 px-4 py-2 text-white shadow-none hover:bg-[#166534] dark:bg-primary-700 dark:hover:bg-[#166534]"
                   >
                     {isApproved && showOnboardingFormComplete && !isRejected
                       ? "View"
@@ -1179,7 +1179,7 @@ const Dashboard = () => {
                       to="/contract"
                       variant="primary"
                       size="sm"
-                      className="rounded-md border-0 bg-[#15803D] px-4 py-2 text-white shadow-none hover:bg-[#166534] dark:bg-[#15803D] dark:hover:bg-[#166534]"
+                      className="rounded-md border-0 bg-primary-700 px-4 py-2 text-white shadow-none hover:bg-[#166534] dark:bg-primary-700 dark:hover:bg-[#166534]"
                     >
                       Continue
                     </Button>

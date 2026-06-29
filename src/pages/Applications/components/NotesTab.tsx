@@ -282,7 +282,7 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
   );
 
   return (
-    <div className="p-4">
+    <div className="px-5 py-5 sm:px-6 sm:py-6">
       <style>{`
         .quill-wrapper {
           border-radius: 14px;
@@ -306,19 +306,18 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
         }
       `}</style>
       {/* Header Section */}
-      <div className="flex items-start justify-between gap-4 mb-6">
+      <div className="mb-6 flex flex-col gap-4 border-b border-neutral-100 pb-5 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <div className="flex items-center gap-2 text-[#111827]">
-            {/* <FiEdit className="text-[18px] text-[#2d7a42]" /> */}
-            <div className="text-[18px] font-semibold">Notes</div>
-            <span className="ml-2 text-xs font-semibold px-2 py-1 rounded-full border border-primary-border text-gray-600 bg-white">
+          <div className="flex items-center gap-2">
+            <div className="text-base font-semibold text-neutral-900">Notes</div>
+            <span className="rounded-full border border-neutral-200 bg-neutral-50 px-2 py-0.5 text-xs font-semibold text-neutral-600">
               {notes.length} threads
             </span>
           </div>
-          <div className="text-[12px] text-gray-500 mt-1">
+          <p className="mt-1 text-xs text-neutral-500">
             Internal discussion for this application. Latest activity appears
             first.
-          </div>
+          </p>
         </div>
 
         {!showForm && (
@@ -326,6 +325,7 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
             type="primary"
             onClick={() => setShowForm(true)}
             icon={<PlusOutlined />}
+            className="!rounded-xl !bg-primary-600 hover:!bg-primary-700"
           >
             New note
           </Button>
@@ -334,7 +334,7 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
 
       {/* Note Creation Form */}
       {showForm && (
-        <div className="mb-8 p-5 rounded-3xl bg-[#FFFFFF] border border-primary-border">
+        <div className="mb-8 rounded-2xl border border-neutral-200 bg-neutral-50/50 p-5">
           <div className="">
             <div className="mb-4">
               <label className="block text-gray-500 text-sm mb-1 font-medium">
@@ -372,7 +372,7 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
               </Button>
               <Button
                 type="primary"
-                className="bg-[#2d7a42] hover:bg-[#235e33] border-none rounded-lg px-8 h-10 font-semibold shadow-sm"
+                className="!rounded-xl !border-none !bg-primary-600 px-8 !h-10 !font-semibold shadow-sm hover:!bg-primary-700"
                 loading={isCreating}
                 onClick={onSend}
               >
@@ -397,7 +397,7 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
       )}
 
       {!isLoading && notes.length === 0 && (
-        <div className="py-12 rounded-2xl border border-dashed border-primary-border bg-white">
+        <div className="rounded-2xl border border-dashed border-neutral-200 bg-neutral-50/50 py-12">
           <Empty description="No notes yet" />
         </div>
       )}
@@ -407,7 +407,7 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
           dataSource={notes}
           renderItem={(note) => (
             <div className="mb-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <div className="rounded-3xl !border-primary-border !border transition-shadow bg-white overflow-hidden p-6">
+              <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md sm:p-6">
                 <div>
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div className="flex items-start gap-3 min-w-0">
@@ -493,7 +493,7 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
 
                     <Button
                       type="primary"
-                      className="bg-[#2d7a42] hover:bg-[#235e33] border-none px-6 rounded-lg font-semibold h-9 shadow-sm"
+                      className="!rounded-xl !border-none !bg-primary-600 px-6 !h-9 !font-semibold shadow-sm hover:!bg-primary-700"
                       onClick={() => {
                         setReplyForNoteId(note.id);
                         setReplyBody("");
@@ -637,7 +637,7 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
                       </Button>
                       <Button
                         type="primary"
-                        className="bg-[#2d7a42] hover:bg-[#235e33] border-none rounded-lg h-9 font-semibold shadow-sm"
+                        className="!rounded-xl !border-none !bg-primary-600 !h-9 !font-semibold shadow-sm hover:!bg-primary-700"
                         loading={isReplying}
                         onClick={() => onReply(note.id)}
                       >
@@ -664,7 +664,7 @@ const NotesTab = ({ applicationId }: NotesTabProps) => {
         onOk={onSaveEdit}
         okText="Save"
         okButtonProps={{
-          style: { backgroundColor: "#2d7a42", borderColor: "#2d7a42" },
+          className: "!bg-primary-600 hover:!bg-primary-700",
           loading: isUpdating,
         }}
         width={800}

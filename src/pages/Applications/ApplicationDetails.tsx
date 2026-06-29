@@ -1,14 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Image, Spin } from "antd";
-import React, { useEffect } from "react";
-import { FaCircleCheck, FaCircleXmark } from "react-icons/fa6";
+import { Spin } from "antd";
+import React, { useEffect, useRef } from "react";
+import { ArrowLeft, FileStack } from "lucide-react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   useGetAllInvoicePaymentsQuery,
   useGetApplicationByIdQuery,
 } from "../../redux/features/application/applicationApi";
 
-import { RefreshCw } from "lucide-react";
 import { config } from "../../config";
 import { useStudentProfile } from "../../context/StudentProfileContext";
 import { useGetStudentProfileQuery } from "../../redux/features/profile/studentProfileApi";
@@ -16,6 +15,24 @@ import { getApiImageUrl } from "../../utils/getApiImageUrl";
 import ApplicationRequirementsTab from "./components/ApplicationRequirementsTab";
 import NotesTab from "./components/NotesTab";
 import StudentRecordsTab from "./components/StudentRecordsTab";
+import ApplicationNextStepBanner from "./components/details/ApplicationNextStepBanner";
+import ApplicationProgressPanel from "./components/details/ApplicationProgressPanel";
+import {
+  ImportantNotesCard,
+  NeedHelpCard,
+} from "./components/details/ApplicationSidebarCards";
+import ApplicationSummaryHeader, {
+  summaryMetaIcons,
+} from "./components/details/ApplicationSummaryHeader";
+import ApplicationTabBar, {
+  type ApplicationTabKey,
+} from "./components/details/ApplicationTabBar";
+import StudentInformationCard from "./components/details/StudentInformationCard";
+import UniversityCourseCard from "./components/details/UniversityCourseCard";
+import {
+  getApplicationStatusStyle,
+  getCurrentStepInfo,
+} from "./components/details/applicationDetailsUtils";
 
 const VALID_TABS = ["requirements", "records", "notes"] as const;
 type TabKey = (typeof VALID_TABS)[number];
@@ -24,6 +41,7 @@ const ApplicationDetails = () => {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const requirementsRef = useRef<HTMLDivElement>(null);
 
   const rawTab = searchParams.get("tab");
   const isValidTab = rawTab !== null && VALID_TABS.includes(rawTab as TabKey);
@@ -38,6 +56,7 @@ const ApplicationDetails = () => {
   const setActiveTab = (key: TabKey) => {
     navigate(`?tab=${key}`, { replace: true });
   };
+
   const { setStudent } = useStudentProfile();
   const { data, isLoading, error, refetch, isFetching } =
     useGetApplicationByIdQuery(id, {
@@ -47,7 +66,6 @@ const ApplicationDetails = () => {
     useGetAllInvoicePaymentsQuery([]);
   const applicationApiData = data?.data;
 
-  /** Partner profile API uses student record id (see Admission.tsx), not auth userId. */
   const studentIdForProfile =
     applicationApiData?.studentId ?? applicationApiData?.student?.id;
 
@@ -128,12 +146,10 @@ const ApplicationDetails = () => {
       address: s?.address ?? "—",
       status: s?.status ?? "—",
       avatar:
-        // Prefer student profile photo from partner student profile API (same as StudentProfile page)
         getApiImageUrl(profileData?.image) ||
         (profileData?.imageId
           ? `${config.image_access_url}/media/${String(profileData.imageId)}`
           : "") ||
-        // Fallback to auth user profile photo if present
         (s?.profile_photo
           ? s.profile_photo.startsWith("http")
             ? s.profile_photo
@@ -162,7 +178,7 @@ const ApplicationDetails = () => {
     });
     return () => setStudent(null);
   }, [studentIdForProfile, applicationApiData, profileData, setStudent]);
-  // Scroll to top when component mounts or id changes
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [id]);
@@ -170,7 +186,6 @@ const ApplicationDetails = () => {
   const applicationData = {
     id: applicationApiData?.id,
     applicationId: applicationApiData?.applicationId,
-
     college: {
       name: applicationApiData?.course?.university?.name,
       logo: applicationApiData?.university?.logoId
@@ -182,19 +197,13 @@ const ApplicationDetails = () => {
         .join("")
         .slice(0, 3),
     },
-
     program: applicationApiData?.course?.course?.name,
-
     modeOfStudy: applicationApiData?.studyMode,
-
     mainSelectedIntake: applicationApiData?.intake,
-
     student: applicationApiData?.student
       ? `${applicationApiData.student?.firstName ?? ""} ${applicationApiData.student?.lastName ?? ""}`.trim()
       : "",
-
     studyType: applicationApiData?.studyLevel ?? "Undergraduate",
-
     status: applicationApiData?.status,
   };
 
@@ -280,257 +289,236 @@ const ApplicationDetails = () => {
     ];
   }, [applicationApiData, profileData]);
 
-  // ২. 🔥 Route Guard: ইউজার ম্যানুয়ালি URL এ নাম লিখলে তাকে আটকে দিবে
-  // useEffect(() => {
-  //   if (!isLoading && applicationApiData) {
-  //     // URL থেকে কারেন্ট স্টেপ বের করা (e.g., 'apply', 'checklist')
-  //     const pathSegments = location.pathname.split("/");
-  //     const currentStepId = pathSegments[pathSegments.length - 1];
+  const statusStyle = getApplicationStatusStyle(applicationData.status);
+  const currentStepInfo = getCurrentStepInfo(steps);
 
-  //     const currentIndex = steps.findIndex((s) => s.id === currentStepId);
+  const studentAvatar =
+    getApiImageUrl(profileData?.image) ||
+    (profileData?.imageId
+      ? `${config.image_access_url}/media/${String(profileData.imageId)}`
+      : "") ||
+    (applicationApiData?.student?.profile_photo
+      ? applicationApiData.student.profile_photo.startsWith("http")
+        ? applicationApiData.student.profile_photo
+        : `${config.image_access_url || ""}${applicationApiData.student.profile_photo}`
+      : "");
 
-  //     // যদি ইউজার অ্যাডমিশন ছাড়া অন্য কোনো ধাপে সরাসরি যেতে চায়
-  //     if (currentIndex > 0) {
-  //       // চেক করবে আগের ধাপটি কমপ্লিট কি না
-  //       const prevStep = steps[currentIndex - 1];
-  //       if (!prevStep.isCompleted) {
-  //         // আগের ধাপ কমপ্লিট না থাকলে তাকে প্রথম ধাপে রিডাইরেক্ট করবে
-  //         navigate(`/applications/${id}/admission`, { replace: true });
-  //       }
-  //     }
-  //   }
-  // }, [location.pathname, isLoading, applicationApiData, id]);
+  const universityLogoUrl = applicationApiData?.course?.university
+    ?.UniversityLogo?.url
+    ? `${config.image_access_url}${applicationApiData.course.university.UniversityLogo.url}`
+    : undefined;
 
-  // NOTE: ApplicationDetails no longer uses step-based routing (e.g. /admission, /apply).
-  // It renders the full journey in-page (accordion) inside the Requirements tab.
+  const universitySlug =
+    applicationApiData?.course?.university?.slug ??
+    applicationApiData?.course?.universitySlug;
+  const courseSlug =
+    applicationApiData?.course?.course?.slug ??
+    applicationApiData?.course?.slug;
 
-  // ১. মেইন ডাটা লোড হওয়া বা রিডাইরেক্ট হওয়ার সময় ফুল পেজ স্পিনার দেখাবে
+  const handleRefresh = () => {
+    refetch();
+    paymentRefetch();
+    if (studentIdForProfile) refetchProfile();
+  };
+
+  const handleContinueStage = () => {
+    setActiveTab("requirements");
+    requestAnimationFrame(() => {
+      requirementsRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  };
+
+  const handleViewProgram = () => {
+    if (universitySlug && courseSlug) {
+      navigate(
+        `/programs-schools/courses/${universitySlug}/${courseSlug}`,
+      );
+      return;
+    }
+    if (universitySlug) {
+      navigate(`/programs-schools/universities/${universitySlug}`);
+    }
+  };
+
+  const handleContactSupport = () => {
+    window.location.href = "mailto:support@campustransfer.com";
+  };
+
   if (isLoading) {
     return (
-      <div className="flex h-[60vh] items-center justify-center">
+      <div className="flex min-h-[60vh] items-center justify-center">
         <Spin size="large" tip="Loading Application Details..." />
       </div>
     );
   }
 
-  // ২. যদি কোনো এরর থাকে
   if (error) {
-    return <div>Error loading application.</div>;
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center rounded-2xl border border-red-100 bg-red-50 p-8 text-red-700">
+        Error loading application.
+      </div>
+    );
   }
 
+  const countryName =
+    applicationApiData?.course?.country?.name ??
+    applicationApiData?.country?.name ??
+    applicationApiData?.course?.university?.country?.name;
+
   return (
-    <div>
-      {/* Program Overview */}
-      <div className="mb-8 space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-start gap-4">
-            {applicationApiData?.course?.university?.UniversityLogo?.url ? (
-              <Image
-                src={`${config.image_access_url}${applicationApiData.course.university.UniversityLogo.url}`}
-                alt={applicationData.college.name}
-                width={64}
-                height={64}
-                preview={false}
-                className="rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-16 h-16 rounded-full bg-[#237D3B] flex items-center justify-center shrink-0">
-                <span className="text-white font-bold text-xl">
-                  {applicationData.college.initials}
-                </span>
+    <div className="mx-auto w-full max-w-[1400px] space-y-5 pb-10">
+      <button
+        type="button"
+        onClick={() => navigate("/applications")}
+        className="inline-flex items-center gap-2 text-sm font-medium text-neutral-500 transition hover:text-primary-600"
+      >
+        <ArrowLeft size={16} />
+        Back to Applications
+      </button>
+
+      <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-3">
+        <div className="space-y-5 xl:col-span-2">
+          <ApplicationSummaryHeader
+            universityName={applicationData.college.name}
+            universityLogoUrl={universityLogoUrl}
+            programName={applicationData.program}
+            statusLabel={statusStyle.label}
+            statusClassName={statusStyle.className}
+            onRefresh={handleRefresh}
+            isRefreshing={isFetching || isPaymentFetching}
+            metaItems={[
+              {
+                label: "Application ID",
+                value: String(applicationData.applicationId ?? ""),
+                icon: summaryMetaIcons.applicationId,
+              },
+              {
+                label: "Mode of Study",
+                value: String(applicationData.modeOfStudy ?? ""),
+                icon: summaryMetaIcons.modeOfStudy,
+              },
+              {
+                label: "Intake",
+                value: String(applicationData.mainSelectedIntake ?? ""),
+                icon: summaryMetaIcons.intake,
+              },
+              {
+                label: "Study Type",
+                value: String(applicationData.studyType ?? ""),
+                icon: summaryMetaIcons.studyType,
+              },
+              {
+                label: "Student Name",
+                value: applicationData.student,
+                icon: summaryMetaIcons.student,
+              },
+            ]}
+          />
+
+          <ApplicationNextStepBanner
+            stepName={currentStepInfo.name}
+            stepDescription={currentStepInfo.description}
+            onContinue={handleContinueStage}
+            hidden={currentStepInfo.allComplete || isRejected}
+          />
+
+          {/* <StudentInformationCard
+            name={applicationData.student || "Student"}
+            email={applicationApiData?.student?.email}
+            phone={applicationApiData?.student?.phone}
+            address={applicationApiData?.student?.address}
+            status={applicationApiData?.student?.status}
+            avatarUrl={studentAvatar || undefined}
+            onViewProfile={
+              studentIdForProfile
+                ? () => navigate(`/students/${studentIdForProfile}/profile`)
+                : undefined
+            }
+          /> */}
+
+          <ApplicationTabBar
+            activeTab={activeTab as ApplicationTabKey}
+            onChange={setActiveTab}
+          />
+
+          <div
+            ref={requirementsRef}
+            className="rounded-2xl border border-neutral-200/80 bg-white shadow-sm"
+          >
+            {activeTab === "requirements" && (
+              <div className="border-b border-neutral-100 px-5 py-4 sm:px-6">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
+                    <FileStack size={16} />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-semibold text-neutral-900">
+                      Application Checklist
+                    </h2>
+                    <p className="text-xs text-neutral-500">
+                      Complete each stage to move your application forward.
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
-            <div className="flex-1">
-              <h2 className="text-[18px] text-[#4B5563] mb-1">
-                {applicationData.college.name}
-              </h2>
-              <h3 className="text-[20px] font-semibold text-[#20242A] lg:mb-2">
-                {applicationData.program}
-              </h3>
-            </div>
-          </div>
 
-          <div className="shrink-0">
-            <button
-              onClick={() => { refetch(); paymentRefetch(); }}
-              className="px-3 sm:px-4 py-3 text-sm bg-primary-600 text-white rounded-xl hover:bg-primary-700 flex items-center gap-2 transition-all disabled:opacity-70"
-              disabled={isFetching || isPaymentFetching}
+            <div
+              className={
+                activeTab === "requirements"
+                  ? "p-4 sm:p-5"
+                  : activeTab === "records"
+                    ? ""
+                    : ""
+              }
             >
-              <RefreshCw
-                size={18}
-                className={`${isFetching || isPaymentFetching ? "animate-spin" : ""}`}
-              />
-              <span className="hidden sm:inline">Refresh</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 text-[14px]">
-          <div className="flex flex-col gap-2">
-            <span className="text-[#4B5563] text-[14px]">Application ID</span>{" "}
-            <span className="font-medium text-[14px] text-[#20242A]">
-              {applicationData.applicationId}
-            </span>
-          </div>
-          <div className="flex flex-col gap-2">
-            <span className="text-[#4B5563] text-[14px]">Mode of Study</span>{" "}
-            <span className="font-medium text-[14px] text-[#20242A]">
-              {applicationData.modeOfStudy}
-            </span>
-          </div>
-          <div className="flex flex-col gap-2">
-            <span className="text-[#4B5563] text-[14px]">
-              Main selected intake
-            </span>{" "}
-            <span className="font-medium text-[14px] text-[#20242A]">
-              {applicationData.mainSelectedIntake}
-            </span>
-          </div>
-          <div className="flex flex-col gap-2">
-            <span className="text-[#4B5563] text-[14px]">Student</span>{" "}
-            <span className="font-medium text-[14px] text-[#20242A]">
-              {applicationData.student}
-            </span>
-          </div>
-          <div className="flex flex-col gap-2">
-            <span className="text-[#4B5563] text-[14px]">Study Type</span>{" "}
-            <span className="font-medium text-[14px] text-[#20242A]">
-              {applicationData.studyType}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="mb-6 border-b border-primary-border dark:border-gray-800">
-        <div className="flex items-center gap-8 overflow-x-auto no-scrollbar">
-          <button
-            type="button"
-            onClick={() => setActiveTab("requirements")}
-            className={`-mb-px pb-3 text-sm font-medium transition-colors cursor-pointer whitespace-nowrap ${
-              activeTab === "requirements"
-                ? "border-b-2 border-primary text-primary"
-                : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-            }`}
-          >
-            Application Requirements
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("records")}
-            className={`-mb-px pb-3 text-sm font-medium transition-colors cursor-pointer whitespace-nowrap ${
-              activeTab === "records"
-                ? "border-b-2 border-primary text-primary"
-                : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-            }`}
-          >
-            Student Records
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("notes")}
-            className={`-mb-px pb-3 text-sm font-medium transition-colors cursor-pointer whitespace-nowrap ${
-              activeTab === "notes"
-                ? "border-b-2 border-primary text-primary"
-                : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-            }`}
-          >
-            Notes
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 items-start">
-        {/* Left content changes with tabs */}
-        <div className="lg:col-span-2">
-          {activeTab === "requirements" ? (
-            <ApplicationRequirementsTab
-              applicationApiData={applicationApiData}
-              steps={steps}
-            />
-          ) : activeTab === "records" ? (
-            <StudentRecordsTab applicationApiData={applicationApiData} />
-          ) : (
-            <NotesTab applicationId={id!} />
-          )}
-        </div>
-
-        {/* Right sidebar stays the same */}
-        <aside className="lg:col-span-1 ">
-          <div className=" rounded-3xl border border-primary-border bg-white p-6 sticky top-20 card-shadow dark:border-gray-800 dark:bg-gray-900">
-            <h3 className="text-[18px] font-semibold text-[#20242A] dark:text-white">
-              Application journey
-            </h3>
-
-            <div className="relative mt-6">
-              {/* <div className="absolute z-10 left-[11px] top-2 bottom-2 w-0.5 bg-[#D1D5DB]" /> */}
-
-              <div
-                className={`absolute z-10 left-[11px] top-2 bottom-2 w-0.5 ${isRejected ? "bg-red-400 " : " bg-[#D1D5DB]"}`}
-              />
-
-              <div className="space-y-10">
-                {isRejected && (
-                  <div className="flex items-start gap-4 relative z-10 w-full">
-                    <div className="rounded-full z-50 bg-white">
-                      <FaCircleXmark className="text-red-500" size={22} />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[13px] font-bold text-red-600">
-                        Application Rejected
-                      </span>
-                      {/* রিজেকশন নোটটি এখানে দেখান */}
-                      {applicationApiData?.rejectionReason && (
-                        <div className="mt-1 p-2 bg-red-50 border border-red-100 rounded text-[11px] text-red-700 italic max-w-[200px]">
-                          " {applicationApiData?.rejectionReason} "
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-                {steps.map((step, index) => {
-                  // Step routing removed; highlight the first incomplete step instead.
-                  const firstIncompleteIndex = steps.findIndex(
-                    (s) => !s.isCompleted,
-                  );
-                  const isActive =
-                    (firstIncompleteIndex === -1 &&
-                      index === steps.length - 1) ||
-                    index ===
-                      (firstIncompleteIndex === -1 ? 0 : firstIncompleteIndex);
-
-                  return (
-                    <div
-                      key={step.id}
-                      className="flex items-center gap-4 relative z-10 cursor-default"
-                    >
-                      <div className="relative z-50">
-                        {step.isCompleted ? (
-                          <FaCircleCheck
-                            className="text-[#00B561] bg-white rounded-full relative z-50"
-                            size={22}
-                          />
-                        ) : (
-                          <div
-                            className={`w-6 h-6 rounded-full flex items-center justify-center font-semibold text-[13px] relative z-50 ${
-                              isActive
-                                ? "bg-[#237D3B] text-white"
-                                : "bg-[#E6F4EA] text-[#237D3B]"
-                            }`}
-                          >
-                            {index + 1}
-                          </div>
-                        )}
-                      </div>
-                      <span className="text-[14px] text-[#4B5563] dark:text-gray-300">
-                        {step.name}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+              {activeTab === "requirements" ? (
+                <ApplicationRequirementsTab
+                  applicationApiData={applicationApiData}
+                  steps={steps}
+                />
+              ) : activeTab === "records" ? (
+                <StudentRecordsTab applicationApiData={applicationApiData} />
+              ) : (
+                <NotesTab applicationId={id!} />
+              )}
             </div>
           </div>
+
+          {/* <UniversityCourseCard
+            fields={[
+              {
+                label: "Institution",
+                value: applicationData.college.name,
+              },
+              { label: "Program", value: applicationData.program },
+              {
+                label: "Mode of Study",
+                value: String(applicationData.modeOfStudy ?? ""),
+              },
+              {
+                label: "Intake",
+                value: String(applicationData.mainSelectedIntake ?? ""),
+              },
+              { label: "Study Type", value: applicationData.studyType },
+              { label: "Country", value: countryName },
+            ]}
+            showViewProgram={Boolean(universitySlug)}
+            onViewProgram={handleViewProgram}
+          /> */}
+        </div>
+
+        <aside className="space-y-5 xl:sticky xl:top-20 xl:self-start">
+          <ApplicationProgressPanel
+            steps={steps}
+            isRejected={isRejected}
+            rejectionReason={applicationApiData?.rejectionReason}
+          />
+          <ImportantNotesCard />
+          <NeedHelpCard onContactSupport={handleContactSupport} />
         </aside>
       </div>
     </div>
